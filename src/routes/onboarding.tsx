@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { KeyRound, MessagesSquare, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useMCM } from "@/lib/mcm/store";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/mcm-logo.png";
 
@@ -38,14 +37,13 @@ const SLIDES = [
 
 function Onboarding() {
   const [index, setIndex] = useState(0);
-  const { update } = useMCM();
   const navigate = useNavigate();
   const slide = SLIDES[index]!;
   const Icon = slide.icon;
 
   const finish = () => {
-    update((d) => ({ ...d, onboarded: true }));
-    navigate({ to: "/register" });
+    localStorage.setItem("mcm-onboarded", "1");
+    void navigate({ to: "/register" });
   };
 
   return (
@@ -85,8 +83,8 @@ function Onboarding() {
             variant="ghost"
             className="w-full text-navy-foreground hover:bg-white/10"
             onClick={() => {
-              update((d) => ({ ...d, onboarded: true }));
-              navigate({ to: "/login" });
+              localStorage.setItem("mcm-onboarded", "1");
+              void navigate({ to: "/login" });
             }}
           >
             Saya sudah punya akun

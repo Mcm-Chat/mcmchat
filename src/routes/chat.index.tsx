@@ -1,373 +1,249 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Bell, Camera, MessageSquarePlus, Search, Users, UserPlus, ShieldCheck, Archive } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Camera, MessageCirclePlus, MessagesSquare, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatListItem } from "@/components/mcm/chat-parts";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { chatSortValue, lastMessage, uid, useMCM } from "@/lib/mcm/store";
+import { supabase } from "@/integrations/supabase/client";
+import { createGroup, getOrCreateDirect } from "@/lib/api/chat";
+import { useRequireAuth } from "@/lib/api/guard";
+import { qk, useContacts, useConversations } from "@/lib/api/queries";
 import { waktuRelatif } from "@/lib/mcm/format";
 
 export const Route = createFileRoute("/chat/")({
   head: () => ({
     meta: [
       { title: "Chat — MCM" },
-      { name: "description", content: "Semua percakapan personal dan grup Anda di MCM, lengkap dengan pencarian, pin, dan arsip." },
+      { name: "description", content: "Semua percakapan personal dan grup MCM Anda dalam satu daftar yang rapi." },
       { property: "og:title", content: "Chat — MCM" },
-      { property: "og:description", content: "Percakapan personal dan grup yang rapi dan privat." },
+      { property: "og:description", content: "Percakapan personal dan grup MCM Anda." },
     ],
   }),
-  component: ChatList,
+  component: ChatIndex,
 });
 
-function ChatList() {
-  const { state, ready, update } = useMCM();
+const initialsOf = (name: string) =>
+  name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("") || "MC";
+
+function ChatIndex() {
+  const { userId, loading } = useRequireAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { data: conversations, isLoading } = useConversations(userId);
+  const { data: contacts } = useContacts(userId);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState("semua");
-  const [openGroup, setOpenGroup] = useState(false);
-  const [openNew, setOpenNew] = useState(false);
-  const [openNotif, setOpenNotif] = useState(false);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
-  const [members, setMembers] = useState<string[]>([]);
+  const [groupMembers, setGroupMembers] = useState<string[]>([]);
 
-  const contacts = state.contacts.filter((c) => c.status === "contact");
+  const list = useMemo(() => {
+    const all = conversations ?? [];
+    const filtered = all.filter((c) => c.title_resolved.toLowerCase().includes(q.trim().toLowerCase()));
+    if (tab === "arsip") return filtered.filter((c) => c.me.is_archived);
+    const active = filtered.filter((c) => !c.me.is_archived);
+    return tab === "belum" ? active.filter((c) => c.unread > 0) : active;
+  }, [conversations, q, tab]);
 
-  const chats = useMemo(() => {
-    const filtered = state.chats
-      .filter((c) => (tab === "arsip" ? c.archived : !c.archived))
-      .filter((c) => (tab === "belum" ? c.unread > 0 : true))
-      .filter((c) => c.name.toLowerCase().includes(q.trim().toLowerCase()))
-      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || chatSortValue(state, b) - chatSortValue(state, a));
-    return filtered;
-  }, [state, tab, q]);
+  const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
 
-  const createGroup = () => {
+  const patchMember = async (conversationId: string, patch: { is_pinned?: boolean; is_muted?: boolean; is_archived?: boolean }) => {
+    await supabase.from("conversation_members").update(patch).eq("conversation_id", conversationId).eq("user_id", userId!);
+    void refresh();
+  };
+
+  const openDirect = async (contactId: string) => {
+    try {
+      const id = await getOrCreateDirect(userId!, contactId);
+      setNewOpen(false);
+      void refresh();
+      void navigate({ to: "/chat/$id", params: { id } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membuka chat");
+    }
+  };
+
+  const submitGroup = async () => {
     if (groupName.trim().length < 3) {
       toast.error("Nama grup minimal 3 karakter");
       return;
     }
-    if (members.length === 0) {
+    if (groupMembers.length === 0) {
       toast.error("Pilih minimal satu anggota");
       return;
     }
-    const id = uid("ch");
-    update((d) => {
-      d.chats.unshift({
-        id,
-        type: "group",
-        name: groupName.trim(),
-        avatarColor: "from-teal-500 to-emerald-700",
-        initials: groupName.trim().slice(0, 2).toUpperCase(),
-        memberIds: ["me", ...members],
-        pinned: false,
-        archived: false,
-        muted: false,
-        unread: 0,
-        disappearingHours: 0,
-      });
-      d.messages.push({
-        id: uid("m"),
-        chatId: id,
-        senderId: "me",
-        senderName: state.profile.name,
-        kind: "system",
-        text: `${state.profile.name} membuat grup "${groupName.trim()}"`,
-        at: new Date().toISOString(),
-        status: "sent",
-        reactions: [],
-      });
-      return d;
-    });
-    setOpenGroup(false);
-    setGroupName("");
-    setMembers([]);
-    toast.success("Grup berhasil dibuat");
-    navigate({ to: "/chat/$id", params: { id } });
-  };
-
-  const startChat = (contactId: string) => {
-    const existing = state.chats.find((c) => c.contactId === contactId);
-    if (existing) {
-      setOpenNew(false);
-      navigate({ to: "/chat/$id", params: { id: existing.id } });
-      return;
+    try {
+      const id = await createGroup(userId!, groupName.trim(), groupMembers);
+      setGroupOpen(false);
+      setGroupName("");
+      setGroupMembers([]);
+      void refresh();
+      void navigate({ to: "/chat/$id", params: { id } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membuat grup");
     }
-    const contact = state.contacts.find((c) => c.id === contactId)!;
-    const id = uid("ch");
-    update((d) => {
-      d.chats.unshift({
-        id,
-        type: "personal",
-        name: contact.name,
-        avatarColor: contact.avatarColor,
-        initials: contact.initials,
-        contactId,
-        memberIds: ["me", contactId],
-        pinned: false,
-        archived: false,
-        muted: false,
-        unread: 0,
-        disappearingHours: 0,
-      });
-      return d;
-    });
-    setOpenNew(false);
-    navigate({ to: "/chat/$id", params: { id } });
   };
-
-  const unreadNotif = state.notifications.filter((n) => !n.read).length;
 
   return (
     <AppShell
       header={
         <MobileHeader
-          title="MCM"
-          subtitle={`PIN ${state.profile.pin} • Privasi terlindungi`}
+          title="Chat"
+          variant="gradient"
           actions={
             <>
-              <Button variant="ghost" size="icon" aria-label="Notifikasi" className="relative" onClick={() => setOpenNotif(true)}>
-                <Bell className="size-5" />
-                {unreadNotif > 0 && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive" />}
-              </Button>
-              <Button variant="ghost" size="icon" aria-label="Kontak" asChild>
-                <Link to="/contacts">
-                  <Users className="size-5" />
-                </Link>
-              </Button>
+              <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Buat grup" className="size-9 text-navy-foreground hover:bg-white/15">
+                    <Users className="size-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Grup baru</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="group-name">Nama grup</Label>
+                      <Input id="group-name" value={groupName} maxLength={60} onChange={(e) => setGroupName(e.target.value)} placeholder="Contoh: Tim Kopi Nusa" />
+                    </div>
+                    <div className="max-h-56 space-y-1 overflow-y-auto">
+                      {(contacts ?? []).map((c) => (
+                        <label key={c.contact_id} className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted">
+                          <Checkbox
+                            checked={groupMembers.includes(c.contact_id)}
+                            onCheckedChange={(v) =>
+                              setGroupMembers((p) => (v ? [...p, c.contact_id] : p.filter((x) => x !== c.contact_id)))
+                            }
+                          />
+                          <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} size="sm" />
+                          <span className="min-w-0 flex-1 truncate text-sm">{c.profile.display_name}</span>
+                        </label>
+                      ))}
+                      {(contacts ?? []).length === 0 && <p className="px-2 py-6 text-center text-xs text-muted-foreground">Belum ada kontak.</p>}
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button className="w-full rounded-xl" onClick={() => void submitGroup()}>
+                      Buat grup
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Dialog open={newOpen} onOpenChange={setNewOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Chat baru" className="size-9 text-navy-foreground hover:bg-white/15">
+                    <MessageCirclePlus className="size-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Mulai chat</DialogTitle>
+                  </DialogHeader>
+                  <div className="max-h-72 space-y-1 overflow-y-auto">
+                    {(contacts ?? [])
+                      .filter((c) => !c.is_blocked)
+                      .map((c) => (
+                        <button
+                          key={c.contact_id}
+                          type="button"
+                          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-muted"
+                          onClick={() => void openDirect(c.contact_id)}
+                        >
+                          <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} size="sm" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium">{c.profile.display_name}</span>
+                            <span className="block truncate font-mono text-[11px] text-muted-foreground">{c.profile.pin}</span>
+                          </span>
+                        </button>
+                      ))}
+                    {(contacts ?? []).length === 0 && (
+                      <p className="px-2 py-6 text-center text-xs text-muted-foreground">Tambahkan kontak lewat PIN dulu.</p>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="secondary" className="w-full rounded-xl" onClick={() => void navigate({ to: "/contacts/add" })}>
+                      Tambah kontak lewat PIN
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </>
           }
         >
           <div className="px-3 pb-3">
             <div className="relative">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-navy-foreground/60" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Cari chat atau grup"
-                className="h-10 rounded-xl pl-9"
                 maxLength={60}
+                placeholder="Cari percakapan"
+                className="h-10 rounded-xl border-white/20 bg-white/10 pl-9 text-navy-foreground placeholder:text-navy-foreground/60"
               />
             </div>
-            <Tabs value={tab} onValueChange={setTab} className="mt-3">
-              <TabsList className="w-full rounded-xl">
-                <TabsTrigger value="semua" className="flex-1 rounded-lg">
-                  Semua
-                </TabsTrigger>
-                <TabsTrigger value="belum" className="flex-1 rounded-lg">
-                  Belum dibaca
-                </TabsTrigger>
-                <TabsTrigger value="arsip" className="flex-1 rounded-lg">
-                  Arsip
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
           </div>
         </MobileHeader>
       }
     >
-      {!ready ? (
-        <LoadingSkeleton />
-      ) : chats.length === 0 ? (
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-2">
+          <TabsTrigger value="semua">Semua</TabsTrigger>
+          <TabsTrigger value="belum">Belum dibaca</TabsTrigger>
+          <TabsTrigger value="arsip">Arsip</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {loading || isLoading ? (
+        <LoadingSkeleton rows={6} />
+      ) : list.length === 0 ? (
         <EmptyState
-          icon={tab === "arsip" ? Archive : MessageSquarePlus}
-          title={q ? "Tidak ada hasil" : tab === "arsip" ? "Belum ada chat diarsipkan" : "Belum ada percakapan"}
-          description={
-            q
-              ? `Tidak ditemukan chat dengan kata "${q}".`
-              : "Mulai percakapan dengan kontak Anda atau tambahkan teman lewat PIN MCM."
-          }
+          icon={MessagesSquare}
+          title="Belum ada percakapan"
+          description="Tambahkan kontak lewat PIN MCM, lalu mulai chat pertama Anda."
           action={
-            <Button className="rounded-xl" onClick={() => setOpenNew(true)}>
-              <MessageSquarePlus className="size-4" /> Chat baru
+            <Button className="rounded-xl" onClick={() => void navigate({ to: "/contacts/add" })}>
+              Tambah kontak
             </Button>
           }
         />
       ) : (
-        <ul className="divide-y divide-border/70 pb-24">
-          {chats.map((chat) => {
-            const last = lastMessage(state, chat.id);
-            return (
-              <li key={chat.id}>
-                <ChatListItem
-                  chat={chat}
-                  preview={
-                    last
-                      ? last.kind === "document"
-                        ? `📎 ${last.attachmentName}`
-                        : last.kind === "image"
-                          ? `📷 Foto${last.text ? ` — ${last.text}` : ""}${last.location ? " • 📍 lokasi" : ""}`
-                        : last.kind === "voice"
-                          ? "🎤 Pesan suara"
-                          : last.kind === "poll"
-                            ? `📊 ${last.text}`
-                            : last.text
-                      : "Belum ada pesan"
-                  }
-                  time={last ? waktuRelatif(last.at) : ""}
-                  outgoing={last?.senderId === "me"}
-                  onTogglePin={() =>
-                    update((d) => {
-                      const c = d.chats.find((x) => x.id === chat.id)!;
-                      c.pinned = !c.pinned;
-                      toast.success(c.pinned ? "Chat disematkan" : "Sematan dilepas");
-                      return d;
-                    })
-                  }
-                  onToggleMute={() =>
-                    update((d) => {
-                      const c = d.chats.find((x) => x.id === chat.id)!;
-                      c.muted = !c.muted;
-                      toast.success(c.muted ? "Notifikasi dibisukan" : "Notifikasi dinyalakan");
-                      return d;
-                    })
-                  }
-                  onToggleArchive={() =>
-                    update((d) => {
-                      const c = d.chats.find((x) => x.id === chat.id)!;
-                      c.archived = !c.archived;
-                      toast.success(c.archived ? "Chat diarsipkan" : "Chat dikeluarkan dari arsip");
-                      return d;
-                    })
-                  }
-                />
-              </li>
-            );
-          })}
+        <ul className="divide-y divide-border/70">
+          {list.map((c) => (
+            <li key={c.id}>
+              <ChatListItem
+                conv={c}
+                time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
+                onTogglePin={() => void patchMember(c.id, { is_pinned: !c.me.is_pinned })}
+                onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
+                onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}
+              />
+            </li>
+          ))}
         </ul>
       )}
 
-      <div className="pointer-events-none sticky bottom-4 flex justify-end px-4">
-        <div className="pointer-events-auto flex flex-col gap-2">
-          <Button size="icon" variant="secondary" className="size-11 rounded-2xl shadow-soft" aria-label="Kirim foto" asChild>
-            <Link to="/photo/new">
-              <Camera className="size-5" />
-            </Link>
-          </Button>
-          <Button size="icon" variant="secondary" className="size-11 rounded-2xl shadow-soft" aria-label="Buat grup" onClick={() => setOpenGroup(true)}>
-            <Users className="size-5" />
-          </Button>
-          <Button size="icon" className="size-14 rounded-2xl shadow-soft" aria-label="Chat baru" onClick={() => setOpenNew(true)}>
-            <MessageSquarePlus className="size-6" />
-          </Button>
-        </div>
-      </div>
-
-      <Dialog open={openNew} onOpenChange={setOpenNew}>
-        <DialogContent className="max-w-[360px] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Chat baru</DialogTitle>
-            <DialogDescription>Pilih kontak yang sudah menerima permintaan Anda.</DialogDescription>
-          </DialogHeader>
-          <ul className="max-h-72 space-y-1 overflow-y-auto">
-            {contacts.map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-muted"
-                  onClick={() => startChat(c.id)}
-                >
-                  <MCMAvatar initials={c.initials} color={c.avatarColor} size="sm" online={c.online ?? false} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{c.name}</span>
-                    <span className="block font-mono text-[11px] text-muted-foreground">{c.pin}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <Button variant="outline" className="rounded-xl" asChild>
-            <Link to="/contacts/add">
-              <UserPlus className="size-4" /> Tambah kontak lewat PIN
-            </Link>
-          </Button>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openGroup} onOpenChange={setOpenGroup}>
-        <DialogContent className="max-w-[360px] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Buat grup baru</DialogTitle>
-            <DialogDescription>Beri nama grup dan pilih anggotanya.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="group-name">Nama grup</Label>
-            <Input id="group-name" value={groupName} maxLength={40} onChange={(e) => setGroupName(e.target.value)} placeholder="Contoh: Tim Operasional" />
-          </div>
-          <ul className="max-h-56 space-y-1 overflow-y-auto">
-            {contacts.map((c) => (
-              <li key={c.id} className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted">
-                <Checkbox
-                  id={`m-${c.id}`}
-                  checked={members.includes(c.id)}
-                  onCheckedChange={(v) => setMembers((prev) => (v ? [...prev, c.id] : prev.filter((x) => x !== c.id)))}
-                />
-                <Label htmlFor={`m-${c.id}`} className="flex flex-1 items-center gap-2">
-                  <MCMAvatar initials={c.initials} color={c.avatarColor} size="xs" />
-                  {c.name}
-                </Label>
-              </li>
-            ))}
-          </ul>
-          <DialogFooter className="flex-row justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="ghost">Batal</Button>
-            </DialogClose>
-            <Button onClick={createGroup}>Buat grup</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Sheet open={openNotif} onOpenChange={setOpenNotif}>
-        <SheetContent side="right" className="w-[86vw] max-w-sm">
-          <SheetHeader>
-            <SheetTitle>Notifikasi</SheetTitle>
-            <SheetDescription>Aktivitas terbaru di akun MCM Anda.</SheetDescription>
-          </SheetHeader>
-          <ul className="space-y-2 overflow-y-auto px-4 pb-4">
-            {state.notifications.map((n) => (
-              <li key={n.id} className={`rounded-xl border p-3 ${n.read ? "border-border" : "border-primary/40 bg-primary/5"}`}>
-                <p className="text-sm font-medium">{n.title}</p>
-                <p className="text-xs text-muted-foreground">{n.body}</p>
-                <p className="mt-1 text-[11px] text-muted-foreground">{waktuRelatif(n.at)}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="px-4 pb-6">
-            <Button
-              variant="outline"
-              className="w-full rounded-xl"
-              onClick={() => {
-                update((d) => {
-                  d.notifications = d.notifications.map((n) => ({ ...n, read: true }));
-                  return d;
-                });
-                toast.success("Semua notifikasi ditandai dibaca");
-              }}
-            >
-              Tandai semua dibaca
-            </Button>
-            <p className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <ShieldCheck className="size-3.5" /> Notifikasi push nyata membutuhkan integrasi lanjutan.
-            </p>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <Button
+        size="icon"
+        aria-label="Kirim foto"
+        className="fixed right-4 bottom-20 z-40 size-13 rounded-full shadow-lg sm:right-[max(1rem,calc(50%-13rem))]"
+        onClick={() => void navigate({ to: "/photo/new" })}
+      >
+        <Camera className="size-5.5" />
+      </Button>
     </AppShell>
   );
 }

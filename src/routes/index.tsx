@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ShieldCheck } from "lucide-react";
 import logo from "@/assets/mcm-logo.png";
-import { useMCM } from "@/lib/mcm/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,25 +21,26 @@ export const Route = createFileRoute("/")({
 });
 
 function Splash() {
-  const { state, ready } = useMCM();
+  const { session, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!ready) return;
+    if (loading) return;
+    const seen = typeof window !== "undefined" && localStorage.getItem("mcm-onboarded") === "1";
     const t = setTimeout(() => {
-      if (state.authed) navigate({ to: "/chat" });
-      else if (state.onboarded) navigate({ to: "/login" });
-      else navigate({ to: "/onboarding" });
-    }, 1200);
+      if (session) void navigate({ to: "/chat", replace: true });
+      else if (seen) void navigate({ to: "/login", replace: true });
+      else void navigate({ to: "/onboarding", replace: true });
+    }, 700);
     return () => clearTimeout(t);
-  }, [ready, state.authed, state.onboarded, navigate]);
+  }, [loading, session, navigate]);
 
   return (
     <div className="app-gradient flex min-h-screen flex-col items-center justify-center gap-6 px-6 text-navy-foreground">
       <img src={logo} alt="Logo MCM" width={512} height={512} className="size-28 animate-pulse" />
       <div className="text-center">
         <h1 className="text-3xl font-extrabold tracking-tight">MCM</h1>
-        <p className="mt-1 text-sm text-navy-foreground/75">Private Chat, Calls & Smart Ledger</p>
+        <p className="mt-1 text-sm text-navy-foreground/75">Private Chat, Calls &amp; Smart Ledger</p>
       </div>
       <div className="absolute bottom-10 flex items-center gap-2 text-xs text-navy-foreground/70">
         <ShieldCheck className="size-4" /> Privasi terlindungi

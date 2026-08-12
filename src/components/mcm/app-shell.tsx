@@ -3,7 +3,8 @@ import { ArrowLeft, Briefcase, MessageCircle, Phone, User, Wallet } from "lucide
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useMCM } from "@/lib/mcm/store";
+import { useAuth } from "@/lib/auth";
+import { useCalls, useConversations, useLedgers } from "@/lib/api/queries";
 
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
@@ -14,12 +15,14 @@ const NAV = [
 ] as const;
 
 export function BottomNavigation({ badges }: { badges?: Partial<Record<string, number>> | undefined }) {
-  const { state } = useMCM();
+  const { user } = useAuth();
+  const { data: convs } = useConversations(user?.id);
+  const { data: calls } = useCalls(user?.id);
+  const { data: ledgers } = useLedgers(user?.id);
   const auto: Record<string, number> = {
-    "/chat": state.chats.filter((c) => !c.archived).reduce((s, c) => s + c.unread, 0),
-    "/calls": state.calls.filter((c) => c.missed && c.direction === "in").length,
-    "/ledger": state.ledgers.filter((l) => l.status === "menunggu").length,
-    "/business": state.orders.filter((o) => o.status === "baru").length,
+    "/chat": (convs ?? []).filter((c) => !c.me.is_archived).reduce((s, c) => s + c.unread, 0),
+    "/calls": (calls ?? []).filter((c) => c.status === "missed" && c.initiator_id !== user?.id).length,
+    "/ledger": (ledgers ?? []).filter((l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id).length,
   };
   const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
