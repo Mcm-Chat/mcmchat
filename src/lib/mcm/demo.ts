@@ -450,3 +450,10 @@ function order(
 ) {
   return { id, number, customerName, customerPin, status, at: iso(ago), items, note, address, shipping };
 }
+
+/** Direktori pengguna demo yang bisa ditemukan lewat pencarian PIN. */
+export const DEMO_DIRECTORY: { pin: string; name: string; bio: string; initials: string; avatarColor: string }[] = [
+  { pin: "R8NA-K4Q7", name: "Rina Safitri", bio: "Desainer grafis • Bandung", initials: "RS", avatarColor: "from-fuchsia-500 to-rose-600" },
+  { pin: "G6TX-P2WV", name: "Galih Prasetya", bio: "Supplier biji kopi • Garut", initials: "GP", avatarColor: "from-amber-500 to-orange-600" },
+  { pin: "N3KY-Z8HR", name: "Nadia Puspita", bio: "Admin toko online", initials: "NP", avatarColor: "from-teal-500 to-emerald-600" },
+];
