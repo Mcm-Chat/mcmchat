@@ -12,6 +12,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
+// Layar lama (kontak, panggilan, catatan, bisnis, profil) masih memakai store lokal
+// sampai migrasi lanjutan selesai; provider ini menjaga aplikasi tetap berjalan.
+import { MCMProvider } from "@/lib/mcm/store";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -133,9 +136,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <MCMProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Toaster position="top-center" richColors closeButton />
+        </MCMProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
