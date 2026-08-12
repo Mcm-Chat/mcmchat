@@ -190,3 +190,10 @@ export function advance(
   const target = groups[ng]!;
   return { groupIndex: ng, itemIndex: dir === 1 ? 0 : Math.max(0, target.items.length - 1), done: false };
 }
+
+export const initialsOf = (name: string) =>
+  name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("") || "MC";

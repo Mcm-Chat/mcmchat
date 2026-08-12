@@ -22,7 +22,7 @@ import {
   setStatusMuted,
 } from "@/lib/api/status";
 import { statusKeys, useStatusMedia } from "@/lib/status/hooks";
-import { advance, REACTIONS, waktuStatus, type StatusGroup, type StatusItem } from "@/lib/status/model";
+import { advance, initialsOf, REACTIONS, waktuStatus, type StatusGroup, type StatusItem } from "@/lib/status/model";
 
 const TICK = 50;
 
@@ -209,7 +209,7 @@ export function StatusViewer({
           ))}
         </div>
         <div className="pointer-events-auto mt-3 flex items-center gap-3 px-3">
-          <MCMAvatar name={name} color={group.profile?.avatar_color} src={group.profile?.avatar_url} size="sm" />
+          <MCMAvatar initials={initialsOf(name)} color={group.profile?.avatar_color ?? "#0ea5e9"} size="sm" />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{mine ? "Status Saya" : name}</div>
             <div className="text-[11px] text-white/70">{waktuStatus(item.created_at)}</div>
@@ -329,7 +329,7 @@ export function StatusViewer({
             )}
             {(viewers ?? []).map((v) => (
               <div key={`${v.item_id}-${v.viewer_id}`} className="flex items-center gap-3">
-                <MCMAvatar name={v.profile?.display_name ?? "Kontak"} color={v.profile?.avatar_color} src={v.profile?.avatar_url} size="sm" />
+                <MCMAvatar initials={initialsOf(v.profile?.display_name ?? "Kontak")} color={v.profile?.avatar_color ?? "#0ea5e9"} size="sm" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{v.profile?.display_name ?? "Kontak MCM"}</div>
                   <div className="text-xs text-muted-foreground">{waktuStatus(v.viewed_at)}</div>
