@@ -230,7 +230,6 @@ export function PhotoFlow({
             return (
               <li key={c.id}>
                 <div
-                  type="button"
                   onClick={() => toggle(c.id)}
                   role="checkbox"
                   aria-checked={selected.includes(c.id)}
