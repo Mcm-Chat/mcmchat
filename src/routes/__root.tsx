@@ -14,6 +14,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
+import { initConnectionWatcher } from "@/lib/realtime/connection";
+import { initOutboxFlush } from "@/lib/api/outbox";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +132,16 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Pemantau koneksi realtime + pengiriman ulang outbox dipasang sekali.
+  useEffect(() => {
+    const offConn = initConnectionWatcher();
+    const offOutbox = initOutboxFlush();
+    return () => {
+      offConn();
+      offOutbox();
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

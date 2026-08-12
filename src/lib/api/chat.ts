@@ -144,14 +144,38 @@ export async function createGroup(userId: string, title: string, memberIds: stri
   return conv.id;
 }
 
-export async function listMessages(conversationId: string, userId: string): Promise<MessageRow[]> {
-  const [msgs, hides] = await Promise.all([
-    supabase.from("messages").select("*").eq("conversation_id", conversationId).order("created_at", { ascending: true }),
-    supabase.from("message_hides").select("message_id").eq("user_id", userId),
-  ]);
+export const MESSAGE_PAGE_SIZE = 40;
+
+/** Urutan stabil: server timestamp, lalu id sebagai tie-breaker deterministik. */
+export function compareMessages(a: MessageRow, b: MessageRow): number {
+  const ta = new Date(a.created_at).getTime();
+  const tb = new Date(b.created_at).getTime();
+  if (ta !== tb) return ta - tb;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/**
+ * Satu halaman pesan (terbaru lebih dulu di server, dikembalikan menaik).
+ * `before` adalah `created_at` pesan tertua yang sudah dimuat.
+ */
+export async function listMessages(
+  conversationId: string,
+  userId: string,
+  opts: { before?: string | null; limit?: number } = {},
+): Promise<MessageRow[]> {
+  const limit = opts.limit ?? MESSAGE_PAGE_SIZE;
+  let q = supabase
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit);
+  if (opts.before) q = q.lt("created_at", opts.before);
+  const [msgs, hides] = await Promise.all([q, supabase.from("message_hides").select("message_id").eq("user_id", userId)]);
   if (msgs.error) throw new Error(friendly(msgs.error.message, "Gagal memuat pesan"));
   const hidden = new Set((hides.data ?? []).map((h) => h.message_id));
-  return (msgs.data ?? []).filter((m) => !hidden.has(m.id));
+  return (msgs.data ?? []).filter((m) => !hidden.has(m.id)).sort(compareMessages);
 }
 
 export type SendMessageInput = {
@@ -164,6 +188,8 @@ export type SendMessageInput = {
   location?: MessageLocationInput | null;
   payload?: Record<string, unknown> | null;
   durationSec?: number | null;
+  /** Kunci idempotensi buatan perangkat; mencegah duplikasi saat retry/reconnect. */
+  clientId?: string | null;
 };
 
 export async function sendMessage(input: SendMessageInput): Promise<MessageRow> {
@@ -175,6 +201,7 @@ export async function sendMessage(input: SendMessageInput): Promise<MessageRow> 
     reply_to_id: input.replyToId ?? null,
     payload: (input.payload ?? null) as never,
     duration_sec: input.durationSec ?? null,
+    client_id: input.clientId ?? null,
   };
   if (input.file) {
     const up = await uploadChatMedia(input.conversationId, input.file.blob, input.file.name);

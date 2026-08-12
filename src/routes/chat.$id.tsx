@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BellOff, ClipboardList, Info, Phone, Users, Video, Wallet, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, BellOff, ClipboardList, Info, Phone, RotateCw, Users, Video, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
@@ -26,6 +26,8 @@ import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/pr
 import { SaleDialog } from "@/components/mcm/sale-dialog";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
+import { discardEntry, enqueueText, retryEntry, setOutboxSentHandler, useOutbox } from "@/lib/api/outbox";
+import { useConnectionState } from "@/lib/realtime/connection";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) => (typeof search['hl'] === "string" ? { hl: search['hl'] } : {}),
@@ -54,8 +56,10 @@ function ChatRoom() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: conversations } = useConversations(userId);
-  const { data: messages, isLoading } = useMessages(id, userId);
+  const { messages, isLoading, hasOlder, isFetchingOlder, fetchOlder } = useMessages(id, userId);
   const conv = (conversations ?? []).find((c) => c.id === id);
+  const connection = useConnectionState();
+  const pending = useOutbox(id);
 
   const [text, setText] = useState("");
   const [reply, setReply] = useState<MessageRow | null>(null);
@@ -70,6 +74,8 @@ function ChatRoom() {
   const [ledger, setLedger] = useState({ type: "receivable", amount: "", dueDate: "", note: "" });
   const docRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
 
   const { data: business } = useMyBusiness(userId);
   const { data: prepJobs } = useQuery({
@@ -90,13 +96,13 @@ function ChatRoom() {
       const { data } = await supabase
         .from("message_reactions")
         .select("message_id, emoji")
-        .in("message_id", (messages ?? []).map((m) => m.id));
+        .in("message_id", messages.map((m) => m.id));
       return data ?? [];
     },
-    enabled: (messages ?? []).length > 0,
+    enabled: messages.length > 0,
   });
 
-  const myMessageIds = useMemo(() => (messages ?? []).filter((m) => m.sender_id === userId).map((m) => m.id), [messages, userId]);
+  const myMessageIds = useMemo(() => messages.filter((m) => m.sender_id === userId).map((m) => m.id), [messages, userId]);
   const { data: receiptRows } = useReceipts(id, myMessageIds, userId);
   const receiptIndex = useMemo(() => indexReceipts(receiptRows ?? []), [receiptRows]);
   const otherMemberCount = useMemo(() => (conv?.members ?? []).filter((m) => m.id !== userId).length, [conv, userId]);
@@ -110,7 +116,7 @@ function ChatRoom() {
       void qc.invalidateQueries({ queryKey: qk.conversations(userId) });
       void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
     });
-  }, [userId, id, messages?.length, qc]);
+  }, [userId, id, messages.length, qc]);
 
   // Jaring pengaman bila pesan tiba saat aplikasi tidak fokus.
   useEffect(() => {
@@ -122,9 +128,30 @@ function ChatRoom() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [userId, id]);
 
+  // Auto-scroll hanya bila pengguna memang sedang berada di dekat pesan terbaru.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages?.length]);
+    if (atBottom) bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length, pending.length, atBottom]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setAtBottom(distance < 120);
+    if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
+  }, [hasOlder, isFetchingOlder, fetchOlder]);
+
+  // Draf per percakapan bertahan saat pindah layar atau reload.
+  const draftKey = `mcm.draft.${id}`;
+  useEffect(() => {
+    const saved = typeof localStorage !== "undefined" ? localStorage.getItem(draftKey) : null;
+    if (saved) setText(saved);
+  }, [draftKey]);
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return;
+    if (text) localStorage.setItem(draftKey, text);
+    else localStorage.removeItem(draftKey);
+  }, [text, draftKey]);
 
   const nameOf = useMemo(() => {
     const map = new Map((conv?.members ?? []).map((m) => [m.id, m.display_name]));
@@ -137,25 +164,38 @@ function ChatRoom() {
     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
   };
 
+  // Saat entri outbox berhasil terkirim, muat ulang halaman pesan percakapan itu.
+  useEffect(() => {
+    setOutboxSentHandler((entry) => {
+      void qc.invalidateQueries({ queryKey: qk.messages(entry.conversationId) });
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+    });
+    return () => setOutboxSentHandler(null);
+  }, [qc, userId]);
+
   const blocked = block?.iBlocked ?? false;
   const blockedByOther = block?.blockedMe ?? false;
 
   const doSend = async () => {
     const body = text.trim();
     if (!body || !userId) return;
-    try {
-      if (editingId) {
+    if (editingId) {
+      try {
         await editMessage(editingId, body);
         setEditingId(null);
-      } else {
-        await sendMessage({ conversationId: id, senderId: userId, body, replyToId: reply?.id ?? null });
+        setText("");
+        refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Pesan gagal diubah");
       }
-      setText("");
-      setReply(null);
-      refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Pesan gagal dikirim");
+      return;
     }
+    // Pesan teks masuk outbox: tampil langsung, terkirim otomatis saat online,
+    // dan tidak pernah hilang meski koneksi putus.
+    enqueueText({ conversationId: id, senderId: userId, body, replyToId: reply?.id ?? null });
+    setText("");
+    setReply(null);
+    setAtBottom(true);
   };
 
   const sendVoice = async (blob: Blob, seconds: number) => {
@@ -226,7 +266,7 @@ function ChatRoom() {
 
   const runDeleteForEveryone = async () => {
     if (!userId) return;
-    const target = (messages ?? []).filter((m) => selection.includes(m.id));
+    const target = messages.filter((m) => selection.includes(m.id));
     try {
       await deleteForEveryone(target, userId);
       setSelection([]);
@@ -306,7 +346,7 @@ function ChatRoom() {
                 <Button variant="ghost" size="sm" onClick={() => void deleteForMe(selection, userId!).then(() => { setSelection([]); refresh(); })}>
                   Hapus untuk saya
                 </Button>
-                {(messages ?? []).filter((m) => selection.includes(m.id)).every((m) => m.sender_id === userId) && (
+                {messages.filter((m) => selection.includes(m.id)).every((m) => m.sender_id === userId) && (
                   <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setConfirmAll(true)}>
                     Hapus untuk semua
                   </Button>
@@ -361,8 +401,23 @@ function ChatRoom() {
         )
       }
     >
-      <div className="chat-canvas flex-1 px-2 py-3">
-        {(messages ?? []).length === 0 && (
+      {connection !== "online" && (
+        <div
+          role="status"
+          className="sticky top-0 z-10 bg-muted/90 px-4 py-1.5 text-center text-[11px] font-medium text-muted-foreground backdrop-blur"
+        >
+          {connection === "connecting" ? "Menghubungkan kembali…" : "Offline — pesan dikirim otomatis saat koneksi kembali"}
+        </div>
+      )}
+      <div ref={scrollRef} onScroll={onScroll} className="chat-canvas relative flex-1 overflow-y-auto px-2 py-3">
+        {hasOlder && (
+          <div className="mb-2 flex justify-center">
+            <Button variant="ghost" size="sm" disabled={isFetchingOlder} onClick={() => void fetchOlder()}>
+              {isFetchingOlder ? "Memuat pesan lama…" : "Muat pesan lama"}
+            </Button>
+          </div>
+        )}
+        {messages.length === 0 && (
           <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} />
@@ -371,14 +426,14 @@ function ChatRoom() {
             <p className="text-xs text-muted-foreground">Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.</p>
           </div>
         )}
-        {(messages ?? []).map((m, idx) => {
+        {messages.map((m, idx) => {
           const day = labelHari(m.created_at);
           const showDay = day !== lastDay;
           lastDay = day;
           const mine = m.sender_id === userId;
-          const replyTo = m.reply_to_id ? (messages ?? []).find((x) => x.id === m.reply_to_id) : undefined;
+          const replyTo = m.reply_to_id ? messages.find((x) => x.id === m.reply_to_id) : undefined;
           const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
-          const prev = (messages ?? [])[idx - 1];
+          const prev = messages[idx - 1];
           const grouped =
             !showDay &&
             !!prev &&
@@ -412,8 +467,57 @@ function ChatRoom() {
             </div>
           );
         })}
+
+        {/* Pesan yang masih di outbox: tampil optimistis, tidak pernah hilang. */}
+        {pending.map((entry) => (
+          <div key={entry.clientId} className="mb-1.5 flex justify-end px-2">
+            <div
+              className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${
+                entry.status === "failed" ? "border border-destructive/40 bg-destructive/10" : "bg-primary/70 text-primary-foreground"
+              }`}
+            >
+              <p className="whitespace-pre-wrap break-words">{entry.body}</p>
+              <div className="mt-1 flex items-center justify-end gap-2 text-[10px] opacity-80">
+                {entry.status === "failed" ? (
+                  <>
+                    <span className="text-destructive">Gagal terkirim</span>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 font-medium text-destructive underline"
+                      onClick={() => retryEntry(entry.clientId)}
+                    >
+                      <RotateCw className="size-3" /> Coba lagi
+                    </button>
+                    <button type="button" className="font-medium underline" onClick={() => discardEntry(entry.clientId)}>
+                      Buang
+                    </button>
+                  </>
+                ) : (
+                  <span>Mengirim…</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
         <div ref={bottomRef} />
       </div>
+
+      {!atBottom && (
+        <div className="pointer-events-none sticky bottom-24 z-10 flex justify-end px-4">
+          <Button
+            size="icon"
+            variant="secondary"
+            aria-label="Lompat ke pesan terbaru"
+            className="pointer-events-auto rounded-full shadow-md"
+            onClick={() => {
+              setAtBottom(true);
+              bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+            }}
+          >
+            <ArrowDown className="size-4" />
+          </Button>
+        </div>
+      )}
 
       {blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">

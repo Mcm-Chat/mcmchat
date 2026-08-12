@@ -878,6 +878,7 @@ export type Database = {
           attachment_path: string | null
           attachment_size: number | null
           body: string
+          client_id: string | null
           conversation_id: string
           created_at: string
           duration_sec: number | null
@@ -900,6 +901,7 @@ export type Database = {
           attachment_path?: string | null
           attachment_size?: number | null
           body?: string
+          client_id?: string | null
           conversation_id: string
           created_at?: string
           duration_sec?: number | null
@@ -922,6 +924,7 @@ export type Database = {
           attachment_path?: string | null
           attachment_size?: number | null
           body?: string
+          client_id?: string | null
           conversation_id?: string
           created_at?: string
           duration_sec?: number | null
