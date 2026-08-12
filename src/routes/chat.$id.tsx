@@ -467,8 +467,57 @@ function ChatRoom() {
             </div>
           );
         })}
+
+        {/* Pesan yang masih di outbox: tampil optimistis, tidak pernah hilang. */}
+        {pending.map((entry) => (
+          <div key={entry.clientId} className="mb-1.5 flex justify-end px-2">
+            <div
+              className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${
+                entry.status === "failed" ? "border border-destructive/40 bg-destructive/10" : "bg-primary/70 text-primary-foreground"
+              }`}
+            >
+              <p className="whitespace-pre-wrap break-words">{entry.body}</p>
+              <div className="mt-1 flex items-center justify-end gap-2 text-[10px] opacity-80">
+                {entry.status === "failed" ? (
+                  <>
+                    <span className="text-destructive">Gagal terkirim</span>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 font-medium text-destructive underline"
+                      onClick={() => retryEntry(entry.clientId)}
+                    >
+                      <RotateCw className="size-3" /> Coba lagi
+                    </button>
+                    <button type="button" className="font-medium underline" onClick={() => discardEntry(entry.clientId)}>
+                      Buang
+                    </button>
+                  </>
+                ) : (
+                  <span>Mengirim…</span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
         <div ref={bottomRef} />
       </div>
+
+      {!atBottom && (
+        <div className="pointer-events-none sticky bottom-24 z-10 flex justify-end px-4">
+          <Button
+            size="icon"
+            variant="secondary"
+            aria-label="Lompat ke pesan terbaru"
+            className="pointer-events-auto rounded-full shadow-md"
+            onClick={() => {
+              setAtBottom(true);
+              bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+            }}
+          >
+            <ArrowDown className="size-4" />
+          </Button>
+        </div>
+      )}
 
       {blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">
