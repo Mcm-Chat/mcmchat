@@ -35,6 +35,7 @@ import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
+import { Route as SettingsVoiceRouteImport } from './routes/settings.voice'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
 import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
@@ -169,6 +170,11 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   path: '/settings/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsVoiceRoute = SettingsVoiceRouteImport.update({
+  id: '/settings/voice',
+  path: '/settings/voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/voice': typeof SettingsVoiceRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/voice': typeof SettingsVoiceRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/voice': typeof SettingsVoiceRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -300,6 +309,7 @@ export interface FileRouteTypes {
     | '/photo/new'
     | '/prepare/$token'
     | '/settings/notifications'
+    | '/settings/voice'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/photo/new'
     | '/prepare/$token'
     | '/settings/notifications'
+    | '/settings/voice'
     | '/tasks/$id'
     | '/business'
     | '/calls'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/photo/new'
     | '/prepare/$token'
     | '/settings/notifications'
+    | '/settings/voice'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -394,6 +406,7 @@ export interface RootRouteChildren {
   PhotoNewRoute: typeof PhotoNewRoute
   PrepareTokenRoute: typeof PrepareTokenRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsVoiceRoute: typeof SettingsVoiceRoute
   TasksIdRoute: typeof TasksIdRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/voice': {
+      id: '/settings/voice'
+      path: '/settings/voice'
+      fullPath: '/settings/voice'
+      preLoaderRoute: typeof SettingsVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -634,6 +654,7 @@ const rootRouteChildren: RootRouteChildren = {
   PhotoNewRoute: PhotoNewRoute,
   PrepareTokenRoute: PrepareTokenRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsVoiceRoute: SettingsVoiceRoute,
   TasksIdRoute: TasksIdRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
