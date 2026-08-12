@@ -22,12 +22,14 @@ import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
 import { Route as ContactsAddRouteImport } from './routes/contacts.add'
+import { Route as FinanceIndexRouteImport } from './routes/finance.index'
 import { Route as LedgerIndexRouteImport } from './routes/ledger.index'
 import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
 import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
+import { Route as TasksIdRouteImport } from './routes/tasks.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -94,6 +96,11 @@ const ContactsAddRoute = ContactsAddRouteImport.update({
   path: '/contacts/add',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FinanceIndexRoute = FinanceIndexRouteImport.update({
+  id: '/finance/',
+  path: '/finance/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LedgerIndexRoute = LedgerIndexRouteImport.update({
   id: '/ledger/',
   path: '/ledger/',
@@ -124,6 +131,11 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
   path: '/tasks/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TasksIdRoute = TasksIdRouteImport.update({
+  id: '/tasks/$id',
+  path: '/tasks/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -137,11 +149,13 @@ export interface FileRoutesByFullPath {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
   '/catalog/': typeof CatalogIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/finance/': typeof FinanceIndexRoute
   '/ledger/': typeof LedgerIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/tasks/': typeof TasksIndexRoute
@@ -158,11 +172,13 @@ export interface FileRoutesByTo {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/tasks/$id': typeof TasksIdRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
   '/catalog': typeof CatalogIndexRoute
   '/chat': typeof ChatIndexRoute
   '/contacts': typeof ContactsIndexRoute
+  '/finance': typeof FinanceIndexRoute
   '/ledger': typeof LedgerIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/tasks': typeof TasksIndexRoute
@@ -180,11 +196,13 @@ export interface FileRoutesById {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
   '/catalog/': typeof CatalogIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/finance/': typeof FinanceIndexRoute
   '/ledger/': typeof LedgerIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/tasks/': typeof TasksIndexRoute
@@ -203,11 +221,13 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/tasks/$id'
     | '/business/'
     | '/calls/'
     | '/catalog/'
     | '/chat/'
     | '/contacts/'
+    | '/finance/'
     | '/ledger/'
     | '/profile/'
     | '/tasks/'
@@ -224,11 +244,13 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/tasks/$id'
     | '/business'
     | '/calls'
     | '/catalog'
     | '/chat'
     | '/contacts'
+    | '/finance'
     | '/ledger'
     | '/profile'
     | '/tasks'
@@ -245,11 +267,13 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/tasks/$id'
     | '/business/'
     | '/calls/'
     | '/catalog/'
     | '/chat/'
     | '/contacts/'
+    | '/finance/'
     | '/ledger/'
     | '/profile/'
     | '/tasks/'
@@ -267,11 +291,13 @@ export interface RootRouteChildren {
   LedgerIdRoute: typeof LedgerIdRoute
   PhotoNewRoute: typeof PhotoNewRoute
   PrepareTokenRoute: typeof PrepareTokenRoute
+  TasksIdRoute: typeof TasksIdRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
   CatalogIndexRoute: typeof CatalogIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
+  FinanceIndexRoute: typeof FinanceIndexRoute
   LedgerIndexRoute: typeof LedgerIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
@@ -370,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/finance/': {
+      id: '/finance/'
+      path: '/finance'
+      fullPath: '/finance/'
+      preLoaderRoute: typeof FinanceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ledger/': {
       id: '/ledger/'
       path: '/ledger'
@@ -412,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tasks/$id': {
+      id: '/tasks/$id'
+      path: '/tasks/$id'
+      fullPath: '/tasks/$id'
+      preLoaderRoute: typeof TasksIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -427,11 +467,13 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerIdRoute: LedgerIdRoute,
   PhotoNewRoute: PhotoNewRoute,
   PrepareTokenRoute: PrepareTokenRoute,
+  TasksIdRoute: TasksIdRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
   CatalogIndexRoute: CatalogIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
+  FinanceIndexRoute: FinanceIndexRoute,
   LedgerIndexRoute: LedgerIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
   TasksIndexRoute: TasksIndexRoute,

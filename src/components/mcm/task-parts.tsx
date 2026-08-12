@@ -28,7 +28,7 @@ export function TaskStatusBadge({ status }: { status: string }) {
 
 export function progressOf(job: JobWithItems) {
   const total = job.items.length;
-  const done = job.items.filter((i) => i.status === "done" || i.status === "completed").length;
+  const done = job.items.filter((i) => i.status === "done").length;
   return { done, total };
 }
 
