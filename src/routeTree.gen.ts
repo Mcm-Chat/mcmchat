@@ -23,6 +23,7 @@ import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
 import { Route as ContactsAddRouteImport } from './routes/contacts.add'
 import { Route as LedgerIndexRouteImport } from './routes/ledger.index'
 import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
+import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -95,6 +96,11 @@ const LedgerIdRoute = LedgerIdRouteImport.update({
   path: '/ledger/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PhotoNewRoute = PhotoNewRouteImport.update({
+  id: '/photo/new',
+  path: '/photo/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileIndexRoute = ProfileIndexRouteImport.update({
   id: '/profile/',
   path: '/profile/',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
+  '/photo/new': typeof PhotoNewRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
@@ -128,6 +135,7 @@ export interface FileRoutesByTo {
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
+  '/photo/new': typeof PhotoNewRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
   '/chat': typeof ChatIndexRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
+  '/photo/new': typeof PhotoNewRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
+    | '/photo/new'
     | '/business/'
     | '/calls/'
     | '/chat/'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
+    | '/photo/new'
     | '/business'
     | '/calls'
     | '/chat'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
+    | '/photo/new'
     | '/business/'
     | '/calls/'
     | '/chat/'
@@ -217,6 +229,7 @@ export interface RootRouteChildren {
   ChatIdRoute: typeof ChatIdRoute
   ContactsAddRoute: typeof ContactsAddRoute
   LedgerIdRoute: typeof LedgerIdRoute
+  PhotoNewRoute: typeof PhotoNewRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LedgerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/photo/new': {
+      id: '/photo/new'
+      path: '/photo/new'
+      fullPath: '/photo/new'
+      preLoaderRoute: typeof PhotoNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile/': {
       id: '/profile/'
       path: '/profile'
@@ -345,6 +365,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatIdRoute: ChatIdRoute,
   ContactsAddRoute: ContactsAddRoute,
   LedgerIdRoute: LedgerIdRoute,
+  PhotoNewRoute: PhotoNewRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
@@ -355,3 +376,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -30,12 +30,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { chatMessages, uid, useMCM } from "@/lib/mcm/store";
 import { labelHari, rupiah } from "@/lib/mcm/format";
 import type { Message } from "@/lib/mcm/types";
 
 export const Route = createFileRoute("/chat/$id")({
+  validateSearch: (search: Record<string, unknown>): { hl?: string } =>
+    typeof search['hl'] === "string" ? { hl: search['hl'] } : {},
   head: () => ({
     meta: [
       { title: "Percakapan — MCM" },
@@ -49,6 +52,7 @@ export const Route = createFileRoute("/chat/$id")({
 
 function ChatRoom() {
   const { id } = Route.useParams();
+  const { hl } = Route.useSearch();
   const { state, update } = useMCM();
   const navigate = useNavigate();
   const chat = state.chats.find((c) => c.id === id);
@@ -60,6 +64,7 @@ function ChatRoom() {
   const [info, setInfo] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [dismissSuggestion, setDismissSuggestion] = useState(false);
   const [ledgerForm, setLedgerForm] = useState({ type: "piutang", amount: "", note: "", dueDate: "" });
   const bottom = useRef<HTMLDivElement>(null);
@@ -344,12 +349,14 @@ function ChatRoom() {
                   <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground">{day}</span>
                 </div>
               )}
-              <MessageBubble
-                message={m}
-                replyTo={m.replyToId ? messages.find((x) => x.id === m.replyToId) : undefined}
-                showSender={chat.type === "group"}
-                onAction={onAction}
-              />
+              <div className={m.id === hl ? "animate-in fade-in rounded-2xl bg-primary/10 ring-2 ring-primary/40" : undefined}>
+                <MessageBubble
+                  message={m}
+                  replyTo={m.replyToId ? messages.find((x) => x.id === m.replyToId) : undefined}
+                  showSender={chat.type === "group"}
+                  onAction={onAction}
+                />
+              </div>
             </div>
           );
         })}
@@ -399,8 +406,8 @@ function ChatRoom() {
         onSend={send}
         onAttach={(kind) => {
           if (kind === "document") push({ kind: "document", text: "Dokumen", attachmentName: "Dokumen-MCM.pdf" });
-          else push({ kind: "image", text: kind === "camera" ? "Foto kamera" : "Foto galeri", attachmentName: "foto.jpg" });
-          toast.success("Lampiran terkirim (simulasi)");
+          else setPhotoOpen(true);
+          if (kind === "document") toast.success("Lampiran terkirim (simulasi)");
         }}
         onVoice={() => {
           push({ kind: "voice", text: "Pesan suara", durationSec: 12 });
@@ -416,6 +423,25 @@ function ChatRoom() {
         quickReplies={state.business.quickReplies.map((q) => ({ shortcut: q.shortcut, text: q.text }))}
       />
       )}
+
+      <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
+        <SheetContent side="bottom" className="flex h-[92vh] flex-col gap-0 rounded-t-3xl p-0">
+          <SheetHeader className="pb-2">
+            <SheetTitle>Kirim foto ke {chat.name}</SheetTitle>
+            <SheetDescription>Penerima sudah dipilih otomatis dari percakapan ini.</SheetDescription>
+          </SheetHeader>
+          {photoOpen && (
+            <PhotoFlow
+              fixedChatIds={[id]}
+              onCancel={() => setPhotoOpen(false)}
+              onDone={(_ids, messageId) => {
+                setPhotoOpen(false);
+                void navigate({ to: "/chat/$id", params: { id }, search: { hl: messageId }, replace: true });
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={ledgerOpen} onOpenChange={setLedgerOpen}>
         <DialogContent className="max-w-[360px] rounded-2xl">
