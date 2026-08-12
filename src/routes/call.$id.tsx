@@ -207,6 +207,11 @@ function CallScreen() {
             <p className="text-sm text-navy-foreground/75">{phaseLabel}</p>
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             <VoicePrivacyBadge active={voiceActive} className="mt-1" />
+            {voiceFallback ? (
+              <p className="mt-1 text-xs text-navy-foreground/70">
+                Voice Privacy tidak tersedia di perangkat ini — panggilan berlanjut dengan mikrofon apa adanya.
+              </p>
+            ) : null}
             {session.pipelineState.reason && (
               <p className="text-[11px] text-navy-foreground/60">{session.pipelineState.reason}</p>
             )}
