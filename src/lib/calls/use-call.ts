@@ -129,7 +129,7 @@ export function useCall(opts: {
       pipeRef.current = null;
       setVoiceActive(false);
       setVoiceFallback(true);
-      setPipelineState({ status: "error", latencyMs: 0 });
+      setPipelineState({ status: "failed", latencyMs: 0 });
       return raw;
     }
   }, [prefs, voiceApplied]);
