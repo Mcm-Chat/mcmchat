@@ -301,7 +301,7 @@ export function ChatComposer({
   const [recording, setRecording] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);
   const matches = value.startsWith("/")
-    ? (quickReplies ?? []).filter((q) => q.shortcut.startsWith(value.trim().toLowerCase()))
+    ? (quickReplies ?? []).filter((q) => (q.shortcut ?? "").startsWith(value.trim().toLowerCase()))
     : [];
 
   return (
