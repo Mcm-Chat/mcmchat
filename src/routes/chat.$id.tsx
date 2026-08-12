@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BellOff, ClipboardList, Info, Phone, Users, Video, Wallet, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, BellOff, ClipboardList, Info, Phone, RotateCw, Users, Video, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
@@ -26,6 +26,8 @@ import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/pr
 import { SaleDialog } from "@/components/mcm/sale-dialog";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
+import { discardEntry, enqueueText, retryEntry, setOutboxSentHandler, useOutbox } from "@/lib/api/outbox";
+import { useConnectionState } from "@/lib/realtime/connection";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) => (typeof search['hl'] === "string" ? { hl: search['hl'] } : {}),
@@ -54,8 +56,10 @@ function ChatRoom() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: conversations } = useConversations(userId);
-  const { data: messages, isLoading } = useMessages(id, userId);
+  const { messages, isLoading, hasOlder, isFetchingOlder, fetchOlder } = useMessages(id, userId);
   const conv = (conversations ?? []).find((c) => c.id === id);
+  const connection = useConnectionState();
+  const pending = useOutbox(id);
 
   const [text, setText] = useState("");
   const [reply, setReply] = useState<MessageRow | null>(null);
@@ -70,6 +74,8 @@ function ChatRoom() {
   const [ledger, setLedger] = useState({ type: "receivable", amount: "", dueDate: "", note: "" });
   const docRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
 
   const { data: business } = useMyBusiness(userId);
   const { data: prepJobs } = useQuery({
