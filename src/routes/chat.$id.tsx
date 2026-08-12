@@ -351,6 +351,21 @@ function ChatRoom() {
         <div ref={bottom} />
       </div>
 
+      {showLedgerSuggestion && (
+        <div className="mx-3 mb-2 rounded-2xl border border-primary/30 bg-primary/10 p-3">
+          <p className="text-sm font-semibold text-foreground">Terdeteksi pembicaraan pembayaran</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Buat catatan bersama agar nominal dan jatuh temponya tercatat rapi.</p>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" className="flex-1 rounded-lg text-xs" onClick={() => setLedgerOpen(true)}>
+              Buat catatan bersama
+            </Button>
+            <Button size="sm" variant="ghost" className="rounded-lg text-xs" onClick={() => setDismissSuggestion(true)}>
+              Nanti
+            </Button>
+          </div>
+        </div>
+      )}
+
       <ChatComposer
         value={text}
         onChange={setText}
