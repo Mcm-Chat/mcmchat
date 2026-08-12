@@ -164,7 +164,7 @@ export async function deleteProduct(productId: string) {
 }
 
 export type VariantInput = {
-  id?: string;
+  id?: string | undefined;
   business_id: string;
   product_id: string;
   name: string;

@@ -38,7 +38,7 @@ function useNotifications(userId?: string) {
   return { items, loading, error, reload: load };
 }
 
-export function NotificationBell({ userId }: { userId?: string }) {
+export function NotificationBell({ userId }: { userId?: string | undefined }) {
   const { items, loading, error, reload } = useNotifications(userId);
   const unread = items.filter((n) => !n.is_read).length;
   return (

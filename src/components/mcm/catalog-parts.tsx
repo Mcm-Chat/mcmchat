@@ -19,7 +19,7 @@ export function StockChip({ variant, balance }: { variant: Pick<VariantRow, "sto
   );
 }
 
-export function ProductThumb({ path, className }: { path?: string | null; className?: string }) {
+export function ProductThumb({ path, className }: { path?: string | null | undefined; className?: string | undefined }) {
   const url = useSignedUrl("product-photos", path);
   if (!url) {
     return <div className={`flex items-center justify-center rounded-xl bg-muted text-2xl ${className ?? "size-16"}`}>📦</div>;
