@@ -119,6 +119,10 @@ function ChatRoom() {
   const send = () => {
     const value = text.trim();
     if (!value) return;
+    if (isBlocked) {
+      toast.error(`${chat.name} diblokir. Buka blokir untuk mengirim pesan.`);
+      return;
+    }
     if (value.length > 2000) {
       toast.error("Pesan terlalu panjang (maksimal 2000 karakter)");
       return;
