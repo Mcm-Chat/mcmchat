@@ -91,6 +91,7 @@ function BusinessPage() {
     return haystack.includes(term);
   });
   const visibleInbox = state.inbox.filter((t) => inboxFilter === "all" || t.status === inboxFilter);
+  const liveProduct = product ? (state.products.find((p) => p.id === product.id) ?? null) : null;
 
   const openEdit = (p: Product) => {
     setProduct(null);
