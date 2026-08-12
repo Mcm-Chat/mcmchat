@@ -99,6 +99,7 @@ function ChatRoom() {
   }
 
   const contact = state.contacts.find((c) => c.id === chat.contactId);
+  const isBlocked = contact?.status === "blocked";
 
   const push = (partial: Partial<Message> & { kind: Message["kind"]; text: string }) => {
     update((d) => {
@@ -119,6 +120,10 @@ function ChatRoom() {
   const send = () => {
     const value = text.trim();
     if (!value) return;
+    if (isBlocked) {
+      toast.error(`${chat.name} diblokir. Buka blokir untuk mengirim pesan.`);
+      return;
+    }
     if (value.length > 2000) {
       toast.error("Pesan terlalu panjang (maksimal 2000 karakter)");
       return;
@@ -366,6 +371,28 @@ function ChatRoom() {
         </div>
       )}
 
+      {isBlocked ? (
+        <div className="sticky bottom-0 border-t border-border bg-background/95 px-4 py-4 text-center backdrop-blur">
+          <p className="text-sm font-medium">Anda memblokir {chat.name}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Pesan tidak dapat dikirim atau diterima selama kontak ini diblokir.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-3 rounded-xl"
+            onClick={() => {
+              update((d) => {
+                const c = d.contacts.find((x) => x.id === chat.contactId);
+                if (c) c.status = "contact";
+                return d;
+              });
+              toast.success("Blokir dibuka");
+            }}
+          >
+            Buka blokir
+          </Button>
+        </div>
+      ) : (
       <ChatComposer
         value={text}
         onChange={setText}
@@ -388,6 +415,7 @@ function ChatRoom() {
         onCancelReply={() => setReply(null)}
         quickReplies={state.business.quickReplies.map((q) => ({ shortcut: q.shortcut, text: q.text }))}
       />
+      )}
 
       <Dialog open={ledgerOpen} onOpenChange={setLedgerOpen}>
         <DialogContent className="max-w-[360px] rounded-2xl">

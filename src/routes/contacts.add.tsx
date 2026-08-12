@@ -82,6 +82,11 @@ function AddContactPage() {
 
   const sendRequest = () => {
     if (!result || result === "notfound") return;
+    const existing = state.contacts.find((c) => c.pin === result.pin);
+    if (existing?.status === "blocked") {
+      toast.error(`${existing.name} diblokir. Buka blokir dulu di daftar kontak.`);
+      return;
+    }
     if (result.status === "contact") {
       toast.info("Sudah menjadi kontak Anda");
       navigate({ to: "/contacts" });
@@ -153,7 +158,16 @@ function AddContactPage() {
                   <Textarea id="msg" value={message} maxLength={140} onChange={(e) => setMessage(e.target.value)} />
                   <p className="text-right text-[11px] text-muted-foreground">{message.length}/140</p>
                 </div>
-                <Button className="h-11 w-full rounded-xl" onClick={sendRequest}>
+                {state.contacts.some((c) => c.pin === result.pin && c.status === "blocked") && (
+                  <p className="rounded-xl bg-destructive/10 p-2 text-center text-xs text-destructive">
+                    Kontak ini diblokir. Buka blokir untuk mengirim permintaan.
+                  </p>
+                )}
+                <Button
+                  className="h-11 w-full rounded-xl"
+                  disabled={state.contacts.some((c) => c.pin === result.pin && c.status === "blocked")}
+                  onClick={sendRequest}
+                >
                   <Send className="size-4" /> Kirim permintaan
                 </Button>
               </div>
