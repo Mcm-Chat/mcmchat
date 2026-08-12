@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, MessageCirclePlus, Search, Users } from "lucide-react";
+import { Camera, MessageCirclePlus, MessagesSquare, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatListItem } from "@/components/mcm/chat-parts";
@@ -60,7 +60,7 @@ function ChatIndex() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
 
-  const patchMember = async (conversationId: string, patch: Record<string, boolean>) => {
+  const patchMember = async (conversationId: string, patch: { is_pinned?: boolean; is_muted?: boolean; is_archived?: boolean }) => {
     await supabase.from("conversation_members").update(patch).eq("conversation_id", conversationId).eq("user_id", userId!);
     void refresh();
   };
@@ -211,6 +211,7 @@ function ChatIndex() {
         <LoadingSkeleton rows={6} />
       ) : list.length === 0 ? (
         <EmptyState
+          icon={MessagesSquare}
           title="Belum ada percakapan"
           description="Tambahkan kontak lewat PIN MCM, lalu mulai chat pertama Anda."
           action={
