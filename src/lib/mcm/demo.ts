@@ -300,8 +300,20 @@ export function createDemoState(): MCMState {
       },
     ],
     products: [
-      prod("p-1", "Kopi Susu Nusa", "Minuman", 24000, 10, "KN-001", 120, "Espresso double dengan susu segar dan gula aren cair.", "☕"),
-      prod("p-2", "Es Kopi Gula Aren", "Minuman", 26000, 0, "KN-002", 85, "Signature kami, memakai gula aren asli Ciamis.", "🧋"),
+      // Produk lama: masih memakai satu foto + satu lokasi (dimigrasikan otomatis).
+      {
+        ...prod("p-1", "Kopi Susu Nusa", "Minuman", 24000, 10, "KN-001", 120, "Espresso double dengan susu segar dan gula aren cair.", "☕"),
+        imageUrl: swatch("#0f766e", "Kopi Susu"),
+        locationUrl: "https://www.google.com/maps?q=-6.89147,107.61006",
+      },
+      {
+        ...prod("p-2", "Es Kopi Gula Aren", "Minuman", 26000, 0, "KN-002", 85, "Signature kami, memakai gula aren asli Ciamis.", "🧋"),
+        photos: [
+          photo("pp-2a", "p-2", swatch("#155e75", "Gudang A"), "https://www.google.com/maps?q=-6.90389,107.61861", "Stok gudang Dago", 0),
+          photo("pp-2b", "p-2", swatch("#7c2d12", "Gudang B"), "https://www.google.com/maps?q=-6.93472,107.60694", "Stok gudang Buah Batu", 1),
+        ],
+      },
+      prod("p-2x", "Kopi Kelapa Bakar", "Minuman", 28000, 0, "KN-009", 42, "Kopi dengan santan kelapa bakar dan gula aren.", "🥥"),
       prod("p-3", "Americano Dingin", "Minuman", 22000, 0, "KN-003", 60, "Arabika Garut, seduhan dingin 12 jam.", "🥤"),
       prod("p-4", "Matcha Latte", "Minuman", 30000, 15, "KN-004", 40, "Matcha kelas upacara dengan susu oat pilihan.", "🍵"),
       prod("p-5", "Croissant Butter", "Makanan", 27000, 0, "KN-005", 24, "Dipanggang setiap pagi, 27 lapis mentega Wijsman.", "🥐"),
