@@ -87,16 +87,18 @@ export function CreatePreparationDialog({
     const v = current;
     const n = Number(qty.replace(",", "."));
     if (!v) return toast.error("Pilih varian produk dulu");
-    if (!Number.isFinite(n) || n <= 0) return toast.error("Jumlah harus lebih dari nol");
-    if (v.stock_type === "count" && !v.allow_decimal && !Number.isInteger(n))
-      return toast.error(`${v.name} hanya menerima jumlah bulat`);
+    if (!Number.isFinite(n) || n <= 0) { toast.error("Jumlah harus lebih dari nol"); return; }
+    if (v.stock_type === "count" && !v.allow_decimal && !Number.isInteger(n)) {
+      toast.error(`${v.name} hanya menerima jumlah bulat`);
+      return;
+    }
     setItems((p) => [...p, { key: crypto.randomUUID(), variant_id: v.id, qty: n, unit: activeUnit }]);
     setQty("1");
   };
 
   const submit = async () => {
-    if (items.length === 0) return toast.error("Tambahkan minimal satu item");
-    if (!assignee) return toast.error("Pilih pegawai penerima tugas");
+    if (items.length === 0) { toast.error("Tambahkan minimal satu item"); return; }
+    if (!assignee) { toast.error("Pilih pegawai penerima tugas"); return; }
     setSending(true);
     try {
       const job = await createPreparationJob({
