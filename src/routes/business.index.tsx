@@ -70,8 +70,8 @@ function BusinessPage() {
 
   const addProduct = () => {
     const price = Number(form.price);
-    if (form.name.trim().length < 3) return toast.error("Nama produk minimal 3 karakter");
-    if (!Number.isFinite(price) || price <= 0) return toast.error("Harga tidak valid");
+    if (form.name.trim().length < 3) { toast.error("Nama produk minimal 3 karakter"); return; }
+    if (!Number.isFinite(price) || price <= 0) { toast.error("Harga tidak valid"); return; }
     update((d) => {
       d.products.unshift({
         id: uid("pr"),

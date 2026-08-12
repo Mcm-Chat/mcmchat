@@ -353,7 +353,9 @@ function ChatRoom() {
           else push({ kind: "image", text: kind === "camera" ? "Foto kamera" : "Foto galeri", attachmentName: "foto.jpg" });
           toast.success("Lampiran terkirim (simulasi)");
         }}
-        onVoice={() => push({ kind: "voice", text: "Pesan suara", durationSec: 12 })}
+        onVoice={() => {
+          push({ kind: "voice", text: "Pesan suara", durationSec: 12 });
+        }}
         onNewLedger={() => setLedgerOpen(true)}
         editing={!!editing}
         onCancelEdit={() => {

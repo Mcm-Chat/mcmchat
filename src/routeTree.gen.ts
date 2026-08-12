@@ -14,6 +14,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as CallIdRouteImport } from './routes/call.$id'
 import { Route as CallsIndexRouteImport } from './routes/calls.index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
@@ -22,6 +23,7 @@ import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
 import { Route as ContactsAddRouteImport } from './routes/contacts.add'
 import { Route as LedgerIndexRouteImport } from './routes/ledger.index'
 import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +48,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessIndexRoute = BusinessIndexRouteImport.update({
+  id: '/business/',
+  path: '/business/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CallIdRoute = CallIdRouteImport.update({
@@ -88,6 +95,11 @@ const LedgerIdRoute = LedgerIdRouteImport.update({
   path: '/ledger/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -99,10 +111,12 @@ export interface FileRoutesByFullPath {
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
+  '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/ledger/': typeof LedgerIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,10 +128,12 @@ export interface FileRoutesByTo {
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
+  '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
   '/chat': typeof ChatIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/ledger': typeof LedgerIndexRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,10 +146,12 @@ export interface FileRoutesById {
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
+  '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/ledger/': typeof LedgerIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,10 +165,12 @@ export interface FileRouteTypes {
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
+    | '/business/'
     | '/calls/'
     | '/chat/'
     | '/contacts/'
     | '/ledger/'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,10 +182,12 @@ export interface FileRouteTypes {
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
+    | '/business'
     | '/calls'
     | '/chat'
     | '/contacts'
     | '/ledger'
+    | '/profile'
   id:
     | '__root__'
     | '/'
@@ -177,10 +199,12 @@ export interface FileRouteTypes {
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
+    | '/business/'
     | '/calls/'
     | '/chat/'
     | '/contacts/'
     | '/ledger/'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -193,10 +217,12 @@ export interface RootRouteChildren {
   ChatIdRoute: typeof ChatIdRoute
   ContactsAddRoute: typeof ContactsAddRoute
   LedgerIdRoute: typeof LedgerIdRoute
+  BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
   LedgerIndexRoute: typeof LedgerIndexRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -234,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/': {
+      id: '/business/'
+      path: '/business'
+      fullPath: '/business/'
+      preLoaderRoute: typeof BusinessIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/call/$id': {
@@ -292,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LedgerIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -305,10 +345,12 @@ const rootRouteChildren: RootRouteChildren = {
   ChatIdRoute: ChatIdRoute,
   ContactsAddRoute: ContactsAddRoute,
   LedgerIdRoute: LedgerIdRoute,
+  BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
   LedgerIndexRoute: LedgerIndexRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

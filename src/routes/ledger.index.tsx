@@ -60,9 +60,9 @@ function LedgerPage() {
   const create = () => {
     const amount = Number(form.amount);
     const contact = contacts.find((c) => c.id === form.counterpartId);
-    if (!contact) return toast.error("Pilih kontak terlebih dahulu");
-    if (!Number.isFinite(amount) || amount <= 0) return toast.error("Nominal harus lebih dari nol");
-    if (form.note.trim().length < 3) return toast.error("Keterangan minimal 3 karakter");
+    if (!contact) { toast.error("Pilih kontak terlebih dahulu"); return; }
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Nominal harus lebih dari nol"); return; }
+    if (form.note.trim().length < 3) { toast.error("Keterangan minimal 3 karakter"); return; }
     const id = uid("lg");
     update((d) => {
       d.ledgers.unshift({

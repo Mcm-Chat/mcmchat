@@ -76,8 +76,8 @@ function LedgerDetail() {
 
   const submitPayment = () => {
     const amount = Number(pay.amount);
-    if (!Number.isFinite(amount) || amount <= 0) return toast.error("Nominal cicilan tidak valid");
-    if (amount > ledgerRemaining(entry)) return toast.error("Nominal melebihi sisa tagihan");
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Nominal cicilan tidak valid"); return; }
+    if (amount > ledgerRemaining(entry)) { toast.error("Nominal melebihi sisa tagihan"); return; }
     update((d) => {
       const idx = d.ledgers.findIndex((x) => x.id === id);
       const updated = applyPayment(d.ledgers[idx]!, {

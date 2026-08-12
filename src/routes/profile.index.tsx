@@ -48,7 +48,7 @@ function ProfilePage() {
           <Button
             className="w-full rounded-xl"
             onClick={() => {
-              if (name.trim().length < 3) return toast.error("Nama minimal 3 karakter");
+              if (name.trim().length < 3) { toast.error("Nama minimal 3 karakter"); return; }
               update((d) => {
                 d.profile.name = name.trim();
                 d.profile.bio = bio.trim();

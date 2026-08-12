@@ -74,9 +74,9 @@ function LoginPage() {
               maxLength={120}
               placeholder="0812xxxxxxx atau nama@email.com"
               onChange={(e) => setIdentifier(e.target.value)}
-              aria-invalid={!!errors.identifier}
+              aria-invalid={!!errors['identifier']}
             />
-            {errors.identifier && <p className="text-xs text-destructive">{errors.identifier}</p>}
+            {errors['identifier'] && <p className="text-xs text-destructive">{errors['identifier']}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Kata sandi</Label>
@@ -87,9 +87,9 @@ function LoginPage() {
               maxLength={72}
               placeholder="Minimal 6 karakter"
               onChange={(e) => setPassword(e.target.value)}
-              aria-invalid={!!errors.password}
+              aria-invalid={!!errors['password']}
             />
-            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+            {errors['password'] && <p className="text-xs text-destructive">{errors['password']}</p>}
           </div>
           <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
             {loading && <Loader2 className="size-4 animate-spin" />} Masuk

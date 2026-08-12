@@ -123,18 +123,18 @@ function RegisterPage() {
           <form className="card-soft space-y-4 p-5" onSubmit={submitStep1} noValidate>
             <div className="space-y-1.5">
               <Label htmlFor="name">Nama lengkap</Label>
-              <Input id="name" value={form.name} maxLength={60} placeholder="Contoh: Andi Pratama" onChange={(e) => set("name", e.target.value)} aria-invalid={!!errors.name} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+              <Input id="name" value={form.name} maxLength={60} placeholder="Contoh: Andi Pratama" onChange={(e) => set("name", e.target.value)} aria-invalid={!!errors['name']} />
+              {errors['name'] && <p className="text-xs text-destructive">{errors['name']}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone">Nomor telepon</Label>
-              <Input id="phone" inputMode="tel" value={form.phone} maxLength={16} placeholder="081234567890" onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors.phone} />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+              <Input id="phone" inputMode="tel" value={form.phone} maxLength={16} placeholder="081234567890" onChange={(e) => set("phone", e.target.value)} aria-invalid={!!errors['phone']} />
+              {errors['phone'] && <p className="text-xs text-destructive">{errors['phone']}</p>}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Kata sandi</Label>
-              <Input id="password" type="password" value={form.password} maxLength={72} placeholder="Minimal 8 karakter" onChange={(e) => set("password", e.target.value)} aria-invalid={!!errors.password} />
-              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+              <Input id="password" type="password" value={form.password} maxLength={72} placeholder="Minimal 8 karakter" onChange={(e) => set("password", e.target.value)} aria-invalid={!!errors['password']} />
+              {errors['password'] && <p className="text-xs text-destructive">{errors['password']}</p>}
             </div>
             <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
               {loading && <Loader2 className="size-4 animate-spin" />} Kirim kode OTP
