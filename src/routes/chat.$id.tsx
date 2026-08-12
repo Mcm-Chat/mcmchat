@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BellOff, Info, Phone, Users, Video, Wallet, X } from "lucide-react";
+import { BellOff, ClipboardList, Info, Phone, Users, Video, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
@@ -20,7 +20,9 @@ import { deleteForEveryone, deleteForMe, editMessage, markRead, sendMessage, tog
 import { createLedger } from "@/lib/api/ledger";
 import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
-import { qk, useConversations, useMessages } from "@/lib/api/queries";
+import { qk, useConversations, useMessages, useMyBusiness } from "@/lib/api/queries";
+import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
+import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 
 export const Route = createFileRoute("/chat/$id")({
@@ -61,9 +63,17 @@ function ChatRoom() {
   const [photoOpen, setPhotoOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [prepOpen, setPrepOpen] = useState(false);
   const [ledger, setLedger] = useState({ type: "receivable", amount: "", dueDate: "", note: "" });
   const docRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const { data: business } = useMyBusiness(userId);
+  const { data: prepJobs } = useQuery({
+    queryKey: ["prep-jobs", id],
+    queryFn: () => listJobsForConversation(id),
+    enabled: !!userId,
+  });
 
   const { data: block } = useQuery({
     queryKey: ["block", userId, conv?.other?.id],
@@ -306,6 +316,11 @@ function ChatRoom() {
                 <Button variant="ghost" size="icon" aria-label="Panggilan video" onClick={() => void call("video")}>
                   <Video className="size-5" />
                 </Button>
+                {business && (
+                  <Button variant="ghost" size="icon" aria-label="Buat perintah penyiapan" onClick={() => setPrepOpen(true)}>
+                    <ClipboardList className="size-5" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" aria-label="Detail chat" onClick={() => setDetailOpen(true)}>
                   <Info className="size-5" />
                 </Button>
@@ -437,6 +452,18 @@ function ChatRoom() {
                 </li>
               ))}
             </ul>
+            {(prepJobs ?? []).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground">Perintah penyiapan percakapan ini</p>
+                {(prepJobs ?? []).map((job) => (
+                  <PreparationJobCard
+                    key={job.id}
+                    job={job}
+                    onChanged={() => void qc.invalidateQueries({ queryKey: ["prep-jobs", id] })}
+                  />
+                ))}
+              </div>
+            )}
             <Button
               variant="secondary"
               className="w-full rounded-xl"
@@ -509,6 +536,22 @@ function ChatRoom() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {business && userId && (
+        <CreatePreparationDialog
+          open={prepOpen}
+          onOpenChange={setPrepOpen}
+          businessId={business.id}
+          conversationId={id}
+          customerName={conv.other?.display_name ?? conv.title_resolved}
+          customerUserId={conv.other?.id ?? null}
+          onCreated={(job) => {
+            void qc.invalidateQueries({ queryKey: ["prep-jobs", id] });
+            setDetailOpen(true);
+            toast.success(`Tugas ${job.code} dikirim. Barcode siap dipindai pegawai.`);
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmAll}
