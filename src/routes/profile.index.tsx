@@ -441,6 +441,17 @@ function ProfilePage() {
                 right={<Switch checked={sec.appLock} onCheckedChange={(v) => void patchSettings({ security: { appLock: v } })} />}
               />
               <SettingRow
+                icon={Shield}
+                label="Perlindungan layar"
+                description={screenSecurity.detail}
+                right={
+                  <span className="max-w-[9rem] text-right text-[10px] leading-tight font-medium text-muted-foreground">
+                    {screenSecurity.flagSecure ? "APK Android" : "Web/PWA"}
+                  </span>
+                }
+              />
+              <p className="px-1 text-xs text-muted-foreground">{screenSecurity.label}</p>
+              <SettingRow
                 icon={KeyRound}
                 label="Verifikasi dua langkah"
                 description="Minta kode tambahan saat masuk di perangkat baru"
