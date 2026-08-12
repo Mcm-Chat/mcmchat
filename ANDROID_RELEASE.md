@@ -186,3 +186,41 @@ notifikasi, kamera, mikrofon, lokasi, dan foto, lengkap dengan tombol minta izin
 dan pintasan ke Setelan Android saat izin ditolak permanen. MCM tidak memakai
 background location, `MANAGE_EXTERNAL_STORAGE`, maupun exact alarm — sesuai
 kebijakan Play Store.
+
+## Tiga kapabilitas push yang TERPISAH
+
+Jangan menyamakan ketiganya. Layar **Izin & Notifikasi** menampilkannya satu per satu
+supaya aplikasi tidak mengklaim kemampuan yang belum ada.
+
+1. **Server pengirim push (FCM) dikonfigurasi** — kredensial FCM v1 tersedia di server.
+2. **Token perangkat terdaftar** — perangkat ini punya baris di tabel `devices`
+   dengan izin notifikasi yang sudah diberikan pengguna.
+3. **Penerima latar native terpasang** — APK menyertakan `FirebaseMessagingService`
+   MCM yang menangani data-only message saat proses aplikasi dimatikan, membangun
+   notifikasi, channel, PendingIntent deep-link, serta aksi **Balas** dan
+   **Tandai dibaca** yang memanggil `/api/public/push/actions`.
+
+Repo ini belum memuat sumber Android native (folder `android/` dibuat oleh
+`npx cap add android` di luar Lovable), jadi kapabilitas (3) **belum terbukti**.
+Selama receiver native belum terpasang, pengiriman saat aplikasi benar-benar
+ditutup tidak dijamin dan UI tidak boleh menjanjikannya.
+
+### Kontrak penanda receiver
+
+Setelah `FirebaseMessagingService` MCM terpasang, wadah Android wajib menandai
+dirinya sedini mungkin di WebView:
+
+```java
+webView.evaluateJavascript(
+  "window.MCMNative = Object.assign(window.MCMNative || {}, { backgroundReceiver: true });",
+  null);
+```
+
+Tanpa penanda ini aplikasi tetap melaporkan "Belum" pada baris ketiga.
+
+### Izin notifikasi bersifat opt-in kontekstual
+
+Aplikasi tidak pernah memunculkan dialog izin hanya karena pengguna membuka
+halaman. Registrasi otomatis hanya terjadi bila izin sudah diberikan sebelumnya;
+selain itu pengguna menekan sendiri **Aktifkan notifikasi di perangkat ini** di
+layar Izin & Notifikasi.
