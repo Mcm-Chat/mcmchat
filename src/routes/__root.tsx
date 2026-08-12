@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { usePushSession } from "@/lib/push/use-push";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
+import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { initOutboxFlush } from "@/lib/api/outbox";
 
@@ -158,6 +159,7 @@ function RootComponent() {
         <Outlet />
         <PushSession />
         <IncomingCallListener />
+        <ScreenPrivacyGuard />
         <Toaster position="top-center" richColors closeButton />
       </AuthProvider>
     </QueryClientProvider>

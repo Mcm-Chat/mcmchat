@@ -31,6 +31,7 @@ import { canManage, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/busines
 import { useMyBusiness } from "@/lib/api/queries";
 import { uploadChatMedia } from "@/lib/api/storage";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
+import { readScreenSecurity, type ScreenSecurityStatus } from "@/lib/security/screen-privacy";
 import {
   getSettings,
   listDevices,
@@ -230,6 +231,11 @@ function ProfilePage() {
   const notif = notificationsOf(settings);
   const priv = privacyOf(settings);
   const sec = securityOf(settings);
+  // Status read-only: berasal dari kapabilitas wadah native, bukan toggle demo.
+  const [screenSecurity, setScreenSecurity] = useState<ScreenSecurityStatus>(() => readScreenSecurity());
+  useEffect(() => {
+    setScreenSecurity(readScreenSecurity(window as never));
+  }, []);
   const role = myBiz?.role;
 
   return (
@@ -440,6 +446,17 @@ function ProfilePage() {
                 description="Minta PIN perangkat saat membuka MCM"
                 right={<Switch checked={sec.appLock} onCheckedChange={(v) => void patchSettings({ security: { appLock: v } })} />}
               />
+              <SettingRow
+                icon={Shield}
+                label="Perlindungan layar"
+                description={screenSecurity.detail}
+                right={
+                  <span className="max-w-[9rem] text-right text-[10px] leading-tight font-medium text-muted-foreground">
+                    {screenSecurity.flagSecure ? "APK Android" : "Web/PWA"}
+                  </span>
+                }
+              />
+              <p className="px-1 text-xs text-muted-foreground">{screenSecurity.label}</p>
               <SettingRow
                 icon={KeyRound}
                 label="Verifikasi dua langkah"

@@ -14,7 +14,7 @@ Dokumen ini adalah langkah rilis yang harus dijalankan di komputer lokal Anda
 
 ```bash
 bun add @capacitor/core @capacitor/cli @capacitor/android
-bunx cap init "MCM" app.mcm.privateconnect --web-dir=dist
+bunx cap init "MCM" com.mcm.privateconnect --web-dir=dist
 bunx cap add android
 ```
 
@@ -24,7 +24,7 @@ bunx cap add android
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "app.mcm.privateconnect",
+  appId: "com.mcm.privateconnect",
   appName: "MCM",
   webDir: "dist",
   server: {
@@ -69,7 +69,7 @@ Pada `android/app/build.gradle`:
 
 ```gradle
 defaultConfig {
-    applicationId "app.mcm.privateconnect"
+    applicationId "com.mcm.privateconnect"
     minSdkVersion 23
     targetSdkVersion 35
     versionCode 1
@@ -224,3 +224,11 @@ Aplikasi tidak pernah memunculkan dialog izin hanya karena pengguna membuka
 halaman. Registrasi otomatis hanya terjadi bila izin sudah diberikan sebelumnya;
 selain itu pengguna menekan sendiri **Aktifkan notifikasi di perangkat ini** di
 layar Izin & Notifikasi.
+
+## Proteksi screenshot & perekaman layar
+
+Pemblokiran screenshot/perekaman **hanya** berasal dari `FLAG_SECURE` di
+`MainActivity` APK (plus `setRecentsScreenshotEnabled(false)` pada API 33+).
+Tidak ada setelan web/PWA yang bisa memblokir screenshot OS, dan aplikasi tidak
+boleh mengklaimnya. Detail file native, perilaku, dan langkah verifikasi ada di
+`ANDROID_SCREEN_SECURITY.md`.

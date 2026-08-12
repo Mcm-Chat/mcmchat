@@ -196,3 +196,19 @@
     animation: none;
   }
 }
+
+/* Proteksi cetak: isi MCM tidak boleh keluar lewat Print / Save as PDF. */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  body::before {
+    content: "Konten MCM dilindungi — pencetakan dinonaktifkan.";
+    visibility: visible;
+    display: block;
+    padding: 24px;
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+  }
+}
