@@ -72,7 +72,7 @@ export function VoiceEffectsPanel({
   }, [preview.running, premium]);
 
   const set = (patch: Partial<VoicePrefs>) => onChange({ ...prefs, ...patch });
-  const activePreset = useMemo(() => PRESETS.find((p) => p.id === prefs.preset) ?? PRESETS[1], [prefs.preset]);
+  const activePreset = useMemo(() => PRESETS.find((p) => p.id === prefs.preset), [prefs.preset]);
   const effectOn = prefs.enabled && prefs.preset !== "off";
   const failed = preview.pipeline.status === "failed" || preview.pipeline.status === "unsupported";
 
@@ -135,7 +135,7 @@ export function VoiceEffectsPanel({
             );
           })}
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">{activePreset.desc}</p>
+        <p className="mt-2 text-[11px] text-muted-foreground">{activePreset?.desc}</p>
       </div>
 
       {prefs.preset !== "custom" && prefs.preset !== "off" && (
@@ -149,7 +149,7 @@ export function VoiceEffectsPanel({
             min={0}
             max={1}
             step={0.05}
-            onValueChange={([v]) => set({ intensity: v })}
+            onValueChange={([v]) => set({ intensity: v ?? prefs.intensity })}
             aria-label="Intensitas efek"
           />
         </div>
@@ -171,7 +171,7 @@ export function VoiceEffectsPanel({
                   min={lim.min}
                   max={lim.max}
                   step={lim.step}
-                  onValueChange={([v]) => set({ custom: { ...prefs.custom, [key]: v } })}
+                  onValueChange={([v]) => set({ custom: { ...prefs.custom, [key]: v ?? prefs.custom[key] } })}
                   aria-label={meta.label}
                 />
                 <p className="text-[11px] text-muted-foreground">{meta.hint}</p>
