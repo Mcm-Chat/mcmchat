@@ -8,6 +8,7 @@ import type {
   Message,
   Order,
   Product,
+  ProductPhoto,
 } from "./types";
 
 const KEY = "mcm-state-v1";
