@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Settings2, VolumeX } from "lucide-react";
+import { CircleDashed, Plus, Settings2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
@@ -133,6 +133,7 @@ function StatusIndex() {
 
   return (
     <AppShell
+      nav
       header={
         <MobileHeader
           title="Status"
@@ -218,6 +219,7 @@ function StatusIndex() {
 
         {!isLoading && groups.length === 0 && (
           <EmptyState
+            icon={CircleDashed}
             title="Belum ada status"
             description="Bagikan foto atau teks singkat — otomatis hilang setelah masa aktif berakhir."
             action={<Button onClick={() => navigate({ to: "/status/new" })}>Buat status pertama</Button>}

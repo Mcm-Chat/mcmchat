@@ -36,6 +36,7 @@ import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as SettingsVoiceRouteImport } from './routes/settings.voice'
+import { Route as StatusIndexRouteImport } from './routes/status.index'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
 import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
@@ -175,6 +176,11 @@ const SettingsVoiceRoute = SettingsVoiceRouteImport.update({
   path: '/settings/voice',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StatusIndexRoute = StatusIndexRouteImport.update({
+  id: '/status/',
+  path: '/status/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/finance/': typeof FinanceIndexRoute
   '/ledger/': typeof LedgerIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/status/': typeof StatusIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
@@ -252,6 +259,7 @@ export interface FileRoutesByTo {
   '/finance': typeof FinanceIndexRoute
   '/ledger': typeof LedgerIndexRoute
   '/profile': typeof ProfileIndexRoute
+  '/status': typeof StatusIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/finance/': typeof FinanceIndexRoute
   '/ledger/': typeof LedgerIndexRoute
   '/profile/': typeof ProfileIndexRoute
+  '/status/': typeof StatusIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/finance/'
     | '/ledger/'
     | '/profile/'
+    | '/status/'
     | '/tasks/'
     | '/api/public/push/actions'
   fileRoutesByTo: FileRoutesByTo
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/finance'
     | '/ledger'
     | '/profile'
+    | '/status'
     | '/tasks'
     | '/api/public/push/actions'
   id:
@@ -383,6 +394,7 @@ export interface FileRouteTypes {
     | '/finance/'
     | '/ledger/'
     | '/profile/'
+    | '/status/'
     | '/tasks/'
     | '/api/public/push/actions'
   fileRoutesById: FileRoutesById
@@ -416,6 +428,7 @@ export interface RootRouteChildren {
   FinanceIndexRoute: typeof FinanceIndexRoute
   LedgerIndexRoute: typeof LedgerIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
+  StatusIndexRoute: typeof StatusIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
   ApiPublicPushActionsRoute: typeof ApiPublicPushActionsRoute
 }
@@ -611,6 +624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsVoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/status/': {
+      id: '/status/'
+      path: '/status'
+      fullPath: '/status/'
+      preLoaderRoute: typeof StatusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -664,6 +684,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanceIndexRoute: FinanceIndexRoute,
   LedgerIndexRoute: LedgerIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
+  StatusIndexRoute: StatusIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
   ApiPublicPushActionsRoute: ApiPublicPushActionsRoute,
 }
