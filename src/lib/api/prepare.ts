@@ -154,3 +154,38 @@ export async function reopenJob(jobId: string) {
 
 export const prepareUrl = (token: string) =>
   `${typeof window === "undefined" ? "" : window.location.origin}/prepare/${token}`;
+
+/**
+ * Token plaintext tidak bisa dibaca ulang dari database (hanya hash yang disimpan),
+ * jadi perangkat admin menyimpan salinannya untuk menampilkan QR/tautan kembali.
+ */
+const TOKEN_KEY = "mcm-prep-tokens";
+
+function tokenMap(): Record<string, string> {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(TOKEN_KEY) ?? "{}") as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+export function rememberToken(jobId: string, token: string) {
+  if (typeof localStorage === "undefined") return;
+  const map = tokenMap();
+  map[jobId] = token;
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(map));
+}
+
+export function recallToken(jobId: string): string | null {
+  return tokenMap()[jobId] ?? null;
+}
+
+/** Menerbitkan ulang tautan: token lama langsung tidak berlaku. */
+export async function rotateToken(jobId: string): Promise<string> {
+  const { data, error } = await supabase.rpc("rotate_preparation_token", { _job: jobId });
+  if (error) throw new Error(friendly(error.message, "Gagal menerbitkan ulang tautan"));
+  const token = (data as unknown as { token: string }).token;
+  rememberToken(jobId, token);
+  return token;
+}
