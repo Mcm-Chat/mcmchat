@@ -229,10 +229,19 @@ export function PhotoFlow({
             const contact = state.contacts.find((x) => x.id === c.contactId);
             return (
               <li key={c.id}>
-                <button
+                <div
                   type="button"
                   onClick={() => toggle(c.id)}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50"
+                  role="checkbox"
+                  aria-checked={selected.includes(c.id)}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggle(c.id);
+                    }
+                  }}
+                  className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50"
                 >
                   <MCMAvatar initials={c.initials} color={c.avatarColor} size="sm" online={contact?.online ?? false} />
                   <span className="min-w-0 flex-1">
@@ -245,7 +254,7 @@ export function PhotoFlow({
                     </span>
                   </span>
                   <Checkbox checked={selected.includes(c.id)} aria-label={`Pilih ${c.name}`} className="pointer-events-none" />
-                </button>
+                </div>
               </li>
             );
           })}
