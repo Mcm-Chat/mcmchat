@@ -1,28 +1,26 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, MessageCircle, Phone, User, Wallet } from "lucide-react";
+import { ArrowLeft, ClipboardList, MessageCircle, Package, User, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { useCalls, useConversations, useLedgers } from "@/lib/api/queries";
+import { useConversations, useLedgers } from "@/lib/api/queries";
 
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
-  { to: "/calls", label: "Panggilan", icon: Phone, match: "/calls" },
-  { to: "/ledger", label: "Catatan", icon: Wallet, match: "/ledger" },
-  { to: "/business", label: "Bisnis", icon: Briefcase, match: "/business" },
+  { to: "/tasks", label: "Tugas", icon: ClipboardList, match: "/tasks" },
+  { to: "/catalog", label: "Katalog", icon: Package, match: "/catalog" },
+  { to: "/finance", label: "Keuangan", icon: Wallet, match: "/finance" },
   { to: "/profile", label: "Profil", icon: User, match: "/profile" },
 ] as const;
 
 export function BottomNavigation({ badges }: { badges?: Partial<Record<string, number>> | undefined }) {
   const { user } = useAuth();
   const { data: convs } = useConversations(user?.id);
-  const { data: calls } = useCalls(user?.id);
   const { data: ledgers } = useLedgers(user?.id);
   const auto: Record<string, number> = {
     "/chat": (convs ?? []).filter((c) => !c.me.is_archived).reduce((s, c) => s + c.unread, 0),
-    "/calls": (calls ?? []).filter((c) => c.status === "missed" && c.initiator_id !== user?.id).length,
-    "/ledger": (ledgers ?? []).filter((l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id).length,
+    "/finance": (ledgers ?? []).filter((l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id).length,
   };
   const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });

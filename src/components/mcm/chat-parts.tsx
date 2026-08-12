@@ -5,6 +5,7 @@ import {
   Camera,
   Check,
   CheckCheck,
+  ClipboardList,
   CornerUpLeft,
   Copy,
   FileText,
@@ -12,11 +13,13 @@ import {
   MapPin,
   Mic,
   MoreVertical,
+  Package,
   Paperclip,
   Pencil,
   Pin,
   Plus,
   Send,
+  ShoppingCart,
   Smile,
   Square,
   Trash2,
@@ -33,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { jam, rupiah } from "@/lib/mcm/format";
@@ -135,6 +139,52 @@ export function MessageLocationCard({ message, compact }: { message: MessageRow;
   );
 }
 
+type SalesCardPhoto = {
+  id: string;
+  location_url?: string | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_label?: string | null;
+};
+
+type SalesCardItem = {
+  name: string;
+  variantName?: string;
+  unit?: string;
+  qty: number;
+  price: number;
+  discount: number;
+  photos?: SalesCardPhoto[];
+};
+
+const PAYMENT_LABEL_ID: Record<string, string> = {
+  cash: "Tunai",
+  transfer: "Transfer",
+  dp: "DP / uang muka",
+  credit: "Kredit / tempo",
+};
+
+function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
+  const url = useSignedUrl("product-photos", (photo as { image_path?: string }).image_path ?? photo.id);
+  const mapsUrl =
+    photo.location_url ||
+    (photo.location_lat != null && photo.location_lng != null
+      ? `https://www.google.com/maps/search/?api=1&query=${photo.location_lat},${photo.location_lng}`
+      : "");
+  return (
+    <div className="w-20 shrink-0 space-y-1">
+      <div className="size-20 overflow-hidden rounded-lg bg-black/10">
+        {url ? <img src={url} alt="Foto produk" className="size-full object-cover" /> : <div className="size-full animate-pulse" />}
+      </div>
+      {mapsUrl && (
+        <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-0.5 truncate text-[10px] font-semibold text-primary">
+          <MapPin className="size-3 shrink-0" /> Buka Lokasi
+        </a>
+      )}
+    </div>
+  );
+}
+
 function SalesCard({ message }: { message: MessageRow }) {
   const p = (message.payload ?? {}) as {
     number?: string;
@@ -142,25 +192,42 @@ function SalesCard({ message }: { message: MessageRow }) {
     paid?: number;
     outstanding?: number;
     dueDate?: string | null;
-    items?: { name: string; qty: number; price: number; discount: number }[];
+    paymentMethod?: string;
+    note?: string;
+    items?: SalesCardItem[];
   };
   return (
-    <div className="w-60 space-y-1.5">
+    <div className="w-64 max-w-[78vw] space-y-2">
       <p className="text-xs font-bold">Rincian penjualan {p.number}</p>
-      <ul className="space-y-0.5 text-[11px]">
+      <ul className="space-y-2 text-[11px]">
         {(p.items ?? []).map((i, idx) => (
-          <li key={idx} className="flex justify-between gap-2">
-            <span className="truncate">
-              {i.name} × {i.qty}
-            </span>
-            <span>{rupiah(Math.max(0, i.price - i.discount) * i.qty)}</span>
+          <li key={idx} className="space-y-1">
+            <div className="flex justify-between gap-2">
+              <span className="min-w-0 truncate">
+                {i.name}
+                {i.variantName ? ` — ${i.variantName}` : ""} × {i.qty} {i.unit ?? ""}
+              </span>
+              <span className="shrink-0">{rupiah(Math.max(0, i.price - i.discount) * i.qty)}</span>
+            </div>
+            {i.discount > 0 && <div className="text-[10px] opacity-75">Diskon item {rupiah(i.discount)}</div>}
+            {(i.photos ?? []).length > 0 && (
+              <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+                {(i.photos ?? []).map((ph) => (
+                  <SalesCardPhotoThumb key={ph.id} photo={ph} />
+                ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>
-      <div className="border-t border-current/20 pt-1 text-[11px]">
+      <div className="space-y-0.5 border-t border-current/20 pt-1.5 text-[11px]">
         <div className="flex justify-between font-semibold">
           <span>Total</span>
           <span>{rupiah(p.total ?? 0)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Metode</span>
+          <span>{PAYMENT_LABEL_ID[p.paymentMethod ?? ""] ?? "-"}</span>
         </div>
         <div className="flex justify-between">
           <span>Dibayar</span>
@@ -172,6 +239,13 @@ function SalesCard({ message }: { message: MessageRow }) {
             <span>{rupiah(p.outstanding ?? 0)}</span>
           </div>
         )}
+        {p.dueDate && (
+          <div className="flex justify-between">
+            <span>Jatuh tempo</span>
+            <span>{p.dueDate}</span>
+          </div>
+        )}
+        {p.note && <p className="pt-0.5 break-words opacity-85">Catatan: {p.note}</p>}
       </div>
     </div>
   );
@@ -431,6 +505,9 @@ export function ChatComposer({
   onVoice,
   onNewLedger,
   onNewSale,
+  onSendProduct,
+  onNewPreparation,
+  onLocation,
   editing,
   onCancelEdit,
   replyPreview,
@@ -446,6 +523,9 @@ export function ChatComposer({
   onVoice: (blob: Blob, seconds: number) => void;
   onNewLedger: () => void;
   onNewSale?: (() => void) | undefined;
+  onSendProduct?: (() => void) | undefined;
+  onNewPreparation?: (() => void) | undefined;
+  onLocation?: (() => void) | undefined;
   editing?: boolean | undefined;
   onCancelEdit?: (() => void) | undefined;
   replyPreview?: MessageRow | undefined;
@@ -455,6 +535,11 @@ export function ChatComposer({
   disabled?: boolean | undefined;
 }) {
   const { recording, seconds, start, stop } = useVoiceRecorder(onVoice);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const runAction = (fn?: () => void) => {
+    setActionsOpen(false);
+    fn?.();
+  };
   const matches = value.startsWith("/")
     ? (quickReplies ?? []).filter((q) => q.shortcut.toLowerCase().startsWith(value.trim().toLowerCase()))
     : [];
@@ -497,29 +582,40 @@ export function ChatComposer({
         </div>
       )}
       <div className="flex items-end gap-1.5 px-2 py-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label="Lampiran" disabled={disabled}>
-              <Plus className="size-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => onAttach("image")}>
-              <ImageIcon className="size-4" /> Foto &amp; galeri
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAttach("document")}>
-              <Paperclip className="size-4" /> Dokumen
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onNewLedger}>
-              <Wallet className="size-4" /> Catatan utang bersama
-            </DropdownMenuItem>
-            {onNewSale && (
-              <DropdownMenuItem onClick={onNewSale}>
-                <Wallet className="size-4" /> Catat penjualan
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label="Tindakan lain" disabled={disabled} onClick={() => setActionsOpen(true)}>
+          <Plus className="size-5" />
+        </Button>
+        <Sheet open={actionsOpen} onOpenChange={setActionsOpen}>
+          <SheetContent side="bottom" className="rounded-t-3xl">
+            <SheetHeader>
+              <SheetTitle>Tindakan</SheetTitle>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-3 px-1 pb-6">
+              {[
+                { icon: Camera, label: "Foto/Kamera", fn: () => onAttach("camera") },
+                { icon: ImageIcon, label: "Foto & lokasi", fn: () => onAttach("image") },
+                ...(onLocation ? [{ icon: MapPin, label: "Lokasi", fn: onLocation }] : []),
+                ...(onSendProduct ? [{ icon: Package, label: "Kirim Produk", fn: onSendProduct }] : []),
+                ...(onNewSale ? [{ icon: ShoppingCart, label: "Penjualan", fn: onNewSale }] : []),
+                { icon: Wallet, label: "Catat Utang/Piutang", fn: onNewLedger },
+                ...(onNewPreparation ? [{ icon: ClipboardList, label: "Buat Penyiapan", fn: onNewPreparation }] : []),
+                { icon: Paperclip, label: "Dokumen", fn: () => onAttach("document") },
+              ].map(({ icon: Icon, label, fn }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => runAction(fn)}
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border p-3 text-center hover:bg-muted"
+                >
+                  <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="text-[11px] leading-tight font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
         <div className="flex flex-1 items-end rounded-2xl border border-input bg-background px-2">
           <Popover>
             <PopoverTrigger asChild>

@@ -1,106 +1,179 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Loader2, ShieldCheck, Signal } from "lucide-react";
-import { toast } from "sonner";
-import { z } from "zod";
-import { CallControls, type CallState } from "@/components/mcm/call-parts";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { ArrowLeft, PhoneMissed, ShieldAlert, Video, Phone as PhoneIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
-import { durasi } from "@/lib/mcm/format";
-import { callAdapter, type CallSession } from "@/lib/mcm/call-service";
-import { uid, useMCM } from "@/lib/mcm/store";
-
-const searchSchema = z.object({ kind: z.enum(["audio", "video"]).catch("audio") });
+import { durasi, tanggalPanjang, jam } from "@/lib/mcm/format";
+import { useRequireAuth } from "@/lib/api/guard";
+import { supabase } from "@/integrations/supabase/client";
+import type { CallHistoryItem } from "@/lib/api/calls";
 
 export const Route = createFileRoute("/call/$id")({
-  validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Panggilan berlangsung — MCM" },
-      { name: "description", content: "Layar panggilan MCM dengan kontrol mikrofon, kamera, speaker, dan tambah peserta." },
-      { property: "og:title", content: "Panggilan berlangsung — MCM" },
-      { property: "og:description", content: "Kontrol panggilan suara dan video MCM." },
+      { title: "Detail panggilan — MCM" },
+      { name: "description", content: "Rincian panggilan MCM: peserta, jenis, status, dan durasi." },
+      { property: "og:title", content: "Detail panggilan — MCM" },
+      { property: "og:description", content: "Rincian riwayat panggilan MCM." },
     ],
   }),
-  component: CallScreen,
+  component: CallDetailScreen,
 });
 
-function CallScreen() {
+const STATUS_LABEL: Record<string, string> = {
+  ringing: "Berdering",
+  ongoing: "Berlangsung",
+  ended: "Selesai",
+  missed: "Tak terjawab",
+  declined: "Ditolak",
+  failed: "Gagal",
+  unconfigured: "Tidak dikonfigurasi",
+};
+
+async function fetchCall(id: string, userId: string): Promise<CallHistoryItem | null> {
+  const { data: call, error } = await supabase.from("calls").select("*").eq("id", id).maybeSingle();
+  if (error || !call) return null;
+  const { data: parts } = await supabase.from("call_participants").select("call_id, user_id").eq("call_id", id);
+  const ids = [...new Set((parts ?? []).map((p) => p.user_id))];
+  const { data: profiles } = await supabase.from("profiles").select("id, display_name, avatar_color").in("id", ids.length ? ids : [userId]);
+  const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  return {
+    ...call,
+    participants: (parts ?? []).map((p) => ({
+      user_id: p.user_id,
+      display_name: pmap.get(p.user_id)?.display_name ?? "Pengguna",
+      avatar_color: pmap.get(p.user_id)?.avatar_color ?? "#0ea5e9",
+    })),
+  };
+}
+
+function CallDetailScreen() {
   const { id } = Route.useParams();
-  const { kind } = Route.useSearch();
-  const { state, update } = useMCM();
+  const { userId, loading } = useRequireAuth();
   const navigate = useNavigate();
-  const contact = state.contacts.find((c) => c.id === id);
-  const [phase, setPhase] = useState<"memanggil" | "berlangsung">("memanggil");
-  const [seconds, setSeconds] = useState(0);
-  const [controls, setControls] = useState<CallState>({ muted: false, cameraOn: kind === "video", speakerOn: true, frontCamera: true });
-  const session = useRef<CallSession | null>(null);
+  const [call, setCall] = useState<CallHistoryItem | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [notice, setNotice] = useState(false);
 
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | undefined;
-    const connect = setTimeout(async () => {
-      session.current = await callAdapter.start(id, kind);
-      setPhase("berlangsung");
-      timer = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }, 2200);
-    return () => {
-      clearTimeout(connect);
-      if (timer) clearInterval(timer);
-    };
-  }, [id, kind]);
-
-  const end = () => {
-    update((d) => {
-      d.calls.unshift({
-        id: uid("cl"),
-        contactId: id,
-        contactName: contact?.name ?? "Pengguna MCM",
-        kind,
-        direction: "out",
-        missed: phase === "memanggil",
-        at: new Date().toISOString(),
-        durationSec: seconds,
-      });
-      return d;
-    });
-    toast.success(phase === "memanggil" ? "Panggilan dibatalkan" : `Panggilan berakhir • ${durasi(seconds)}`);
-    navigate({ to: "/calls" });
+  const load = () => {
+    if (!userId) return;
+    setStatus("loading");
+    fetchCall(id, userId)
+      .then((c) => {
+        setCall(c);
+        setStatus("ready");
+      })
+      .catch(() => setStatus("error"));
   };
 
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, userId]);
+
+  if (loading || status === "loading") {
+    return (
+      <div className="app-gradient flex min-h-screen items-center justify-center text-navy-foreground">
+        <p className="text-sm">Memuat detail panggilan…</p>
+      </div>
+    );
+  }
+
+  if (status === "error" || !call) {
+    return (
+      <div className="app-gradient flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-navy-foreground">
+        <ShieldAlert className="size-10" />
+        <p className="text-sm">Data panggilan tidak ditemukan atau gagal dimuat.</p>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="rounded-xl" onClick={load}>
+            Coba lagi
+          </Button>
+          <Button variant="secondary" className="rounded-xl" onClick={() => void navigate({ to: "/calls" })}>
+            Kembali
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const other = call.participants.find((p) => p.user_id !== userId) ?? call.participants[0] ?? null;
+  const isMissed = call.status === "missed";
+
   return (
-    <div className="app-gradient flex min-h-screen flex-col items-center justify-between px-6 py-10 text-navy-foreground">
-      <div className="flex flex-col items-center gap-3 pt-8">
-        <MCMAvatar initials={contact?.initials ?? "MC"} color={contact?.avatarColor ?? "from-slate-500 to-slate-700"} size="xl" />
-        <h1 className="text-2xl font-semibold">{contact?.name ?? "Pengguna MCM"}</h1>
-        <p className="flex items-center gap-1.5 text-sm text-navy-foreground/70">
-          {phase === "memanggil" ? (
-            <>
-              <Loader2 className="size-4 animate-spin" /> Memanggil…
-            </>
-          ) : (
-            <>
-              <Signal className="size-4" /> {durasi(seconds)} • kualitas baik
-            </>
-          )}
-        </p>
-        {kind === "video" && (
-          <div className="mt-4 flex h-40 w-56 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-xs text-navy-foreground/70">
-            {controls.cameraOn ? `Pratinjau kamera ${controls.frontCamera ? "depan" : "belakang"} (simulasi)` : "Kamera dimatikan"}
-          </div>
-        )}
+    <div className="app-gradient flex min-h-screen flex-col px-6 py-8 text-navy-foreground">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" aria-label="Kembali" className="text-navy-foreground hover:bg-white/15" onClick={() => void navigate({ to: "/calls" })}>
+          <ArrowLeft className="size-5" />
+        </Button>
+        <h1 className="text-base font-semibold">Detail panggilan</h1>
       </div>
 
-      <div className="w-full max-w-sm space-y-6">
-        <CallControls
-          state={controls}
-          kind={kind}
-          onToggle={(key) => setControls((p) => ({ ...p, [key]: !p[key] }))}
-          onAddParticipant={() => toast.info("Panggilan grup tersedia setelah integrasi WebRTC")}
-          onEnd={end}
-        />
-        <p className="flex items-center justify-center gap-1.5 text-[11px] text-navy-foreground/60">
-          <ShieldCheck className="size-3.5" /> Mode simulasi • adapter: {callAdapter.name}
+      <div className="mt-8 flex flex-col items-center gap-3">
+        <MCMAvatar initials={(other?.display_name ?? "MC").slice(0, 2).toUpperCase()} color={other?.avatar_color ?? "from-slate-500 to-slate-700"} size="xl" />
+        <h2 className="text-2xl font-semibold">{other?.display_name ?? "Pengguna MCM"}</h2>
+        <p className="flex items-center gap-1.5 text-sm text-navy-foreground/70">
+          {isMissed && <PhoneMissed className="size-4 text-destructive" />}
+          {call.kind === "video" ? <Video className="size-4" /> : <PhoneIcon className="size-4" />}
+          {call.kind === "video" ? "Panggilan video" : "Panggilan suara"} • {STATUS_LABEL[call.status] ?? call.status}
         </p>
       </div>
+
+      <div className="mt-8 space-y-3 rounded-2xl bg-white/10 p-4 text-sm">
+        <div className="flex justify-between">
+          <span className="text-navy-foreground/70">Tanggal</span>
+          <span className="font-medium">{tanggalPanjang(call.created_at)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-navy-foreground/70">Waktu mulai</span>
+          <span className="font-medium">{call.started_at ? jam(call.started_at) : jam(call.created_at)}</span>
+        </div>
+        {call.ended_at && (
+          <div className="flex justify-between">
+            <span className="text-navy-foreground/70">Waktu berakhir</span>
+            <span className="font-medium">{jam(call.ended_at)}</span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span className="text-navy-foreground/70">Durasi</span>
+          <span className="font-medium">{durasi(call.duration_sec)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-navy-foreground/70">Peserta</span>
+          <span className="max-w-[60%] text-right font-medium">{call.participants.map((p) => p.display_name).join(", ")}</span>
+        </div>
+      </div>
+
+      <div className="mt-auto space-y-3 pt-8">
+        <Button className="w-full rounded-xl" variant="secondary" onClick={() => setNotice(true)}>
+          Panggil lagi
+        </Button>
+        <Button variant="ghost" className="w-full rounded-xl text-navy-foreground/80 hover:bg-white/10" asChild>
+          <Link to="/calls">Kembali ke riwayat</Link>
+        </Button>
+      </div>
+
+      <AlertDialog open={notice} onOpenChange={setNotice}>
+        <AlertDialogContent className="max-w-[340px] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Panggilan belum dikonfigurasi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Fitur panggilan suara dan video akan aktif setelah kredensial penyedia panggilan dikonfigurasi oleh admin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setNotice(false)}>Mengerti</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.create_preparation_job(uuid, uuid, jsonb, uuid, uuid, uuid, text, uuid, text, integer) FROM anon;

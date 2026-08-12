@@ -22,6 +22,7 @@ import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useConversations, useMessages, useMyBusiness } from "@/lib/api/queries";
 import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
+import { SaleDialog } from "@/components/mcm/sale-dialog";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 
@@ -64,6 +65,7 @@ function ChatRoom() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
+  const [saleOpen, setSaleOpen] = useState(false);
   const [ledger, setLedger] = useState({ type: "receivable", amount: "", dueDate: "", note: "" });
   const docRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -393,6 +395,9 @@ function ChatRoom() {
           onAttach={(kind) => (kind === "document" ? docRef.current?.click() : setPhotoOpen(true))}
           onVoice={(blob, sec) => void sendVoice(blob, sec)}
           onNewLedger={() => setLedgerOpen(true)}
+          onNewSale={business ? () => setSaleOpen(true) : undefined}
+          onNewPreparation={business ? () => setPrepOpen(true) : undefined}
+          onLocation={() => setPhotoOpen(true)}
           editing={!!editingId}
           onCancelEdit={() => {
             setEditingId(null);
@@ -536,6 +541,19 @@ function ChatRoom() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {business && userId && (
+        <SaleDialog
+          open={saleOpen}
+          onOpenChange={setSaleOpen}
+          businessId={business.business.id}
+          sellerId={userId}
+          conversationId={id}
+          customerUserId={conv.other?.id ?? null}
+          customerName={conv.other?.display_name ?? conv.title_resolved}
+          onSuccess={() => refresh()}
+        />
+      )}
 
       {business && userId && (
         <CreatePreparationDialog

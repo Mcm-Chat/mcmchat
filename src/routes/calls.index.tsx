@@ -1,13 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, PhoneMissed, Phone, PhoneCall, Trash2, Video } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowDownLeft, ArrowUpRight, Phone, PhoneCall, PhoneMissed, Video } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { ConfirmDialog, EmptyState, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
+import { EmptyState, LoadingSkeleton, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, waktuRelatif } from "@/lib/mcm/format";
-import { useMCM } from "@/lib/mcm/store";
+import { useRequireAuth } from "@/lib/api/guard";
+import { useCalls } from "@/lib/api/queries";
+import type { CallHistoryItem } from "@/lib/api/calls";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -21,27 +31,38 @@ export const Route = createFileRoute("/calls/")({
   component: CallsPage,
 });
 
-function CallsPage() {
-  const { state, update } = useMCM();
-  const [tab, setTab] = useState("semua");
-  const [clear, setClear] = useState(false);
+const STATUS_LABEL: Record<string, string> = {
+  ringing: "Berdering",
+  ongoing: "Berlangsung",
+  ended: "Selesai",
+  missed: "Tak terjawab",
+  declined: "Ditolak",
+  failed: "Gagal",
+  unconfigured: "Tidak dikonfigurasi",
+};
 
-  const calls = state.calls
-    .filter((c) => (tab === "takterjawab" ? c.missed : true))
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+function counterpartOf(call: CallHistoryItem, userId?: string) {
+  return call.participants.find((p) => p.user_id !== userId) ?? call.participants[0] ?? null;
+}
+
+function CallsPage() {
+  const { userId, loading } = useRequireAuth();
+  const { data: calls, isLoading, isError, refetch } = useCalls(userId);
+  const [tab, setTab] = useState("semua");
+  const [notice, setNotice] = useState(false);
+  const navigate = useNavigate();
+
+  const list = (calls ?? [])
+    .filter((c) => (tab === "takterjawab" ? c.status === "missed" : true))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const missedCount = (calls ?? []).filter((c) => c.status === "missed").length;
+  const busy = loading || isLoading;
 
   return (
     <AppShell
       header={
-        <MobileHeader
-          title="Panggilan"
-          subtitle={`${state.calls.filter((c) => c.missed).length} panggilan tak terjawab`}
-          actions={
-            <Button variant="ghost" size="icon" aria-label="Bersihkan riwayat" onClick={() => setClear(true)}>
-              <Trash2 className="size-5" />
-            </Button>
-          }
-        >
+        <MobileHeader title="Panggilan" subtitle={`${missedCount} panggilan tak terjawab`}>
           <div className="px-3 pb-3">
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="w-full rounded-xl">
@@ -57,26 +78,53 @@ function CallsPage() {
         </MobileHeader>
       }
     >
-      {calls.length === 0 ? (
-        <EmptyState icon={PhoneCall} title="Belum ada panggilan" description="Mulai panggilan suara atau video dari halaman kontak atau ruang chat." />
+      {busy ? (
+        <LoadingSkeleton rows={6} />
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+          <p className="text-sm text-muted-foreground">Gagal memuat riwayat panggilan.</p>
+          <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void refetch()}>
+            Coba lagi
+          </Button>
+        </div>
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={PhoneCall}
+          title="Belum ada panggilan"
+          description="Riwayat panggilan suara dan video Anda akan muncul di sini."
+        />
       ) : (
         <ul className="divide-y divide-border/70">
-          {calls.map((c) => {
-            const contact = state.contacts.find((x) => x.id === c.contactId);
+          {list.map((c) => {
+            const other = counterpartOf(c, userId);
+            const isMissed = c.status === "missed";
+            const wasIncoming = c.initiator_id !== userId;
             return (
               <li key={c.id} className="flex items-center gap-3 px-4 py-3">
-                <MCMAvatar initials={contact?.initials ?? c.contactName.slice(0, 2)} color={contact?.avatarColor ?? "from-slate-500 to-slate-700"} />
-                <div className="min-w-0 flex-1">
-                  <p className={`truncate text-sm font-semibold ${c.missed ? "text-destructive" : ""}`}>{c.contactName}</p>
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    {c.missed ? <PhoneMissed className="size-3.5 text-destructive" /> : c.direction === "in" ? <ArrowDownLeft className="size-3.5 text-success" /> : <ArrowUpRight className="size-3.5 text-primary" />}
-                    {c.kind === "video" ? "Video" : "Suara"} • {c.missed ? "Tak terjawab" : durasi(c.durationSec)} • {waktuRelatif(c.at)}
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon" aria-label={`Panggil ${c.contactName}`} asChild>
-                  <Link to="/call/$id" params={{ id: c.contactId }} search={{ kind: c.kind }}>
-                    {c.kind === "video" ? <Video className="size-5" /> : <Phone className="size-5" />}
-                  </Link>
+                <button
+                  type="button"
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  onClick={() => void navigate({ to: "/call/$id", params: { id: c.id } })}
+                >
+                  <MCMAvatar initials={(other?.display_name ?? "MC").slice(0, 2).toUpperCase()} color={other?.avatar_color ?? "from-slate-500 to-slate-700"} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`truncate text-sm font-semibold ${isMissed ? "text-destructive" : ""}`}>{other?.display_name ?? "Pengguna MCM"}</p>
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      {isMissed ? (
+                        <PhoneMissed className="size-3.5 text-destructive" />
+                      ) : wasIncoming ? (
+                        <ArrowDownLeft className="size-3.5 text-success" />
+                      ) : (
+                        <ArrowUpRight className="size-3.5 text-primary" />
+                      )}
+                      {c.kind === "video" ? "Video" : "Suara"} •{" "}
+                      {isMissed ? "Tak terjawab" : c.status === "ended" ? durasi(c.duration_sec) : STATUS_LABEL[c.status]} •{" "}
+                      {waktuRelatif(c.created_at)}
+                    </p>
+                  </div>
+                </button>
+                <Button variant="ghost" size="icon" aria-label={`Panggil ${other?.display_name ?? "pengguna"}`} onClick={() => setNotice(true)}>
+                  {c.kind === "video" ? <Video className="size-5" /> : <Phone className="size-5" />}
                 </Button>
               </li>
             );
@@ -84,24 +132,23 @@ function CallsPage() {
         </ul>
       )}
       <div className="px-4 py-6">
-        <ProtoNote>Panggilan berjalan dalam mode simulasi. Panggilan nyata memerlukan WebRTC dengan server signalling & TURN.</ProtoNote>
+        <ProtoNote>Panggilan suara/video real-time belum diaktifkan. Riwayat panggilan tetap tercatat.</ProtoNote>
       </div>
 
-      <ConfirmDialog
-        open={clear}
-        onOpenChange={setClear}
-        title="Bersihkan riwayat panggilan?"
-        description="Seluruh riwayat panggilan akan dihapus dari perangkat ini."
-        confirmLabel="Bersihkan"
-        destructive
-        onConfirm={() => {
-          update((d) => {
-            d.calls = [];
-            return d;
-          });
-          toast.success("Riwayat panggilan dibersihkan");
-        }}
-      />
+      <AlertDialog open={notice} onOpenChange={setNotice}>
+        <AlertDialogContent className="max-w-[340px] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Panggilan belum dikonfigurasi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Fitur panggilan suara dan video akan aktif setelah kredensial penyedia panggilan (WebRTC/SFU/TURN) dikonfigurasi
+              oleh admin. Belum ada panggilan tiruan yang akan dimulai.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setNotice(false)}>Mengerti</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }

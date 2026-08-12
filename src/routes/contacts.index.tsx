@@ -1,13 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Ban, Check, MessageSquare, Search, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { ConfirmDialog, EmptyState, MCMAvatar, StatusBadge } from "@/components/mcm/primitives";
+import { ConfirmDialog, EmptyState, LoadingSkeleton, MCMAvatar, StatusBadge } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { uid, useMCM } from "@/lib/mcm/store";
+import { getOrCreateDirect } from "@/lib/api/chat";
+import { respondToRequest, setBlocked, type ContactWithProfile, type RequestRow } from "@/lib/api/contacts";
+import { useRequireAuth } from "@/lib/api/guard";
+import { qk, useContacts, useRequests } from "@/lib/api/queries";
 
 export const Route = createFileRoute("/contacts/")({
   head: () => ({
@@ -21,53 +25,83 @@ export const Route = createFileRoute("/contacts/")({
   component: ContactsPage,
 });
 
+const initialsOf = (name: string) =>
+  name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("") || "MC";
+
 function ContactsPage() {
-  const { state, update } = useMCM();
+  const { userId, loading } = useRequireAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { data: contacts, isLoading: loadingContacts, isError: errContacts, refetch: refetchContacts } = useContacts(userId);
+  const { data: requests, isLoading: loadingRequests, isError: errRequests, refetch: refetchRequests } = useRequests(userId);
   const [tab, setTab] = useState("kontak");
   const [q, setQ] = useState("");
-  const [toRemove, setToRemove] = useState<string | null>(null);
+  const [toRemove, setToRemove] = useState<ContactWithProfile | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
-  const list = state.contacts
-    .filter((c) => (tab === "kontak" ? c.status === "contact" : tab === "masuk" ? c.status === "incoming" : tab === "terkirim" ? c.status === "outgoing" : c.status === "blocked"))
-    .filter((c) => c.name.toLowerCase().includes(q.toLowerCase()) || c.pin.toLowerCase().includes(q.toLowerCase()));
-
-  const setStatus = (contactId: string, status: "contact" | "blocked") =>
-    update((d) => {
-      const c = d.contacts.find((x) => x.id === contactId);
-      if (c) c.status = status;
-      return d;
-    });
-
-  const openChat = (contactId: string) => {
-    const existing = state.chats.find((c) => c.contactId === contactId);
-    if (existing) {
-      navigate({ to: "/chat/$id", params: { id: existing.id } });
-      return;
-    }
-    const contact = state.contacts.find((c) => c.id === contactId)!;
-    const id = uid("ch");
-    update((d) => {
-      d.chats.unshift({
-        id,
-        type: "personal",
-        name: contact.name,
-        avatarColor: contact.avatarColor,
-        initials: contact.initials,
-        contactId,
-        memberIds: ["me", contactId],
-        pinned: false,
-        archived: false,
-        muted: false,
-        unread: 0,
-        disappearingHours: 0,
-      });
-      return d;
-    });
-    navigate({ to: "/chat/$id", params: { id } });
+  const refreshAll = () => {
+    void qc.invalidateQueries({ queryKey: qk.contacts(userId ?? "") });
+    void qc.invalidateQueries({ queryKey: qk.requests(userId ?? "") });
   };
 
-  const incoming = state.contacts.filter((c) => c.status === "incoming").length;
+  const active = (contacts ?? []).filter((c) => !c.is_blocked);
+  const blocked = (contacts ?? []).filter((c) => c.is_blocked);
+  const incoming = requests?.incoming ?? [];
+  const outgoing = requests?.outgoing ?? [];
+
+  const term = q.trim().toLowerCase();
+  const matches = (name: string, pin: string) => name.toLowerCase().includes(term) || pin.toLowerCase().includes(term);
+
+  const filteredActive = active.filter((c) => matches(c.profile.display_name, c.profile.pin));
+  const filteredIncoming = incoming.filter((r) => matches(r.profile?.display_name ?? "", r.profile?.pin ?? ""));
+  const filteredOutgoing = outgoing.filter((r) => matches(r.profile?.display_name ?? "", r.profile?.pin ?? ""));
+  const filteredBlocked = blocked.filter((c) => matches(c.profile.display_name, c.profile.pin));
+
+  const isLoading = loading || loadingContacts || loadingRequests;
+  const isError = errContacts || errRequests;
+
+  const openChat = async (contactId: string) => {
+    if (!userId) return;
+    try {
+      const id = await getOrCreateDirect(userId, contactId);
+      void navigate({ to: "/chat/$id", params: { id } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal membuka chat");
+    }
+  };
+
+  const respond = async (r: RequestRow, action: "accepted" | "rejected" | "blocked") => {
+    setBusy(r.id);
+    try {
+      await respondToRequest(r, action);
+      refreshAll();
+      toast.success(
+        action === "accepted" ? "Kontak ditambahkan" : action === "rejected" ? "Permintaan ditolak" : "Pengirim diblokir",
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memproses permintaan");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const toggleBlock = async (contactId: string, block: boolean) => {
+    if (!userId) return;
+    setBusy(contactId);
+    try {
+      await setBlocked(userId, contactId, block);
+      refreshAll();
+      toast.success(block ? "Kontak diblokir" : "Blokir dibuka");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui blokir");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <AppShell
@@ -75,7 +109,7 @@ function ContactsPage() {
         <MobileHeader
           back
           title="Kontak"
-          subtitle={`${state.contacts.filter((c) => c.status === "contact").length} kontak tersimpan`}
+          subtitle={`${active.length} kontak tersimpan`}
           actions={
             <Button variant="ghost" size="icon" aria-label="Tambah kontak" asChild>
               <Link to="/contacts/add">
@@ -95,7 +129,7 @@ function ContactsPage() {
                   Kontak
                 </TabsTrigger>
                 <TabsTrigger value="masuk" className="flex-1 rounded-lg text-xs">
-                  Masuk{incoming > 0 ? ` (${incoming})` : ""}
+                  Masuk{incoming.length > 0 ? ` (${incoming.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="terkirim" className="flex-1 rounded-lg text-xs">
                   Terkirim
@@ -109,63 +143,119 @@ function ContactsPage() {
         </MobileHeader>
       }
     >
-      {list.length === 0 ? (
-        <EmptyState
-          icon={UserPlus}
-          title="Belum ada data"
-          description="Tambahkan teman dengan memasukkan PIN MCM mereka — tanpa perlu bertukar nomor telepon."
-          action={
-            <Button className="rounded-xl" asChild>
-              <Link to="/contacts/add">Tambah lewat PIN</Link>
-            </Button>
-          }
-        />
-      ) : (
-        <ul className="divide-y divide-border/70 pb-24">
-          {list.map((c) => (
-            <li key={c.id} className="flex items-center gap-3 px-4 py-3">
-              <MCMAvatar initials={c.initials} color={c.avatarColor} online={c.online ?? false} />
-              <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
-                  {c.name}
-                  {c.isBusiness && <StatusBadge tone="primary">Bisnis</StatusBadge>}
-                </p>
-                <p className="font-mono text-[11px] text-muted-foreground">{c.pin}</p>
-                <p className="truncate text-xs text-muted-foreground">{c.requestMessage || c.bio}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                {c.status === "contact" && (
-                  <>
-                    <Button variant="ghost" size="icon" aria-label={`Chat ${c.name}`} onClick={() => openChat(c.id)}>
-                      <MessageSquare className="size-5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" aria-label={`Hapus ${c.name}`} onClick={() => setToRemove(c.id)}>
-                      <UserX className="size-5" />
-                    </Button>
-                  </>
-                )}
-                {c.status === "incoming" && (
-                  <>
-                    <Button size="icon" className="size-9 rounded-xl" aria-label="Terima" onClick={() => { setStatus(c.id, "contact"); toast.success(`${c.name} ditambahkan ke kontak`); }}>
-                      <Check className="size-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" aria-label="Tolak" onClick={() => { update((d) => { d.contacts = d.contacts.filter((x) => x.id !== c.id); return d; }); toast.info("Permintaan ditolak"); }}>
-                      <X className="size-4" />
-                    </Button>
-                  </>
-                )}
-                {c.status === "outgoing" && <StatusBadge tone="warning">Menunggu</StatusBadge>}
-                {c.status === "blocked" && (
-                  <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setStatus(c.id, "contact"); toast.success("Blokir dibuka"); }}>
-                    Buka blokir
+      {isLoading ? (
+        <LoadingSkeleton rows={6} />
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+          <p className="text-sm text-muted-foreground">Gagal memuat data kontak.</p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-xl"
+            onClick={() => {
+              void refetchContacts();
+              void refetchRequests();
+            }}
+          >
+            Coba lagi
+          </Button>
+        </div>
+      ) : tab === "kontak" ? (
+        filteredActive.length === 0 ? (
+          <EmptyState
+            icon={UserPlus}
+            title="Belum ada kontak"
+            description="Tambahkan teman dengan memasukkan PIN MCM mereka — tanpa perlu bertukar nomor telepon."
+            action={
+              <Button className="rounded-xl" asChild>
+                <Link to="/contacts/add">Tambah lewat PIN</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-border/70 pb-24">
+            {filteredActive.map((c) => (
+              <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+                <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{c.alias || c.profile.display_name}</p>
+                  <p className="font-mono text-[11px] text-muted-foreground">{c.profile.pin}</p>
+                  {c.profile.bio && <p className="truncate text-xs text-muted-foreground">{c.profile.bio}</p>}
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button variant="ghost" size="icon" aria-label={`Chat ${c.profile.display_name}`} onClick={() => void openChat(c.contact_id)}>
+                    <MessageSquare className="size-5" />
                   </Button>
-                )}
-                {c.status === "contact" && (
-                  <Button variant="ghost" size="icon" aria-label={`Blokir ${c.name}`} onClick={() => { setStatus(c.id, "blocked"); toast.success(`${c.name} diblokir`); }}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Blokir ${c.profile.display_name}`}
+                    disabled={busy === c.contact_id}
+                    onClick={() => setToRemove(c)}
+                  >
                     <Ban className="size-5" />
                   </Button>
-                )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : tab === "masuk" ? (
+        filteredIncoming.length === 0 ? (
+          <EmptyState icon={UserPlus} title="Tidak ada permintaan masuk" description="Permintaan kontak baru akan muncul di sini." />
+        ) : (
+          <ul className="divide-y divide-border/70 pb-24">
+            {filteredIncoming.map((r) => (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                <MCMAvatar initials={initialsOf(r.profile?.display_name ?? "MC")} color={r.profile?.avatar_color ?? "from-slate-500 to-slate-700"} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{r.profile?.display_name ?? "Pengguna"}</p>
+                  <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
+                  <p className="truncate text-xs text-muted-foreground">{r.message}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button size="icon" className="size-9 rounded-xl" aria-label="Terima" disabled={busy === r.id} onClick={() => void respond(r, "accepted")}>
+                    <Check className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Tolak" disabled={busy === r.id} onClick={() => void respond(r, "rejected")}>
+                    <X className="size-4" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : tab === "terkirim" ? (
+        filteredOutgoing.length === 0 ? (
+          <EmptyState icon={UserPlus} title="Tidak ada permintaan terkirim" description="Permintaan yang Anda kirim akan tampil di sini sampai direspons." />
+        ) : (
+          <ul className="divide-y divide-border/70 pb-24">
+            {filteredOutgoing.map((r) => (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                <MCMAvatar initials={initialsOf(r.profile?.display_name ?? "MC")} color={r.profile?.avatar_color ?? "from-slate-500 to-slate-700"} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{r.profile?.display_name ?? "Pengguna"}</p>
+                  <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
+                </div>
+                <StatusBadge tone="warning">Menunggu</StatusBadge>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : filteredBlocked.length === 0 ? (
+        <EmptyState icon={Ban} title="Tidak ada kontak diblokir" description="Kontak yang Anda blokir akan muncul di sini." />
+      ) : (
+        <ul className="divide-y divide-border/70 pb-24">
+          {filteredBlocked.map((c) => (
+            <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+              <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{c.profile.display_name}</p>
+                <p className="font-mono text-[11px] text-muted-foreground">{c.profile.pin}</p>
               </div>
+              <Button variant="outline" size="sm" className="rounded-xl" disabled={busy === c.contact_id} onClick={() => void toggleBlock(c.contact_id, false)}>
+                Buka blokir
+              </Button>
             </li>
           ))}
         </ul>
@@ -174,17 +264,13 @@ function ContactsPage() {
       <ConfirmDialog
         open={!!toRemove}
         onOpenChange={(v) => !v && setToRemove(null)}
-        title="Hapus kontak?"
-        description="Kontak akan dihapus dari daftar Anda. Riwayat chat tetap tersimpan."
-        confirmLabel="Hapus"
+        title="Blokir kontak?"
+        description="Kontak tidak akan bisa mengirim pesan atau permintaan baru kepada Anda sampai Anda membuka blokirnya."
+        confirmLabel="Blokir"
         destructive
         onConfirm={() => {
-          update((d) => {
-            d.contacts = d.contacts.filter((x) => x.id !== toRemove);
-            return d;
-          });
+          if (toRemove) void toggleBlock(toRemove.contact_id, true);
           setToRemove(null);
-          toast.success("Kontak dihapus");
         }}
       />
     </AppShell>

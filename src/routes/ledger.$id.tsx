@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { BellRing, CheckCircle2, MessageSquare, ShieldAlert, Wallet, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, MessageSquare, ShieldAlert, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { LedgerCard, PaymentList, PaymentTimeline } from "@/components/mcm/ledger-parts";
-import { ProtoNote } from "@/components/mcm/primitives";
+import { EmptyState, LoadingSkeleton, ConfirmDialog, StatusBadge } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogClose,
@@ -19,16 +18,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { rupiah } from "@/lib/mcm/format";
-import { applyPayment, ledgerRemaining, uid, useMCM } from "@/lib/mcm/store";
+import { rupiah, tanggal, waktuRelatif } from "@/lib/mcm/format";
+import { supabase } from "@/integrations/supabase/client";
+import { useRequireAuth } from "@/lib/api/guard";
+import { getLedger, LEDGER_STATUS_LABEL, recordPayment, remaining, updateStatus, type LedgerRow } from "@/lib/api/ledger";
+import { qk } from "@/lib/api/queries";
 
 export const Route = createFileRoute("/ledger/$id")({
   head: () => ({
     meta: [
       { title: "Detail catatan — MCM" },
-      { name: "description", content: "Detail utang piutang MCM: cicilan, bukti bayar, linimasa aktivitas, dan pengingat." },
+      { name: "description", content: "Detail utang piutang MCM: pembayaran, linimasa aktivitas, dan persetujuan." },
       { property: "og:title", content: "Detail catatan — MCM" },
-      { property: "og:description", content: "Riwayat cicilan dan persetujuan catatan utang." },
+      { property: "og:description", content: "Riwayat pembayaran dan persetujuan catatan utang." },
     ],
   }),
   component: LedgerDetail,
@@ -36,80 +38,142 @@ export const Route = createFileRoute("/ledger/$id")({
 
 function LedgerDetail() {
   const { id } = Route.useParams();
-  const { state, update } = useMCM();
-  const entry = state.ledgers.find((l) => l.id === id);
-  const [payOpen, setPayOpen] = useState(false);
-  const [pay, setPay] = useState({ amount: "", method: "Transfer bank", note: "" });
+  const { userId, loading } = useRequireAuth();
+  const qc = useQueryClient();
 
-  if (!entry) {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: qk.ledger(id),
+    queryFn: () => getLedger(id),
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase
+      .channel(`ledger-detail-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ledgers", filter: `id=eq.${id}` }, () => {
+        void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "ledger_payments", filter: `ledger_id=eq.${id}` }, () => {
+        void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "ledger_events", filter: `ledger_id=eq.${id}` }, () => {
+        void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [id, qc]);
+
+  const [payOpen, setPayOpen] = useState(false);
+  const [pay, setPay] = useState({ amount: "", method: "transfer", note: "" });
+  const [confirm, setConfirm] = useState<null | { status: LedgerRow["status"]; title: string; description: string; label: string; destructive?: boolean }>(null);
+
+  const ledger = data?.ledger;
+  const isOwner = ledger?.owner_id === userId;
+  const isCounterpart = ledger?.counterpart_user_id === userId;
+
+  const sisa = useMemo(() => (ledger ? remaining(ledger) : 0), [ledger]);
+
+  const refresh = () => void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+
+  const runStatus = async (status: LedgerRow["status"]) => {
+    if (!ledger || !userId) return;
+    try {
+      await updateStatus(ledger.id, status, userId);
+      toast.success(`Status diperbarui: ${LEDGER_STATUS_LABEL[status]}`);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui status");
+    } finally {
+      setConfirm(null);
+    }
+  };
+
+  const submitPayment = async () => {
+    if (!ledger) return;
+    const amount = Number(pay.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Nominal pembayaran tidak valid");
+      return;
+    }
+    if (amount > sisa) {
+      toast.error("Nominal melebihi sisa tagihan");
+      return;
+    }
+    try {
+      await recordPayment(ledger.id, amount, pay.method, pay.note.trim());
+      toast.success("Pembayaran tercatat");
+      setPayOpen(false);
+      setPay({ amount: "", method: "transfer", note: "" });
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Pembayaran gagal dicatat");
+    }
+  };
+
+  if (loading || isLoading) {
     return (
-      <AppShell nav={false} header={<MobileHeader back title="Catatan tidak ditemukan" />}>
-        <div className="px-6 py-16 text-center text-sm text-muted-foreground">
-          Catatan ini sudah dihapus.
-          <div className="mt-4">
-            <Button asChild className="rounded-xl">
-              <Link to="/ledger">Kembali ke catatan</Link>
-            </Button>
-          </div>
-        </div>
+      <AppShell nav={false} header={<MobileHeader back title="Detail catatan" />}>
+        <LoadingSkeleton rows={5} />
       </AppShell>
     );
   }
 
-  const addEvent = (label: string, detail?: string) => ({
-    id: uid("ev"),
-    at: new Date().toISOString(),
-    actor: state.profile.name,
-    label,
-    ...(detail ? { detail } : {}),
-  });
+  if (isError || !ledger) {
+    return (
+      <AppShell nav={false} header={<MobileHeader back title="Detail catatan" />}>
+        <EmptyState
+          icon={Wallet}
+          title="Catatan tidak ditemukan"
+          description="Catatan ini mungkin sudah dihapus atau Anda tidak memiliki akses."
+          action={
+            <div className="flex gap-2">
+              <Button variant="outline" className="rounded-xl" onClick={() => void refetch()}>Coba lagi</Button>
+              <Button asChild className="rounded-xl">
+                <Link to="/finance">Kembali ke Keuangan</Link>
+              </Button>
+            </div>
+          }
+        />
+      </AppShell>
+    );
+  }
 
-  const setStatus = (status: typeof entry.status, label: string) => {
-    update((d) => {
-      const l = d.ledgers.find((x) => x.id === id)!;
-      l.status = status;
-      l.timeline.push(addEvent(label));
-      return d;
-    });
-    toast.success(label);
-  };
-
-  const submitPayment = () => {
-    const amount = Number(pay.amount);
-    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Nominal cicilan tidak valid"); return; }
-    if (amount > ledgerRemaining(entry)) { toast.error("Nominal melebihi sisa tagihan"); return; }
-    update((d) => {
-      const idx = d.ledgers.findIndex((x) => x.id === id);
-      const updated = applyPayment(d.ledgers[idx]!, {
-        id: uid("pm"),
-        amount,
-        at: new Date().toISOString(),
-        method: pay.method,
-        ...(pay.note.trim() ? { note: pay.note.trim() } : {}),
-      });
-      updated.timeline = [...updated.timeline, addEvent("Pembayaran dicatat", `${rupiah(amount)} via ${pay.method}`)];
-      d.ledgers[idx] = updated;
-      return d;
-    });
-    setPayOpen(false);
-    setPay({ amount: "", method: "Transfer bank", note: "" });
-    toast.success("Pembayaran tercatat");
-  };
+  const canApprove = isCounterpart && ledger.status === "pending_approval";
+  const canPay = (isOwner || isCounterpart) && (ledger.status === "active" || ledger.status === "partially_paid");
+  const canMarkPaid = (isOwner || isCounterpart) && sisa === 0 && ledger.status !== "paid" && ledger.status !== "cancelled" && ledger.status !== "rejected";
+  const canDispute = (isOwner || isCounterpart) && !["disputed", "cancelled", "rejected"].includes(ledger.status);
+  const canCancel = isOwner && !["cancelled", "paid"].includes(ledger.status);
 
   return (
-    <AppShell nav={false} header={<MobileHeader back title="Detail catatan" subtitle={entry.counterpartName} />}>
-      <div className="space-y-4 px-4 py-4">
-        <LedgerCard entry={entry} />
+    <AppShell nav={false} header={<MobileHeader back title="Detail catatan" subtitle={ledger.counterpart_name} />}>
+      <div className="space-y-4 px-4 py-4 pb-10">
+        <div className="card-soft space-y-3 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-sm text-muted-foreground">{ledger.type === "receivable" ? "Piutang saya" : "Saya berutang"}</p>
+              <p className="text-2xl font-bold">{rupiah(sisa)}</p>
+              <p className="text-xs text-muted-foreground">dari total {rupiah(Number(ledger.amount))} • dibayar {rupiah(Number(ledger.paid_amount))}</p>
+            </div>
+            <StatusBadge tone={ledger.status === "paid" ? "success" : ledger.status === "rejected" || ledger.status === "disputed" ? "danger" : ledger.status === "pending_approval" ? "warning" : "primary"}>
+              {LEDGER_STATUS_LABEL[ledger.status]}
+            </StatusBadge>
+          </div>
+          {ledger.note && <p className="text-sm">{ledger.note}</p>}
+          {ledger.due_date && <p className="text-xs text-muted-foreground">Jatuh tempo {tanggal(ledger.due_date)}</p>}
+        </div>
 
-        {entry.status === "menunggu" && (
+        {canApprove && (
           <div className="card-soft space-y-2 p-4">
-            <p className="text-sm font-semibold">Menunggu persetujuan</p>
-            <p className="text-xs text-muted-foreground">Catatan berlaku setelah kedua pihak setuju.</p>
+            <p className="text-sm font-semibold">Menunggu persetujuan Anda</p>
+            <p className="text-xs text-muted-foreground">Catatan ini berlaku setelah Anda menyetujuinya.</p>
             <div className="flex gap-2">
-              <Button className="flex-1 rounded-xl" onClick={() => setStatus("aktif", "Catatan disetujui")}>
+              <Button className="flex-1 rounded-xl" onClick={() => void runStatus("active")}>
                 <CheckCircle2 className="size-4" /> Setujui
               </Button>
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStatus("ditolak", "Catatan ditolak")}>
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => void runStatus("rejected")}>
                 <XCircle className="size-4" /> Tolak
               </Button>
             </div>
@@ -117,65 +181,111 @@ function LedgerDetail() {
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <Button className="rounded-xl" onClick={() => setPayOpen(true)} disabled={entry.status === "lunas" || entry.status === "ditolak"}>
-            <Wallet className="size-4" /> Catat cicilan
+          <Button className="rounded-xl" disabled={!canPay} onClick={() => setPayOpen(true)}>
+            <Wallet className="size-4" /> Catat pembayaran
           </Button>
-          <Button variant="outline" className="rounded-xl" onClick={() => toast.success("Pengingat dikirim ke " + entry.counterpartName)}>
-            <BellRing className="size-4" /> Kirim pengingat
-          </Button>
-        </div>
-
-        <div className="card-soft flex items-center justify-between p-3">
-          <Label htmlFor="rem">Pengingat otomatis</Label>
-          <Switch
-            id="rem"
-            checked={entry.reminder}
-            onCheckedChange={(v) =>
-              update((d) => {
-                const l = d.ledgers.find((x) => x.id === id)!;
-                l.reminder = v;
-                return d;
-              })
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={!canMarkPaid}
+            onClick={() =>
+              setConfirm({ status: "paid", title: "Tandai lunas?", description: "Catatan ini akan ditandai lunas.", label: "Tandai lunas" })
             }
-          />
+          >
+            <CheckCircle2 className="size-4" /> Tandai lunas
+          </Button>
         </div>
 
         <div className="card-soft p-4">
           <p className="mb-2 text-sm font-semibold">Riwayat pembayaran</p>
-          <PaymentList entry={entry} />
+          {data.payments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Belum ada pembayaran yang dicatat.</p>
+          ) : (
+            <ul className="space-y-2">
+              {data.payments.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <CheckCircle2 className="size-5 shrink-0 text-success" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">{rupiah(Number(p.amount))}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {p.method} • {tanggal(p.paid_at)}
+                    </p>
+                    {p.note && <p className="text-[11px] text-muted-foreground">{p.note}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="card-soft p-4">
           <p className="mb-2 text-sm font-semibold">Linimasa aktivitas</p>
-          <PaymentTimeline entry={entry} />
+          {data.events.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Belum ada aktivitas.</p>
+          ) : (
+            <ol className="relative space-y-4 pl-6">
+              <span className="absolute top-1 bottom-1 left-[7px] w-px bg-border" />
+              {[...data.events].reverse().map((ev) => (
+                <li key={ev.id} className="relative">
+                  <span className="absolute top-1 -left-[22px] size-3.5 rounded-full border-2 border-background bg-primary" />
+                  <p className="text-sm font-medium">{ev.label}</p>
+                  {ev.detail && <p className="text-xs text-muted-foreground">{ev.detail}</p>}
+                  <p className="text-[11px] text-muted-foreground">{waktuRelatif(ev.created_at)}</p>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          {entry.createdFromChatId && (
+          {ledger.conversation_id && (
             <Button variant="outline" className="rounded-xl" asChild>
-              <Link to="/chat/$id" params={{ id: entry.createdFromChatId }}>
+              <Link to="/chat/$id" params={{ id: ledger.conversation_id }}>
                 <MessageSquare className="size-4" /> Buka chat
               </Link>
             </Button>
           )}
-          <Button variant="outline" className="rounded-xl text-destructive" onClick={() => setStatus("disengketakan", "Catatan disengketakan")}>
+          <Button
+            variant="outline"
+            className="rounded-xl text-destructive"
+            disabled={!canDispute}
+            onClick={() =>
+              setConfirm({ status: "disputed", title: "Sengketakan catatan?", description: "Catatan akan ditandai disengketakan hingga kedua pihak menyelesaikannya.", label: "Sengketakan", destructive: true })
+            }
+          >
             <ShieldAlert className="size-4" /> Sengketakan
           </Button>
         </div>
 
-        <ProtoNote>Kesepakatan dicatat lokal di perangkat. Versi produksi membutuhkan sinkronisasi server agar kedua pihak melihat status sama.</ProtoNote>
+        {canCancel && (
+          <Button
+            variant="ghost"
+            className="w-full rounded-xl text-destructive"
+            onClick={() =>
+              setConfirm({ status: "cancelled", title: "Batalkan catatan?", description: "Catatan yang dibatalkan tidak bisa diaktifkan kembali.", label: "Batalkan", destructive: true })
+            }
+          >
+            <XCircle className="size-4" /> Batalkan catatan
+          </Button>
+        )}
       </div>
 
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent className="max-w-[360px] rounded-2xl">
           <DialogHeader>
             <DialogTitle>Catat pembayaran</DialogTitle>
-            <DialogDescription>Sisa tagihan {rupiah(ledgerRemaining(entry))}.</DialogDescription>
+            <DialogDescription>Sisa tagihan {rupiah(sisa)}.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="pay-amount">Nominal (Rp)</Label>
-              <Input id="pay-amount" inputMode="numeric" maxLength={12} value={pay.amount} onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))} />
+              <Input
+                id="pay-amount"
+                inputMode="numeric"
+                maxLength={12}
+                value={pay.amount}
+                onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Metode</Label>
@@ -184,9 +294,9 @@ function LedgerDetail() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Transfer bank">Transfer bank</SelectItem>
-                  <SelectItem value="Tunai">Tunai</SelectItem>
-                  <SelectItem value="E-wallet">E-wallet</SelectItem>
+                  <SelectItem value="transfer">Transfer bank</SelectItem>
+                  <SelectItem value="cash">Tunai</SelectItem>
+                  <SelectItem value="ewallet">E-wallet</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -199,10 +309,20 @@ function LedgerDetail() {
             <DialogClose asChild>
               <Button variant="ghost">Batal</Button>
             </DialogClose>
-            <Button onClick={submitPayment}>Simpan</Button>
+            <Button onClick={() => void submitPayment()}>Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!confirm}
+        onOpenChange={(v) => !v && setConfirm(null)}
+        title={confirm?.title ?? ""}
+        description={confirm?.description ?? ""}
+        confirmLabel={confirm?.label ?? "Lanjutkan"}
+        destructive={confirm?.destructive}
+        onConfirm={() => confirm && void runStatus(confirm.status)}
+      />
     </AppShell>
   );
 }
