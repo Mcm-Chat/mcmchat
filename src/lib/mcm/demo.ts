@@ -427,6 +427,7 @@ function prod(
     description,
     active: stock > 0,
     emoji,
+    photos: [],
     variants:
       category === "Minuman"
         ? [
