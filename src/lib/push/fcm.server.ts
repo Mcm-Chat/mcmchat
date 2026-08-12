@@ -94,6 +94,25 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
 export type PushTarget = { token: string; sound: boolean; vibrate: boolean };
 
 /**
+ * Hanya error yang benar-benar berarti "token tidak berlaku lagi" yang boleh
+ * menghapus token. Bug payload (INVALID_ARGUMENT pada field lain, quota,
+ * server error) TIDAK boleh membuang token pengguna yang valid.
+ */
+export function isDeadTokenError(status: number, body: unknown): boolean {
+  if (status === 404) return true;
+  if (status !== 400 && status !== 403) return false;
+  const err = (body as { error?: { status?: string; details?: { errorCode?: string }[]; message?: string } } | null)?.error;
+  if (!err) return false;
+  const codes = new Set<string>();
+  if (err.status) codes.add(err.status);
+  for (const d of err.details ?? []) if (d.errorCode) codes.add(d.errorCode);
+  if (codes.has("UNREGISTERED") || codes.has("NOT_FOUND") || codes.has("SENDER_ID_MISMATCH")) return true;
+  // INVALID_ARGUMENT hanya dianggap token mati bila memang menyebut field token.
+  if (codes.has("INVALID_ARGUMENT")) return /registration token|message\.token|not a valid FCM/i.test(err.message ?? "");
+  return false;
+}
+
+/**
  * Kirim data-only message (prioritas tinggi) agar receiver native yang
  * membangun notifikasi — termasuk aksi Balas / Tandai dibaca — tetap jalan
  * saat proses aplikasi mati.
@@ -136,7 +155,8 @@ export async function sendPush(targets: PushTarget[], data: PushData): Promise<F
         return;
       }
       failed += 1;
-      if (res.status === 404 || res.status === 400) invalidTokens.push(t.token);
+      const body = await res.json().catch(() => null);
+      if (isDeadTokenError(res.status, body)) invalidTokens.push(t.token);
     }),
   );
 

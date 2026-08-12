@@ -439,6 +439,35 @@ export type Database = {
           },
         ]
       }
+      device_action_rate: {
+        Row: {
+          action: string
+          count: number
+          device_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          device_id: string
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          device_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_action_rate_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       devices: {
         Row: {
           action_token_hash: string | null
@@ -2092,6 +2121,32 @@ export type Database = {
         }
         Returns: number
       }
+      answer_call: {
+        Args: { _call: string }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       bg_mark_delivered: {
         Args: { _conv: string; _message?: string; _token: string }
         Returns: Json
@@ -2099,6 +2154,10 @@ export type Database = {
       bg_mark_read: {
         Args: { _conv: string; _idempotency_key?: string; _token: string }
         Returns: Json
+      }
+      bg_rate_ok: {
+        Args: { _action: string; _dev: string; _limit: number }
+        Returns: boolean
       }
       bg_reply_message: {
         Args: {
@@ -2153,6 +2212,36 @@ export type Database = {
         Args: { _qty: number; _unit: string; _variant: string }
         Returns: number
       }
+      create_call_tx: {
+        Args: {
+          _conversation: string
+          _kind: Database["public"]["Enums"]["call_kind"]
+          _max_participants?: number
+        }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_preparation_job: {
         Args: {
           _assigned: string
@@ -2175,6 +2264,37 @@ export type Database = {
           device_id: string
           user_id: string
         }[]
+      }
+      end_call: {
+        Args: {
+          _call: string
+          _duration?: number
+          _reason?: string
+          _status: Database["public"]["Enums"]["call_status"]
+        }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       expire_stale_calls: { Args: never; Returns: number }
       find_profile_by_pin: {

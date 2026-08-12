@@ -18,7 +18,7 @@ import {
   type UserSettingsRow,
 } from "@/lib/api/settings";
 import { getPushStatus } from "@/lib/push/push.functions";
-import { usePushRegistration } from "@/lib/push/use-push";
+import { enablePush, usePushChannels, usePushState } from "@/lib/push/use-push";
 import {
   PERM_LABEL,
   STATE_LABEL,
@@ -72,7 +72,8 @@ function NotificationSettingsPage() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const notif = notificationsOf(settings);
-  const push = usePushRegistration(userId, { sound: notif.sound, vibrate: notif.vibrate });
+  const push = usePushState();
+  usePushChannels({ sound: notif.sound, vibrate: notif.vibrate });
 
   const refreshPerms = useCallback(async () => {
     const entries = await Promise.all(PERM_KEYS.map(async (k) => [k, await checkPermission(k)] as const));
@@ -125,22 +126,65 @@ function NotificationSettingsPage() {
   return (
     <AppShell nav={false} header={<MobileHeader title="Izin & Notifikasi" subtitle="Kontrol push, channel, dan izin" back />}>
       <div className="space-y-5 px-4 py-5 pb-12">
-        <section className="space-y-2 rounded-2xl border border-border bg-card p-4">
+        <section className="space-y-3 rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
             <BellRing className="size-4 text-primary" />
             <h2 className="text-sm font-semibold">Status push perangkat</h2>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {configured === null
-              ? "Memeriksa konfigurasi server…"
-              : !configured
-                ? "Kredensial pengiriman push belum dikonfigurasi di server, jadi notifikasi latar belakang belum aktif. Preferensi di bawah tetap tersimpan."
-                : push.native
-                  ? push.registered
-                    ? "Perangkat ini terdaftar dan siap menerima notifikasi walau aplikasi tertutup."
-                    : `Perangkat native belum terdaftar (${push.reason ?? "izin belum diberikan"}).`
-                  : "Anda membuka MCM di browser. Notifikasi latar belakang penuh tersedia pada aplikasi Android."}
-          </p>
+          {/* Tiga kapabilitas TERPISAH — tidak ada klaim gabungan yang menyesatkan. */}
+          <ul className="space-y-2">
+            {[
+              {
+                label: "Server pengirim push (FCM)",
+                ok: configured === true,
+                pending: configured === null,
+                hint: "Dikonfigurasi admin lewat kredensial server.",
+              },
+              {
+                label: "Token perangkat ini terdaftar",
+                ok: push.registered,
+                pending: false,
+                hint: push.native
+                  ? (push.reason ?? "Aktifkan notifikasi agar perangkat terdaftar.")
+                  : "Hanya tersedia pada aplikasi Android, bukan tab browser.",
+              },
+              {
+                label: "Penerima latar native terpasang",
+                ok: push.receiverInstalled,
+                pending: false,
+                hint: push.receiverInstalled
+                  ? "Pesan tetap masuk saat aplikasi ditutup."
+                  : "Belum terpasang di build ini, jadi pengiriman saat aplikasi benar-benar ditutup belum dijamin.",
+              },
+            ].map((row) => (
+              <li key={row.label} className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{row.label}</p>
+                  <p className="text-xs text-muted-foreground">{row.hint}</p>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className={row.pending ? "bg-muted text-muted-foreground" : stateTone(row.ok ? "granted" : "prompt")}
+                >
+                  {row.pending ? "Memeriksa…" : row.ok ? "Aktif" : "Belum"}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+          {userId && push.native && perms["notifications"] !== "granted" ? (
+            <Button
+              size="sm"
+              className="w-full rounded-xl"
+              onClick={() => {
+                void enablePush(userId).then((s) => {
+                  setPerms((p) => ({ ...p, notifications: s.permission }));
+                  if (s.permission !== "granted") toast.info("Izin notifikasi belum diberikan.");
+                });
+              }}
+            >
+              Aktifkan notifikasi di perangkat ini
+            </Button>
+          ) : null}
           <div className="flex items-center justify-between gap-3 pt-1">
             <div>
               <p className="text-sm font-medium">Aktifkan notifikasi push</p>
