@@ -113,3 +113,14 @@ export async function fileToDataUrl(file: File, max = 720): Promise<string> {
     return dataUrl;
   }
 }
+/** Kecilkan foto sebelum diunggah agar hemat kuota (maks sisi terpanjang 1280px). */
+export async function compressImage(file: File, max = 1280): Promise<{ blob: Blob; previewUrl: string }> {
+  const dataUrl = await fileToDataUrl(file, max);
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return { blob, previewUrl: dataUrl };
+}
+
+export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+  return (await fetch(dataUrl)).blob();
+}
