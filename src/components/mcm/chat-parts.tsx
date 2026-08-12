@@ -158,10 +158,23 @@ export function MessageBubble({
             </div>
           ) : message.kind === "image" ? (
             <div className="space-y-1">
-              <div className="flex h-28 w-44 items-center justify-center rounded-xl bg-black/15">
-                <ImageIcon className="size-7 opacity-70" />
-              </div>
-              <span>{message.text}</span>
+              {message.mediaDataUrl ? (
+                <img
+                  src={message.mediaDataUrl}
+                  alt={message.text || "Foto terkirim"}
+                  className="max-h-56 w-52 max-w-full rounded-xl object-cover"
+                />
+              ) : (
+                <div className="flex h-28 w-44 items-center justify-center rounded-xl bg-black/15">
+                  <ImageIcon className="size-7 opacity-70" />
+                </div>
+              )}
+              {message.text && <span className="block w-52 max-w-full break-words">{message.text}</span>}
+              {message.location && (
+                <div className="w-52 max-w-full">
+                  <LocationCard location={message.location} compact />
+                </div>
+              )}
             </div>
           ) : message.kind === "voice" ? (
             <div className="flex w-44 items-center gap-2">
