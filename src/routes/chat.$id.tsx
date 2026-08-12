@@ -96,13 +96,13 @@ function ChatRoom() {
       const { data } = await supabase
         .from("message_reactions")
         .select("message_id, emoji")
-        .in("message_id", (messages ?? []).map((m) => m.id));
+        .in("message_id", messages.map((m) => m.id));
       return data ?? [];
     },
-    enabled: (messages ?? []).length > 0,
+    enabled: messages.length > 0,
   });
 
-  const myMessageIds = useMemo(() => (messages ?? []).filter((m) => m.sender_id === userId).map((m) => m.id), [messages, userId]);
+  const myMessageIds = useMemo(() => messages.filter((m) => m.sender_id === userId).map((m) => m.id), [messages, userId]);
   const { data: receiptRows } = useReceipts(id, myMessageIds, userId);
   const receiptIndex = useMemo(() => indexReceipts(receiptRows ?? []), [receiptRows]);
   const otherMemberCount = useMemo(() => (conv?.members ?? []).filter((m) => m.id !== userId).length, [conv, userId]);
@@ -116,7 +116,7 @@ function ChatRoom() {
       void qc.invalidateQueries({ queryKey: qk.conversations(userId) });
       void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
     });
-  }, [userId, id, messages?.length, qc]);
+  }, [userId, id, messages.length, qc]);
 
   // Jaring pengaman bila pesan tiba saat aplikasi tidak fokus.
   useEffect(() => {
@@ -130,7 +130,7 @@ function ChatRoom() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages?.length]);
+  }, [messages.length]);
 
   const nameOf = useMemo(() => {
     const map = new Map((conv?.members ?? []).map((m) => [m.id, m.display_name]));
@@ -232,7 +232,7 @@ function ChatRoom() {
 
   const runDeleteForEveryone = async () => {
     if (!userId) return;
-    const target = (messages ?? []).filter((m) => selection.includes(m.id));
+    const target = messages.filter((m) => selection.includes(m.id));
     try {
       await deleteForEveryone(target, userId);
       setSelection([]);
@@ -312,7 +312,7 @@ function ChatRoom() {
                 <Button variant="ghost" size="sm" onClick={() => void deleteForMe(selection, userId!).then(() => { setSelection([]); refresh(); })}>
                   Hapus untuk saya
                 </Button>
-                {(messages ?? []).filter((m) => selection.includes(m.id)).every((m) => m.sender_id === userId) && (
+                {messages.filter((m) => selection.includes(m.id)).every((m) => m.sender_id === userId) && (
                   <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setConfirmAll(true)}>
                     Hapus untuk semua
                   </Button>
@@ -368,7 +368,7 @@ function ChatRoom() {
       }
     >
       <div className="chat-canvas flex-1 px-2 py-3">
-        {(messages ?? []).length === 0 && (
+        {messages.length === 0 && (
           <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} />
@@ -377,14 +377,14 @@ function ChatRoom() {
             <p className="text-xs text-muted-foreground">Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.</p>
           </div>
         )}
-        {(messages ?? []).map((m, idx) => {
+        {messages.map((m, idx) => {
           const day = labelHari(m.created_at);
           const showDay = day !== lastDay;
           lastDay = day;
           const mine = m.sender_id === userId;
-          const replyTo = m.reply_to_id ? (messages ?? []).find((x) => x.id === m.reply_to_id) : undefined;
+          const replyTo = m.reply_to_id ? messages.find((x) => x.id === m.reply_to_id) : undefined;
           const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
-          const prev = (messages ?? [])[idx - 1];
+          const prev = messages[idx - 1];
           const grouped =
             !showDay &&
             !!prev &&
