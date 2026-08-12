@@ -261,7 +261,9 @@ function ChatRoom() {
       header={
         <MobileHeader
           back
-          onBack={() => navigate({ to: "/chat" })}
+          onBack={() => {
+            void navigate({ to: "/chat" });
+          }}
           title={
             <span className="flex items-center gap-2">
               {chat.name}
