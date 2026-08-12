@@ -65,7 +65,7 @@ export function OrderCard({ order }: { order: Order }) {
         </p>
         <p className="mt-1 text-sm font-bold">{rupiah(orderTotal(order))}</p>
       </div>
-    </Link>
+    </div>
   );
 }
 
