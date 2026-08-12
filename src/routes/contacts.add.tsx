@@ -122,6 +122,13 @@ function AddContactPage() {
                   className="h-12 rounded-xl text-center font-mono text-lg tracking-[0.25em]"
                 />
                 <p className="text-[11px] text-muted-foreground">Tanpa karakter membingungkan: 0, O, I, dan 1 tidak dipakai.</p>
+                <button
+                  type="button"
+                  className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
+                  onClick={() => setPin("R8NA-K4Q7")}
+                >
+                  Coba PIN contoh: R8NA-K4Q7 (Rina Safitri)
+                </button>
               </div>
               <Button className="h-11 w-full rounded-xl" onClick={doSearch} disabled={!valid}>
                 <Search className="size-4" /> Cari pengguna
