@@ -78,12 +78,10 @@ const toBlob = (canvas: HTMLCanvasElement, quality: number) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Gagal memproses gambar"))), "image/jpeg", quality),
   );
 
-/** Susun foto + filter + coretan + teks menjadi satu berkas 1080x1920. */
-export async function composeStatus(image: HTMLImageElement, state: EditorState): Promise<Composed> {
-  const canvas = document.createElement("canvas");
-  canvas.width = CANVAS_W;
-  canvas.height = CANVAS_H;
+/** Gambar seluruh adegan ke konteks 1080x1920 — dipakai pratinjau dan ekspor. */
+export function drawScene(canvas: HTMLCanvasElement, image: HTMLImageElement, state: EditorState) {
   const ctx = canvas.getContext("2d")!;
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
   ctx.fillStyle = "#0b1220";
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
@@ -118,6 +116,16 @@ export async function composeStatus(image: HTMLImageElement, state: EditorState)
       ctx.restore();
     }
   }
+
+  return canvas;
+}
+
+/** Susun foto + filter + coretan + teks menjadi satu berkas 1080x1920. */
+export async function composeStatus(image: HTMLImageElement, state: EditorState): Promise<Composed> {
+  const canvas = document.createElement("canvas");
+  canvas.width = CANVAS_W;
+  canvas.height = CANVAS_H;
+  drawScene(canvas, image, state);
 
   const thumbCanvas = document.createElement("canvas");
   thumbCanvas.width = 270;
