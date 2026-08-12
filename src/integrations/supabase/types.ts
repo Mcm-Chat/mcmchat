@@ -2176,6 +2176,7 @@ export type Database = {
         Args: { _biz: string; _uid: string }
         Returns: boolean
       }
+      can_read_avatar_object: { Args: { _name: string }; Returns: boolean }
       can_read_status_object: { Args: { _name: string }; Returns: boolean }
       can_see_ledger: {
         Args: { _ledger: string; _uid: string }
@@ -2258,6 +2259,7 @@ export type Database = {
         Returns: Json
       }
       create_sale_tx: { Args: { _payload: Json }; Returns: Json }
+      customer_pin: { Args: { _customer: string }; Returns: string }
       device_from_action_token: {
         Args: { _token: string }
         Returns: {
@@ -2321,6 +2323,7 @@ export type Database = {
         Args: { _call: string; _uid: string }
         Returns: boolean
       }
+      is_conv_admin: { Args: { _conv: string; _uid: string }; Returns: boolean }
       is_conv_member: {
         Args: { _conv: string; _uid: string }
         Returns: boolean
