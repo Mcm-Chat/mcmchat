@@ -401,7 +401,22 @@ function ChatRoom() {
         )
       }
     >
-      <div className="chat-canvas flex-1 px-2 py-3">
+      {connection !== "online" && (
+        <div
+          role="status"
+          className="sticky top-0 z-10 bg-muted/90 px-4 py-1.5 text-center text-[11px] font-medium text-muted-foreground backdrop-blur"
+        >
+          {connection === "connecting" ? "Menghubungkan kembali…" : "Offline — pesan dikirim otomatis saat koneksi kembali"}
+        </div>
+      )}
+      <div ref={scrollRef} onScroll={onScroll} className="chat-canvas relative flex-1 overflow-y-auto px-2 py-3">
+        {hasOlder && (
+          <div className="mb-2 flex justify-center">
+            <Button variant="ghost" size="sm" disabled={isFetchingOlder} onClick={() => void fetchOlder()}>
+              {isFetchingOlder ? "Memuat pesan lama…" : "Muat pesan lama"}
+            </Button>
+          </div>
+        )}
         {messages.length === 0 && (
           <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
