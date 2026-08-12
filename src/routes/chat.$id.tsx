@@ -541,7 +541,7 @@ function ChatRoom() {
         <CreatePreparationDialog
           open={prepOpen}
           onOpenChange={setPrepOpen}
-          businessId={business.id}
+          businessId={business.business.id}
           conversationId={id}
           customerName={conv.other?.display_name ?? conv.title_resolved}
           customerUserId={conv.other?.id ?? null}
