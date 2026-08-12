@@ -341,6 +341,48 @@ function ChatRoom() {
       className="flex flex-col"
     >
       <div className="flex-1 space-y-1.5 px-3 py-4">
+        {selectMode && (
+          <div className="sticky top-0 z-10 -mx-1 mb-2 flex items-center gap-2 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-soft backdrop-blur">
+            <span className="text-sm font-semibold">{selection.length} dipilih</span>
+            <div className="ml-auto flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+                disabled={selection.length === 0}
+                onClick={() => {
+                  update((d) => deleteForMe(d, selection));
+                  setSelection([]);
+                  setSelectMode(false);
+                  toast.success("Pesan dihapus");
+                }}
+              >
+                Hapus untuk saya
+              </Button>
+              {selection.some((sid) => messages.find((m) => m.id === sid)?.senderId === "me") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl text-destructive hover:text-destructive"
+                  onClick={() => setConfirmAll(selection.filter((sid) => messages.find((m) => m.id === sid)?.senderId === "me"))}
+                >
+                  <Trash2 className="size-4" /> Untuk semua
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => {
+                  setSelection([]);
+                  setSelectMode(false);
+                }}
+              >
+                Batal
+              </Button>
+            </div>
+          </div>
+        )}
         {chat.disappearingHours > 0 && (
           <div className="mb-2 flex items-center justify-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground">
             <Timer className="size-3.5" /> Pesan menghilang setelah {chat.disappearingHours} jam
@@ -368,6 +410,8 @@ function ChatRoom() {
                   replyTo={m.replyToId ? messages.find((x) => x.id === m.replyToId) : undefined}
                   showSender={chat.type === "group"}
                   onAction={onAction}
+                  selectable={selectMode}
+                  selected={selection.includes(m.id)}
                 />
               </div>
             </div>
