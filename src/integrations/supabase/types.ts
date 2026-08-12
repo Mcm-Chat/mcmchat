@@ -905,6 +905,11 @@ export type Database = {
           price: number
           product_id: string | null
           qty: number
+          qty_base: number
+          qty_num: number
+          unit: string
+          variant_id: string | null
+          variant_name: string
         }
         Insert: {
           business_id: string
@@ -917,6 +922,11 @@ export type Database = {
           price?: number
           product_id?: string | null
           qty?: number
+          qty_base?: number
+          qty_num?: number
+          unit?: string
+          variant_id?: string | null
+          variant_name?: string
         }
         Update: {
           business_id?: string
@@ -929,6 +939,11 @@ export type Database = {
           price?: number
           product_id?: string | null
           qty?: number
+          qty_base?: number
+          qty_num?: number
+          unit?: string
+          variant_id?: string | null
+          variant_name?: string
         }
         Relationships: [
           {
@@ -950,6 +965,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1774,6 +1796,7 @@ export type Database = {
         }
         Returns: Json
       }
+      create_sale_tx: { Args: { _payload: Json }; Returns: Json }
       find_profile_by_pin: {
         Args: { _pin: string }
         Returns: {
