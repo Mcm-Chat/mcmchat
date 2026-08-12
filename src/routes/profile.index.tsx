@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Bell, LogOut, Moon, Palette, Shield, Users } from "lucide-react";
+import { Bell, Eye, KeyRound, LogOut, Monitor, Moon, Palette, Phone, Shield, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { PinCard } from "@/components/mcm/pin-card";
@@ -126,6 +126,86 @@ function ProfilePage() {
               />
             }
           />
+          <SettingRow
+            icon={Eye}
+            label="Centang dibaca"
+            description="Bagikan status baca ke lawan bicara"
+            right={
+              <Switch
+                checked={s.privacy.readReceipts}
+                onCheckedChange={(v) =>
+                  update((d) => {
+                    d.settings.privacy.readReceipts = v;
+                    return d;
+                  })
+                }
+              />
+            }
+          />
+          <SettingRow
+            icon={Phone}
+            label="Notifikasi panggilan"
+            description="Dering saat ada panggilan masuk"
+            right={
+              <Switch
+                checked={s.notifications.calls}
+                onCheckedChange={(v) =>
+                  update((d) => {
+                    d.settings.notifications.calls = v;
+                    return d;
+                  })
+                }
+              />
+            }
+          />
+          <SettingRow
+            icon={KeyRound}
+            label="Verifikasi dua langkah"
+            description="Minta kode tambahan saat masuk di perangkat baru"
+            right={
+              <Switch
+                checked={s.security.twoFactor}
+                onCheckedChange={(v) =>
+                  update((d) => {
+                    d.settings.security.twoFactor = v;
+                    return d;
+                  })
+                }
+              />
+            }
+          />
+        </div>
+
+        <div className="card-soft space-y-3 p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <Monitor className="size-4" /> Perangkat aktif
+          </p>
+          {s.security.devices.map((dv) => (
+            <div key={dv.id} className="flex items-center justify-between gap-3 rounded-xl bg-muted/50 p-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {dv.name} {dv.current && <span className="text-xs text-primary">• perangkat ini</span>}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">{dv.location}</p>
+              </div>
+              {!dv.current && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-lg text-xs"
+                  onClick={() => {
+                    update((d) => {
+                      d.settings.security.devices = d.settings.security.devices.filter((x) => x.id !== dv.id);
+                      return d;
+                    });
+                    toast.success("Perangkat dikeluarkan");
+                  }}
+                >
+                  Keluarkan
+                </Button>
+              )}
+            </div>
+          ))}
         </div>
 
         <Button variant="outline" className="w-full rounded-xl" asChild>
