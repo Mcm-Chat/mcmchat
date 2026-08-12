@@ -232,5 +232,5 @@ export function __resetOutbox() {
   timers.clear();
   queue = [];
   loaded = true;
-  onSent = null;
+  sentListeners.clear();
 }
