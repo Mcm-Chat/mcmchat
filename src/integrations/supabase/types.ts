@@ -478,6 +478,39 @@ export type Database = {
         }
         Relationships: []
       }
+      entitlements: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          feature: string
+          id: string
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          feature: string
+          id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          feature?: string
+          id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       inventory_balances: {
         Row: {
           business_id: string
@@ -1774,6 +1807,7 @@ export type Database = {
           theme: string
           updated_at: string
           user_id: string
+          voice: Json
         }
         Insert: {
           created_at?: string
@@ -1783,6 +1817,7 @@ export type Database = {
           theme?: string
           updated_at?: string
           user_id: string
+          voice?: Json
         }
         Update: {
           created_at?: string
@@ -1792,6 +1827,7 @@ export type Database = {
           theme?: string
           updated_at?: string
           user_id?: string
+          voice?: Json
         }
         Relationships: []
       }
@@ -1886,6 +1922,10 @@ export type Database = {
         }[]
       }
       gen_mcm_pin: { Args: never; Returns: string }
+      has_entitlement: {
+        Args: { _feature: string; _user_id: string }
+        Returns: boolean
+      }
       is_business_member: {
         Args: { _biz: string; _uid: string }
         Returns: boolean

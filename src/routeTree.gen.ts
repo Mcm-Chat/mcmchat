@@ -14,6 +14,7 @@ import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SupportRouteImport } from './routes/support'
@@ -34,6 +35,7 @@ import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
+import { Route as SettingsVoiceRouteImport } from './routes/settings.voice'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
 import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
@@ -61,6 +63,11 @@ const LoginRoute = LoginRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PremiumRoute = PremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -163,6 +170,11 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   path: '/settings/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsVoiceRoute = SettingsVoiceRouteImport.update({
+  id: '/settings/voice',
+  path: '/settings/voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -185,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/premium': typeof PremiumRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
@@ -197,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/voice': typeof SettingsVoiceRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -215,6 +229,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/premium': typeof PremiumRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
@@ -227,6 +242,7 @@ export interface FileRoutesByTo {
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/voice': typeof SettingsVoiceRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
@@ -246,6 +262,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/premium': typeof PremiumRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
@@ -258,6 +275,7 @@ export interface FileRoutesById {
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/voice': typeof SettingsVoiceRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -278,6 +296,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/premium'
     | '/privacy'
     | '/register'
     | '/support'
@@ -290,6 +309,7 @@ export interface FileRouteTypes {
     | '/photo/new'
     | '/prepare/$token'
     | '/settings/notifications'
+    | '/settings/voice'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -308,6 +328,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/premium'
     | '/privacy'
     | '/register'
     | '/support'
@@ -320,6 +341,7 @@ export interface FileRouteTypes {
     | '/photo/new'
     | '/prepare/$token'
     | '/settings/notifications'
+    | '/settings/voice'
     | '/tasks/$id'
     | '/business'
     | '/calls'
@@ -338,6 +360,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/premium'
     | '/privacy'
     | '/register'
     | '/support'
@@ -350,6 +373,7 @@ export interface FileRouteTypes {
     | '/photo/new'
     | '/prepare/$token'
     | '/settings/notifications'
+    | '/settings/voice'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -369,6 +393,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  PremiumRoute: typeof PremiumRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   SupportRoute: typeof SupportRoute
@@ -381,6 +406,7 @@ export interface RootRouteChildren {
   PhotoNewRoute: typeof PhotoNewRoute
   PrepareTokenRoute: typeof PrepareTokenRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsVoiceRoute: typeof SettingsVoiceRoute
   TasksIdRoute: typeof TasksIdRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
@@ -429,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/premium': {
+      id: '/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof PremiumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -571,6 +604,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/voice': {
+      id: '/settings/voice'
+      path: '/settings/voice'
+      fullPath: '/settings/voice'
+      preLoaderRoute: typeof SettingsVoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -601,6 +641,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  PremiumRoute: PremiumRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   SupportRoute: SupportRoute,
@@ -613,6 +654,7 @@ const rootRouteChildren: RootRouteChildren = {
   PhotoNewRoute: PhotoNewRoute,
   PrepareTokenRoute: PrepareTokenRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsVoiceRoute: SettingsVoiceRoute,
   TasksIdRoute: TasksIdRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
