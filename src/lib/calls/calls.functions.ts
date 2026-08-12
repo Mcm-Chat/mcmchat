@@ -23,15 +23,31 @@ export const issueCallToken = createServerFn({ method: "POST" })
     const cfg = readLiveKitConfig();
     if (!cfg) return { configured: false as const, reason: "Penyedia panggilan belum terhubung" };
 
-    // RLS memastikan baris hanya terbaca oleh peserta panggilan.
+    // Otorisasi eksplisit: baris peserta harus ada untuk pengguna ini.
+    // RLS tetap berlaku, tetapi izin masuk room TIDAK boleh bergantung pada
+    // efek samping kebijakan saja.
+    const { data: participant } = await context.supabase
+      .from("call_participants")
+      .select("user_id, left_at")
+      .eq("call_id", data.callId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!participant) {
+      return { configured: true as const, allowed: false as const, reason: "Anda bukan peserta panggilan ini" };
+    }
+
     const { data: call } = await context.supabase
       .from("calls")
       .select("id, kind, status, room_name")
       .eq("id", data.callId)
       .maybeSingle();
     if (!call) return { configured: true as const, allowed: false as const, reason: "Panggilan tidak ditemukan" };
-    if (call.status === "ended" || call.status === "missed" || call.status === "declined") {
+    if (call.status === "ended" || call.status === "missed" || call.status === "declined" || call.status === "failed") {
       return { configured: true as const, allowed: false as const, reason: "Panggilan sudah berakhir" };
+    }
+    // Room dibuat server saat panggilan dibuat; tanpa itu token tidak diterbitkan.
+    if (!call.room_name) {
+      return { configured: true as const, allowed: false as const, reason: "Panggilan tidak valid" };
     }
 
     const { data: profile } = await context.supabase
@@ -40,7 +56,7 @@ export const issueCallToken = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
 
-    const room = call.room_name ?? `mcm-${call.id}`;
+    const room = call.room_name;
     const { token, expiresAt } = await mintAccessToken(cfg, {
       room,
       identity: context.userId,
