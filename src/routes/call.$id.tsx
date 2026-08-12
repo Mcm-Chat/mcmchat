@@ -158,6 +158,7 @@ function CallScreen() {
   const isVideo = detail.kind === "video";
   const live = session.phase === "outgoing" || session.phase === "incoming" || session.phase === "connecting" || session.phase === "connected";
   const voiceActive = session.voiceApplied;
+  const voiceFallback = session.voiceFallback;
 
   const phaseLabel =
     session.phase === "connected"
@@ -262,13 +263,26 @@ function CallScreen() {
                     onClick={session.toggleCamera}
                     icon={session.controls.cameraOn ? Video : VideoOff}
                   />
-                  <ControlButton
-                    label="Speaker"
-                    active={session.controls.speakerOn}
-                    ariaLabel="Pengeras suara"
-                    onClick={session.toggleSpeaker}
-                    icon={session.controls.speakerOn ? Volume2 : VolumeX}
-                  />
+                  {/* Tombol speaker hanya muncul bila rute keluaran memang bisa
+                      diatur; kalau tidak, label jujur "Diatur sistem". */}
+                  {session.speakerSupported ? (
+                    <ControlButton
+                      label="Speaker"
+                      active={session.controls.speakerOn}
+                      ariaLabel="Pengeras suara"
+                      onClick={session.toggleSpeaker}
+                      icon={session.controls.speakerOn ? Volume2 : VolumeX}
+                    />
+                  ) : (
+                    <ControlButton
+                      label="Diatur sistem"
+                      active={false}
+                      disabled
+                      ariaLabel="Keluaran audio diatur sistem"
+                      onClick={() => undefined}
+                      icon={Volume2}
+                    />
+                  )}
                   <ControlButton
                     label="Balik kamera"
                     active={false}
