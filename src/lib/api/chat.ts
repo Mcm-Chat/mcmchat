@@ -164,6 +164,8 @@ export type SendMessageInput = {
   location?: MessageLocationInput | null;
   payload?: Record<string, unknown> | null;
   durationSec?: number | null;
+  /** Kunci idempotensi buatan perangkat; mencegah duplikasi saat retry/reconnect. */
+  clientId?: string | null;
 };
 
 export async function sendMessage(input: SendMessageInput): Promise<MessageRow> {
@@ -175,6 +177,7 @@ export async function sendMessage(input: SendMessageInput): Promise<MessageRow> 
     reply_to_id: input.replyToId ?? null,
     payload: (input.payload ?? null) as never,
     duration_sec: input.durationSec ?? null,
+    client_id: input.clientId ?? null,
   };
   if (input.file) {
     const up = await uploadChatMedia(input.conversationId, input.file.blob, input.file.name);
