@@ -428,6 +428,30 @@ function prod(
   description: string,
   emoji: string,
 ) {
+  return prodBase(id, name, category, price, discountPercent, sku, stock, description, emoji);
+}
+
+/** Placeholder foto ringan (SVG data URL) untuk data demo. */
+function swatch(color: string, label: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"><rect width="480" height="360" fill="${color}"/><text x="50%" y="52%" font-family="sans-serif" font-size="34" fill="#ffffff" text-anchor="middle">${label}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function photo(id: string, productId: string, imageUrl: string, locationUrl: string, caption: string, sortOrder: number) {
+  return { id, productId, imageUrl, locationUrl, caption, sortOrder, createdAt: iso(sortOrder * 60_000) };
+}
+
+function prodBase(
+  id: string,
+  name: string,
+  category: string,
+  price: number,
+  discountPercent: number,
+  sku: string,
+  stock: number,
+  description: string,
+  emoji: string,
+) {
   return {
     id,
     name,
