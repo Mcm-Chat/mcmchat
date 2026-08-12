@@ -153,6 +153,17 @@ export interface ProductVariant {
   price: number;
 }
 
+/** Satu foto produk dengan link lokasi miliknya sendiri. */
+export interface ProductPhoto {
+  id: ID;
+  productId: ID;
+  imageUrl: string;
+  locationUrl: string;
+  caption: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
 export interface Product {
   id: ID;
   name: string;
@@ -165,6 +176,11 @@ export interface Product {
   active: boolean;
   emoji: string;
   variants: ProductVariant[];
+  photos: ProductPhoto[];
+  /** Field lama (satu foto / satu lokasi) — hanya dibaca saat migrasi. */
+  imageUrl?: string | undefined;
+  image?: string | undefined;
+  locationUrl?: string | undefined;
 }
 
 export type OrderStatus = "baru" | "diproses" | "dikirim" | "selesai" | "dibatalkan";
