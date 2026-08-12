@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PIN_ALPHABET } from "@/lib/mcm/demo";
+import { DEMO_DIRECTORY, PIN_ALPHABET } from "@/lib/mcm/demo";
 import { uid, useMCM } from "@/lib/mcm/store";
 import type { Contact } from "@/lib/mcm/types";
 
@@ -52,6 +52,20 @@ function AddContactPage() {
     const found = state.contacts.find((c) => c.pin === formatted);
     if (found) {
       setResult(found);
+      return;
+    }
+    const dir = DEMO_DIRECTORY.find((d) => d.pin === formatted);
+    if (dir) {
+      setResult({
+        id: uid("ct"),
+        name: dir.name,
+        pin: dir.pin,
+        bio: dir.bio,
+        avatarColor: dir.avatarColor,
+        initials: dir.initials,
+        status: "outgoing",
+        lastSeen: new Date().toISOString(),
+      });
       return;
     }
     setResult({
