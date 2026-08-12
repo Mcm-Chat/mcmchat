@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Json, Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { DEFAULT_VOICE_PREFS, normalizePrefs, type VoicePrefs } from "@/lib/voice/presets";
 
 export type UserSettingsRow = Tables<"user_settings">;
 
@@ -52,6 +53,10 @@ export function privacyOf(row: UserSettingsRow | null): PrivacyPrefs {
 export function securityOf(row: UserSettingsRow | null): SecurityPrefs {
   return { ...DEFAULT_SECURITY, ...asRecord(row?.security) } as SecurityPrefs;
 }
+/** Preferensi Voice Privacy. Hanya setelan (angka), tidak pernah sampel suara. */
+export function voiceOf(row: UserSettingsRow | null): VoicePrefs {
+  return normalizePrefs(asRecord(row?.voice) as Partial<VoicePrefs>);
+}
 
 /** Ambil pengaturan pengguna, membuat baris default jika belum ada. */
 export async function getSettings(userId: string): Promise<UserSettingsRow> {
@@ -67,6 +72,7 @@ export async function getSettings(userId: string): Promise<UserSettingsRow> {
         notifications: DEFAULT_NOTIFICATIONS as unknown as Json,
         privacy: DEFAULT_PRIVACY as unknown as Json,
         security: DEFAULT_SECURITY as unknown as Json,
+        voice: DEFAULT_VOICE_PREFS as unknown as Json,
       })
       .select("*")
       .single(),
@@ -79,6 +85,7 @@ export type SettingsPatch = {
   notifications?: Partial<NotificationsPrefs>;
   privacy?: Partial<PrivacyPrefs>;
   security?: Partial<SecurityPrefs>;
+  voice?: Partial<VoicePrefs>;
 };
 
 /** Gabungkan patch jsonb parsial di sisi klien lalu simpan seluruh objek. */
@@ -88,6 +95,7 @@ export async function updateSettings(userId: string, patch: SettingsPatch): Prom
   if (patch.theme) update.theme = patch.theme;
   if (patch.notifications) update.notifications = { ...notificationsOf(current), ...patch.notifications } as unknown as Json;
   if (patch.privacy) update.privacy = { ...privacyOf(current), ...patch.privacy } as unknown as Json;
+  if (patch.voice) update.voice = normalizePrefs({ ...voiceOf(current), ...patch.voice }) as unknown as Json;
   if (patch.security) update.security = { ...securityOf(current), ...patch.security } as unknown as Json;
   return unwrap(
     await supabase.from("user_settings").update(update).eq("user_id", userId).select("*").single(),
