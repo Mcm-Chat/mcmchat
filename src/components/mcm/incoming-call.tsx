@@ -13,7 +13,7 @@ import { MCMAvatar } from "@/components/mcm/primitives";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { declineCall, listRingingCalls, subscribeIncomingCalls, type CallRow } from "@/lib/api/calls";
-import { subscribeConnection } from "@/lib/realtime/connection";
+import { onConnectionChange } from "@/lib/realtime/connection";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -55,7 +55,7 @@ export function IncomingCallListener() {
       if (document.visibilityState === "visible") recover();
     };
     document.addEventListener("visibilitychange", onVisible);
-    const offConn = subscribeConnection((s) => {
+    const offConn = onConnectionChange((s) => {
       if (s === "online") recover();
     });
     return () => {
