@@ -99,6 +99,7 @@ function ChatRoom() {
   }
 
   const contact = state.contacts.find((c) => c.id === chat.contactId);
+  const isBlocked = contact?.status === "blocked";
 
   const push = (partial: Partial<Message> & { kind: Message["kind"]; text: string }) => {
     update((d) => {
