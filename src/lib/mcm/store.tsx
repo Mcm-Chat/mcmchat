@@ -31,7 +31,7 @@ export function MCMProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as MCMState;
-        if (parsed && parsed.version === 1) setState(parsed);
+        if (parsed && parsed.version === 1) setState(migrateState(parsed));
       }
     } catch {
       /* abaikan penyimpanan rusak */
