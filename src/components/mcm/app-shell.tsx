@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, ClipboardList, MessageCircle, Package, User, Wallet } from "lucide-react";
+import { ArrowLeft, CircleDashed, ClipboardList, MessageCircle, Package, User, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useConversations, useLedgers } from "@/lib/api/queries";
 
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
+  { to: "/status", label: "Status", icon: CircleDashed, match: "/status" },
   { to: "/tasks", label: "Tugas", icon: ClipboardList, match: "/tasks" },
   { to: "/catalog", label: "Katalog", icon: Package, match: "/catalog" },
   { to: "/finance", label: "Keuangan", icon: Wallet, match: "/finance" },
@@ -26,7 +27,7 @@ export function BottomNavigation({ badges }: { badges?: Partial<Record<string, n
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="sticky bottom-0 z-30 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {NAV.map((item) => {
           const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
           const badge = merged[item.match];
