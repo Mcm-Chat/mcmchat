@@ -32,7 +32,7 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { chatMessages, uid, useMCM } from "@/lib/mcm/store";
+import { chatMessages, deleteForEveryone, deleteForMe, uid, useMCM } from "@/lib/mcm/store";
 import { labelHari, rupiah } from "@/lib/mcm/format";
 import type { Message } from "@/lib/mcm/types";
 
@@ -65,6 +65,9 @@ function ChatRoom() {
   const [confirmClear, setConfirmClear] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [selection, setSelection] = useState<string[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
+  const [confirmAll, setConfirmAll] = useState<string[] | null>(null);
   const [dismissSuggestion, setDismissSuggestion] = useState(false);
   const [ledgerForm, setLedgerForm] = useState({ type: "piutang", amount: "", note: "", dueDate: "" });
   const bottom = useRef<HTMLDivElement>(null);
@@ -177,6 +180,20 @@ function ChatRoom() {
   };
 
   const onAction = (action: string, message: Message, payload?: string) => {
+    if (action === "select") {
+      setSelectMode(true);
+      setSelection((prev) => (prev.includes(message.id) ? prev.filter((x) => x !== message.id) : [...prev, message.id]));
+      return;
+    }
+    if (action === "delete-me") {
+      update((d) => deleteForMe(d, [message.id]));
+      toast.success("Pesan dihapus");
+      return;
+    }
+    if (action === "delete-all") {
+      setConfirmAll([message.id]);
+      return;
+    }
     if (action === "reply") return setReply(message);
     if (action === "edit") {
       setEditing(message);
@@ -197,10 +214,6 @@ function ChatRoom() {
       if (!m) return d;
       if (action === "star") m.starred = !m.starred;
       if (action === "pin") m.pinned = !m.pinned;
-      if (action === "delete") {
-        m.deleted = true;
-        m.text = "Pesan ini dihapus";
-      }
       if (action === "react" && payload) {
         const existing = m.reactions.find((r) => r.by === "me");
         if (existing && existing.emoji === payload) m.reactions = m.reactions.filter((r) => r.by !== "me");
@@ -328,6 +341,48 @@ function ChatRoom() {
       className="flex flex-col"
     >
       <div className="flex-1 space-y-1.5 px-3 py-4">
+        {selectMode && (
+          <div className="sticky top-0 z-10 -mx-1 mb-2 flex items-center gap-2 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-soft backdrop-blur">
+            <span className="text-sm font-semibold">{selection.length} dipilih</span>
+            <div className="ml-auto flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+                disabled={selection.length === 0}
+                onClick={() => {
+                  update((d) => deleteForMe(d, selection));
+                  setSelection([]);
+                  setSelectMode(false);
+                  toast.success("Pesan dihapus");
+                }}
+              >
+                Hapus untuk saya
+              </Button>
+              {selection.some((sid) => messages.find((m) => m.id === sid)?.senderId === "me") && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl text-destructive hover:text-destructive"
+                  onClick={() => setConfirmAll(selection.filter((sid) => messages.find((m) => m.id === sid)?.senderId === "me"))}
+                >
+                  <Trash2 className="size-4" /> Untuk semua
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => {
+                  setSelection([]);
+                  setSelectMode(false);
+                }}
+              >
+                Batal
+              </Button>
+            </div>
+          </div>
+        )}
         {chat.disappearingHours > 0 && (
           <div className="mb-2 flex items-center justify-center gap-1.5 rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground">
             <Timer className="size-3.5" /> Pesan menghilang setelah {chat.disappearingHours} jam
@@ -355,6 +410,8 @@ function ChatRoom() {
                   replyTo={m.replyToId ? messages.find((x) => x.id === m.replyToId) : undefined}
                   showSender={chat.type === "group"}
                   onAction={onAction}
+                  selectable={selectMode}
+                  selected={selection.includes(m.id)}
                 />
               </div>
             </div>
@@ -607,6 +664,25 @@ function ChatRoom() {
           });
           setInfo(false);
           toast.success("Percakapan dibersihkan");
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmAll !== null}
+        onOpenChange={(v) => {
+          if (!v) setConfirmAll(null);
+        }}
+        title="Hapus untuk semua?"
+        description="Hapus pesan ini untuk semua orang? Pesan akan hilang tanpa jejak di percakapan."
+        confirmLabel="Hapus untuk semua"
+        destructive
+        onConfirm={() => {
+          const ids = confirmAll ?? [];
+          update((d) => deleteForEveryone(d, ids));
+          setConfirmAll(null);
+          setSelection([]);
+          setSelectMode(false);
+          toast.success("Pesan dihapus");
         }}
       />
     </AppShell>

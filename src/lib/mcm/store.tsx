@@ -79,10 +79,58 @@ export const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).s
 
 /* ---------------- selectors & helpers ---------------- */
 
+export const ME: string = "me";
+
+/** Pesan yang benar-benar terlihat oleh pengguna saat ini (tanpa tombstone & tanpa yang dihapus lokal). */
+export function visibleForMe(state: MCMState, m: Message): boolean {
+  if ((state.deletedMessageIds ?? []).includes(m.id)) return false;
+  return !(m.hiddenFor ?? []).includes(ME);
+}
+
 export function chatMessages(state: MCMState, chatId: string): Message[] {
   return state.messages
-    .filter((m) => m.chatId === chatId)
+    .filter((m) => m.chatId === chatId && visibleForMe(state, m))
     .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+}
+
+/** Sembunyikan pesan hanya untuk perangkat/akun ini. Sisi lawan tidak berubah. */
+export function deleteForMe(draft: MCMState, ids: string[]): MCMState {
+  for (const m of draft.messages) {
+    if (!ids.includes(m.id)) continue;
+    const hidden = new Set(m.hiddenFor ?? []);
+    hidden.add(ME);
+    m.hiddenFor = [...hidden];
+  }
+  return cleanupAfterDelete(draft);
+}
+
+/**
+ * Hapus permanen dari shared conversation store (dua sisi) — tanpa placeholder.
+ * Tombstone hanya dipakai untuk konsistensi sinkronisasi dan tidak pernah dirender.
+ */
+export function deleteForEveryone(draft: MCMState, ids: string[]): MCMState {
+  const target = new Set(draft.messages.filter((m) => ids.includes(m.id) && m.senderId === ME).map((m) => m.id));
+  if (target.size === 0) return draft;
+  draft.messages = draft.messages.filter((m) => !target.has(m.id));
+  const tomb = new Set(draft.deletedMessageIds ?? []);
+  for (const t of target) tomb.add(t);
+  draft.deletedMessageIds = [...tomb].slice(-500);
+  return cleanupAfterDelete(draft);
+}
+
+/** Bersihkan referensi menggantung: reply, unread, dan tombstone yang sudah tidak dipakai. */
+function cleanupAfterDelete(draft: MCMState): MCMState {
+  const alive = new Set(draft.messages.filter((m) => visibleForMe(draft, m)).map((m) => m.id));
+  for (const m of draft.messages) {
+    if (m.replyToId && !alive.has(m.replyToId)) m.replyToId = undefined;
+  }
+  for (const c of draft.chats) {
+    const remaining = draft.messages.filter((m) => m.chatId === c.id && visibleForMe(draft, m) && m.senderId !== ME).length;
+    if (c.unread > remaining) c.unread = remaining;
+  }
+  const existing = new Set(draft.messages.map((m) => m.id));
+  draft.deletedMessageIds = (draft.deletedMessageIds ?? []).filter((tid) => !existing.has(tid));
+  return draft;
 }
 
 export function lastMessage(state: MCMState, chatId: string): Message | undefined {

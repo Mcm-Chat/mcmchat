@@ -62,7 +62,8 @@ export interface Message {
   reactions: Reaction[];
   replyToId?: ID | undefined;
   edited?: boolean | undefined;
-  deleted?: boolean | undefined;
+  /** Daftar peserta yang menyembunyikan pesan ini secara lokal ("hapus untuk saya"). */
+  hiddenFor?: ID[] | undefined;
   starred?: boolean | undefined;
   pinned?: boolean | undefined;
   forwarded?: boolean | undefined;
@@ -270,4 +271,6 @@ export interface MCMState {
   settings: Settings;
   notifications: AppNotification[];
   searchAttempts: { at: number }[];
+  /** Tombstone internal untuk sinkronisasi hapus-untuk-semua. Tidak pernah dirender. */
+  deletedMessageIds?: ID[] | undefined;
 }
