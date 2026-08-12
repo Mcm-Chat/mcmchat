@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, PhoneMissed, ShieldAlert, Video, Phone as PhoneIcon } from "lucide-react";
+import { ArrowLeft, PhoneMissed, ShieldAlert, Video, Phone as PhoneIcon, Sparkles } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +16,10 @@ import { durasi, tanggalPanjang, jam } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { supabase } from "@/integrations/supabase/client";
 import type { CallHistoryItem } from "@/lib/api/calls";
+import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-effects";
+import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
+import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
+import { DEFAULT_VOICE_PREFS, PRESET_MAP, type VoicePrefs } from "@/lib/voice/presets";
 
 export const Route = createFileRoute("/call/$id")({
   head: () => ({
@@ -63,6 +67,13 @@ function CallDetailScreen() {
   const [call, setCall] = useState<CallHistoryItem | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [notice, setNotice] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [settingsRow, setSettingsRow] = useState<UserSettingsRow | null>(null);
+  const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
+  const [savingVoice, setSavingVoice] = useState(false);
+  const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
+  // Efek hanya benar-benar dipakai bila entitlement premium aktif; default selalu OFF.
+  const voiceActive = entitlement.active && voicePrefs.enabled && voicePrefs.preset !== "off";
 
   const load = () => {
     if (!userId) return;
@@ -74,6 +85,27 @@ function CallDetailScreen() {
       })
       .catch(() => setStatus("error"));
   };
+
+  useEffect(() => {
+    if (!userId) return;
+    void getSettings(userId)
+      .then((r) => {
+        setSettingsRow(r);
+        setVoicePrefs(voiceOf(r));
+      })
+      .catch(() => undefined);
+  }, [userId]);
+
+  const saveVoice = (next: VoicePrefs) => {
+    setVoicePrefs(next);
+    if (!userId) return;
+    setSavingVoice(true);
+    void updateSettings(userId, { voice: next })
+      .then(setSettingsRow)
+      .catch(() => undefined)
+      .finally(() => setSavingVoice(false));
+  };
+  void settingsRow;
 
   useEffect(() => {
     load();
@@ -152,6 +184,25 @@ function CallDetailScreen() {
         </div>
       </div>
 
+      <div className="mt-6 rounded-2xl bg-white/10 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-semibold">
+              <Sparkles className="size-4" /> Efek Suara
+            </p>
+            <p className="mt-0.5 text-xs text-navy-foreground/70">
+              {voiceActive
+                ? `Preset ${PRESET_MAP.get(voicePrefs.preset)?.name ?? "Custom"} akan dipakai saat panggilan.`
+                : "Nonaktif — suara asli Anda yang dikirim."}
+            </p>
+          </div>
+          <Button size="sm" variant="secondary" className="rounded-xl" onClick={() => setVoiceOpen(true)}>
+            Atur
+          </Button>
+        </div>
+        <VoicePrivacyBadge active={voiceActive} className="mt-3" />
+      </div>
+
       <div className="mt-auto space-y-3 pt-8">
         <Button className="w-full rounded-xl" variant="secondary" onClick={() => setNotice(true)}>
           Panggil lagi
@@ -160,6 +211,15 @@ function CallDetailScreen() {
           <Link to="/calls">Kembali ke riwayat</Link>
         </Button>
       </div>
+
+      <VoiceEffectsSheet
+        open={voiceOpen}
+        onOpenChange={setVoiceOpen}
+        prefs={voicePrefs}
+        onChange={saveVoice}
+        entitlement={entitlement}
+        saving={savingVoice}
+      />
 
       <AlertDialog open={notice} onOpenChange={setNotice}>
         <AlertDialogContent className="max-w-[340px] rounded-2xl">
