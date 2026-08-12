@@ -8,11 +8,34 @@ export type MessageRow = Tables<"messages">;
 export type ConversationRow = Tables<"conversations">;
 export type MemberProfile = { id: string; display_name: string; pin: string; avatar_color: string; avatar_url: string | null };
 
+/** Ringkasan per percakapan dari RPC `conversation_overview`. */
+type OverviewRow = {
+  conversation_id: string;
+  last_message_id: string | null;
+  last_message_kind: MessageRow["kind"] | null;
+  last_message_body: string | null;
+  last_message_sender: string | null;
+  last_message_at: string | null;
+  last_attachment_name: string | null;
+  last_location_lat: number | null;
+  unread_count: number;
+};
+
+/**
+ * Ringkasan pesan terakhir untuk daftar percakapan. Bentuknya sengaja
+ * menyerupai `messages` agar komponen daftar tidak perlu berubah, tetapi hanya
+ * berisi kolom yang benar-benar dipakai untuk pratinjau.
+ */
+export type LastMessagePreview = Pick<
+  MessageRow,
+  "id" | "kind" | "body" | "sender_id" | "created_at" | "attachment_name" | "location_lat"
+>;
+
 export type ConversationView = ConversationRow & {
   members: MemberProfile[];
   me: Tables<"conversation_members">;
   other: MemberProfile | null;
-  lastMessage: MessageRow | null;
+  lastMessage: LastMessagePreview | null;
   unread: number;
   title_resolved: string;
 };
@@ -30,7 +53,7 @@ export function mapsUrl(lat: number, lng: number) {
 }
 
 /** Ringkasan pesan untuk daftar percakapan. */
-export function previewOf(m: MessageRow | null): string {
+export function previewOf(m: LastMessagePreview | MessageRow | null): string {
   if (!m) return "Belum ada pesan";
   const loc = m.location_lat != null ? " • 📍 lokasi" : "";
   switch (m.kind) {
@@ -56,21 +79,22 @@ export async function listConversations(userId: string): Promise<ConversationVie
   );
   if (memberships.length === 0) return [];
   const ids = memberships.map((m) => m.conversation_id);
-  const [convs, allMembers, lastMsgs] = await Promise.all([
+  // Pesan terakhir + jumlah belum dibaca dihitung di database (satu baris per
+  // percakapan), bukan dengan menarik ratusan pesan ke browser.
+  const [convs, allMembers, overview] = await Promise.all([
     supabase.from("conversations").select("*").in("id", ids),
     supabase.from("conversation_members").select("conversation_id, user_id").in("conversation_id", ids),
-    supabase.from("messages").select("*").in("conversation_id", ids).order("created_at", { ascending: false }).limit(400),
+    supabase.rpc("conversation_overview"),
   ]);
   const profileIds = [...new Set((allMembers.data ?? []).map((m) => m.user_id))];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, display_name, pin, avatar_color, avatar_url")
+    .select("id, display_name, avatar_color, avatar_url")
     .in("id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"]);
-  const pmap = new Map((profiles ?? []).map((p) => [p.id, p as MemberProfile]));
-  const hidden = new Set(
-    (await supabase.from("message_hides").select("message_id").eq("user_id", userId)).data?.map((h) => h.message_id) ?? [],
+  const pmap = new Map(
+    (profiles ?? []).map((p) => [p.id, { ...p, pin: "" } as MemberProfile]),
   );
-  const messages = (lastMsgs.data ?? []).filter((m) => !hidden.has(m.id));
+  const omap = new Map(((overview.data ?? []) as OverviewRow[]).map((o) => [o.conversation_id, o]));
 
   return (convs.data ?? [])
     .map((c) => {
@@ -80,16 +104,26 @@ export async function listConversations(userId: string): Promise<ConversationVie
         .map((m) => pmap.get(m.user_id))
         .filter((p): p is MemberProfile => !!p);
       const other = c.type === "direct" ? (members.find((m) => m.id !== userId) ?? null) : null;
-      const convMsgs = messages.filter((m) => m.conversation_id === c.id);
-      const lastMessage = convMsgs[0] ?? null;
-      const unread = convMsgs.filter((m) => m.sender_id !== userId && new Date(m.created_at) > new Date(me.last_read_at)).length;
+      const o = omap.get(c.id);
+      const lastMessage: LastMessagePreview | null =
+        o && o.last_message_id && o.last_message_at
+          ? {
+              id: o.last_message_id,
+              kind: o.last_message_kind ?? "text",
+              body: o.last_message_body ?? "",
+              sender_id: o.last_message_sender ?? "",
+              created_at: o.last_message_at,
+              attachment_name: o.last_attachment_name,
+              location_lat: o.last_location_lat,
+            }
+          : null;
       return {
         ...c,
         me,
         members,
         other,
         lastMessage,
-        unread,
+        unread: o?.unread_count ?? 0,
         title_resolved: c.title || other?.display_name || "Percakapan",
       };
     })

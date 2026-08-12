@@ -56,19 +56,22 @@ export async function listAgents(businessId: string) {
   const rows = unwrap(
     await supabase
       .from("business_members")
-      .select("user_id, role, profiles:user_id(display_name, pin, avatar_color)")
+      .select("user_id, role, profiles:user_id(display_name, avatar_color)")
       .eq("business_id", businessId),
     "Gagal memuat pegawai",
   ) as unknown as Array<{
     user_id: string;
     role: string;
-    profiles: { display_name: string; pin: string; avatar_color: string } | null;
+    profiles: { display_name: string; avatar_color: string } | null;
   }>;
+  // PIN pegawai hanya tampil bila memang tersimpan sebagai kontak saya.
+  const { pinsFor } = await import("./pins");
+  const pins = await pinsFor(rows.map((r) => r.user_id));
   return rows.map((r) => ({
     id: r.user_id,
     role: r.role,
     name: r.profiles?.display_name ?? "Pegawai",
-    pin: r.profiles?.pin ?? "",
+    pin: pins.get(r.user_id) ?? "",
     color: r.profiles?.avatar_color ?? "#0ea5e9",
   }));
 }

@@ -1895,6 +1895,20 @@ export type Database = {
         Returns: boolean
       }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
+      conversation_overview: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          last_attachment_name: string
+          last_location_lat: number
+          last_message_at: string
+          last_message_body: string
+          last_message_id: string
+          last_message_kind: Database["public"]["Enums"]["message_kind"]
+          last_message_sender: string
+          unread_count: number
+        }[]
+      }
       convert_to_base: {
         Args: { _qty: number; _unit: string; _variant: string }
         Returns: number
@@ -1953,6 +1967,14 @@ export type Database = {
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
+      my_pin: { Args: never; Returns: string }
+      pins_for_me: {
+        Args: { _ids: string[] }
+        Returns: {
+          id: string
+          pin: string
+        }[]
+      }
       prep_job_id_by_token: { Args: { _token: string }; Returns: string }
       push_targets_for_conversation: {
         Args: { _conv: string; _sender: string }

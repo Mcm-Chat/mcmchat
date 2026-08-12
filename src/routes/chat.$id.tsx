@@ -28,6 +28,8 @@ import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 import { discardEntry, enqueueText, retryEntry, setOutboxSentHandler, useOutbox } from "@/lib/api/outbox";
 import { useConnectionState } from "@/lib/realtime/connection";
+import { useTyping } from "@/lib/api/presence";
+import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) => (typeof search['hl'] === "string" ? { hl: search['hl'] } : {}),
@@ -128,16 +130,19 @@ function ChatRoom() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [userId, id]);
 
-  // Auto-scroll hanya bila pengguna memang sedang berada di dekat pesan terbaru.
+  const { typingUsers, notifyTyping } = useTyping(id, userId);
+
+  // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
+  // memang miliknya sendiri.
+  const lastSenderId = messages.at(-1)?.sender_id ?? null;
   useEffect(() => {
-    if (atBottom) bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, pending.length, atBottom]);
+    if (shouldAutoScroll({ atBottom, lastSenderId, userId })) bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length, pending.length, atBottom, lastSenderId, userId]);
 
   const onScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-    setAtBottom(distance < 120);
+    setAtBottom(isNearBottom(el));
     if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
   }, [hasOlder, isFetchingOlder, fetchOlder]);
 
@@ -373,11 +378,15 @@ function ChatRoom() {
               </span>
             }
             subtitle={
-              conv.type === "group"
-                ? `${conv.members.length} anggota`
-                : conv.other && onlineIds.has(conv.other.id)
-                  ? "Online sekarang"
-                  : (conv.other?.pin ?? "")
+              typingUsers.length > 0
+                ? conv.type === "group"
+                  ? `${nameOf(typingUsers[0]!)} sedang mengetik…`
+                  : "sedang mengetik…"
+                : conv.type === "group"
+                  ? `${conv.members.length} anggota`
+                  : conv.other && onlineIds.has(conv.other.id)
+                    ? "Online sekarang"
+                    : (conv.other?.pin ?? "")
             }
             actions={
               <>
@@ -542,7 +551,10 @@ function ChatRoom() {
       ) : (
         <ChatComposer
           value={text}
-          onChange={setText}
+          onChange={(v) => {
+            setText(v);
+            if (v) notifyTyping();
+          }}
           onSend={() => void doSend()}
           onAttach={(kind) => (kind === "document" ? docRef.current?.click() : setPhotoOpen(true))}
           onVoice={(blob, sec) => void sendVoice(blob, sec)}

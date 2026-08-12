@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { pinsFor } from "./pins";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ContactRow = Tables<"contacts">;
@@ -29,8 +30,12 @@ export async function findByPin(pin: string): Promise<ProfileLite | null> {
 
 async function profilesByIds(ids: string[]): Promise<Map<string, ProfileLite>> {
   if (ids.length === 0) return new Map();
-  const { data } = await supabase.from("profiles").select("id, pin, display_name, bio, avatar_url, avatar_color").in("id", ids);
-  return new Map((data ?? []).map((p) => [p.id, p as ProfileLite]));
+  // PIN diambil terpisah: hanya kontak tersimpan (dan diri sendiri) yang boleh terlihat.
+  const [{ data }, pins] = await Promise.all([
+    supabase.from("profiles").select("id, display_name, bio, avatar_url, avatar_color").in("id", ids),
+    pinsFor(ids),
+  ]);
+  return new Map((data ?? []).map((p) => [p.id, { ...p, pin: pins.get(p.id) ?? "" } as ProfileLite]));
 }
 
 export async function listContacts(userId: string): Promise<ContactWithProfile[]> {
