@@ -60,6 +60,7 @@ function ChatRoom() {
   const [info, setInfo] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [dismissSuggestion, setDismissSuggestion] = useState(false);
   const [ledgerForm, setLedgerForm] = useState({ type: "piutang", amount: "", note: "", dueDate: "" });
   const bottom = useRef<HTMLDivElement>(null);
 
