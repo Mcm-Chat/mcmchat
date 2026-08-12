@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { InvoiceView, OrderCard, ProductCard, QuickReplyPicker } from "@/components/mcm/business-parts";
 import { EmptyState, ProtoNote } from "@/components/mcm/primitives";
+import { ProductGallery, ProductPhotoEditor } from "@/components/mcm/product-photos";
 import { LedgerSummaryCard } from "@/components/mcm/ledger-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { rupiah } from "@/lib/mcm/format";
-import { orderTotal, uid, useMCM } from "@/lib/mcm/store";
-import type { InboxStatus, Order, Product } from "@/lib/mcm/types";
+import { isValidLocationUrl, orderTotal, reindexPhotos, uid, useMCM } from "@/lib/mcm/store";
+import type { InboxStatus, Order, Product, ProductPhoto } from "@/lib/mcm/types";
 
 export const Route = createFileRoute("/business/")({
   head: () => ({
@@ -34,8 +35,10 @@ function BusinessPage() {
   const [invoice, setInvoice] = useState<Order | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ name: "", price: "", category: "Umum", description: "" });
+  const [formPhotos, setFormPhotos] = useState<ProductPhoto[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
   const [editForm, setEditForm] = useState({ name: "", price: "", stock: "", description: "" });
+  const [editPhotos, setEditPhotos] = useState<ProductPhoto[]>([]);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("Semua");
   const [inboxFilter, setInboxFilter] = useState<"all" | InboxStatus>("all");
@@ -73,15 +76,27 @@ function BusinessPage() {
 
   const omzet = state.orders.filter((o) => o.status !== "dibatalkan").reduce((s, o) => s + orderTotal(o), 0);
   const categories = ["Semua", ...Array.from(new Set(state.products.map((p) => p.category)))];
-  const visibleProducts = state.products.filter(
-    (p) => (cat === "Semua" || p.category === cat) && p.name.toLowerCase().includes(q.trim().toLowerCase()),
-  );
+  const term = q.trim().toLowerCase();
+  const visibleProducts = state.products.filter((p) => {
+    if (cat !== "Semua" && p.category !== cat) return false;
+    if (!term) return true;
+    const haystack = [
+      p.name,
+      p.description,
+      p.sku,
+      ...(p.photos ?? []).flatMap((ph) => [ph.caption, ph.locationUrl]),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(term);
+  });
   const visibleInbox = state.inbox.filter((t) => inboxFilter === "all" || t.status === inboxFilter);
 
   const openEdit = (p: Product) => {
     setProduct(null);
     setEditing(p);
     setEditForm({ name: p.name, price: String(p.price), stock: String(p.stock), description: p.description });
+    setEditPhotos(reindexPhotos([...(p.photos ?? [])]));
   };
 
   const saveEdit = () => {
@@ -90,6 +105,7 @@ function BusinessPage() {
     const stock = Number(editForm.stock);
     if (editForm.name.trim().length < 3) { toast.error("Nama produk minimal 3 karakter"); return; }
     if (!Number.isFinite(price) || price <= 0) { toast.error("Harga tidak valid"); return; }
+    if (editPhotos.some((ph) => !isValidLocationUrl(ph.locationUrl))) { toast.error("Ada link lokasi yang tidak valid"); return; }
     update((d) => {
       const target = d.products.find((p) => p.id === editing.id);
       if (target) {
@@ -97,10 +113,12 @@ function BusinessPage() {
         target.price = price;
         target.stock = Number.isFinite(stock) ? stock : target.stock;
         target.description = editForm.description.trim();
+        target.photos = reindexPhotos(editPhotos).map((ph) => ({ ...ph, productId: target.id }));
       }
       return d;
     });
     setEditing(null);
+    setEditPhotos([]);
     toast.success("Produk diperbarui");
   };
 
@@ -117,9 +135,11 @@ function BusinessPage() {
     const price = Number(form.price);
     if (form.name.trim().length < 3) { toast.error("Nama produk minimal 3 karakter"); return; }
     if (!Number.isFinite(price) || price <= 0) { toast.error("Harga tidak valid"); return; }
+    if (formPhotos.some((ph) => !isValidLocationUrl(ph.locationUrl))) { toast.error("Ada link lokasi yang tidak valid"); return; }
+    const newId = uid("pr");
     update((d) => {
       d.products.unshift({
-        id: uid("pr"),
+        id: newId,
         name: form.name.trim(),
         category: form.category,
         price,
@@ -130,11 +150,13 @@ function BusinessPage() {
         active: true,
         emoji: "📦",
         variants: [],
+        photos: reindexPhotos(formPhotos).map((ph) => ({ ...ph, productId: newId })),
       });
       return d;
     });
     setAddOpen(false);
     setForm({ name: "", price: "", category: "Umum", description: "" });
+    setFormPhotos([]);
     toast.success("Produk ditambahkan");
   };
 
