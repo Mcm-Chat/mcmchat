@@ -18,18 +18,28 @@ export const ORDER_META: Record<OrderStatus, { label: string; tone: Tone }> = {
 
 export function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
   const final = productPrice(product);
+  const cover = (product.photos ?? [])[0];
   return (
     <button
       type="button"
       onClick={onClick}
       className="card-soft flex w-full flex-col overflow-hidden text-left transition-colors hover:bg-muted/40"
     >
-      <div className="flex h-24 items-center justify-center bg-gradient-to-br from-primary/12 to-navy/10 text-4xl">
-        {product.emoji}
-      </div>
+      {cover ? (
+        <img src={cover.imageUrl} alt={cover.caption || product.name} className="h-24 w-full object-cover" />
+      ) : (
+        <div className="flex h-24 items-center justify-center bg-gradient-to-br from-primary/12 to-navy/10 text-4xl">
+          {product.emoji}
+        </div>
+      )}
       <div className="flex flex-1 flex-col p-3">
         <p className="line-clamp-2 text-sm font-semibold">{product.name}</p>
         <p className="text-[11px] text-muted-foreground">{product.category} • {product.sku}</p>
+        {(product.photos ?? []).length > 0 && (
+          <p className="text-[11px] text-muted-foreground">
+            {product.photos.length} foto • {product.photos.filter((ph) => ph.locationUrl.trim()).length} lokasi
+          </p>
+        )}
         <div className="mt-1.5 flex items-baseline gap-1.5">
           <span className="text-sm font-bold">{rupiah(final)}</span>
           {product.discountPercent > 0 && (
