@@ -14,6 +14,7 @@ import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PremiumRouteImport } from './routes/premium'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SupportRouteImport } from './routes/support'
@@ -61,6 +62,11 @@ const LoginRoute = LoginRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PremiumRoute = PremiumRouteImport.update({
+  id: '/premium',
+  path: '/premium',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/premium': typeof PremiumRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/premium': typeof PremiumRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/premium': typeof PremiumRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/support': typeof SupportRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/premium'
     | '/privacy'
     | '/register'
     | '/support'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/premium'
     | '/privacy'
     | '/register'
     | '/support'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/onboarding'
+    | '/premium'
     | '/privacy'
     | '/register'
     | '/support'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  PremiumRoute: typeof PremiumRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   SupportRoute: typeof SupportRoute
@@ -429,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/premium': {
+      id: '/premium'
+      path: '/premium'
+      fullPath: '/premium'
+      preLoaderRoute: typeof PremiumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -601,6 +621,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  PremiumRoute: PremiumRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   SupportRoute: SupportRoute,
