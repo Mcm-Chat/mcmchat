@@ -11,7 +11,7 @@ penyamaran identitas.
 | Preset + parameter + gating + penyimpanan preferensi | **Selesai, bekerja end-to-end** |
 | Pipeline Web Audio (AudioWorklet) + tes mikrofon live | **Selesai, bekerja end-to-end di WebView/browser** |
 | Entitlement premium (tabel `entitlements`, RPC `has_entitlement`) | **Selesai**, tetapi **penagihan belum tersambung** — tidak ada baris aktif, jadi semua pengguna non-premium |
-| Penyedia panggilan (LiveKit/WebRTC/SFU) | **Belum terpasang.** Layar panggilan MCM masih detail/riwayat dengan status `unconfigured`. Tidak ada panggilan palsu yang dibuat. |
+| Penyedia panggilan (LiveKit/WebRTC/SFU) | **Arsitektur & integrasi selesai** (lihat `LIVE_CALLS.md`); track efek sudah tersambung ke sender. Menunggu kredensial `LIVEKIT_*` — sampai itu UI menampilkan "Belum terhubung". |
 | Native Android audio path (panggilan saat app di background) | **Belum** — lihat "Integrasi berikutnya" |
 
 Artinya: efek suara sudah nyata dan bisa didengar lewat **Tes mikrofon**, tetapi belum ada
