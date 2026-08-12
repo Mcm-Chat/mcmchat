@@ -505,6 +505,9 @@ export function ChatComposer({
   onVoice,
   onNewLedger,
   onNewSale,
+  onSendProduct,
+  onNewPreparation,
+  onLocation,
   editing,
   onCancelEdit,
   replyPreview,
@@ -520,6 +523,9 @@ export function ChatComposer({
   onVoice: (blob: Blob, seconds: number) => void;
   onNewLedger: () => void;
   onNewSale?: (() => void) | undefined;
+  onSendProduct?: (() => void) | undefined;
+  onNewPreparation?: (() => void) | undefined;
+  onLocation?: (() => void) | undefined;
   editing?: boolean | undefined;
   onCancelEdit?: (() => void) | undefined;
   replyPreview?: MessageRow | undefined;
@@ -529,6 +535,11 @@ export function ChatComposer({
   disabled?: boolean | undefined;
 }) {
   const { recording, seconds, start, stop } = useVoiceRecorder(onVoice);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const runAction = (fn?: () => void) => {
+    setActionsOpen(false);
+    fn?.();
+  };
   const matches = value.startsWith("/")
     ? (quickReplies ?? []).filter((q) => q.shortcut.toLowerCase().startsWith(value.trim().toLowerCase()))
     : [];
@@ -571,29 +582,40 @@ export function ChatComposer({
         </div>
       )}
       <div className="flex items-end gap-1.5 px-2 py-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label="Lampiran" disabled={disabled}>
-              <Plus className="size-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => onAttach("image")}>
-              <ImageIcon className="size-4" /> Foto &amp; galeri
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAttach("document")}>
-              <Paperclip className="size-4" /> Dokumen
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onNewLedger}>
-              <Wallet className="size-4" /> Catatan utang bersama
-            </DropdownMenuItem>
-            {onNewSale && (
-              <DropdownMenuItem onClick={onNewSale}>
-                <Wallet className="size-4" /> Catat penjualan
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label="Tindakan lain" disabled={disabled} onClick={() => setActionsOpen(true)}>
+          <Plus className="size-5" />
+        </Button>
+        <Sheet open={actionsOpen} onOpenChange={setActionsOpen}>
+          <SheetContent side="bottom" className="rounded-t-3xl">
+            <SheetHeader>
+              <SheetTitle>Tindakan</SheetTitle>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-3 px-1 pb-6">
+              {[
+                { icon: Camera, label: "Foto/Kamera", fn: () => onAttach("camera") },
+                { icon: ImageIcon, label: "Foto & lokasi", fn: () => onAttach("image") },
+                ...(onLocation ? [{ icon: MapPin, label: "Lokasi", fn: onLocation }] : []),
+                ...(onSendProduct ? [{ icon: Package, label: "Kirim Produk", fn: onSendProduct }] : []),
+                ...(onNewSale ? [{ icon: ShoppingCart, label: "Penjualan", fn: onNewSale }] : []),
+                { icon: Wallet, label: "Catat Utang/Piutang", fn: onNewLedger },
+                ...(onNewPreparation ? [{ icon: ClipboardList, label: "Buat Penyiapan", fn: onNewPreparation }] : []),
+                { icon: Paperclip, label: "Dokumen", fn: () => onAttach("document") },
+              ].map(({ icon: Icon, label, fn }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => runAction(fn)}
+                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border p-3 text-center hover:bg-muted"
+                >
+                  <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </span>
+                  <span className="text-[11px] leading-tight font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
         <div className="flex flex-1 items-end rounded-2xl border border-input bg-background px-2">
           <Popover>
             <PopoverTrigger asChild>
