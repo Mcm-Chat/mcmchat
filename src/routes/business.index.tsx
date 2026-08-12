@@ -193,7 +193,7 @@ function BusinessPage() {
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Cari produk"
+                placeholder="Cari produk, keterangan, atau link lokasi"
                 className="h-11 rounded-xl pl-9"
               />
             </div>
