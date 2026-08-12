@@ -72,7 +72,7 @@ export const liveKitProvider: CallProvider = {
   isConfigured: () => true,
   async connect(opts: ConnectOptions): Promise<CallSessionHandle> {
     const lk = await import("livekit-client");
-    const { Room, RoomEvent, LocalAudioTrack, Track } = lk;
+    const { Room, RoomEvent, Track } = lk;
     const room = new Room({ adaptiveStream: true, dynacast: true });
 
     let facingUser = true;
@@ -107,10 +107,7 @@ export const liveKitProvider: CallProvider = {
     await room.connect(opts.url, opts.token);
 
     if (opts.audioTrack) {
-      await room.localParticipant.publishTrack(new LocalAudioTrack(opts.audioTrack), {
-        dtx: true,
-        red: true,
-      });
+      await room.localParticipant.publishTrack(opts.audioTrack, { dtx: true, red: true });
     } else {
       await room.localParticipant.setMicrophoneEnabled(true);
     }
@@ -146,9 +143,9 @@ export const liveKitProvider: CallProvider = {
       },
       async replaceAudioTrack(track) {
         for (const pub of room.localParticipant.audioTrackPublications.values()) {
-          if (pub.track) await room.localParticipant.unpublishTrack(pub.track);
+          if (pub.track?.mediaStreamTrack) await room.localParticipant.unpublishTrack(pub.track.mediaStreamTrack);
         }
-        await room.localParticipant.publishTrack(new LocalAudioTrack(track), { dtx: true, red: true });
+        await room.localParticipant.publishTrack(track, { dtx: true, red: true });
       },
       attachLocalVideo(el) {
         const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
