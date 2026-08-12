@@ -1810,6 +1810,241 @@ export type Database = {
           },
         ]
       }
+      status_audience: {
+        Row: {
+          status_id: string
+          user_id: string
+        }
+        Insert: {
+          status_id: string
+          user_id: string
+        }
+        Update: {
+          status_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_audience_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_items: {
+        Row: {
+          caption: string
+          created_at: string
+          duration_ms: number
+          height: number
+          id: string
+          kind: Database["public"]["Enums"]["status_item_kind"]
+          media_path: string | null
+          owner_id: string
+          sort_order: number
+          status_id: string
+          text_meta: Json
+          thumb_path: string | null
+          width: number
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          duration_ms?: number
+          height?: number
+          id?: string
+          kind?: Database["public"]["Enums"]["status_item_kind"]
+          media_path?: string | null
+          owner_id: string
+          sort_order?: number
+          status_id: string
+          text_meta?: Json
+          thumb_path?: string | null
+          width?: number
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          duration_ms?: number
+          height?: number
+          id?: string
+          kind?: Database["public"]["Enums"]["status_item_kind"]
+          media_path?: string | null
+          owner_id?: string
+          sort_order?: number
+          status_id?: string
+          text_meta?: Json
+          thumb_path?: string | null
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_items_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_mutes: {
+        Row: {
+          created_at: string
+          muted_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          muted_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          muted_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      status_preferences: {
+        Row: {
+          created_at: string
+          default_lifetime_minutes: number
+          default_privacy: Database["public"]["Enums"]["status_privacy"]
+          default_slide_ms: number
+          share_view_receipts: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_lifetime_minutes?: number
+          default_privacy?: Database["public"]["Enums"]["status_privacy"]
+          default_slide_ms?: number
+          share_view_receipts?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_lifetime_minutes?: number
+          default_privacy?: Database["public"]["Enums"]["status_privacy"]
+          default_slide_ms?: number
+          share_view_receipts?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      status_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          item_id: string
+          status_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          item_id: string
+          status_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          item_id?: string
+          status_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_reactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "status_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_reactions_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_views: {
+        Row: {
+          item_id: string
+          status_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          item_id: string
+          status_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          item_id?: string
+          status_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_views_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "status_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "status_views_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      statuses: {
+        Row: {
+          caption: string
+          created_at: string
+          deleted_at: string | null
+          expires_at: string
+          id: string
+          owner_id: string
+          privacy: Database["public"]["Enums"]["status_privacy"]
+          updated_at: string
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          deleted_at?: string | null
+          expires_at: string
+          id?: string
+          owner_id: string
+          privacy?: Database["public"]["Enums"]["status_privacy"]
+          updated_at?: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          deleted_at?: string | null
+          expires_at?: string
+          id?: string
+          owner_id?: string
+          privacy?: Database["public"]["Enums"]["status_privacy"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -1882,6 +2117,7 @@ export type Database = {
         Args: { _biz: string; _uid: string }
         Returns: boolean
       }
+      can_read_status_object: { Args: { _name: string }; Returns: boolean }
       can_see_ledger: {
         Args: { _ledger: string; _uid: string }
         Returns: boolean
@@ -1892,6 +2128,10 @@ export type Database = {
       }
       can_sell_business: {
         Args: { _biz: string; _uid: string }
+        Returns: boolean
+      }
+      can_view_status: {
+        Args: { _status: string; _uid: string }
         Returns: boolean
       }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
@@ -2050,6 +2290,22 @@ export type Database = {
         Returns: Json
       }
       safe_uuid: { Args: { _t: string }; Returns: string }
+      status_feed: {
+        Args: never
+        Returns: {
+          caption: string
+          created_at: string
+          expires_at: string
+          item_count: number
+          last_item_at: string
+          muted: boolean
+          owner_id: string
+          privacy: Database["public"]["Enums"]["status_privacy"]
+          status_id: string
+          unseen_count: number
+        }[]
+      }
+      status_owner_of: { Args: { _status: string }; Returns: string }
     }
     Enums: {
       business_role: "owner" | "admin" | "agent" | "cashier" | "viewer"
@@ -2106,6 +2362,8 @@ export type Database = {
         | "ready"
         | "completed"
         | "cancelled"
+      status_item_kind: "image" | "text" | "video"
+      status_privacy: "contacts" | "contacts_except" | "only_share_with"
       stock_type: "weight" | "count"
     }
     CompositeTypes: {
@@ -2294,6 +2552,8 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      status_item_kind: ["image", "text", "video"],
+      status_privacy: ["contacts", "contacts_except", "only_share_with"],
       stock_type: ["weight", "count"],
     },
   },
