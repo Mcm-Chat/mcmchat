@@ -374,6 +374,7 @@ export function createDemoState(): MCMState {
       { id: "nt-4", title: "Panggilan tak terjawab", body: "Sari Melati menelepon Anda", at: iso(1 * day + 3 * hour), read: true, kind: "call" },
     ],
     searchAttempts: [],
+    deletedMessageIds: [],
   };
 }
 
