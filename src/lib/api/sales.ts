@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
-import { createLedger } from "./ledger";
 import { sendMessage } from "./chat";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -16,13 +15,26 @@ export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   credit: "Kredit / tempo",
 };
 
+export type SaleItemPhotoInput = {
+  id: string;
+  location_url?: string | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_label?: string | null;
+};
+
 export type SaleItemInput = {
   productId: string | null;
+  variantId: string | null;
   name: string;
+  variantName: string;
+  unit: string;
   price: number;
   qty: number;
+  qtyBase: number;
   discount: number;
   photoIds: string[];
+  photos?: SaleItemPhotoInput[];
 };
 
 export type CreateSaleInput = {
@@ -61,119 +73,90 @@ export function validateSale(input: Pick<CreateSaleInput, "items" | "discount" |
   return errors;
 }
 
+type SaleTxResult = {
+  sale_id: string;
+  order_id: string;
+  ledger_id: string | null;
+  total: number;
+  paid: number;
+  number: string;
+  already: boolean;
+};
+
 /**
- * Catat penjualan sekali jalan: order + item + sales_record, lalu (bila perlu)
- * catatan piutang dan kartu rincian di chat. Idempotency key mencegah dobel
- * saat tombol ditekan dua kali atau koneksi terputus.
+ * Catat penjualan sekali jalan lewat RPC transaksional `create_sale_tx`:
+ * order + item + sales_record + (bila perlu) piutang, semuanya atomik.
+ * Idempotency key mencegah dobel saat tombol ditekan dua kali atau koneksi terputus;
+ * jika key sama sudah pernah dipakai, RPC mengembalikan catatan yang sama (already: true)
+ * dan kita tidak mengirim kartu chat kedua kalinya.
  */
 export async function createSale(input: CreateSaleInput): Promise<SalesRecordRow> {
   const errors = validateSale(input);
   if (errors.length > 0) throw new Error(errors[0]);
 
-  const existing = unwrap(
-    await supabase.from("sales_records").select("*").eq("business_id", input.businessId).eq("idempotency_key", input.idempotencyKey).limit(1),
-    "Gagal memeriksa penjualan",
-  );
-  if (existing[0]) return existing[0];
-
-  const { subtotal, total } = computeTotals(input.items, input.discount, input.extraFee);
-  const paid = input.paymentMethod === "credit" ? Math.min(input.paidAmount, total) : Math.min(input.paidAmount, total);
-  const number = `INV-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.floor(Math.random() * 9000 + 1000)}`;
-
-  const order = unwrap(
-    await supabase
-      .from("orders")
-      .insert({
-        business_id: input.businessId,
-        number,
-        buyer_user_id: input.customerUserId,
-        note: input.note,
-        discount: input.discount,
-        shipping: input.extraFee,
-        total,
-        status: "new",
-      })
-      .select("*")
-      .single(),
-    "Gagal menyimpan pesanan",
-  );
-
-  const { error: itemErr } = await supabase.from("order_items").insert(
-    input.items.map((i) => ({
-      order_id: order.id,
-      business_id: input.businessId,
+  const payload = {
+    business_id: input.businessId,
+    idempotency_key: input.idempotencyKey,
+    conversation_id: input.conversationId,
+    customer_user_id: input.customerUserId,
+    customer_name: input.customerName || "Pelanggan",
+    note: input.note,
+    discount: input.discount,
+    extra_fee: input.extraFee,
+    payment_method: input.paymentMethod,
+    paid_amount: input.paidAmount,
+    due_date: input.dueDate,
+    items: input.items.map((i) => ({
       product_id: i.productId,
+      variant_id: i.variantId,
       name: i.name,
-      price: i.price,
+      variant_name: i.variantName,
       qty: i.qty,
+      qty_base: i.qtyBase,
+      unit: i.unit,
+      price: i.price,
       discount: i.discount,
       photo_ids: i.photoIds,
     })),
-  );
-  if (itemErr) throw new Error(friendly(itemErr.message, "Gagal menyimpan item penjualan"));
+  };
+
+  const { data, error } = await supabase.rpc("create_sale_tx", { _payload: payload as never });
+  if (error) throw new Error(friendly(error.message, "Gagal mencatat penjualan"));
+  const result = data as unknown as SaleTxResult;
 
   const record = unwrap(
-    await supabase
-      .from("sales_records")
-      .insert({
-        business_id: input.businessId,
-        seller_id: input.sellerId,
-        order_id: order.id,
-        idempotency_key: input.idempotencyKey,
-        customer_user_id: input.customerUserId,
-        conversation_id: input.conversationId,
-        subtotal,
-        discount: input.discount,
-        extra_fee: input.extraFee,
-        total,
-        paid_amount: paid,
-        payment_method: input.paymentMethod,
-        due_date: input.dueDate,
-        note: input.note,
-        payload: {
-          number,
-          customerName: input.customerName,
-          items: input.items,
-        } as never,
-      })
-      .select("*")
-      .single(),
-    "Gagal menyimpan penjualan",
+    await supabase.from("sales_records").select("*").eq("id", result.sale_id).single(),
+    "Gagal memuat penjualan",
   );
 
-  const outstanding = total - paid;
-  if (outstanding > 0) {
-    await createLedger({
-      ownerId: input.sellerId,
-      counterpartUserId: input.customerUserId,
-      counterpartName: input.customerName || "Pelanggan",
-      type: "receivable",
-      amount: total,
-      paidAmount: paid,
-      dueDate: input.dueDate,
-      note: `Penjualan ${number}`,
-      salesRecordId: record.id,
-      conversationId: input.conversationId,
-    });
-  }
-
-  if (input.conversationId) {
+  if (!result.already && input.conversationId) {
+    const outstanding = Math.max(0, result.total - result.paid);
     const message = await sendMessage({
       conversationId: input.conversationId,
       senderId: input.sellerId,
       kind: "sales_card",
-      body: `Rincian penjualan ${number}`,
+      body: `Rincian penjualan ${result.number}`,
       payload: {
-        number,
-        total,
-        paid,
+        number: result.number,
+        total: result.total,
+        paid: result.paid,
         outstanding,
         paymentMethod: input.paymentMethod,
         dueDate: input.dueDate,
-        items: input.items.map((i) => ({ name: i.name, qty: i.qty, price: i.price, discount: i.discount })),
+        note: input.note,
+        items: input.items.map((i) => ({
+          name: i.name,
+          variantName: i.variantName,
+          unit: i.unit,
+          qty: i.qty,
+          price: i.price,
+          discount: i.discount,
+          photos: i.photos ?? [],
+        })),
       },
     });
     await supabase.from("sales_records").update({ message_id: message.id }).eq("id", record.id);
+    return { ...record, message_id: message.id };
   }
 
   return record;

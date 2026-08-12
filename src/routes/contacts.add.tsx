@@ -1,18 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { QrCode, ScanLine, Search, Send } from "lucide-react";
+import { Search, Send } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
-import { QRCard, copyText } from "@/components/mcm/pin-card";
+import { MCMAvatar } from "@/components/mcm/primitives";
+import { PinCard } from "@/components/mcm/pin-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DEMO_DIRECTORY, PIN_ALPHABET } from "@/lib/mcm/demo";
-import { uid, useMCM } from "@/lib/mcm/store";
-import type { Contact } from "@/lib/mcm/types";
+import { findByPin, isValidPin, normalizePin, sendContactRequest, type ProfileLite } from "@/lib/api/contacts";
+import { useRequireAuth } from "@/lib/api/guard";
 
 export const Route = createFileRoute("/contacts/add")({
   head: () => ({
@@ -26,163 +24,103 @@ export const Route = createFileRoute("/contacts/add")({
   component: AddContactPage,
 });
 
-const normalize = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
-const format = (v: string) => (v.length > 4 ? `${v.slice(0, 4)}-${v.slice(4)}` : v);
-
 function AddContactPage() {
-  const { state, update } = useMCM();
-  const navigate = useNavigate();
+  const { userId, profile } = useRequireAuth();
   const [pin, setPin] = useState("");
   const [message, setMessage] = useState("Halo, saya ingin terhubung di MCM.");
-  const [result, setResult] = useState<Contact | "notfound" | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [found, setFound] = useState<ProfileLite | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
-  const raw = normalize(pin);
-  const valid = raw.length === 8 && [...raw].every((ch) => PIN_ALPHABET.includes(ch));
-
-  const doSearch = () => {
-    if (!valid) {
-      toast.error("PIN harus 8 karakter dan tanpa huruf O/I atau angka 0/1");
+  const search = async () => {
+    if (!isValidPin(pin)) {
+      toast.error("Format PIN tidak valid. Contoh: A2B3-C4D5");
       return;
     }
-    const formatted = format(raw);
-    if (formatted === state.profile.pin) {
-      toast.error("Itu PIN Anda sendiri");
-      return;
+    setSearching(true);
+    setError(null);
+    setFound(null);
+    setSearched(false);
+    try {
+      const result = await findByPin(pin);
+      setFound(result);
+      setSearched(true);
+      if (!result) toast.info("PIN tidak ditemukan. Periksa kembali kode PIN.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Pencarian gagal");
+    } finally {
+      setSearching(false);
     }
-    const found = state.contacts.find((c) => c.pin === formatted);
-    if (found) {
-      setResult(found);
-      return;
-    }
-    const dir = DEMO_DIRECTORY.find((d) => d.pin === formatted);
-    if (dir) {
-      setResult({
-        id: uid("ct"),
-        name: dir.name,
-        pin: dir.pin,
-        bio: dir.bio,
-        avatarColor: dir.avatarColor,
-        initials: dir.initials,
-        status: "outgoing",
-        lastSeen: new Date().toISOString(),
-      });
-      return;
-    }
-    setResult({
-      id: uid("ct"),
-      name: `Pengguna ${raw.slice(0, 4)}`,
-      pin: formatted,
-      bio: "Pengguna MCM",
-      avatarColor: "from-sky-500 to-indigo-600",
-      initials: raw.slice(0, 2),
-      status: "outgoing",
-      lastSeen: new Date().toISOString(),
-    });
   };
 
-  const sendRequest = () => {
-    if (!result || result === "notfound") return;
-    const existing = state.contacts.find((c) => c.pin === result.pin);
-    if (existing?.status === "blocked") {
-      toast.error(`${existing.name} diblokir. Buka blokir dulu di daftar kontak.`);
-      return;
+  const send = async () => {
+    if (!userId || !found) return;
+    setSending(true);
+    try {
+      await sendContactRequest(userId, found.id, message.trim());
+      toast.success("Permintaan kontak terkirim");
+      setFound(null);
+      setSearched(false);
+      setPin("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permintaan gagal dikirim");
+    } finally {
+      setSending(false);
     }
-    if (result.status === "contact") {
-      toast.info("Sudah menjadi kontak Anda");
-      navigate({ to: "/contacts" });
-      return;
-    }
-    update((d) => {
-      if (!d.contacts.some((c) => c.pin === result.pin)) {
-        d.contacts.push({ ...result, status: "outgoing", requestMessage: message.trim().slice(0, 140) });
-      }
-      return d;
-    });
-    toast.success("Permintaan pertemanan terkirim");
-    navigate({ to: "/contacts" });
   };
 
   return (
-    <AppShell nav={false} header={<MobileHeader back title="Tambah kontak" subtitle="Gunakan PIN MCM, bukan nomor telepon" />}>
-      <div className="space-y-4 px-4 py-4">
-        <Tabs defaultValue="pin">
-          <TabsList className="w-full rounded-xl">
-            <TabsTrigger value="pin" className="flex-1 rounded-lg">
-              Cari PIN
-            </TabsTrigger>
-            <TabsTrigger value="qr" className="flex-1 rounded-lg">
-              QR saya
-            </TabsTrigger>
-          </TabsList>
+    <AppShell nav={false} header={<MobileHeader back title="Tambah kontak" subtitle="Cari lewat PIN, bukan nomor telepon" />}>
+      <div className="space-y-4 px-4 py-4 pb-10">
+        {profile && <PinCard pin={profile.pin} name={profile.display_name} subtitle="Bagikan PIN ini agar orang lain bisa menambahkan Anda" />}
 
-          <TabsContent value="pin" className="mt-4 space-y-4">
-            <div className="card-soft space-y-3 p-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="pin">PIN MCM (8 karakter)</Label>
-                <Input
-                  id="pin"
-                  value={format(raw)}
-                  onChange={(e) => setPin(e.target.value)}
-                  placeholder="XXXX-XXXX"
-                  className="h-12 rounded-xl text-center font-mono text-lg tracking-[0.25em]"
-                />
-                <p className="text-[11px] text-muted-foreground">Tanpa karakter membingungkan: 0, O, I, dan 1 tidak dipakai.</p>
-                <button
-                  type="button"
-                  className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
-                  onClick={() => setPin("R8NA-K4Q7")}
-                >
-                  Coba PIN contoh: R8NA-K4Q7 (Rina Safitri)
-                </button>
-              </div>
-              <Button className="h-11 w-full rounded-xl" onClick={doSearch} disabled={!valid}>
-                <Search className="size-4" /> Cari pengguna
-              </Button>
-              <Button variant="outline" className="h-11 w-full rounded-xl" onClick={() => toast.info("Pemindai QR memerlukan izin kamera perangkat (simulasi)")}>
-                <ScanLine className="size-4" /> Pindai QR
+        <div className="card-soft space-y-3 p-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="pin">PIN MCM</Label>
+            <div className="flex gap-2">
+              <Input
+                id="pin"
+                value={pin}
+                onChange={(e) => setPin(normalizePin(e.target.value))}
+                placeholder="A2B3-C4D5"
+                maxLength={9}
+                className="h-11 rounded-xl font-mono tracking-widest uppercase"
+              />
+              <Button className="h-11 rounded-xl" onClick={() => void search()} disabled={searching || !pin}>
+                <Search className="size-4" /> {searching ? "Mencari…" : "Cari"}
               </Button>
             </div>
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
 
-            {result && result !== "notfound" && (
-              <div className="card-soft space-y-3 p-4">
-                <div className="flex items-center gap-3">
-                  <MCMAvatar initials={result.initials} color={result.avatarColor} />
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold">{result.name}</p>
-                    <p className="font-mono text-xs text-muted-foreground">{result.pin}</p>
-                    <p className="truncate text-xs text-muted-foreground">{result.bio}</p>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="msg">Pesan permintaan</Label>
-                  <Textarea id="msg" value={message} maxLength={140} onChange={(e) => setMessage(e.target.value)} />
-                  <p className="text-right text-[11px] text-muted-foreground">{message.length}/140</p>
-                </div>
-                {state.contacts.some((c) => c.pin === result.pin && c.status === "blocked") && (
-                  <p className="rounded-xl bg-destructive/10 p-2 text-center text-xs text-destructive">
-                    Kontak ini diblokir. Buka blokir untuk mengirim permintaan.
-                  </p>
-                )}
-                <Button
-                  className="h-11 w-full rounded-xl"
-                  disabled={state.contacts.some((c) => c.pin === result.pin && c.status === "blocked")}
-                  onClick={sendRequest}
-                >
-                  <Send className="size-4" /> Kirim permintaan
-                </Button>
+        {searched && !found && !error && (
+          <div className="card-soft p-4 text-center text-sm text-muted-foreground">
+            PIN tidak ditemukan. Pastikan PIN benar dan coba lagi.
+          </div>
+        )}
+
+        {found && (
+          <div className="card-soft space-y-3 p-4">
+            <div className="flex items-center gap-3">
+              <MCMAvatar initials={found.display_name.slice(0, 2).toUpperCase()} color={found.avatar_color} size="lg" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold">{found.display_name}</p>
+                <p className="font-mono text-xs text-muted-foreground">{found.pin}</p>
+                {found.bio && <p className="truncate text-xs text-muted-foreground">{found.bio}</p>}
               </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="qr" className="mt-4 space-y-4">
-            <QRCard pin={state.profile.pin} label={state.profile.name} />
-            <Button variant="outline" className="w-full rounded-xl" onClick={() => copyText(state.profile.pin, "PIN disalin")}>
-              <QrCode className="size-4" /> Salin PIN saya
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="msg">Pesan permintaan</Label>
+              <Textarea id="msg" maxLength={140} value={message} onChange={(e) => setMessage(e.target.value)} rows={3} />
+            </div>
+            <Button className="w-full rounded-xl" onClick={() => void send()} disabled={sending}>
+              <Send className="size-4" /> {sending ? "Mengirim…" : "Kirim permintaan"}
             </Button>
-          </TabsContent>
-        </Tabs>
-
-        <ProtoNote>Pencarian PIN masih memakai data demo di perangkat. Direktori pengguna nyata memerlukan backend.</ProtoNote>
+          </div>
+        )}
       </div>
     </AppShell>
   );
