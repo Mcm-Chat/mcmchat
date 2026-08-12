@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { notifyNewMessage } from "@/lib/push/push.functions";
 import { removeObject, uploadChatMedia } from "./storage";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
@@ -191,6 +192,9 @@ export async function sendMessage(input: SendMessageInput): Promise<MessageRow> 
   }
   const { data, error } = await supabase.from("messages").insert(row).select("*").single();
   if (error) throw new Error(friendly(error.message, "Pesan gagal dikirim"));
+  // Fan-out push ke perangkat penerima (mute + preferensi dihormati di server).
+  // Sengaja tidak di-await: kegagalan push tidak boleh menggagalkan kirim pesan.
+  void notifyNewMessage({ data: { messageId: data.id } }).catch(() => undefined);
   return data;
 }
 
