@@ -19,6 +19,7 @@ import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
 import { deleteForEveryone, deleteForMe, editMessage, sendMessage, toggleReaction, type MessageRow } from "@/lib/api/chat";
 import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
 import { createLedger } from "@/lib/api/ledger";
+import { getCallConfig } from "@/lib/calls/calls.functions";
 import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";
@@ -318,6 +319,8 @@ function ChatRoom() {
       toast.error(err instanceof Error ? err.message : "Gagal membuat catatan");
     }
   };
+
+  const loadCallConfig = useServerFn(getCallConfig);
 
   const call = async (kind: "audio" | "video") => {
     if (!userId || !conv) return;
