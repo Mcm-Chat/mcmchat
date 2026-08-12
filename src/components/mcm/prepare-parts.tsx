@@ -86,7 +86,7 @@ export function CreatePreparationDialog({
   const addItem = () => {
     const v = current;
     const n = Number(qty.replace(",", "."));
-    if (!v) return toast.error("Pilih varian produk dulu");
+    if (!v) { toast.error("Pilih varian produk dulu"); return; }
     if (!Number.isFinite(n) || n <= 0) { toast.error("Jumlah harus lebih dari nol"); return; }
     if (v.stock_type === "count" && !v.allow_decimal && !Number.isInteger(n)) {
       toast.error(`${v.name} hanya menerima jumlah bulat`);
