@@ -20,6 +20,7 @@ import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
 import { Route as ContactsAddRouteImport } from './routes/contacts.add'
+import { Route as LedgerIndexRouteImport } from './routes/ledger.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +77,11 @@ const ContactsAddRoute = ContactsAddRouteImport.update({
   path: '/contacts/add',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LedgerIndexRoute = LedgerIndexRouteImport.update({
+  id: '/ledger/',
+  path: '/ledger/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/ledger/': typeof LedgerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/calls': typeof CallsIndexRoute
   '/chat': typeof ChatIndexRoute
   '/contacts': typeof ContactsIndexRoute
+  '/ledger': typeof LedgerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
+  '/ledger/': typeof LedgerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/calls/'
     | '/chat/'
     | '/contacts/'
+    | '/ledger/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/calls'
     | '/chat'
     | '/contacts'
+    | '/ledger'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/calls/'
     | '/chat/'
     | '/contacts/'
+    | '/ledger/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   CallsIndexRoute: typeof CallsIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
+  LedgerIndexRoute: typeof LedgerIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ledger/': {
+      id: '/ledger/'
+      path: '/ledger'
+      fullPath: '/ledger/'
+      preLoaderRoute: typeof LedgerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallsIndexRoute: CallsIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
+  LedgerIndexRoute: LedgerIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
