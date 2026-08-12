@@ -128,9 +128,30 @@ function ChatRoom() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [userId, id]);
 
+  // Auto-scroll hanya bila pengguna memang sedang berada di dekat pesan terbaru.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length]);
+    if (atBottom) bottomRef.current?.scrollIntoView({ block: "end" });
+  }, [messages.length, pending.length, atBottom]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setAtBottom(distance < 120);
+    if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
+  }, [hasOlder, isFetchingOlder, fetchOlder]);
+
+  // Draf per percakapan bertahan saat pindah layar atau reload.
+  const draftKey = `mcm.draft.${id}`;
+  useEffect(() => {
+    const saved = typeof localStorage !== "undefined" ? localStorage.getItem(draftKey) : null;
+    if (saved) setText(saved);
+  }, [draftKey]);
+  useEffect(() => {
+    if (typeof localStorage === "undefined") return;
+    if (text) localStorage.setItem(draftKey, text);
+    else localStorage.removeItem(draftKey);
+  }, [text, draftKey]);
 
   const nameOf = useMemo(() => {
     const map = new Map((conv?.members ?? []).map((m) => [m.id, m.display_name]));
@@ -143,25 +164,38 @@ function ChatRoom() {
     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
   };
 
+  // Saat entri outbox berhasil terkirim, muat ulang halaman pesan percakapan itu.
+  useEffect(() => {
+    setOutboxSentHandler((entry) => {
+      void qc.invalidateQueries({ queryKey: qk.messages(entry.conversationId) });
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+    });
+    return () => setOutboxSentHandler(null);
+  }, [qc, userId]);
+
   const blocked = block?.iBlocked ?? false;
   const blockedByOther = block?.blockedMe ?? false;
 
   const doSend = async () => {
     const body = text.trim();
     if (!body || !userId) return;
-    try {
-      if (editingId) {
+    if (editingId) {
+      try {
         await editMessage(editingId, body);
         setEditingId(null);
-      } else {
-        await sendMessage({ conversationId: id, senderId: userId, body, replyToId: reply?.id ?? null });
+        setText("");
+        refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Pesan gagal diubah");
       }
-      setText("");
-      setReply(null);
-      refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Pesan gagal dikirim");
+      return;
     }
+    // Pesan teks masuk outbox: tampil langsung, terkirim otomatis saat online,
+    // dan tidak pernah hilang meski koneksi putus.
+    enqueueText({ conversationId: id, senderId: userId, body, replyToId: reply?.id ?? null });
+    setText("");
+    setReply(null);
+    setAtBottom(true);
   };
 
   const sendVoice = async (blob: Blob, seconds: number) => {
