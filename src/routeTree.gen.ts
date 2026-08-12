@@ -20,6 +20,7 @@ import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as CallIdRouteImport } from './routes/call.$id'
 import { Route as CallsIndexRouteImport } from './routes/calls.index'
 import { Route as CatalogIndexRouteImport } from './routes/catalog.index'
+import { Route as CatalogIdRouteImport } from './routes/catalog.$id'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
@@ -86,6 +87,11 @@ const CallsIndexRoute = CallsIndexRouteImport.update({
 const CatalogIndexRoute = CatalogIndexRouteImport.update({
   id: '/catalog/',
   path: '/catalog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogIdRoute = CatalogIdRouteImport.update({
+  id: '/catalog/$id',
+  path: '/catalog/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
   '/call/$id': typeof CallIdRoute
+  '/catalog/$id': typeof CatalogIdRoute
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
   '/call/$id': typeof CallIdRoute
+  '/catalog/$id': typeof CatalogIdRoute
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
   '/call/$id': typeof CallIdRoute
+  '/catalog/$id': typeof CatalogIdRoute
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/terms'
     | '/call/$id'
+    | '/catalog/$id'
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/terms'
     | '/call/$id'
+    | '/catalog/$id'
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/terms'
     | '/call/$id'
+    | '/catalog/$id'
     | '/chat/$id'
     | '/contacts/add'
     | '/ledger/$id'
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   TermsRoute: typeof TermsRoute
   CallIdRoute: typeof CallIdRoute
+  CatalogIdRoute: typeof CatalogIdRoute
   ChatIdRoute: typeof ChatIdRoute
   ContactsAddRoute: typeof ContactsAddRoute
   LedgerIdRoute: typeof LedgerIdRoute
@@ -406,6 +419,13 @@ declare module '@tanstack/react-router' {
       path: '/catalog'
       fullPath: '/catalog/'
       preLoaderRoute: typeof CatalogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog/$id': {
+      id: '/catalog/$id'
+      path: '/catalog/$id'
+      fullPath: '/catalog/$id'
+      preLoaderRoute: typeof CatalogIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/': {
@@ -504,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   TermsRoute: TermsRoute,
   CallIdRoute: CallIdRoute,
+  CatalogIdRoute: CatalogIdRoute,
   ChatIdRoute: ChatIdRoute,
   ContactsAddRoute: ContactsAddRoute,
   LedgerIdRoute: LedgerIdRoute,
