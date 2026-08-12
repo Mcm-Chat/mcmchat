@@ -425,6 +425,29 @@ function ChatRoom() {
       )}
 
       <Dialog open={ledgerOpen} onOpenChange={setLedgerOpen}>
+        {null}
+      </Dialog>
+
+      <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
+        <SheetContent side="bottom" className="flex h-[92vh] flex-col gap-0 rounded-t-3xl p-0">
+          <SheetHeader className="pb-2">
+            <SheetTitle>Kirim foto ke {chat.name}</SheetTitle>
+            <SheetDescription>Penerima sudah dipilih otomatis dari percakapan ini.</SheetDescription>
+          </SheetHeader>
+          {photoOpen && (
+            <PhotoFlow
+              fixedChatIds={[id]}
+              onCancel={() => setPhotoOpen(false)}
+              onDone={(_ids, messageId) => {
+                setPhotoOpen(false);
+                void navigate({ to: "/chat/$id", params: { id }, search: { hl: messageId }, replace: true });
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={ledgerOpen} onOpenChange={setLedgerOpen}>
         <DialogContent className="max-w-[360px] rounded-2xl">
           <DialogHeader>
             <DialogTitle>Catatan utang bersama</DialogTitle>
