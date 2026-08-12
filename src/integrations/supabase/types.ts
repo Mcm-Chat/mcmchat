@@ -425,6 +425,122 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_balances: {
+        Row: {
+          business_id: string
+          product_id: string
+          qty_base: number
+          updated_at: string
+          variant_id: string
+        }
+        Insert: {
+          business_id: string
+          product_id: string
+          qty_base?: number
+          updated_at?: string
+          variant_id: string
+        }
+        Update: {
+          business_id?: string
+          product_id?: string
+          qty_base?: number
+          updated_at?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_balances_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_balances_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: true
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_movements: {
+        Row: {
+          balance_after: number
+          balance_before: number
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          movement_type: Database["public"]["Enums"]["inventory_movement_type"]
+          note: string
+          product_id: string
+          qty_base: number
+          ref_id: string | null
+          ref_type: string
+          variant_id: string
+        }
+        Insert: {
+          balance_after?: number
+          balance_before?: number
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type: Database["public"]["Enums"]["inventory_movement_type"]
+          note?: string
+          product_id: string
+          qty_base: number
+          ref_id?: string | null
+          ref_type?: string
+          variant_id: string
+        }
+        Update: {
+          balance_after?: number
+          balance_before?: number
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          movement_type?: Database["public"]["Enums"]["inventory_movement_type"]
+          note?: string
+          product_id?: string
+          qty_base?: number
+          ref_id?: string | null
+          ref_type?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ledger_events: {
         Row: {
           actor_id: string | null
@@ -922,51 +1038,309 @@ export type Database = {
         }
         Relationships: []
       }
+      preparation_item_photos: {
+        Row: {
+          accuracy: number | null
+          caption: string
+          created_at: string
+          id: string
+          job_id: string
+          job_item_id: string
+          lat: number | null
+          lng: number | null
+          location_label: string
+          maps_url: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          accuracy?: number | null
+          caption?: string
+          created_at?: string
+          id?: string
+          job_id: string
+          job_item_id: string
+          lat?: number | null
+          lng?: number | null
+          location_label?: string
+          maps_url?: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          accuracy?: number | null
+          caption?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          job_item_id?: string
+          lat?: number | null
+          lng?: number | null
+          location_label?: string
+          maps_url?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preparation_item_photos_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_item_photos_job_item_id_fkey"
+            columns: ["job_item_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_job_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preparation_job_items: {
+        Row: {
+          actual_qty_base: number | null
+          created_at: string
+          id: string
+          job_id: string
+          notes: string
+          product_id: string
+          product_name: string
+          requested_qty: number
+          requested_qty_base: number
+          requested_unit: string
+          require_location: boolean
+          require_photo: boolean
+          sort_order: number
+          status: Database["public"]["Enums"]["preparation_item_status"]
+          updated_at: string
+          variant_id: string
+          variant_name: string
+        }
+        Insert: {
+          actual_qty_base?: number | null
+          created_at?: string
+          id?: string
+          job_id: string
+          notes?: string
+          product_id: string
+          product_name?: string
+          requested_qty: number
+          requested_qty_base: number
+          requested_unit?: string
+          require_location?: boolean
+          require_photo?: boolean
+          sort_order?: number
+          status?: Database["public"]["Enums"]["preparation_item_status"]
+          updated_at?: string
+          variant_id: string
+          variant_name?: string
+        }
+        Update: {
+          actual_qty_base?: number | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          notes?: string
+          product_id?: string
+          product_name?: string
+          requested_qty?: number
+          requested_qty_base?: number
+          requested_unit?: string
+          require_location?: boolean
+          require_photo?: boolean
+          sort_order?: number
+          status?: Database["public"]["Enums"]["preparation_item_status"]
+          updated_at?: string
+          variant_id?: string
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preparation_job_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_job_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_job_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      preparation_jobs: {
+        Row: {
+          assigned_user_id: string
+          business_id: string
+          code: string
+          completed_at: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          customer_name: string
+          customer_user_id: string | null
+          expires_at: string
+          id: string
+          notes: string
+          opened_at: string | null
+          order_id: string | null
+          revoked_at: string | null
+          status: Database["public"]["Enums"]["preparation_status"]
+          token_hash: string
+          token_prefix: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_user_id: string
+          business_id: string
+          code: string
+          completed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_user_id?: string | null
+          expires_at?: string
+          id?: string
+          notes?: string
+          opened_at?: string | null
+          order_id?: string | null
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["preparation_status"]
+          token_hash: string
+          token_prefix?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_user_id?: string
+          business_id?: string
+          code?: string
+          completed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_user_id?: string | null
+          expires_at?: string
+          id?: string
+          notes?: string
+          opened_at?: string | null
+          order_id?: string | null
+          revoked_at?: string | null
+          status?: Database["public"]["Enums"]["preparation_status"]
+          token_hash?: string
+          token_prefix?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preparation_jobs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_jobs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_jobs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_jobs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_photos: {
         Row: {
           business_id: string
           caption: string
           created_at: string
+          group_label: string
           id: string
           image_path: string
           image_url: string | null
+          location_accuracy: number | null
           location_label: string
           location_lat: number | null
           location_lng: number | null
           location_url: string
+          preparation_job_id: string | null
+          preparation_job_item_id: string | null
           product_id: string
           sort_order: number
+          source_photo_id: string | null
           updated_at: string
+          variant_id: string | null
         }
         Insert: {
           business_id: string
           caption?: string
           created_at?: string
+          group_label?: string
           id?: string
           image_path: string
           image_url?: string | null
+          location_accuracy?: number | null
           location_label?: string
           location_lat?: number | null
           location_lng?: number | null
           location_url?: string
+          preparation_job_id?: string | null
+          preparation_job_item_id?: string | null
           product_id: string
           sort_order?: number
+          source_photo_id?: string | null
           updated_at?: string
+          variant_id?: string | null
         }
         Update: {
           business_id?: string
           caption?: string
           created_at?: string
+          group_label?: string
           id?: string
           image_path?: string
           image_url?: string | null
+          location_accuracy?: number | null
           location_label?: string
           location_lat?: number | null
           location_lng?: number | null
           location_url?: string
+          preparation_job_id?: string | null
+          preparation_job_item_id?: string | null
           product_id?: string
           sort_order?: number
+          source_photo_id?: string | null
           updated_at?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -977,7 +1351,100 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "product_photos_preparation_job_id_fkey"
+            columns: ["preparation_job_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_photos_preparation_job_item_id_fkey"
+            columns: ["preparation_job_item_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_job_items"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "product_photos_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_photos_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          allow_decimal: boolean
+          base_unit: string
+          business_id: string
+          conversion_factor: number
+          created_at: string
+          display_unit: string
+          id: string
+          is_active: boolean
+          name: string
+          precision_scale: number
+          price: number
+          product_id: string
+          sku: string
+          sort_order: number
+          stock_type: Database["public"]["Enums"]["stock_type"]
+          updated_at: string
+        }
+        Insert: {
+          allow_decimal?: boolean
+          base_unit?: string
+          business_id: string
+          conversion_factor?: number
+          created_at?: string
+          display_unit?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          precision_scale?: number
+          price?: number
+          product_id: string
+          sku?: string
+          sort_order?: number
+          stock_type?: Database["public"]["Enums"]["stock_type"]
+          updated_at?: string
+        }
+        Update: {
+          allow_decimal?: boolean
+          base_unit?: string
+          business_id?: string
+          conversion_factor?: number
+          created_at?: string
+          display_unit?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          precision_scale?: number
+          price?: number
+          product_id?: string
+          sku?: string
+          sort_order?: number
+          stock_type?: Database["public"]["Enums"]["stock_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1258,6 +1725,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_inventory: {
+        Args: {
+          _note?: string
+          _qty_base: number
+          _type?: Database["public"]["Enums"]["inventory_movement_type"]
+          _variant: string
+        }
+        Returns: number
+      }
       business_role_of: {
         Args: { _biz: string; _uid: string }
         Returns: Database["public"]["Enums"]["business_role"]
@@ -1270,9 +1746,33 @@ export type Database = {
         Args: { _ledger: string; _uid: string }
         Returns: boolean
       }
+      can_see_prep_job: {
+        Args: { _job: string; _uid: string }
+        Returns: boolean
+      }
       can_sell_business: {
         Args: { _biz: string; _uid: string }
         Returns: boolean
+      }
+      complete_preparation_job: { Args: { _job: string }; Returns: Json }
+      convert_to_base: {
+        Args: { _qty: number; _unit: string; _variant: string }
+        Returns: number
+      }
+      create_preparation_job: {
+        Args: {
+          _assigned: string
+          _business: string
+          _conversation?: string
+          _customer?: string
+          _customer_name?: string
+          _customer_user?: string
+          _expires_hours?: number
+          _items: Json
+          _notes?: string
+          _order?: string
+        }
+        Returns: Json
       }
       find_profile_by_pin: {
         Args: { _pin: string }
@@ -1298,6 +1798,7 @@ export type Database = {
         Args: { _conv: string; _uid: string }
         Returns: boolean
       }
+      prep_job_id_by_token: { Args: { _token: string }; Returns: string }
       record_ledger_payment: {
         Args: {
           _amount: number
@@ -1329,6 +1830,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      rotate_preparation_token: {
+        Args: { _expires_hours?: number; _job: string }
+        Returns: Json
+      }
       safe_uuid: { Args: { _t: string }; Returns: string }
     }
     Enums: {
@@ -1350,6 +1855,12 @@ export type Database = {
         | "cancelled"
       conversation_type: "direct" | "group" | "business"
       inbox_status: "open" | "pending" | "closed"
+      inventory_movement_type:
+        | "preparation"
+        | "sale"
+        | "adjustment"
+        | "restock"
+        | "return"
       ledger_status:
         | "pending_approval"
         | "active"
@@ -1371,6 +1882,16 @@ export type Database = {
         | "location"
       order_status: "new" | "processing" | "shipped" | "completed" | "cancelled"
       payment_method: "cash" | "transfer" | "dp" | "credit"
+      preparation_item_status: "pending" | "in_progress" | "done"
+      preparation_status:
+        | "draft"
+        | "sent"
+        | "opened"
+        | "in_progress"
+        | "ready"
+        | "completed"
+        | "cancelled"
+      stock_type: "weight" | "count"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1518,6 +2039,13 @@ export const Constants = {
       ],
       conversation_type: ["direct", "group", "business"],
       inbox_status: ["open", "pending", "closed"],
+      inventory_movement_type: [
+        "preparation",
+        "sale",
+        "adjustment",
+        "restock",
+        "return",
+      ],
       ledger_status: [
         "pending_approval",
         "active",
@@ -1541,6 +2069,17 @@ export const Constants = {
       ],
       order_status: ["new", "processing", "shipped", "completed", "cancelled"],
       payment_method: ["cash", "transfer", "dp", "credit"],
+      preparation_item_status: ["pending", "in_progress", "done"],
+      preparation_status: [
+        "draft",
+        "sent",
+        "opened",
+        "in_progress",
+        "ready",
+        "completed",
+        "cancelled",
+      ],
+      stock_type: ["weight", "count"],
     },
   },
 } as const
