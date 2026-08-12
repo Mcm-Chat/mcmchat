@@ -35,7 +35,7 @@ export function LocationCard({ location, compact }: { location: MessageLocation;
           <div className="flex flex-wrap items-center gap-1">
             <p className="truncate text-xs font-semibold">{location.label}</p>
             {location.source === "demo" && <StatusBadge tone="warning">Lokasi Demo</StatusBadge>}
-            {location.source === "manual" && <StatusBadge tone="muted">Manual</StatusBadge>}
+            {location.source === "manual" && <StatusBadge tone="neutral">Manual</StatusBadge>}
           </div>
           <p className="mt-0.5 font-mono text-[10px] break-all text-muted-foreground">
             {koordinat(location.latitude, location.longitude)}
