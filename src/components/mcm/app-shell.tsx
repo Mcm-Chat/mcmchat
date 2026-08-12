@@ -12,7 +12,7 @@ const NAV = [
   { to: "/profile", label: "Profil", icon: User, match: "/profile" },
 ] as const;
 
-export function BottomNavigation({ badges }: { badges?: Partial<Record<string, number>> }) {
+export function BottomNavigation({ badges }: { badges?: Partial<Record<string, number>> | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="sticky bottom-0 z-30 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
