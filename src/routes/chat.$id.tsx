@@ -30,12 +30,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { chatMessages, uid, useMCM } from "@/lib/mcm/store";
 import { labelHari, rupiah } from "@/lib/mcm/format";
 import type { Message } from "@/lib/mcm/types";
 
 export const Route = createFileRoute("/chat/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({ hl: typeof search['hl'] === "string" ? (search['hl'] as string) : undefined }),
   head: () => ({
     meta: [
       { title: "Percakapan — MCM" },
@@ -49,6 +51,7 @@ export const Route = createFileRoute("/chat/$id")({
 
 function ChatRoom() {
   const { id } = Route.useParams();
+  const { hl } = Route.useSearch();
   const { state, update } = useMCM();
   const navigate = useNavigate();
   const chat = state.chats.find((c) => c.id === id);
@@ -60,6 +63,7 @@ function ChatRoom() {
   const [info, setInfo] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [dismissSuggestion, setDismissSuggestion] = useState(false);
   const [ledgerForm, setLedgerForm] = useState({ type: "piutang", amount: "", note: "", dueDate: "" });
   const bottom = useRef<HTMLDivElement>(null);
