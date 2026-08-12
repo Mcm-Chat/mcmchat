@@ -40,6 +40,16 @@ export interface PollOption {
   votes: number;
 }
 
+export interface MessageLocation {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  label: string;
+  mapsUrl: string;
+  capturedAt: string;
+  source: "gps" | "manual" | "demo";
+}
+
 export interface Message {
   id: ID;
   chatId: ID;
@@ -60,6 +70,8 @@ export interface Message {
   durationSec?: number | undefined;
   pollOptions?: PollOption[] | undefined;
   refId?: ID | undefined;
+  mediaDataUrl?: string | undefined;
+  location?: MessageLocation | undefined;
 }
 
 export interface Chat {
