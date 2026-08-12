@@ -21,11 +21,11 @@ export interface Contact {
   avatarColor: string;
   initials: string;
   status: ContactStatus;
-  isBusiness?: boolean;
-  online?: boolean;
+  isBusiness?: boolean | undefined;
+  online?: boolean | undefined;
   lastSeen: string;
-  note?: string;
-  requestMessage?: string;
+  note?: string | undefined;
+  requestMessage?: string | undefined;
 }
 
 export type MessageKind = "text" | "image" | "document" | "voice" | "poll" | "system" | "ledger" | "order";
@@ -50,16 +50,16 @@ export interface Message {
   at: string;
   status: "sending" | "sent" | "delivered" | "read";
   reactions: Reaction[];
-  replyToId?: ID;
-  edited?: boolean;
-  deleted?: boolean;
-  starred?: boolean;
-  pinned?: boolean;
-  forwarded?: boolean;
-  attachmentName?: string;
-  durationSec?: number;
-  pollOptions?: PollOption[];
-  refId?: ID;
+  replyToId?: ID | undefined;
+  edited?: boolean | undefined;
+  deleted?: boolean | undefined;
+  starred?: boolean | undefined;
+  pinned?: boolean | undefined;
+  forwarded?: boolean | undefined;
+  attachmentName?: string | undefined;
+  durationSec?: number | undefined;
+  pollOptions?: PollOption[] | undefined;
+  refId?: ID | undefined;
 }
 
 export interface Chat {
@@ -68,16 +68,16 @@ export interface Chat {
   name: string;
   avatarColor: string;
   initials: string;
-  contactId?: ID;
+  contactId?: ID | undefined;
   memberIds: ID[];
   pinned: boolean;
   archived: boolean;
   muted: boolean;
   unread: number;
-  typing?: boolean;
+  typing?: boolean | undefined;
   disappearingHours: number;
-  onlyAdminsCanPost?: boolean;
-  isBusiness?: boolean;
+  onlyAdminsCanPost?: boolean | undefined;
+  isBusiness?: boolean | undefined;
 }
 
 export interface CallLog {
@@ -105,8 +105,8 @@ export interface LedgerPayment {
   amount: number;
   at: string;
   method: string;
-  proofName?: string;
-  note?: string;
+  proofName?: string | undefined;
+  note?: string | undefined;
 }
 
 export interface LedgerEvent {
@@ -114,7 +114,7 @@ export interface LedgerEvent {
   at: string;
   actor: string;
   label: string;
-  detail?: string;
+  detail?: string | undefined;
 }
 
 export interface LedgerEntry {
@@ -128,9 +128,9 @@ export interface LedgerEntry {
   dueDate: string;
   note: string;
   status: LedgerStatus;
-  attachmentName?: string;
+  attachmentName?: string | undefined;
   reminder: boolean;
-  createdFromChatId?: ID;
+  createdFromChatId?: ID | undefined;
   payments: LedgerPayment[];
   timeline: LedgerEvent[];
 }

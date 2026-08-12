@@ -24,10 +24,10 @@ export function MCMAvatar({
 }: {
   initials: string;
   color: string;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-  online?: boolean;
-  emoji?: string;
-  className?: string;
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | undefined;
+  online?: boolean | undefined;
+  emoji?: string | undefined;
+  className?: string | undefined;
 }) {
   const sizes = {
     xs: "size-8 text-[11px]",
@@ -71,8 +71,8 @@ export function StatusBadge({
   className,
 }: {
   children: ReactNode;
-  tone?: Tone;
-  className?: string;
+  tone?: Tone | undefined;
+  className?: string | undefined;
 }) {
   return (
     <span
@@ -93,10 +93,10 @@ export function EmptyState({
   description,
   action,
 }: {
-  icon: LucideIcon | ComponentType<{ className?: string }>;
+  icon: LucideIcon | ComponentType<{ className?: string }> | undefined;
   title: string;
   description: string;
-  action?: ReactNode;
+  action?: ReactNode | undefined;
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-8 py-14 text-center">
@@ -112,7 +112,7 @@ export function EmptyState({
   );
 }
 
-export function LoadingSkeleton({ rows = 5, avatar = true }: { rows?: number; avatar?: boolean }) {
+export function LoadingSkeleton({ rows = 5, avatar = true }: { rows?: number | undefined; avatar?: boolean }) {
   return (
     <div className="space-y-3 p-4">
       {Array.from({ length: rows }).map((_, i) => (
@@ -142,9 +142,9 @@ export function ConfirmDialog({
   onOpenChange: (v: boolean) => void;
   title: string;
   description: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  destructive?: boolean;
+  confirmLabel?: string | undefined;
+  cancelLabel?: string | undefined;
+  destructive?: boolean | undefined;
   onConfirm: () => void;
 }) {
   return (
@@ -175,11 +175,11 @@ export function SettingRow({
   right,
   onClick,
 }: {
-  icon?: LucideIcon;
+  icon?: LucideIcon | undefined;
   label: string;
-  description?: string;
-  right?: ReactNode;
-  onClick?: () => void;
+  description?: string | undefined;
+  right?: ReactNode | undefined;
+  onClick?: () => void | undefined;
 }) {
   const Comp = onClick ? "button" : "div";
   return (
@@ -219,7 +219,7 @@ export function ActionButton({
   icon: LucideIcon;
   label: string;
   onClick: () => void;
-  tone?: "default" | "danger";
+  tone?: "default" | "danger" | undefined;
 }) {
   return (
     <Button

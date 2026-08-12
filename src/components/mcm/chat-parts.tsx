@@ -53,7 +53,7 @@ export function ChatListItem({
   chat: Chat;
   preview: string;
   time: string;
-  outgoing?: boolean;
+  outgoing?: boolean | undefined;
   onTogglePin: () => void;
   onToggleMute: () => void;
   onToggleArchive: () => void;
@@ -116,9 +116,9 @@ export function MessageBubble({
   onAction,
 }: {
   message: Message;
-  replyTo?: Message;
+  replyTo?: Message | undefined;
   showSender: boolean;
-  onAction: (action: string, message: Message, payload?: string) => void;
+  onAction: (action: string, message: Message, payload?: string) => void | undefined;
 }) {
   const mine = message.senderId === "me";
   if (message.kind === "system") {
@@ -263,7 +263,7 @@ export function MessageBubble({
                 <Pencil className="size-4" /> Edit
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem variant="destructive" onClick={() => onAction("delete", message)}>
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onAction("delete", message)}>
               <Trash2 className="size-4" /> Hapus
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -292,11 +292,11 @@ export function ChatComposer({
   onAttach: (kind: "image" | "document" | "camera") => void;
   onVoice: () => void;
   onNewLedger: () => void;
-  editing?: boolean;
-  onCancelEdit?: () => void;
-  replyPreview?: Message;
-  onCancelReply?: () => void;
-  quickReplies?: { shortcut: string; text: string }[];
+  editing?: boolean | undefined;
+  onCancelEdit?: () => void | undefined;
+  replyPreview?: Message | undefined;
+  onCancelReply?: () => void | undefined;
+  quickReplies?: { shortcut: string | undefined; text: string }[];
 }) {
   const [recording, setRecording] = useState(false);
   const ref = useRef<HTMLTextAreaElement>(null);

@@ -57,12 +57,12 @@ export function MobileHeader({
   children,
 }: {
   title: ReactNode;
-  subtitle?: ReactNode;
-  back?: boolean;
-  onBack?: () => void;
-  actions?: ReactNode;
-  variant?: "solid" | "gradient";
-  children?: ReactNode;
+  subtitle?: ReactNode | undefined;
+  back?: boolean | undefined;
+  onBack?: () => void | undefined;
+  actions?: ReactNode | undefined;
+  variant?: "solid" | "gradient" | undefined;
+  children?: ReactNode | undefined;
 }) {
   const navigate = useNavigate();
   return (
@@ -108,10 +108,10 @@ export function AppShell({
   className,
 }: {
   children: ReactNode;
-  header?: ReactNode;
-  nav?: boolean;
-  badges?: Partial<Record<string, number>>;
-  className?: string;
+  header?: ReactNode | undefined;
+  nav?: boolean | undefined;
+  badges?: Partial<Record<string, number>> | undefined;
+  className?: string | undefined;
 }) {
   return (
     <div className="min-h-screen bg-navy/95 dark:bg-black/40">

@@ -25,8 +25,8 @@ export function LedgerSummaryCard({
 }: {
   label: string;
   value: string;
-  hint?: string;
-  tone?: "primary" | "danger" | "warning" | "success";
+  hint?: string | undefined;
+  tone?: "primary" | "danger" | "warning" | "success" | undefined;
 }) {
   const map = {
     primary: "bg-primary/10 text-primary",
