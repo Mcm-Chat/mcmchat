@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      background_action_log: {
+        Row: {
+          action: string
+          created_at: string
+          device_id: string | null
+          id: string
+          idempotency_key: string
+          result: Json
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          idempotency_key: string
+          result?: Json
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          idempotency_key?: string
+          result?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "background_action_log_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_members: {
         Row: {
           business_id: string
@@ -394,32 +432,47 @@ export type Database = {
       }
       devices: {
         Row: {
+          action_token_hash: string | null
+          action_token_prefix: string | null
+          app_version: string
           created_at: string
           id: string
           last_active_at: string
           name: string
           platform: string
+          push_provider: string
           push_token: string | null
+          revoked_at: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          action_token_hash?: string | null
+          action_token_prefix?: string | null
+          app_version?: string
           created_at?: string
           id?: string
           last_active_at?: string
           name: string
           platform?: string
+          push_provider?: string
           push_token?: string | null
+          revoked_at?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          action_token_hash?: string | null
+          action_token_prefix?: string | null
+          app_version?: string
           created_at?: string
           id?: string
           last_active_at?: string
           name?: string
           platform?: string
+          push_provider?: string
           push_token?: string | null
+          revoked_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1756,6 +1809,23 @@ export type Database = {
         }
         Returns: number
       }
+      bg_mark_delivered: {
+        Args: { _conv: string; _message?: string; _token: string }
+        Returns: Json
+      }
+      bg_mark_read: {
+        Args: { _conv: string; _idempotency_key?: string; _token: string }
+        Returns: Json
+      }
+      bg_reply_message: {
+        Args: {
+          _body: string
+          _conv: string
+          _idempotency_key: string
+          _token: string
+        }
+        Returns: Json
+      }
       business_role_of: {
         Args: { _biz: string; _uid: string }
         Returns: Database["public"]["Enums"]["business_role"]
@@ -1797,6 +1867,13 @@ export type Database = {
         Returns: Json
       }
       create_sale_tx: { Args: { _payload: Json }; Returns: Json }
+      device_from_action_token: {
+        Args: { _token: string }
+        Returns: {
+          device_id: string
+          user_id: string
+        }[]
+      }
       find_profile_by_pin: {
         Args: { _pin: string }
         Returns: {
@@ -1824,6 +1901,30 @@ export type Database = {
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
       prep_job_id_by_token: { Args: { _token: string }; Returns: string }
+      push_targets_for_conversation: {
+        Args: { _conv: string; _sender: string }
+        Returns: {
+          allow_preview: boolean
+          device_id: string
+          muted: boolean
+          platform: string
+          push_token: string
+          sound: boolean
+          user_id: string
+          vibrate: boolean
+        }[]
+      }
+      push_targets_for_user: {
+        Args: { _category: string; _user: string }
+        Returns: {
+          allow_preview: boolean
+          device_id: string
+          platform: string
+          push_token: string
+          sound: boolean
+          vibrate: boolean
+        }[]
+      }
       record_ledger_payment: {
         Args: {
           _amount: number
@@ -1855,6 +1956,20 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      register_push_device: {
+        Args: {
+          _app_version?: string
+          _name: string
+          _platform: string
+          _push_token: string
+        }
+        Returns: Json
+      }
+      revoke_my_push_devices: {
+        Args: { _push_token?: string }
+        Returns: number
+      }
+      revoke_push_device: { Args: { _device: string }; Returns: boolean }
       rotate_preparation_token: {
         Args: { _expires_hours?: number; _job: string }
         Returns: Json

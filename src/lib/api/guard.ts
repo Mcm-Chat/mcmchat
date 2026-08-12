@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useRealtimeSync } from "./queries";
 import { usePresence } from "./presence";
+import { usePushRegistration } from "@/lib/push/use-push";
 
 /** Semua halaman aplikasi butuh sesi nyata; tanpa sesi dialihkan ke halaman masuk. */
 export function useRequireAuth() {
@@ -13,5 +14,6 @@ export function useRequireAuth() {
   }, [loading, session, navigate]);
   useRealtimeSync(user?.id);
   const onlineIds = usePresence(user?.id);
+  usePushRegistration(user?.id);
   return { userId: user?.id, profile, onlineIds, loading: loading || (!!session && !profile) };
 }

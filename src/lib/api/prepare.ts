@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { notifyEvent } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ProductVariant = Tables<"product_variants">;
@@ -111,7 +112,19 @@ export async function createPreparationJob(input: {
   if (input.orderId) args['_order'] = input.orderId;
   const { data, error } = await supabase.rpc("create_preparation_job", args as never);
   if (error) throw new Error(friendly(error.message, "Gagal membuat perintah penyiapan"));
-  return data as unknown as { id: string; code: string; token: string; expires_at: string };
+  const job = data as unknown as { id: string; code: string; token: string; expires_at: string };
+  void notifyEvent({
+    data: {
+      kind: "task_assigned",
+      category: "tasks",
+      userId: input.assignedUserId,
+      title: "Tugas penyiapan baru",
+      body: `${job.code} • ${input.items.length} item untuk ${input.customerName || "pelanggan"}`,
+      route: `/tasks/${job.id}`,
+      jobId: job.id,
+    },
+  }).catch(() => undefined);
+  return job;
 }
 
 export async function listJobsForConversation(conversationId: string): Promise<JobWithItems[]> {

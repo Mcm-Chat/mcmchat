@@ -161,6 +161,24 @@ export const completePrepareTask = createServerFn({ method: "POST" })
           payload: { prep_job_id: jobId, kind: "preparation_completed" } as never,
         });
       }
+      // Beri tahu admin/pembuat tugas bahwa penyiapan sudah selesai.
+      const { data: full } = await supabaseAdmin
+        .from("preparation_jobs")
+        .select("created_by, code, customer_name")
+        .eq("id", jobId)
+        .maybeSingle();
+      if (full?.created_by) {
+        const { dispatchEventPush } = await import("@/lib/push/dispatch.server");
+        await dispatchEventPush({
+          kind: "task_completed",
+          category: "tasks",
+          userId: full.created_by,
+          title: "Penyiapan selesai",
+          body: `${full.code} • ${full.customer_name || "pelanggan"} siap diperiksa`,
+          route: `/tasks/${jobId}`,
+          jobId,
+        }).catch(() => undefined);
+      }
     }
     return { ok: true as const, already: payload.already };
   });

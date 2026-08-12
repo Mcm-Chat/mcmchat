@@ -4,11 +4,38 @@ import type { Json, Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 export type UserSettingsRow = Tables<"user_settings">;
 
-export type NotificationsPrefs = { chat: boolean; calls: boolean; push: boolean };
+export type NotificationsPrefs = {
+  /** Master switch push perangkat. */
+  push: boolean;
+  /** Pratinjau isi pesan di layar kunci. */
+  preview: boolean;
+  sound: boolean;
+  vibrate: boolean;
+  /** Kategori: dipakai juga oleh fan-out push di server. */
+  chat: boolean;
+  group: boolean;
+  calls: boolean;
+  tasks: boolean;
+  sales: boolean;
+  ledger: boolean;
+  badge: boolean;
+};
 export type PrivacyPrefs = { online: boolean; readReceipts: boolean };
 export type SecurityPrefs = { appLock: boolean; twoFactor: boolean };
 
-const DEFAULT_NOTIFICATIONS: NotificationsPrefs = { chat: true, calls: true, push: false };
+const DEFAULT_NOTIFICATIONS: NotificationsPrefs = {
+  push: true,
+  preview: true,
+  sound: true,
+  vibrate: true,
+  chat: true,
+  group: true,
+  calls: true,
+  tasks: true,
+  sales: true,
+  ledger: true,
+  badge: true,
+};
 const DEFAULT_PRIVACY: PrivacyPrefs = { online: true, readReceipts: true };
 const DEFAULT_SECURITY: SecurityPrefs = { appLock: false, twoFactor: false };
 

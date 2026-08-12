@@ -33,8 +33,10 @@ import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
 import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
+import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -156,6 +158,11 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/profile/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/settings/notifications',
+  path: '/settings/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -164,6 +171,11 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
 const TasksIdRoute = TasksIdRouteImport.update({
   id: '/tasks/$id',
   path: '/tasks/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPushActionsRoute = ApiPublicPushActionsRouteImport.update({
+  id: '/api/public/push/actions',
+  path: '/api/public/push/actions',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -184,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -194,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/ledger/': typeof LedgerIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -212,6 +226,7 @@ export interface FileRoutesByTo {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
@@ -222,6 +237,7 @@ export interface FileRoutesByTo {
   '/ledger': typeof LedgerIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -241,6 +257,7 @@ export interface FileRoutesById {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -251,6 +268,7 @@ export interface FileRoutesById {
   '/ledger/': typeof LedgerIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -271,6 +289,7 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/settings/notifications'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -281,6 +300,7 @@ export interface FileRouteTypes {
     | '/ledger/'
     | '/profile/'
     | '/tasks/'
+    | '/api/public/push/actions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -299,6 +319,7 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/settings/notifications'
     | '/tasks/$id'
     | '/business'
     | '/calls'
@@ -309,6 +330,7 @@ export interface FileRouteTypes {
     | '/ledger'
     | '/profile'
     | '/tasks'
+    | '/api/public/push/actions'
   id:
     | '__root__'
     | '/'
@@ -327,6 +349,7 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/settings/notifications'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -337,6 +360,7 @@ export interface FileRouteTypes {
     | '/ledger/'
     | '/profile/'
     | '/tasks/'
+    | '/api/public/push/actions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -356,6 +380,7 @@ export interface RootRouteChildren {
   LedgerIdRoute: typeof LedgerIdRoute
   PhotoNewRoute: typeof PhotoNewRoute
   PrepareTokenRoute: typeof PrepareTokenRoute
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   TasksIdRoute: typeof TasksIdRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
@@ -366,6 +391,7 @@ export interface RootRouteChildren {
   LedgerIndexRoute: typeof LedgerIndexRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  ApiPublicPushActionsRoute: typeof ApiPublicPushActionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -538,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -550,6 +583,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks/$id'
       fullPath: '/tasks/$id'
       preLoaderRoute: typeof TasksIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/push/actions': {
+      id: '/api/public/push/actions'
+      path: '/api/public/push/actions'
+      fullPath: '/api/public/push/actions'
+      preLoaderRoute: typeof ApiPublicPushActionsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -572,6 +612,7 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerIdRoute: LedgerIdRoute,
   PhotoNewRoute: PhotoNewRoute,
   PrepareTokenRoute: PrepareTokenRoute,
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
   TasksIdRoute: TasksIdRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
@@ -582,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerIndexRoute: LedgerIndexRoute,
   ProfileIndexRoute: ProfileIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
+  ApiPublicPushActionsRoute: ApiPublicPushActionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

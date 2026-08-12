@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { notifyEvent } from "@/lib/push/push.functions";
 import { sendMessage } from "./chat";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -156,6 +157,18 @@ export async function createSale(input: CreateSaleInput): Promise<SalesRecordRow
       },
     });
     await supabase.from("sales_records").update({ message_id: message.id }).eq("id", record.id);
+    if (input.customerUserId) {
+      void notifyEvent({
+        data: {
+          kind: "sale",
+          category: "sales",
+          userId: input.customerUserId,
+          title: `Nota penjualan ${result.number}`,
+          body: outstanding > 0 ? `Total ${result.total} • sisa ${outstanding}` : `Total ${result.total} • lunas`,
+          route: `/finance`,
+        },
+      }).catch(() => undefined);
+    }
     return { ...record, message_id: message.id };
   }
 

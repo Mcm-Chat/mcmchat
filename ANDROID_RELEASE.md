@@ -114,3 +114,75 @@ cd android && ./gradlew bundleRelease
   Jangan mencantumkan panggilan sebagai fitur aktif pada listing sampai kredensial ditambahkan.
 - **Notifikasi push** memerlukan Firebase Cloud Messaging (`google-services.json`) dan kredensial
   server. Sampai itu tersedia, aplikasi hanya menampilkan notifikasi di dalam aplikasi.
+
+---
+
+## Notifikasi Android interaktif (produksi)
+
+### 1. Paket native yang dibutuhkan
+
+```bash
+npm i @capacitor/push-notifications @capacitor/app @capacitor/camera \
+      @capacitor/geolocation @capacitor-community/secure-storage-plugin
+npx cap sync android
+```
+
+Seluruh plugin dimuat dinamis oleh `src/lib/push/native.ts`, jadi build web
+tetap jalan walau paket di atas belum terpasang.
+
+### 2. Kredensial FCM di server
+
+Tambahkan secret di **Project Settings → Secrets**:
+
+| Secret | Isi |
+| --- | --- |
+| `FCM_SERVICE_ACCOUNT_JSON` | isi file service account Firebase (JSON penuh) |
+
+Tanpa secret ini `getPushStatus()` mengembalikan `configured: false`, aplikasi
+tetap berjalan normal dan halaman **Izin & Notifikasi** menampilkan status
+"belum dikonfigurasi". Setelah menambah/mengubah secret, publish ulang agar
+versi produksi memakainya.
+
+Letakkan `google-services.json` di `android/app/`.
+
+### 3. Channel notifikasi
+
+Channel dibuat otomatis saat registrasi (`ensureChannels`), sesuai
+`src/lib/push/payload.ts`:
+
+| Channel | ID | Importance |
+| --- | --- | --- |
+| Pesan | `mcm_messages` | High |
+| Panggilan | `mcm_calls` | Max |
+| Tugas Penyiapan | `mcm_tasks` | High |
+| Penjualan & Pesanan | `mcm_sales` | Default |
+| Hutang & Pembayaran | `mcm_ledger` | Default |
+| Umum | `mcm_general` | Low |
+
+### 4. Aksi latar belakang (balas & tandai dibaca)
+
+Receiver native memanggil endpoint publik:
+
+```
+POST https://project--<project-id>.lovable.app/api/public/push/actions
+{ "action": "reply" | "read" | "delivered", "token": "<action token>", "conversationId": "...", "body": "...", "idempotencyKey": "..." }
+```
+
+- `token` adalah kredensial **device-scoped** hasil `register_push_device`;
+  hanya SHA-256-nya tersimpan di server dan token disimpan di Keystore /
+  EncryptedSharedPreferences melalui secure storage plugin.
+- Setiap aksi memakai `idempotencyKey` sehingga retry FCM tidak menggandakan balasan.
+- Logout memanggil `revoke_my_push_devices` → token push dan kredensial aksi dicabut.
+
+### 5. Deep link
+
+Payload push membawa `route` (mis. `/chat/<id>?m=<messageId>`), dipetakan oleh
+`routeFromPush()` dengan fallback aman bila record sudah dihapus.
+
+### 6. Izin
+
+Halaman **Profil → Izin & notifikasi** menampilkan status runtime untuk
+notifikasi, kamera, mikrofon, lokasi, dan foto, lengkap dengan tombol minta izin
+dan pintasan ke Setelan Android saat izin ditolak permanen. MCM tidak memakai
+background location, `MANAGE_EXTERNAL_STORAGE`, maupun exact alarm — sesuai
+kebijakan Play Store.
