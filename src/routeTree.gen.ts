@@ -10,33 +10,219 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HomeRouteImport } from './routes/home'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as BusinessIndexRouteImport } from './routes/business.index'
+import { Route as CallIdRouteImport } from './routes/call.$id'
+import { Route as CallsIndexRouteImport } from './routes/calls.index'
+import { Route as ChatIndexRouteImport } from './routes/chat.index'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
+import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
+import { Route as ContactsAddRouteImport } from './routes/contacts.add'
+import { Route as LedgerIndexRouteImport } from './routes/ledger.index'
+import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessIndexRoute = BusinessIndexRouteImport.update({
+  id: '/business/',
+  path: '/business/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallIdRoute = CallIdRouteImport.update({
+  id: '/call/$id',
+  path: '/call/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallsIndexRoute = CallsIndexRouteImport.update({
+  id: '/calls/',
+  path: '/calls/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsIndexRoute = ContactsIndexRouteImport.update({
+  id: '/contacts/',
+  path: '/contacts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsAddRoute = ContactsAddRouteImport.update({
+  id: '/contacts/add',
+  path: '/contacts/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LedgerIndexRoute = LedgerIndexRouteImport.update({
+  id: '/ledger/',
+  path: '/ledger/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LedgerIdRoute = LedgerIdRouteImport.update({
+  id: '/ledger/$id',
+  path: '/ledger/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/home': typeof HomeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/register': typeof RegisterRoute
+  '/call/$id': typeof CallIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/contacts/add': typeof ContactsAddRoute
+  '/ledger/$id': typeof LedgerIdRoute
+  '/business/': typeof BusinessIndexRoute
+  '/calls/': typeof CallsIndexRoute
+  '/chat/': typeof ChatIndexRoute
+  '/contacts/': typeof ContactsIndexRoute
+  '/ledger/': typeof LedgerIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/home': typeof HomeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/register': typeof RegisterRoute
+  '/call/$id': typeof CallIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/contacts/add': typeof ContactsAddRoute
+  '/ledger/$id': typeof LedgerIdRoute
+  '/business': typeof BusinessIndexRoute
+  '/calls': typeof CallsIndexRoute
+  '/chat': typeof ChatIndexRoute
+  '/contacts': typeof ContactsIndexRoute
+  '/ledger': typeof LedgerIndexRoute
+  '/profile': typeof ProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/home': typeof HomeRoute
+  '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
+  '/register': typeof RegisterRoute
+  '/call/$id': typeof CallIdRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/contacts/add': typeof ContactsAddRoute
+  '/ledger/$id': typeof LedgerIdRoute
+  '/business/': typeof BusinessIndexRoute
+  '/calls/': typeof CallsIndexRoute
+  '/chat/': typeof ChatIndexRoute
+  '/contacts/': typeof ContactsIndexRoute
+  '/ledger/': typeof LedgerIndexRoute
+  '/profile/': typeof ProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/home'
+    | '/login'
+    | '/onboarding'
+    | '/register'
+    | '/call/$id'
+    | '/chat/$id'
+    | '/contacts/add'
+    | '/ledger/$id'
+    | '/business/'
+    | '/calls/'
+    | '/chat/'
+    | '/contacts/'
+    | '/ledger/'
+    | '/profile/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/home'
+    | '/login'
+    | '/onboarding'
+    | '/register'
+    | '/call/$id'
+    | '/chat/$id'
+    | '/contacts/add'
+    | '/ledger/$id'
+    | '/business'
+    | '/calls'
+    | '/chat'
+    | '/contacts'
+    | '/ledger'
+    | '/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/home'
+    | '/login'
+    | '/onboarding'
+    | '/register'
+    | '/call/$id'
+    | '/chat/$id'
+    | '/contacts/add'
+    | '/ledger/$id'
+    | '/business/'
+    | '/calls/'
+    | '/chat/'
+    | '/contacts/'
+    | '/ledger/'
+    | '/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HomeRoute: typeof HomeRoute
+  LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
+  RegisterRoute: typeof RegisterRoute
+  CallIdRoute: typeof CallIdRoute
+  ChatIdRoute: typeof ChatIdRoute
+  ContactsAddRoute: typeof ContactsAddRoute
+  LedgerIdRoute: typeof LedgerIdRoute
+  BusinessIndexRoute: typeof BusinessIndexRoute
+  CallsIndexRoute: typeof CallsIndexRoute
+  ChatIndexRoute: typeof ChatIndexRoute
+  ContactsIndexRoute: typeof ContactsIndexRoute
+  LedgerIndexRoute: typeof LedgerIndexRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +234,124 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/': {
+      id: '/business/'
+      path: '/business'
+      fullPath: '/business/'
+      preLoaderRoute: typeof BusinessIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/call/$id': {
+      id: '/call/$id'
+      path: '/call/$id'
+      fullPath: '/call/$id'
+      preLoaderRoute: typeof CallIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calls/': {
+      id: '/calls/'
+      path: '/calls'
+      fullPath: '/calls/'
+      preLoaderRoute: typeof CallsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/': {
+      id: '/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts/': {
+      id: '/contacts/'
+      path: '/contacts'
+      fullPath: '/contacts/'
+      preLoaderRoute: typeof ContactsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts/add': {
+      id: '/contacts/add'
+      path: '/contacts/add'
+      fullPath: '/contacts/add'
+      preLoaderRoute: typeof ContactsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ledger/': {
+      id: '/ledger/'
+      path: '/ledger'
+      fullPath: '/ledger/'
+      preLoaderRoute: typeof LedgerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ledger/$id': {
+      id: '/ledger/$id'
+      path: '/ledger/$id'
+      fullPath: '/ledger/$id'
+      preLoaderRoute: typeof LedgerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/': {
+      id: '/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HomeRoute: HomeRoute,
+  LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
+  RegisterRoute: RegisterRoute,
+  CallIdRoute: CallIdRoute,
+  ChatIdRoute: ChatIdRoute,
+  ContactsAddRoute: ContactsAddRoute,
+  LedgerIdRoute: LedgerIdRoute,
+  BusinessIndexRoute: BusinessIndexRoute,
+  CallsIndexRoute: CallsIndexRoute,
+  ChatIndexRoute: ChatIndexRoute,
+  ContactsIndexRoute: ContactsIndexRoute,
+  LedgerIndexRoute: LedgerIndexRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
