@@ -32,7 +32,7 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { chatMessages, uid, useMCM } from "@/lib/mcm/store";
+import { chatMessages, deleteForEveryone, deleteForMe, uid, useMCM } from "@/lib/mcm/store";
 import { labelHari, rupiah } from "@/lib/mcm/format";
 import type { Message } from "@/lib/mcm/types";
 
@@ -65,6 +65,9 @@ function ChatRoom() {
   const [confirmClear, setConfirmClear] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [selection, setSelection] = useState<string[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
+  const [confirmAll, setConfirmAll] = useState<string[] | null>(null);
   const [dismissSuggestion, setDismissSuggestion] = useState(false);
   const [ledgerForm, setLedgerForm] = useState({ type: "piutang", amount: "", note: "", dueDate: "" });
   const bottom = useRef<HTMLDivElement>(null);
@@ -177,6 +180,20 @@ function ChatRoom() {
   };
 
   const onAction = (action: string, message: Message, payload?: string) => {
+    if (action === "select") {
+      setSelectMode(true);
+      setSelection((prev) => (prev.includes(message.id) ? prev.filter((x) => x !== message.id) : [...prev, message.id]));
+      return;
+    }
+    if (action === "delete-me") {
+      update((d) => deleteForMe(d, [message.id]));
+      toast.success("Pesan dihapus");
+      return;
+    }
+    if (action === "delete-all") {
+      setConfirmAll([message.id]);
+      return;
+    }
     if (action === "reply") return setReply(message);
     if (action === "edit") {
       setEditing(message);
@@ -197,10 +214,6 @@ function ChatRoom() {
       if (!m) return d;
       if (action === "star") m.starred = !m.starred;
       if (action === "pin") m.pinned = !m.pinned;
-      if (action === "delete") {
-        m.deleted = true;
-        m.text = "Pesan ini dihapus";
-      }
       if (action === "react" && payload) {
         const existing = m.reactions.find((r) => r.by === "me");
         if (existing && existing.emoji === payload) m.reactions = m.reactions.filter((r) => r.by !== "me");
