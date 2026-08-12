@@ -40,7 +40,7 @@ export async function endCall(callId: string, status: CallRow["status"], duratio
     _call: callId,
     _status: status,
     _duration: Math.max(0, Math.round(durationSec)),
-    _reason: reason ?? undefined,
+    ...(reason ? { _reason: reason } : {}),
   });
   if (error) throw new Error(friendly(error.message, "Gagal mengakhiri panggilan"));
 }
