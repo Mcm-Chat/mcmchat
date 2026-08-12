@@ -37,6 +37,7 @@ import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as SettingsVoiceRouteImport } from './routes/settings.voice'
 import { Route as StatusIndexRouteImport } from './routes/status.index'
+import { Route as StatusNewRouteImport } from './routes/status.new'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
 import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
@@ -181,6 +182,11 @@ const StatusIndexRoute = StatusIndexRouteImport.update({
   path: '/status/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StatusNewRoute = StatusNewRouteImport.update({
+  id: '/status/new',
+  path: '/status/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/voice': typeof SettingsVoiceRoute
+  '/status/new': typeof StatusNewRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/voice': typeof SettingsVoiceRoute
+  '/status/new': typeof StatusNewRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
@@ -284,6 +292,7 @@ export interface FileRoutesById {
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/voice': typeof SettingsVoiceRoute
+  '/status/new': typeof StatusNewRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/settings/notifications'
     | '/settings/voice'
+    | '/status/new'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/settings/notifications'
     | '/settings/voice'
+    | '/status/new'
     | '/tasks/$id'
     | '/business'
     | '/calls'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/settings/notifications'
     | '/settings/voice'
+    | '/status/new'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -419,6 +431,7 @@ export interface RootRouteChildren {
   PrepareTokenRoute: typeof PrepareTokenRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsVoiceRoute: typeof SettingsVoiceRoute
+  StatusNewRoute: typeof StatusNewRoute
   TasksIdRoute: typeof TasksIdRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
@@ -631,6 +644,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatusIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/status/new': {
+      id: '/status/new'
+      path: '/status/new'
+      fullPath: '/status/new'
+      preLoaderRoute: typeof StatusNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -675,6 +695,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrepareTokenRoute: PrepareTokenRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsVoiceRoute: SettingsVoiceRoute,
+  StatusNewRoute: StatusNewRoute,
   TasksIdRoute: TasksIdRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
