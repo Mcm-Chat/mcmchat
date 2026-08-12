@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { ApiError, classifyFailure } from "./errors";
 import { notifyNewMessage } from "@/lib/push/push.functions";
 import { removeObject, uploadChatMedia } from "./storage";
 import type { Tables, TablesInsert } from "@/integrations/supabase/types";
@@ -180,6 +181,13 @@ export async function createGroup(userId: string, title: string, memberIds: stri
 
 export const MESSAGE_PAGE_SIZE = 40;
 
+/** Kursor keyset stabil: dua pesan dengan `created_at` sama dibedakan oleh id. */
+export type MessageCursor = { createdAt: string; id: string };
+
+export function cursorOf(m: MessageRow): MessageCursor {
+  return { createdAt: m.created_at, id: m.id };
+}
+
 /** Urutan stabil: server timestamp, lalu id sebagai tie-breaker deterministik. */
 export function compareMessages(a: MessageRow, b: MessageRow): number {
   const ta = new Date(a.created_at).getTime();
@@ -190,12 +198,13 @@ export function compareMessages(a: MessageRow, b: MessageRow): number {
 
 /**
  * Satu halaman pesan (terbaru lebih dulu di server, dikembalikan menaik).
- * `before` adalah `created_at` pesan tertua yang sudah dimuat.
+ * Kursor `before` memakai pasangan `(created_at, id)` sehingga pesan dengan
+ * timestamp identik tidak pernah terlewat saat memuat halaman lama.
  */
 export async function listMessages(
   conversationId: string,
   userId: string,
-  opts: { before?: string | null; limit?: number } = {},
+  opts: { before?: MessageCursor | null; limit?: number } = {},
 ): Promise<MessageRow[]> {
   const limit = opts.limit ?? MESSAGE_PAGE_SIZE;
   let q = supabase
@@ -205,7 +214,10 @@ export async function listMessages(
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(limit);
-  if (opts.before) q = q.lt("created_at", opts.before);
+  if (opts.before) {
+    const { createdAt, id } = opts.before;
+    q = q.or(`created_at.lt."${createdAt}",and(created_at.eq."${createdAt}",id.lt.${id})`);
+  }
   const [msgs, hides] = await Promise.all([q, supabase.from("message_hides").select("message_id").eq("user_id", userId)]);
   if (msgs.error) throw new Error(friendly(msgs.error.message, "Gagal memuat pesan"));
   const hidden = new Set((hides.data ?? []).map((h) => h.message_id));
@@ -252,11 +264,35 @@ export async function sendMessage(input: SendMessageInput): Promise<MessageRow> 
     row.location_maps_url = input.location.mapsUrl;
   }
   const { data, error } = await supabase.from("messages").insert(row).select("*").single();
-  if (error) throw new Error(friendly(error.message, "Pesan gagal dikirim"));
+  if (error) {
+    // Duplikat berarti percobaan sebelumnya sudah tersimpan di server: ambil
+    // baris aslinya dan perlakukan sebagai sukses (idempotent).
+    if (classifyFailure(error) === "duplicate" && input.clientId) {
+      const existing = await findByClientId(input.conversationId, input.senderId, input.clientId);
+      if (existing) return existing;
+    }
+    throw new ApiError(friendly(error.message, "Pesan gagal dikirim"), error);
+  }
   // Fan-out push ke perangkat penerima (mute + preferensi dihormati di server).
   // Sengaja tidak di-await: kegagalan push tidak boleh menggagalkan kirim pesan.
   void notifyNewMessage({ data: { messageId: data.id } }).catch(() => undefined);
   return data;
+}
+
+/** Cari pesan yang sudah tersimpan untuk sebuah kunci idempotensi. */
+export async function findByClientId(
+  conversationId: string,
+  senderId: string,
+  clientId: string,
+): Promise<MessageRow | null> {
+  const { data } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .eq("sender_id", senderId)
+    .eq("client_id", clientId)
+    .maybeSingle();
+  return data ?? null;
 }
 
 export async function markRead(conversationId: string, userId: string) {
