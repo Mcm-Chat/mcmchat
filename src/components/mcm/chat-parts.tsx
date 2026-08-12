@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import type { ConversationView, MessageRow } from "@/lib/api/chat";
+import { useStatusMedia } from "@/lib/status/hooks";
 import { previewOf } from "@/lib/api/chat";
 import type { MessageStatus } from "@/lib/api/receipts";
 import { MCMAvatar, StatusBadge } from "./primitives";
@@ -201,6 +202,22 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
           <MapPin className="size-3 shrink-0" /> Buka Lokasi
         </a>
       )}
+    </div>
+  );
+}
+
+/** Kutipan slide status pada balasan/reaksi yang dikirim dari viewer status. */
+function StatusReplyQuote({ message }: { message: MessageRow }) {
+  const p = (message.payload ?? {}) as { type?: string; preview?: string; thumbPath?: string | null };
+  const { data: url } = useStatusMedia(p.type === "status_reply" ? p.thumbPath : null);
+  if (p.type !== "status_reply") return null;
+  return (
+    <div className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]">
+      {url ? <img src={url} alt="" className="size-8 rounded object-cover" /> : <div className="size-8 rounded bg-black/20" />}
+      <span className="min-w-0">
+        <span className="block font-medium">Membalas status</span>
+        <span className="line-clamp-1 opacity-80">{p.preview}</span>
+      </span>
     </div>
   );
 }
@@ -407,7 +424,10 @@ export function MessageBubble({
               <MessageLocationCard message={message} />
             </div>
           ) : (
-            <p className="break-words whitespace-pre-wrap">{message.body}</p>
+            <>
+              <StatusReplyQuote message={message} />
+              <p className="break-words whitespace-pre-wrap">{message.body}</p>
+            </>
           )}
           <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums", mine ? "opacity-85" : "text-muted-foreground")}>
             {message.edited_at && <span>diedit</span>}
