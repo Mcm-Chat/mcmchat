@@ -1,0 +1,13 @@
+{
+  "name": "MCM — Private Chat, Calls & Smart Ledger",
+  "short_name": "MCM",
+  "description": "Aplikasi komunikasi privat berbasis PIN: chat, panggilan, catatan utang-piutang bersama, dan alat bisnis.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1b2a",
+  "theme_color": "#0f1b2a",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
