@@ -12,6 +12,60 @@ import type {
 
 const KEY = "mcm-state-v1";
 
+/**
+ * Migrasi katalog: produk lama dengan satu `imageUrl`/`image` dan satu `locationUrl`
+ * diubah menjadi relasi multi-foto (Product -> photos[]). Idempoten: dijalankan
+ * berulang kali tidak menduplikasi foto atau link.
+ */
+export function migrateState(input: MCMState): MCMState {
+  const s = input;
+  for (const p of s.products ?? []) {
+    const legacyImage = p.imageUrl ?? p.image ?? "";
+    const photos = Array.isArray(p.photos) ? [...p.photos] : [];
+    if (legacyImage && !photos.some((ph) => ph.imageUrl === legacyImage)) {
+      photos.unshift({
+        id: `${p.id}-legacy`,
+        productId: p.id,
+        imageUrl: legacyImage,
+        locationUrl: p.locationUrl ?? "",
+        caption: "",
+        sortOrder: 0,
+        createdAt: new Date(0).toISOString(),
+      });
+    }
+    // Buang field lama agar tidak dimigrasikan dua kali & tidak jadi sumber kebenaran ganda.
+    delete p.imageUrl;
+    delete p.image;
+    delete p.locationUrl;
+    const seen = new Set<string>();
+    p.photos = photos
+      .filter((ph) => (seen.has(ph.id) ? false : (seen.add(ph.id), true)))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((ph, i) => ({ ...ph, productId: p.id, locationUrl: ph.locationUrl ?? "", caption: ph.caption ?? "", sortOrder: i }));
+  }
+  return s;
+}
+
+/** Normalisasi ulang sortOrder setelah tambah/hapus/geser foto. */
+export function reindexPhotos(photos: ProductPhoto[]): ProductPhoto[] {
+  return photos.map((ph, i) => ({ ...ph, sortOrder: i }));
+}
+
+const MAPS_HOST = /^(https?:\/\/)/i;
+
+/** URL lokasi valid bila kosong (opsional) atau berupa http/https yang bisa diparse. */
+export function isValidLocationUrl(url: string): boolean {
+  const v = url.trim();
+  if (!v) return true;
+  if (!MAPS_HOST.test(v)) return false;
+  try {
+    new URL(v);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 type Ctx = {
   state: MCMState;
   ready: boolean;
