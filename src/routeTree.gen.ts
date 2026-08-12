@@ -16,6 +16,8 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
+import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
+import { Route as ContactsAddRouteImport } from './routes/contacts.add'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +54,16 @@ const ChatIdRoute = ChatIdRouteImport.update({
   path: '/chat/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactsIndexRoute = ContactsIndexRouteImport.update({
+  id: '/contacts/',
+  path: '/contacts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsAddRoute = ContactsAddRouteImport.update({
+  id: '/contacts/add',
+  path: '/contacts/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,7 +72,9 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
   '/chat/$id': typeof ChatIdRoute
+  '/contacts/add': typeof ContactsAddRoute
   '/chat/': typeof ChatIndexRoute
+  '/contacts/': typeof ContactsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +83,9 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
   '/chat/$id': typeof ChatIdRoute
+  '/contacts/add': typeof ContactsAddRoute
   '/chat': typeof ChatIndexRoute
+  '/contacts': typeof ContactsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +95,9 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
   '/chat/$id': typeof ChatIdRoute
+  '/contacts/add': typeof ContactsAddRoute
   '/chat/': typeof ChatIndexRoute
+  '/contacts/': typeof ContactsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +108,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/register'
     | '/chat/$id'
+    | '/contacts/add'
     | '/chat/'
+    | '/contacts/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +119,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/register'
     | '/chat/$id'
+    | '/contacts/add'
     | '/chat'
+    | '/contacts'
   id:
     | '__root__'
     | '/'
@@ -108,7 +130,9 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/register'
     | '/chat/$id'
+    | '/contacts/add'
     | '/chat/'
+    | '/contacts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,7 +142,9 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
   ChatIdRoute: typeof ChatIdRoute
+  ContactsAddRoute: typeof ContactsAddRoute
   ChatIndexRoute: typeof ChatIndexRoute
+  ContactsIndexRoute: typeof ContactsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +198,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contacts/': {
+      id: '/contacts/'
+      path: '/contacts'
+      fullPath: '/contacts/'
+      preLoaderRoute: typeof ContactsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts/add': {
+      id: '/contacts/add'
+      path: '/contacts/add'
+      fullPath: '/contacts/add'
+      preLoaderRoute: typeof ContactsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -182,7 +222,9 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
   ChatIdRoute: ChatIdRoute,
+  ContactsAddRoute: ContactsAddRoute,
   ChatIndexRoute: ChatIndexRoute,
+  ContactsIndexRoute: ContactsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
