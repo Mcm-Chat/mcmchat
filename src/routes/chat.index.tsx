@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, MessageCirclePlus, MessagesSquare, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createGroup, getOrCreateDirect } from "@/lib/api/chat";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useContacts, useConversations } from "@/lib/api/queries";
+import { deriveStatus, indexReceipts, listReceipts, markDelivered } from "@/lib/api/receipts";
 import { waktuRelatif } from "@/lib/mcm/format";
 
 export const Route = createFileRoute("/chat/")({
@@ -59,6 +60,28 @@ function ChatIndex() {
   }, [conversations, q, tab]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+
+  // Daftar percakapan tampil = perangkat ini menerima pesan → catat delivery
+  // receipt untuk semua pesan masuk yang belum punya `delivered_at`.
+  useEffect(() => {
+    if (!userId || !conversations) return;
+    const incoming = conversations.filter((c) => c.lastMessage && c.lastMessage.sender_id !== userId);
+    if (incoming.length === 0) return;
+    void Promise.all(incoming.map((c) => markDelivered(c.id))).then(() =>
+      qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" }),
+    );
+  }, [userId, conversations, qc]);
+
+  const myLastIds = useMemo(
+    () => (conversations ?? []).filter((c) => c.lastMessage?.sender_id === userId).map((c) => c.lastMessage!.id),
+    [conversations, userId],
+  );
+  const { data: receiptRows } = useQuery({
+    queryKey: ["receipts", "list", myLastIds.join(",")],
+    queryFn: () => listReceipts(myLastIds, userId!),
+    enabled: !!userId && myLastIds.length > 0,
+  });
+  const receiptIndex = useMemo(() => indexReceipts(receiptRows ?? []), [receiptRows]);
 
   const patchMember = async (conversationId: string, patch: { is_pinned?: boolean; is_muted?: boolean; is_archived?: boolean }) => {
     await supabase.from("conversation_members").update(patch).eq("conversation_id", conversationId).eq("user_id", userId!);
@@ -227,6 +250,11 @@ function ChatIndex() {
               <ChatListItem
                 conv={c}
                 time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
+                outgoingStatus={
+                  c.lastMessage && c.lastMessage.sender_id === userId
+                    ? deriveStatus(receiptIndex.get(c.lastMessage.id) ?? [], Math.max(0, c.members.length - 1))
+                    : undefined
+                }
                 onTogglePin={() => void patchMember(c.id, { is_pinned: !c.me.is_pinned })}
                 onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
                 onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}

@@ -16,11 +16,12 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
-import { deleteForEveryone, deleteForMe, editMessage, markRead, sendMessage, toggleReaction, type MessageRow } from "@/lib/api/chat";
+import { deleteForEveryone, deleteForMe, editMessage, sendMessage, toggleReaction, type MessageRow } from "@/lib/api/chat";
+import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
 import { createLedger } from "@/lib/api/ledger";
 import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
-import { qk, useConversations, useMessages, useMyBusiness } from "@/lib/api/queries";
+import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";
 import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
 import { SaleDialog } from "@/components/mcm/sale-dialog";
 import { listJobsForConversation } from "@/lib/api/prepare";
@@ -49,7 +50,7 @@ const initialsOf = (name: string) =>
 function ChatRoom() {
   const { id } = Route.useParams();
   const search = Route.useSearch() as { hl?: string };
-  const { userId, profile, loading } = useRequireAuth();
+  const { userId, profile, onlineIds, loading } = useRequireAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: conversations } = useConversations(userId);
@@ -95,9 +96,31 @@ function ChatRoom() {
     enabled: (messages ?? []).length > 0,
   });
 
+  const myMessageIds = useMemo(() => (messages ?? []).filter((m) => m.sender_id === userId).map((m) => m.id), [messages, userId]);
+  const { data: receiptRows } = useReceipts(id, myMessageIds, userId);
+  const receiptIndex = useMemo(() => indexReceipts(receiptRows ?? []), [receiptRows]);
+  const otherMemberCount = useMemo(() => (conv?.members ?? []).filter((m) => m.id !== userId).length, [conv, userId]);
+
+  // Membuka ruang chat = pesan masuk dibaca. Server yang menulis receipt
+  // (menghormati pengaturan privasi "laporan dibaca"), lalu pengirim menerima
+  // perubahan centang lewat realtime tanpa reload.
   useEffect(() => {
-    if (userId && id) void markRead(id, userId).then(() => qc.invalidateQueries({ queryKey: qk.conversations(userId) }));
+    if (!userId || !id) return;
+    void markRead(id).then(() => {
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId) });
+      void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
+    });
   }, [userId, id, messages?.length, qc]);
+
+  // Jaring pengaman bila pesan tiba saat aplikasi tidak fokus.
+  useEffect(() => {
+    if (!userId || !id) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void markDelivered(id).then(() => markRead(id));
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [userId, id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
@@ -108,11 +131,6 @@ function ChatRoom() {
     if (userId && profile) map.set(userId, profile.display_name);
     return (uid: string) => map.get(uid) ?? "Pengguna";
   }, [conv, userId, profile]);
-
-  const othersLastRead = useMemo(() => {
-    if (!conv) return 0;
-    return Math.max(0, ...(conv.members.filter((m) => m.id !== userId).length ? [new Date(conv.me.last_read_at).getTime()] : [0]));
-  }, [conv, userId]);
 
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: qk.messages(id) });
@@ -304,12 +322,23 @@ function ChatRoom() {
             back
             title={
               <span className="flex items-center gap-2">
-                <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} size="sm" />
+                <span className="relative shrink-0">
+                  <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} size="sm" />
+                  {conv.other && onlineIds.has(conv.other.id) && (
+                    <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-success" />
+                  )}
+                </span>
                 <span className="truncate">{conv.title_resolved}</span>
                 {conv.me.is_muted && <BellOff className="size-3.5 text-muted-foreground" />}
               </span>
             }
-            subtitle={conv.type === "group" ? `${conv.members.length} anggota` : (conv.other?.pin ?? "")}
+            subtitle={
+              conv.type === "group"
+                ? `${conv.members.length} anggota`
+                : conv.other && onlineIds.has(conv.other.id)
+                  ? "Online sekarang"
+                  : (conv.other?.pin ?? "")
+            }
             actions={
               <>
                 <Button variant="ghost" size="icon" aria-label="Panggilan suara" onClick={() => void call("audio")}>
@@ -332,19 +361,37 @@ function ChatRoom() {
         )
       }
     >
-      <div className="flex-1 space-y-1 px-2 py-3">
-        {(messages ?? []).map((m) => {
+      <div className="chat-canvas flex-1 px-2 py-3">
+        {(messages ?? []).length === 0 && (
+          <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} />
+            </span>
+            <p className="text-sm font-semibold">Mulai percakapan dengan {conv.title_resolved}</p>
+            <p className="text-xs text-muted-foreground">Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.</p>
+          </div>
+        )}
+        {(messages ?? []).map((m, idx) => {
           const day = labelHari(m.created_at);
           const showDay = day !== lastDay;
           lastDay = day;
           const mine = m.sender_id === userId;
           const replyTo = m.reply_to_id ? (messages ?? []).find((x) => x.id === m.reply_to_id) : undefined;
-          const status = mine && new Date(m.created_at).getTime() <= othersLastRead ? "read" : "delivered";
+          const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
+          const prev = (messages ?? [])[idx - 1];
+          const grouped =
+            !showDay &&
+            !!prev &&
+            prev.sender_id === m.sender_id &&
+            prev.kind !== "system" &&
+            new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 4 * 60 * 1000;
           return (
             <div key={m.id}>
               {showDay && (
                 <div className="my-3 flex justify-center">
-                  <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground">{day}</span>
+                  <span className="rounded-full border border-border/60 bg-card/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur">
+                    {day}
+                  </span>
                 </div>
               )}
               <MessageBubble
@@ -356,6 +403,7 @@ function ChatRoom() {
                 showSender={conv.type !== "direct"}
                 reactions={(reactions ?? []).filter((r) => r.message_id === m.id).map((r) => r.emoji)}
                 status={status}
+                grouped={grouped}
                 selectable={selection.length > 0}
                 selected={selection.includes(m.id)}
                 highlighted={search.hl === m.id}

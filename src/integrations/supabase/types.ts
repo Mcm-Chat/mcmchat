@@ -1821,6 +1821,8 @@ export type Database = {
         Args: { _conv: string; _uid: string }
         Returns: boolean
       }
+      mark_messages_delivered: { Args: { _conv: string }; Returns: number }
+      mark_messages_read: { Args: { _conv: string }; Returns: number }
       prep_job_id_by_token: { Args: { _token: string }; Returns: string }
       record_ledger_payment: {
         Args: {

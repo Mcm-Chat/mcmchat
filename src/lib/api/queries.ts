@@ -7,10 +7,12 @@ import { listCalls } from "./calls";
 import { listLedgers } from "./ledger";
 import { listOrders, listSales } from "./sales";
 import { listProducts, myBusiness } from "./business";
+import { listReceipts, markDelivered } from "./receipts";
 
 export const qk = {
   conversations: (uid: string) => ["conversations", uid] as const,
   messages: (cid: string) => ["messages", cid] as const,
+  receipts: (cid: string) => ["receipts", cid] as const,
   contacts: (uid: string) => ["contacts", uid] as const,
   requests: (uid: string) => ["requests", uid] as const,
   calls: (uid: string) => ["calls", uid] as const,
@@ -27,6 +29,14 @@ export const useConversations = (uid?: string) =>
 
 export const useMessages = (cid: string, uid?: string) =>
   useQuery({ queryKey: qk.messages(cid), queryFn: () => listMessages(cid, uid!), enabled: !!uid && !!cid });
+
+/** Tanda terima untuk pesan yang saya kirim di percakapan ini. */
+export const useReceipts = (cid: string, myMessageIds: string[], uid?: string) =>
+  useQuery({
+    queryKey: [...qk.receipts(cid), myMessageIds.length],
+    queryFn: () => listReceipts(myMessageIds, uid),
+    enabled: !!uid && myMessageIds.length > 0,
+  });
 
 export const useContacts = (uid?: string) =>
   useQuery({ queryKey: qk.contacts(uid ?? ""), queryFn: () => listContacts(uid!), enabled: !!uid });
@@ -63,9 +73,18 @@ export function useRealtimeSync(uid?: string) {
     const channel = supabase
       .channel(`mcm-sync-${uid}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
-        const row = (payload.new ?? payload.old) as { conversation_id?: string } | null;
+        const row = (payload.new ?? payload.old) as { conversation_id?: string; sender_id?: string } | null;
         if (row?.conversation_id) void qc.invalidateQueries({ queryKey: qk.messages(row.conversation_id) });
         void qc.invalidateQueries({ queryKey: qk.conversations(uid) });
+        // Penerima langsung mencatat delivery receipt untuk pesan masuk.
+        if (payload.eventType === "INSERT" && row?.conversation_id && row.sender_id && row.sender_id !== uid) {
+          void markDelivered(row.conversation_id).then(() =>
+            qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" }),
+          );
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "message_receipts" }, () => {
+        void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "conversation_members" }, () => {
         void qc.invalidateQueries({ queryKey: qk.conversations(uid) });

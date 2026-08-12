@@ -43,9 +43,24 @@ import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import type { ConversationView, MessageRow } from "@/lib/api/chat";
 import { previewOf } from "@/lib/api/chat";
+import type { MessageStatus } from "@/lib/api/receipts";
 import { MCMAvatar, StatusBadge } from "./primitives";
 
 export const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤝", "👍", "🙏", "🔥", "☕", "💰", "✅", "❤️", "🎉", "😅", "🤔"];
+
+/**
+ * Centang status pesan keluar — sumber kebenarannya `message_receipts`:
+ * `sent` ✓ (tersimpan di server) · `delivered` ✓✓ netral · `read` ✓✓ aksen.
+ */
+export function MessageTicks({ status, className }: { status: MessageStatus; className?: string }) {
+  const label = status === "read" ? "Sudah dibaca" : status === "delivered" ? "Sampai di perangkat penerima" : "Terkirim ke server";
+  const Icon = status === "sent" ? Check : CheckCheck;
+  return (
+    <span role="img" aria-label={label} title={label} data-status={status} className={cn("inline-flex", className)}>
+      <Icon className={cn("size-3.5", status === "read" && "text-tick-read")} />
+    </span>
+  );
+}
 
 const initialsOf = (name: string) =>
   name
@@ -57,31 +72,36 @@ const initialsOf = (name: string) =>
 export function ChatListItem({
   conv,
   time,
+  outgoingStatus,
   onTogglePin,
   onToggleMute,
   onToggleArchive,
 }: {
   conv: ConversationView;
   time: string;
+  outgoingStatus?: MessageStatus | undefined;
   onTogglePin: () => void;
   onToggleMute: () => void;
   onToggleArchive: () => void;
 }) {
   const name = conv.title_resolved;
   return (
-    <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
+    <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 active:bg-muted/60">
       <Link to="/chat/$id" params={{ id: conv.id }} className="flex min-w-0 flex-1 items-center gap-3">
         <MCMAvatar initials={initialsOf(name)} color={conv.other?.avatar_color ?? "#0ea5e9"} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold">{name}</p>
+            <p className="truncate text-[15px] leading-5 font-semibold tracking-[-0.01em]">{name}</p>
             {conv.me.is_pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
             {conv.me.is_muted && <BellOff className="size-3 shrink-0 text-muted-foreground" />}
             {conv.type === "group" && <StatusBadge tone="primary">Grup</StatusBadge>}
-            <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">{time}</span>
+            <span className={cn("ml-auto shrink-0 text-[11px]", conv.unread > 0 ? "font-semibold text-primary" : "text-muted-foreground")}>{time}</span>
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5">
-            <p className="truncate text-xs text-muted-foreground">{previewOf(conv.lastMessage)}</p>
+          <div className="mt-1 flex items-center gap-1.5">
+            {outgoingStatus && <MessageTicks status={outgoingStatus} className="shrink-0 text-muted-foreground" />}
+            <p className={cn("truncate text-[13px] leading-4", conv.unread > 0 ? "text-foreground" : "text-muted-foreground")}>
+              {previewOf(conv.lastMessage)}
+            </p>
             {conv.unread > 0 && (
               <span className="ml-auto min-w-5 shrink-0 rounded-full bg-primary px-1.5 text-center text-[10px] leading-5 font-bold text-primary-foreground">
                 {conv.unread}
@@ -308,6 +328,7 @@ export function MessageBubble({
   selectable,
   selected,
   highlighted,
+  grouped,
 }: {
   message: MessageRow;
   replyTo?: MessageRow | undefined;
@@ -316,27 +337,29 @@ export function MessageBubble({
   mine: boolean;
   showSender: boolean;
   reactions: string[];
-  status: "sent" | "delivered" | "read";
+  status: MessageStatus;
   onAction: (action: MessageAction, message: MessageRow, payload?: string) => void;
   selectable?: boolean | undefined;
   selected?: boolean | undefined;
   highlighted?: boolean | undefined;
+  grouped?: boolean | undefined;
 }) {
   if (message.kind === "system") {
     return (
       <div className="my-2 flex justify-center">
-        <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground">{message.body}</span>
+        <span className="rounded-full bg-muted/80 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">{message.body}</span>
       </div>
     );
   }
   return (
     <div
       className={cn(
-        "group flex w-full gap-1 rounded-2xl px-1 py-0.5 transition-colors",
+        "group animate-bubble-in flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        grouped ? "py-[1px]" : "pt-1.5 pb-[1px]",
         mine ? "justify-end" : "justify-start",
         selectable && "cursor-pointer",
         selectable && selected && "bg-primary/10",
-        highlighted && "ring-2 ring-primary/70",
+        highlighted && "ring-2 ring-primary/60",
       )}
       onClick={selectable ? () => onAction("select", message) : undefined}
       onContextMenu={(e) => {
@@ -344,18 +367,18 @@ export function MessageBubble({
         onAction("select", message);
       }}
     >
-      <div className={cn("flex max-w-[82%] flex-col", mine ? "items-end" : "items-start")}>
+      <div className={cn("flex max-w-[80%] flex-col", mine ? "items-end" : "items-start")}>
         <div
           className={cn(
-            "relative rounded-2xl px-3 py-2 text-sm shadow-sm",
+            "bubble-elevate relative rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45]",
             mine
-              ? "rounded-br-md bg-bubble-out text-bubble-out-foreground"
-              : "rounded-bl-md border border-border bg-bubble-in text-bubble-in-foreground",
+              ? cn("bg-bubble-out text-bubble-out-foreground", grouped ? "rounded-br-lg" : "rounded-br-sm")
+              : cn("border border-border/70 bg-bubble-in text-bubble-in-foreground", grouped ? "rounded-bl-lg" : "rounded-bl-sm"),
           )}
         >
-          {showSender && !mine && <p className="mb-0.5 text-[11px] font-semibold text-primary">{senderName}</p>}
+          {showSender && !mine && !grouped && <p className="mb-0.5 text-[11px] font-semibold text-primary">{senderName}</p>}
           {replyTo && (
-            <div className={cn("mb-1 rounded-lg border-l-2 px-2 py-1 text-[11px]", mine ? "border-white/60 bg-white/15" : "border-primary bg-muted")}>
+            <div className={cn("mb-1.5 rounded-lg border-l-2 px-2 py-1 text-[11px]", mine ? "border-current/50 bg-black/10" : "border-primary bg-muted")}>
               <span className="font-medium">{replySenderName ?? "Pesan"}</span>
               <p className="line-clamp-2 opacity-80">{previewOf(replyTo)}</p>
             </div>
@@ -386,21 +409,14 @@ export function MessageBubble({
           ) : (
             <p className="break-words whitespace-pre-wrap">{message.body}</p>
           )}
-          <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px]", mine ? "opacity-80" : "text-muted-foreground")}>
+          <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums", mine ? "opacity-85" : "text-muted-foreground")}>
             {message.edited_at && <span>diedit</span>}
             <span>{jam(message.created_at)}</span>
-            {mine &&
-              (status === "read" ? (
-                <CheckCheck className="size-3.5 text-sky-200" />
-              ) : status === "delivered" ? (
-                <CheckCheck className="size-3.5" />
-              ) : (
-                <Check className="size-3.5" />
-              ))}
+            {mine && <MessageTicks status={status} />}
           </div>
         </div>
         {reactions.length > 0 && (
-          <div className="-mt-1.5 flex gap-1 rounded-full border border-border bg-card px-1.5 py-0.5 text-xs shadow-sm">
+          <div className="bubble-elevate -mt-1.5 flex gap-1 rounded-full border border-border bg-card px-1.5 py-0.5 text-xs">
             {reactions.map((r, i) => (
               <span key={i}>{r}</span>
             ))}
@@ -410,7 +426,12 @@ export function MessageBubble({
       {!selectable && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-7 self-center opacity-60" aria-label="Opsi pesan">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 self-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-60"
+              aria-label="Opsi pesan"
+            >
               <MoreVertical className="size-3.5" />
             </Button>
           </DropdownMenuTrigger>
@@ -545,11 +566,11 @@ export function ChatComposer({
     : [];
 
   return (
-    <div className="sticky bottom-0 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <div className="composer-raise sticky bottom-0 z-20 border-t border-border/70 bg-card/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
       {matches.length > 0 && (
-        <div className="max-h-40 overflow-y-auto border-b border-border">
+        <div className="max-h-40 overflow-y-auto border-b border-border/70">
           {matches.map((q) => (
-            <button key={q.shortcut} type="button" className="block w-full px-4 py-2 text-left hover:bg-muted" onClick={() => onChange(q.text)}>
+            <button key={q.shortcut} type="button" className="block w-full px-4 py-2 text-left transition-colors hover:bg-muted" onClick={() => onChange(q.text)}>
               <span className="text-xs font-semibold text-primary">{q.shortcut}</span>
               <span className="block truncate text-xs text-muted-foreground">{q.text}</span>
             </button>
@@ -557,7 +578,7 @@ export function ChatComposer({
         </div>
       )}
       {replyPreview && (
-        <div className="flex items-center gap-2 border-b border-border bg-muted/50 px-3 py-2">
+        <div className="flex items-center gap-2 border-b border-border/70 bg-muted/50 px-3 py-2">
           <CornerUpLeft className="size-4 text-primary" />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold text-primary">{replySenderName ?? "Pesan"}</p>
@@ -569,7 +590,7 @@ export function ChatComposer({
         </div>
       )}
       {editing && (
-        <div className="flex items-center gap-2 border-b border-border bg-warning/15 px-3 py-2 text-xs">
+        <div className="flex items-center gap-2 border-b border-border/70 bg-warning/15 px-3 py-2 text-xs">
           <Pencil className="size-4" /> Mengedit pesan
           <Button variant="ghost" size="sm" className="ml-auto" onClick={onCancelEdit}>
             Batal
@@ -577,12 +598,19 @@ export function ChatComposer({
         </div>
       )}
       {recording && (
-        <div className="flex items-center gap-2 border-b border-border bg-destructive/10 px-3 py-2 text-xs">
+        <div className="flex items-center gap-2 border-b border-border/70 bg-destructive/10 px-3 py-2 text-xs font-medium">
           <span className="size-2 animate-pulse rounded-full bg-destructive" /> Merekam… {seconds}s
         </div>
       )}
-      <div className="flex items-end gap-1.5 px-2 py-2">
-        <Button variant="ghost" size="icon" className="size-9 shrink-0" aria-label="Tindakan lain" disabled={disabled} onClick={() => setActionsOpen(true)}>
+      <div className="flex items-end gap-1.5 px-2.5 py-2.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+          aria-label="Tindakan lain"
+          disabled={disabled}
+          onClick={() => setActionsOpen(true)}
+        >
           <Plus className="size-5" />
         </Button>
         <Sheet open={actionsOpen} onOpenChange={setActionsOpen}>
@@ -616,10 +644,10 @@ export function ChatComposer({
             </div>
           </SheetContent>
         </Sheet>
-        <div className="flex flex-1 items-end rounded-2xl border border-input bg-background px-2">
+        <div className="flex flex-1 items-end rounded-3xl border border-input bg-background px-1.5 transition-colors focus-within:border-ring/60 focus-within:ring-2 focus-within:ring-ring/20">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label="Emoji" disabled={disabled}>
+              <Button variant="ghost" size="icon" className="size-9 shrink-0 rounded-full text-muted-foreground" aria-label="Emoji" disabled={disabled}>
                 <Smile className="size-5" />
               </Button>
             </PopoverTrigger>
@@ -645,21 +673,28 @@ export function ChatComposer({
             }}
             rows={1}
             placeholder="Tulis pesan…"
-            className="max-h-28 min-h-9 resize-none border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0 dark:bg-transparent"
+            className="max-h-32 min-h-10 resize-none border-0 bg-transparent px-1 py-2.5 text-[15px] leading-5 shadow-none focus-visible:ring-0 dark:bg-transparent"
           />
-          <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label="Kamera" disabled={disabled} onClick={() => onAttach("camera")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9 shrink-0 rounded-full text-muted-foreground"
+            aria-label="Kamera"
+            disabled={disabled}
+            onClick={() => onAttach("camera")}
+          >
             <Camera className="size-5" />
           </Button>
         </div>
         {value.trim() ? (
-          <Button size="icon" className="size-10 shrink-0 rounded-full" aria-label="Kirim" disabled={disabled} onClick={onSend}>
+          <Button size="icon" className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95" aria-label="Kirim" disabled={disabled} onClick={onSend}>
             <Send className="size-4.5" />
           </Button>
         ) : (
           <Button
             size="icon"
             variant={recording ? "destructive" : "default"}
-            className="size-10 shrink-0 rounded-full"
+            className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label={recording ? "Hentikan rekaman" : "Rekam pesan suara"}
             disabled={disabled}
             onClick={() => (recording ? stop() : void start())}
