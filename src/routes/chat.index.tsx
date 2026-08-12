@@ -210,6 +210,8 @@ function ChatList() {
                     last
                       ? last.kind === "document"
                         ? `📎 ${last.attachmentName}`
+                        : last.kind === "image"
+                          ? `📷 Foto${last.text ? ` — ${last.text}` : ""}${last.location ? " • 📍 lokasi" : ""}`
                         : last.kind === "voice"
                           ? "🎤 Pesan suara"
                           : last.kind === "poll"
