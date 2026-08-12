@@ -170,13 +170,14 @@ function ChatRoom() {
   };
 
   // Saat entri outbox berhasil terkirim, muat ulang halaman pesan percakapan itu.
-  useEffect(() => {
-    setOutboxSentHandler((entry) => {
-      void qc.invalidateQueries({ queryKey: qk.messages(entry.conversationId) });
-      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
-    });
-    return () => setOutboxSentHandler(null);
-  }, [qc, userId]);
+  useEffect(
+    () =>
+      onOutboxSent((entry) => {
+        void qc.invalidateQueries({ queryKey: qk.messages(entry.conversationId) });
+        void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+      }),
+    [qc, userId],
+  );
 
   const blocked = block?.iBlocked ?? false;
   const blockedByOther = block?.blockedMe ?? false;
