@@ -51,11 +51,7 @@ export function ProductCard({ product, onClick }: { product: Product; onClick: (
 export function OrderCard({ order }: { order: Order }) {
   const meta = ORDER_META[order.status];
   return (
-    <Link
-      to="/business/orders/$id"
-      params={{ id: order.id }}
-      className="card-soft flex items-center gap-3 p-4 transition-colors hover:bg-muted/40"
-    >
+    <div className="card-soft flex items-center gap-3 p-4 transition-colors hover:bg-muted/40">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Package className="size-5" />
       </span>
@@ -69,7 +65,7 @@ export function OrderCard({ order }: { order: Order }) {
         </p>
         <p className="mt-1 text-sm font-bold">{rupiah(orderTotal(order))}</p>
       </div>
-    </Link>
+    </div>
   );
 }
 

@@ -60,6 +60,7 @@ function ChatRoom() {
   const [info, setInfo] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
+  const [dismissSuggestion, setDismissSuggestion] = useState(false);
   const [ledgerForm, setLedgerForm] = useState({ type: "piutang", amount: "", note: "", dueDate: "" });
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -255,6 +256,10 @@ function ChatRoom() {
 
   let lastDay = "";
 
+  const paymentRe = /\b(bayar|dibayar|pembayaran|utang|hutang|piutang|cicil|transfer|invoice|tagihan|pinjam)\w*/i;
+  const paymentHint = [...messages].reverse().find((m) => m.senderId !== "me" && paymentRe.test(m.text));
+  const showLedgerSuggestion = !!paymentHint && !dismissSuggestion;
+
   return (
     <AppShell
       nav={false}
@@ -345,6 +350,21 @@ function ChatRoom() {
         })}
         <div ref={bottom} />
       </div>
+
+      {showLedgerSuggestion && (
+        <div className="mx-3 mb-2 rounded-2xl border border-primary/30 bg-primary/10 p-3">
+          <p className="text-sm font-semibold text-foreground">Terdeteksi pembicaraan pembayaran</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Buat catatan bersama agar nominal dan jatuh temponya tercatat rapi.</p>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" className="flex-1 rounded-lg text-xs" onClick={() => setLedgerOpen(true)}>
+              Buat catatan bersama
+            </Button>
+            <Button size="sm" variant="ghost" className="rounded-lg text-xs" onClick={() => setDismissSuggestion(true)}>
+              Nanti
+            </Button>
+          </div>
+        </div>
+      )}
 
       <ChatComposer
         value={text}

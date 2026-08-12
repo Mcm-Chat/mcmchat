@@ -173,9 +173,7 @@ function LedgerPage() {
         <ul className="space-y-3 px-4 py-4 pb-28">
           {list.map((l) => (
             <li key={l.id}>
-              <Link to="/ledger/$id" params={{ id: l.id }} className="block">
-                <LedgerCard entry={l} />
-              </Link>
+              <LedgerCard entry={l} />
             </li>
           ))}
         </ul>
