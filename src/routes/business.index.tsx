@@ -292,16 +292,17 @@ function BusinessPage() {
       </div>
 
       <Dialog open={!!product} onOpenChange={(v) => !v && setProduct(null)}>
-        <DialogContent className="max-w-[360px] rounded-2xl">
+        <DialogContent className="max-h-[85vh] max-w-[360px] overflow-y-auto rounded-2xl">
           <DialogHeader>
-            <DialogTitle>{product?.name}</DialogTitle>
+            <DialogTitle>{liveProduct?.name}</DialogTitle>
           </DialogHeader>
-          {product && (
+          {liveProduct && (
             <div className="space-y-2 text-sm">
-              <p className="text-lg font-bold">{rupiah(product.price)}</p>
-              <p className="text-muted-foreground">{product.description}</p>
-              <p className="text-xs text-muted-foreground">SKU {product.sku} • stok {product.stock}</p>
-              <Button className="w-full rounded-xl" onClick={() => openEdit(product)}>
+              <p className="text-lg font-bold">{rupiah(liveProduct.price)}</p>
+              <p className="text-muted-foreground">{liveProduct.description}</p>
+              <p className="text-xs text-muted-foreground">SKU {liveProduct.sku} • stok {liveProduct.stock}</p>
+              <ProductGallery photos={liveProduct.photos ?? []} />
+              <Button className="w-full rounded-xl" onClick={() => openEdit(liveProduct)}>
                 Edit produk
               </Button>
             </div>
@@ -310,7 +311,7 @@ function BusinessPage() {
       </Dialog>
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-[360px] rounded-2xl">
+        <DialogContent className="max-h-[85vh] max-w-[360px] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle>Edit produk</DialogTitle>
           </DialogHeader>
@@ -333,6 +334,9 @@ function BusinessPage() {
               <Label htmlFor="ed">Deskripsi</Label>
               <Textarea id="ed" maxLength={200} value={editForm.description} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))} />
             </div>
+            {editing && (
+              <ProductPhotoEditor productId={editing.id} photos={editPhotos} onChange={setEditPhotos} />
+            )}
             <Button className="w-full rounded-xl" onClick={saveEdit}>
               Simpan perubahan
             </Button>
@@ -350,7 +354,7 @@ function BusinessPage() {
       </Dialog>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-[360px] rounded-2xl">
+        <DialogContent className="max-h-[85vh] max-w-[360px] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle>Tambah produk</DialogTitle>
           </DialogHeader>
@@ -367,6 +371,7 @@ function BusinessPage() {
               <Label htmlFor="pd">Deskripsi</Label>
               <Textarea id="pd" maxLength={200} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} />
             </div>
+            <ProductPhotoEditor productId="draft" photos={formPhotos} onChange={setFormPhotos} />
             <Button className="w-full rounded-xl" onClick={addProduct}>
               Simpan produk
             </Button>
