@@ -255,6 +255,10 @@ function ChatRoom() {
 
   let lastDay = "";
 
+  const paymentRe = /\b(bayar|dibayar|pembayaran|utang|hutang|piutang|cicil|transfer|invoice|tagihan|pinjam)\w*/i;
+  const paymentHint = [...messages].reverse().find((m) => m.senderId !== "me" && paymentRe.test(m.text));
+  const showLedgerSuggestion = !!paymentHint && !dismissSuggestion;
+
   return (
     <AppShell
       nav={false}
