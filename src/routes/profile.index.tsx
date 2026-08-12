@@ -103,8 +103,12 @@ function ProfilePage() {
         .then(async ({ data }) => {
           const rows = data ?? [];
           const ids = rows.map((r) => r.user_id);
-          const { data: profiles } = await supabase.from("profiles").select("id, display_name, pin").in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
-          const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
+          const { pinsFor } = await import("@/lib/api/pins");
+          const [{ data: profiles }, pins] = await Promise.all([
+            supabase.from("profiles").select("id, display_name").in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
+            pinsFor(ids),
+          ]);
+          const pmap = new Map((profiles ?? []).map((p) => [p.id, { ...p, pin: pins.get(p.id) ?? "" }]));
           setMembers(rows.map((r) => ({ ...r, profile: pmap.get(r.user_id) ?? null })));
         });
     }

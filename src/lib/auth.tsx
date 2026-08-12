@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { myPin } from "@/lib/api/pins";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type Profile = Tables<"profiles">;
@@ -30,11 +31,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSettings(null);
       return;
     }
-    const [p, s] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+    // Kolom `pin` tidak lagi termasuk grant tabel; PIN sendiri diambil via RPC.
+    const [p, s, pin] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, display_name, bio, avatar_url, avatar_color, is_online, last_seen_at, created_at, updated_at")
+        .eq("id", uid)
+        .maybeSingle(),
       supabase.from("user_settings").select("*").eq("user_id", uid).maybeSingle(),
+      myPin().catch(() => ""),
     ]);
-    setProfile(p.data ?? null);
+    setProfile(p.data ? ({ ...p.data, pin } as Profile) : null);
     setSettings(s.data ?? null);
   }, []);
 

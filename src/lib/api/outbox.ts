@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { sendMessage } from "./chat";
+import { loadEntries, saveEntries } from "./outbox-store";
 import { backoffDelay, getConnectionState, onConnectionChange } from "@/lib/realtime/connection";
 
 /**
@@ -10,9 +11,8 @@ import { backoffDelay, getConnectionState, onConnectionChange } from "@/lib/real
  * ulang setelah reconnect tidak pernah membuat pesan ganda — duplikat ditolak
  * database dan dianggap sukses oleh outbox.
  *
- * Batasan jujur: hanya pesan teks yang bertahan lintas reload (lampiran biner
- * tidak disimpan di localStorage). Lampiran yang gagal tetap bisa dicoba ulang
- * selama sesi berjalan.
+ * Antrean disimpan di IndexedDB (fallback localStorage). Batasan jujur: hanya
+ * pesan teks yang bertahan lintas reload — lampiran biner tidak diantrekan.
  */
 export type OutboxEntry = {
   clientId: string;
@@ -24,9 +24,9 @@ export type OutboxEntry = {
   attempts: number;
   status: "sending" | "failed";
   error?: string;
+  /** Error permanen (izin/validasi): tidak pernah dicoba ulang otomatis. */
+  permanent?: boolean;
 };
-
-const STORAGE_KEY = "mcm.outbox.v1";
 
 let queue: OutboxEntry[] = [];
 let loaded = false;
@@ -34,12 +34,7 @@ const listeners = new Set<() => void>();
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function persist() {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-  } catch {
-    /* kuota penuh: antrean tetap hidup di memori */
-  }
+  void saveEntries(queue).catch(() => undefined);
 }
 
 function emit() {
@@ -47,17 +42,24 @@ function emit() {
   for (const l of listeners) l();
 }
 
-function load() {
-  if (loaded || typeof localStorage === "undefined") return;
+/**
+ * Pemuatan awal bersifat async (IndexedDB). Entri yang sudah antre di memori
+ * pada sesi ini menang atas salinan tersimpan agar tidak ada duplikasi.
+ */
+export async function hydrateOutbox(): Promise<void> {
+  if (loaded) return;
   loaded = true;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    if (Array.isArray(parsed)) queue = parsed.filter((e): e is OutboxEntry => !!e && typeof (e as OutboxEntry).clientId === "string");
-  } catch {
-    queue = [];
+  const stored = await loadEntries().catch(() => []);
+  const known = new Set(queue.map((e) => e.clientId));
+  const restored = stored.filter((e) => !known.has(e.clientId)).map((e) => ({ ...e, status: "failed" as const }));
+  if (restored.length > 0) {
+    queue = [...restored, ...queue];
+    emit();
   }
-  for (const entry of queue) entry.status = "failed";
+}
+
+function load() {
+  if (!loaded) void hydrateOutbox();
 }
 
 export function outboxFor(conversationId: string): OutboxEntry[] {
@@ -73,6 +75,23 @@ export function outboxSize(): number {
 function isDuplicateError(message: string): boolean {
   const m = message.toLowerCase();
   return m.includes("duplicate") || m.includes("sudah ada") || m.includes("unique");
+}
+
+/**
+ * Error yang tidak akan pernah sembuh dengan mencoba lagi (RLS/izin, validasi,
+ * percakapan hilang). Entri seperti ini berhenti otomatis dan menunggu
+ * keputusan pengguna, supaya tidak berputar tanpa batas.
+ */
+function isPermanentError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("tidak memiliki akses") ||
+    m.includes("row-level security") ||
+    m.includes("permission denied") ||
+    m.includes("violates foreign key") ||
+    m.includes("invalid input") ||
+    m.includes("not-null")
+  );
 }
 
 let onSent: ((entry: OutboxEntry) => void) | null = null;
@@ -116,8 +135,9 @@ async function attempt(clientId: string) {
     entry.attempts += 1;
     entry.status = "failed";
     entry.error = message;
+    entry.permanent = isPermanentError(message);
     emit();
-    if (entry.attempts < 6) {
+    if (!entry.permanent && entry.attempts < 6) {
       const t = setTimeout(() => {
         timers.delete(clientId);
         void attempt(clientId);
@@ -149,6 +169,7 @@ export function retryEntry(clientId: string) {
   const entry = queue.find((e) => e.clientId === clientId);
   if (!entry) return;
   entry.attempts = 0;
+  entry.permanent = false;
   void attempt(clientId);
 }
 
@@ -163,7 +184,7 @@ export function discardEntry(clientId: string) {
 /** Kirim ulang semua entri tertunda (dipanggil saat koneksi kembali). */
 export function flushOutbox() {
   load();
-  for (const entry of queue) if (entry.status !== "sending") void attempt(entry.clientId);
+  for (const entry of queue) if (entry.status !== "sending" && !entry.permanent) void attempt(entry.clientId);
 }
 
 let flushWired = false;
@@ -171,13 +192,22 @@ let flushWired = false;
 export function initOutboxFlush(): () => void {
   if (flushWired) return () => undefined;
   flushWired = true;
+  void hydrateOutbox().then(() => {
+    if (getConnectionState() !== "offline") flushOutbox();
+  });
   let previous = getConnectionState();
   const off = onConnectionChange((next) => {
     if (next === "online" && previous !== "online") flushOutbox();
     previous = next;
   });
+  // Kembali ke foreground juga memicu pengiriman ulang.
+  const onVisible = () => {
+    if (typeof document !== "undefined" && document.visibilityState === "visible" && getConnectionState() !== "offline") flushOutbox();
+  };
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
   return () => {
     off();
+    if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
     flushWired = false;
   };
 }
