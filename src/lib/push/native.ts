@@ -112,7 +112,7 @@ export async function registerNativePush(deviceName: string): Promise<RegisterRe
 
 /** Cabut token & kredensial aksi saat logout atau perangkat dikeluarkan. */
 export async function revokeNativePush() {
-  await supabase.rpc("revoke_my_push_devices", { _push_token: null }).then(
+  await supabase.rpc("revoke_my_push_devices", {}).then(
     () => undefined,
     () => undefined,
   );

@@ -88,9 +88,9 @@ export type EventPush = {
   title: string;
   body: string;
   route: string;
-  jobId?: string;
-  orderId?: string;
-  ledgerId?: string;
+  jobId?: string | undefined;
+  orderId?: string | undefined;
+  ledgerId?: string | undefined;
 };
 
 /** Push non-chat: tugas penyiapan, penjualan/pesanan, hutang/pembayaran. */
