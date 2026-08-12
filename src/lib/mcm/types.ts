@@ -271,4 +271,6 @@ export interface MCMState {
   settings: Settings;
   notifications: AppNotification[];
   searchAttempts: { at: number }[];
+  /** Tombstone internal untuk sinkronisasi hapus-untuk-semua. Tidak pernah dirender. */
+  deletedMessageIds?: ID[] | undefined;
 }
