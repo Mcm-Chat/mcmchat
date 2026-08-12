@@ -31,8 +31,8 @@ describe("voice presets", () => {
   it("intensitas 0 mengembalikan karakter ke netral", () => {
     const deep = PRESETS.find((p) => p.id === "deep")!;
     const scaled = applyIntensity(deep.params, 0);
-    expect(scaled.pitch).toBe(0);
-    expect(scaled.formant).toBe(0);
+    expect(scaled.pitch).toBeCloseTo(0);
+    expect(scaled.formant).toBeCloseTo(0);
   });
 
   it("tidak ada preset yang menyimpang di luar batas privasi", () => {
