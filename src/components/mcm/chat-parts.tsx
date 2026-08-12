@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { jam } from "@/lib/mcm/format";
 import type { Chat, Message } from "@/lib/mcm/types";
 import { MCMAvatar, StatusBadge } from "./primitives";
+import { LocationCard } from "./photo-parts";
 
 export const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤝", "👍", "🙏", "🔥", "☕", "💰", "✅", "❤️", "🎉", "😅", "🤔"];
 
