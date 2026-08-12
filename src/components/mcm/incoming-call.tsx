@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { declineCall, subscribeIncomingCalls, type CallRow } from "@/lib/api/calls";
+import { declineCall, listRingingCalls, subscribeIncomingCalls, type CallRow } from "@/lib/api/calls";
+import { subscribeConnection } from "@/lib/realtime/connection";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -21,6 +22,47 @@ export function IncomingCallListener() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+
+  // Pemulihan: event INSERT bisa terlewat saat aplikasi di latar belakang atau
+  // realtime sedang putus. Saat kembali ke depan / tersambung ulang kita baca
+  // ulang panggilan yang masih berdering, lalu de-dup dengan state saat ini.
+  useEffect(() => {
+    const uid = user?.id;
+    if (!uid) return;
+    const recover = () => {
+      void listRingingCalls(uid)
+        .then((rows) => {
+          const row = rows[0];
+          if (!row) return;
+          setIncoming((cur) => (cur?.call.id === row.id ? cur : { call: row, name: "Pengguna MCM", color: "from-slate-500 to-slate-700" }));
+          void supabase
+            .from("profiles")
+            .select("display_name, avatar_color")
+            .eq("id", row.initiator_id)
+            .maybeSingle()
+            .then(({ data }) =>
+              setIncoming((cur) =>
+                cur?.call.id === row.id
+                  ? { ...cur, name: data?.display_name ?? cur.name, color: data?.avatar_color ?? cur.color }
+                  : cur,
+              ),
+            );
+        })
+        .catch(() => undefined);
+    };
+    recover();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") recover();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const offConn = subscribeConnection((s) => {
+      if (s === "online") recover();
+    });
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      offConn();
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -31,11 +73,15 @@ export function IncomingCallListener() {
         .eq("id", call.initiator_id)
         .maybeSingle()
         .then(({ data }) =>
-          setIncoming({
-            call,
-            name: data?.display_name ?? "Pengguna MCM",
-            color: data?.avatar_color ?? "from-slate-500 to-slate-700",
-          }),
+          setIncoming((cur) =>
+            cur?.call.id === call.id
+              ? cur
+              : {
+                  call,
+                  name: data?.display_name ?? "Pengguna MCM",
+                  color: data?.avatar_color ?? "from-slate-500 to-slate-700",
+                },
+          ),
         );
     });
   }, [user?.id]);
