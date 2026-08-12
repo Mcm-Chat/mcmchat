@@ -349,12 +349,14 @@ function ChatRoom() {
                   <span className="rounded-full bg-muted px-3 py-1 text-[11px] text-muted-foreground">{day}</span>
                 </div>
               )}
-              <MessageBubble
-                message={m}
-                replyTo={m.replyToId ? messages.find((x) => x.id === m.replyToId) : undefined}
-                showSender={chat.type === "group"}
-                onAction={onAction}
-              />
+              <div className={m.id === hl ? "animate-in fade-in rounded-2xl bg-primary/10 ring-2 ring-primary/40" : undefined}>
+                <MessageBubble
+                  message={m}
+                  replyTo={m.replyToId ? messages.find((x) => x.id === m.replyToId) : undefined}
+                  showSender={chat.type === "group"}
+                  onAction={onAction}
+                />
+              </div>
             </div>
           );
         })}
@@ -404,8 +406,8 @@ function ChatRoom() {
         onSend={send}
         onAttach={(kind) => {
           if (kind === "document") push({ kind: "document", text: "Dokumen", attachmentName: "Dokumen-MCM.pdf" });
-          else push({ kind: "image", text: kind === "camera" ? "Foto kamera" : "Foto galeri", attachmentName: "foto.jpg" });
-          toast.success("Lampiran terkirim (simulasi)");
+          else setPhotoOpen(true);
+          if (kind === "document") toast.success("Lampiran terkirim (simulasi)");
         }}
         onVoice={() => {
           push({ kind: "voice", text: "Pesan suara", durationSec: 12 });
