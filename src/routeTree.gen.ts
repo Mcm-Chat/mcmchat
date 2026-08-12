@@ -17,6 +17,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as CallIdRouteImport } from './routes/call.$id'
 import { Route as CallsIndexRouteImport } from './routes/calls.index'
+import { Route as CatalogIndexRouteImport } from './routes/catalog.index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
@@ -66,6 +67,11 @@ const CallIdRoute = CallIdRouteImport.update({
 const CallsIndexRoute = CallsIndexRouteImport.update({
   id: '/calls/',
   path: '/calls/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogIndexRoute = CatalogIndexRouteImport.update({
+  id: '/catalog/',
+  path: '/catalog/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/prepare/$token': typeof PrepareTokenRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
+  '/catalog/': typeof CatalogIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/ledger/': typeof LedgerIndexRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/prepare/$token': typeof PrepareTokenRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
+  '/catalog': typeof CatalogIndexRoute
   '/chat': typeof ChatIndexRoute
   '/contacts': typeof ContactsIndexRoute
   '/ledger': typeof LedgerIndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/prepare/$token': typeof PrepareTokenRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
+  '/catalog/': typeof CatalogIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
   '/ledger/': typeof LedgerIndexRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/business/'
     | '/calls/'
+    | '/catalog/'
     | '/chat/'
     | '/contacts/'
     | '/ledger/'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/business'
     | '/calls'
+    | '/catalog'
     | '/chat'
     | '/contacts'
     | '/ledger'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/business/'
     | '/calls/'
+    | '/catalog/'
     | '/chat/'
     | '/contacts/'
     | '/ledger/'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   PrepareTokenRoute: typeof PrepareTokenRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
+  CatalogIndexRoute: typeof CatalogIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
   LedgerIndexRoute: typeof LedgerIndexRoute
@@ -320,6 +333,13 @@ declare module '@tanstack/react-router' {
       path: '/calls'
       fullPath: '/calls/'
       preLoaderRoute: typeof CallsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog/': {
+      id: '/catalog/'
+      path: '/catalog'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof CatalogIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/': {
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrepareTokenRoute: PrepareTokenRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
+  CatalogIndexRoute: CatalogIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
   LedgerIndexRoute: LedgerIndexRoute,

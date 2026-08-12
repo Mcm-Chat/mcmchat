@@ -9,7 +9,7 @@ import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-pa
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useMyBusiness } from "@/lib/api/queries";
 import { createBusiness } from "@/lib/api/business";
@@ -294,7 +294,7 @@ function ProductCard({ product }: { product: ProductWithVariants }) {
         <Button
           size="sm"
           className="flex-1 rounded-xl"
-          onClick={() => void navigate({ to: "/chat", search: { send: product.id } as never })}
+          onClick={() => void navigate({ href: `/chat?send=${product.id}` })}
         >
           Kirim ke Pelanggan
         </Button>
@@ -303,4 +303,3 @@ function ProductCard({ product }: { product: ProductWithVariants }) {
   );
 }
 
-import { DialogTrigger } from "@/components/ui/dialog";
