@@ -424,10 +424,6 @@ function ChatRoom() {
       />
       )}
 
-      <Dialog open={ledgerOpen} onOpenChange={setLedgerOpen}>
-        {null}
-      </Dialog>
-
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="flex h-[92vh] flex-col gap-0 rounded-t-3xl p-0">
           <SheetHeader className="pb-2">
