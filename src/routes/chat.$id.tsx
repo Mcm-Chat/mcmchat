@@ -656,9 +656,6 @@ function ChatRoom() {
         onOpenChange={setConfirmClear}
         title="Bersihkan percakapan?"
         description="Semua pesan di chat ini akan dihapus dari perangkat Anda."
-        onOpenChange={setConfirmClear}
-        title="Bersihkan percakapan?"
-        description="Semua pesan di chat ini akan dihapus dari perangkat Anda."
         confirmLabel="Bersihkan"
         onConfirm={() => {
           update((d) => {
@@ -667,6 +664,25 @@ function ChatRoom() {
           });
           setInfo(false);
           toast.success("Percakapan dibersihkan");
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmAll !== null}
+        onOpenChange={(v) => {
+          if (!v) setConfirmAll(null);
+        }}
+        title="Hapus untuk semua?"
+        description="Hapus pesan ini untuk semua orang? Pesan akan hilang tanpa jejak di percakapan."
+        confirmLabel="Hapus untuk semua"
+        destructive
+        onConfirm={() => {
+          const ids = confirmAll ?? [];
+          update((d) => deleteForEveryone(d, ids));
+          setConfirmAll(null);
+          setSelection([]);
+          setSelectMode(false);
+          toast.success("Pesan dihapus");
         }}
       />
     </AppShell>
