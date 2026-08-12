@@ -3,6 +3,7 @@ import { ArrowLeft, Briefcase, MessageCircle, Phone, User, Wallet } from "lucide
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useMCM } from "@/lib/mcm/store";
 
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
@@ -13,13 +14,21 @@ const NAV = [
 ] as const;
 
 export function BottomNavigation({ badges }: { badges?: Partial<Record<string, number>> | undefined }) {
+  const { state } = useMCM();
+  const auto: Record<string, number> = {
+    "/chat": state.chats.filter((c) => !c.archived).reduce((s, c) => s + c.unread, 0),
+    "/calls": state.calls.filter((c) => c.missed && c.direction === "in").length,
+    "/ledger": state.ledgers.filter((l) => l.status === "menunggu").length,
+    "/business": state.orders.filter((o) => o.status === "baru").length,
+  };
+  const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="sticky bottom-0 z-30 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
       <ul className="grid grid-cols-5">
         {NAV.map((item) => {
           const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
-          const badge = badges?.[item.match];
+          const badge = merged[item.match];
           return (
             <li key={item.to}>
               <Link
