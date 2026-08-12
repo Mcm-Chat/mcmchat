@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MCM</string>
+    <string name="title_activity_main">MCM</string>
+    <string name="package_name">com.mcm.privateconnect</string>
+    <string name="custom_url_scheme">com.mcm.privateconnect</string>
+</resources>
