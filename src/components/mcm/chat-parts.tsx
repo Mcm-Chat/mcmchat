@@ -407,7 +407,10 @@ export function MessageBubble({
               <MessageLocationCard message={message} />
             </div>
           ) : (
-            <p className="break-words whitespace-pre-wrap">{message.body}</p>
+            <>
+              <StatusReplyQuote message={message} />
+              <p className="break-words whitespace-pre-wrap">{message.body}</p>
+            </>
           )}
           <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums", mine ? "opacity-85" : "text-muted-foreground")}>
             {message.edited_at && <span>diedit</span>}
