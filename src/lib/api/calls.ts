@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
+import { notifyIncomingCall } from "@/lib/push/push.functions";
 
 export type CallRow = Tables<"calls">;
 export type CallParticipantRow = Tables<"call_participants">;
@@ -35,6 +36,9 @@ export async function startCall(initiatorId: string, conversationId: string, kin
     .from("call_participants")
     .insert([...new Set([initiatorId, ...participantIds])].map((id) => ({ call_id: call.id, user_id: id })));
   if (error) throw new Error(friendly(error.message, "Gagal menambahkan peserta"));
+  // Notifikasi panggilan masuk (channel prioritas tinggi) — gagal kirim tidak
+  // boleh membatalkan panggilan itu sendiri.
+  void notifyIncomingCall({ data: { callId: call.id } }).catch(() => undefined);
   return call;
 }
 
