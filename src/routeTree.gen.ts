@@ -33,6 +33,7 @@ import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
 import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
 import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
@@ -157,6 +158,11 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/profile/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
+  id: '/settings/notifications',
+  path: '/settings/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business': typeof BusinessIndexRoute
   '/calls': typeof CallsIndexRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
+  '/settings/notifications': typeof SettingsNotificationsRoute
   '/tasks/$id': typeof TasksIdRoute
   '/business/': typeof BusinessIndexRoute
   '/calls/': typeof CallsIndexRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/settings/notifications'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/settings/notifications'
     | '/tasks/$id'
     | '/business'
     | '/calls'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
+    | '/settings/notifications'
     | '/tasks/$id'
     | '/business/'
     | '/calls/'
@@ -368,6 +380,7 @@ export interface RootRouteChildren {
   LedgerIdRoute: typeof LedgerIdRoute
   PhotoNewRoute: typeof PhotoNewRoute
   PrepareTokenRoute: typeof PrepareTokenRoute
+  SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   TasksIdRoute: typeof TasksIdRoute
   BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
@@ -551,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/notifications': {
+      id: '/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof SettingsNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -592,6 +612,7 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerIdRoute: LedgerIdRoute,
   PhotoNewRoute: PhotoNewRoute,
   PrepareTokenRoute: PrepareTokenRoute,
+  SettingsNotificationsRoute: SettingsNotificationsRoute,
   TasksIdRoute: TasksIdRoute,
   BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
