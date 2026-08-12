@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Bell, MessageSquarePlus, Search, Users, UserPlus, ShieldCheck, Archive } from "lucide-react";
+import { Bell, Camera, MessageSquarePlus, Search, Users, UserPlus, ShieldCheck, Archive } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatListItem } from "@/components/mcm/chat-parts";
@@ -252,6 +252,11 @@ function ChatList() {
 
       <div className="pointer-events-none sticky bottom-4 flex justify-end px-4">
         <div className="pointer-events-auto flex flex-col gap-2">
+          <Button size="icon" variant="secondary" className="size-11 rounded-2xl shadow-soft" aria-label="Kirim foto" asChild>
+            <Link to="/photo/new">
+              <Camera className="size-5" />
+            </Link>
+          </Button>
           <Button size="icon" variant="secondary" className="size-11 rounded-2xl shadow-soft" aria-label="Buat grup" onClick={() => setOpenGroup(true)}>
             <Users className="size-5" />
           </Button>
