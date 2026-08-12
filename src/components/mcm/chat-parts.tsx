@@ -115,11 +115,15 @@ export function MessageBubble({
   replyTo,
   showSender,
   onAction,
+  selectable,
+  selected,
 }: {
   message: Message;
   replyTo?: Message | undefined;
   showSender: boolean;
   onAction: (action: string, message: Message, payload?: string) => void | undefined;
+  selectable?: boolean | undefined;
+  selected?: boolean | undefined;
 }) {
   const mine = message.senderId === "me";
   if (message.kind === "system") {
@@ -130,7 +134,19 @@ export function MessageBubble({
     );
   }
   return (
-    <div className={cn("group flex w-full gap-1", mine ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "group flex w-full gap-1 rounded-2xl px-1 py-0.5 transition-colors",
+        mine ? "justify-end" : "justify-start",
+        selectable && "cursor-pointer",
+        selectable && selected && "bg-primary/10",
+      )}
+      onClick={selectable ? () => onAction("select", message) : undefined}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onAction("select", message);
+      }}
+    >
       <div className={cn("flex max-w-[82%] flex-col", mine ? "items-end" : "items-start")}>
         <div
           className={cn(
@@ -150,9 +166,7 @@ export function MessageBubble({
               <p className="line-clamp-2 opacity-80">{replyTo.text}</p>
             </div>
           )}
-          {message.deleted ? (
-            <p className="italic opacity-70">Pesan ini dihapus</p>
-          ) : message.kind === "document" ? (
+          {message.kind === "document" ? (
             <div className="flex items-center gap-2">
               <FileText className="size-5 shrink-0" />
               <span className="break-all">{message.attachmentName ?? message.text}</span>
@@ -236,7 +250,7 @@ export function MessageBubble({
           </div>
         )}
       </div>
-      {!message.deleted && (
+      {!selectable && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="size-7 self-center opacity-60" aria-label="Opsi pesan">
@@ -277,9 +291,21 @@ export function MessageBubble({
                 <Pencil className="size-4" /> Edit
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onAction("delete", message)}>
-              <Trash2 className="size-4" /> Hapus
+            <DropdownMenuItem onClick={() => onAction("select", message)}>
+              <CheckCheck className="size-4" /> Pilih pesan
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onAction("delete-me", message)}>
+              <Trash2 className="size-4" /> Hapus untuk saya
+            </DropdownMenuItem>
+            {mine && (
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onAction("delete-all", message)}
+              >
+                <Trash2 className="size-4 text-destructive" /> Hapus untuk semua
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
