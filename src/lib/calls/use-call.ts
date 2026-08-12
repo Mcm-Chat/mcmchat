@@ -43,7 +43,12 @@ export type UseCallResult = {
   durationSec: number;
   controls: CallControlsState;
   pipelineState: PipelineState;
+  /** Efek suara benar-benar aktif pada track keluar (bukan sekadar preferensi). */
   voiceApplied: boolean;
+  /** Efek suara diminta tetapi gagal dipasang; panggilan tetap berjalan polos. */
+  voiceFallback: boolean;
+  /** Tombol speaker hanya ditampilkan bila rute keluaran benar-benar bisa diatur. */
+  speakerSupported: boolean;
   answer: () => void;
   decline: () => void;
   hangup: (status?: CallRow["status"], reason?: string) => void;
@@ -73,6 +78,9 @@ export function useCall(opts: {
   const [durationSec, setDuration] = useState(0);
   const [controls, setControls] = useState<CallControlsState>({ muted: false, cameraOn: false, speakerOn: true });
   const [pipelineState, setPipelineState] = useState<PipelineState>({ status: "idle", latencyMs: 0 });
+  const [voiceFallback, setVoiceFallback] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [speakerSupported, setSpeakerSupported] = useState(false);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
@@ -101,13 +109,29 @@ export function useCall(opts: {
     if (typeof navigator === "undefined" || !navigator.mediaDevices) return null;
     const mic = await navigator.mediaDevices.getUserMedia(MIC_CONSTRAINTS);
     micRef.current = mic;
-    if (!voiceApplied) return mic.getAudioTracks()[0] ?? null;
-    const pipe = new VoicePipeline();
-    pipeRef.current = pipe;
-    pipe.onStateChange(setPipelineState);
-    const out = await pipe.attach(mic);
-    pipe.setParams(effectiveParams(prefs));
-    return out.getAudioTracks()[0] ?? mic.getAudioTracks()[0] ?? null;
+    const raw = mic.getAudioTracks()[0] ?? null;
+    if (!voiceApplied) return raw;
+    // Kegagalan pemrosesan suara TIDAK boleh menggagalkan panggilan: kita
+    // publikasikan mikrofon mentah dan menandai Voice Privacy tidak tersedia.
+    try {
+      const pipe = new VoicePipeline();
+      pipeRef.current = pipe;
+      pipe.onStateChange(setPipelineState);
+      const out = await pipe.attach(mic);
+      pipe.setParams(effectiveParams(prefs));
+      const processed = out.getAudioTracks()[0] ?? null;
+      if (!processed) throw new Error("Track efek suara tidak tersedia");
+      setVoiceActive(true);
+      setVoiceFallback(false);
+      return processed;
+    } catch {
+      await pipeRef.current?.dispose().catch(() => undefined);
+      pipeRef.current = null;
+      setVoiceActive(false);
+      setVoiceFallback(true);
+      setPipelineState({ status: "failed", latencyMs: 0 });
+      return raw;
+    }
   }, [prefs, voiceApplied]);
 
   const join = useCallback(
@@ -150,6 +174,7 @@ export function useCall(opts: {
           },
         });
         sessionRef.current = session;
+        setSpeakerSupported(session.speakerCapability === "sinkId");
         if (row.kind === "video") setControls((c) => ({ ...c, cameraOn: true }));
       } catch (e) {
         joinedRef.current = false;
@@ -264,10 +289,12 @@ export function useCall(opts: {
       durationSec,
       controls,
       pipelineState,
-      voiceApplied,
+      voiceApplied: voiceActive,
+      voiceFallback,
+      speakerSupported,
       answer: () => {
         if (!userId || !call) return;
-        void answerCall(call.id, userId)
+        void answerCall(call.id)
           .then(() => join({ ...call, status: "ongoing" }))
           .catch((e: unknown) => setReason(e instanceof Error ? e.message : "Gagal menjawab"));
       },
@@ -296,11 +323,38 @@ export function useCall(opts: {
           return { ...c, cameraOn };
         });
       },
-      toggleSpeaker: () => setControls((c) => ({ ...c, speakerOn: !c.speakerOn })),
+      // Tidak ada toggle palsu: state hanya berubah bila perangkat keluaran
+      // memang berhasil dipindah oleh browser/penyedia.
+      toggleSpeaker: () => {
+        const next = !controls.speakerOn;
+        void sessionRef.current?.setSpeaker(next).then((applied) => {
+          if (applied === null) {
+            setSpeakerSupported(false);
+            return;
+          }
+          setControls((c) => ({ ...c, speakerOn: applied }));
+        });
+      },
       switchCamera: () => void sessionRef.current?.switchCamera(),
       attachLocalVideo: (el) => sessionRef.current?.attachLocalVideo(el),
       attachRemoteVideo: (el) => sessionRef.current?.attachRemoteMedia(el),
     }),
-    [phase, reason, call, remotes, durationSec, controls, pipelineState, voiceApplied, userId, callId, cleanup, finish, join],
+    [
+      phase,
+      reason,
+      call,
+      remotes,
+      durationSec,
+      controls,
+      pipelineState,
+      voiceActive,
+      voiceFallback,
+      speakerSupported,
+      userId,
+      callId,
+      cleanup,
+      finish,
+      join,
+    ],
   );
 }

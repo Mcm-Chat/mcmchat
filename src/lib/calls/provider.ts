@@ -40,8 +40,19 @@ export type ConnectOptions = {
   onState: (s: ProviderState) => void;
 };
 
+/**
+ * Kemampuan pemilihan keluaran audio.
+ * - `sinkId`: browser mengizinkan memilih perangkat keluaran (setSinkId).
+ * - `system`: rute speaker/earpiece ditentukan sistem — tombol speaker
+ *   TIDAK ditampilkan agar tidak menjadi tombol palsu.
+ */
+export type SpeakerCapability = "sinkId" | "system";
+
 export interface CallSessionHandle {
   readonly provider: string;
+  readonly speakerCapability: SpeakerCapability;
+  /** Mengembalikan status speaker sesungguhnya; `null` bila tidak didukung. */
+  setSpeaker(on: boolean): Promise<boolean | null>;
   setMicEnabled(enabled: boolean): Promise<void>;
   setCameraEnabled(enabled: boolean): Promise<void>;
   switchCamera(): Promise<void>;
@@ -76,6 +87,23 @@ export const liveKitProvider: CallProvider = {
     const room = new Room({ adaptiveStream: true, dynacast: true });
 
     let facingUser = true;
+    let remoteVideoEl: HTMLVideoElement | null = null;
+    const audioEls = new Map<string, HTMLAudioElement>();
+    let speakerSinkId: string | null = null;
+
+    const canSetSink =
+      typeof window !== "undefined" &&
+      typeof (HTMLMediaElement.prototype as unknown as { setSinkId?: unknown }).setSinkId === "function";
+    const speakerCapability: SpeakerCapability = canSetSink ? "sinkId" : "system";
+
+    const applySink = async (el: HTMLAudioElement) => {
+      if (!canSetSink || !speakerSinkId) return;
+      try {
+        await (el as unknown as { setSinkId: (id: string) => Promise<void> }).setSinkId(speakerSinkId);
+      } catch {
+        /* perangkat keluaran ditolak; biarkan default sistem */
+      }
+    };
     const remotes = (): RemoteInfo[] =>
       Array.from(room.remoteParticipants.values()).map((p) => ({
         identity: p.identity,
@@ -98,8 +126,22 @@ export const liveKitProvider: CallProvider = {
       .on(RoomEvent.TrackMuted, () => emit("connected"))
       .on(RoomEvent.TrackUnmuted, () => emit("connected"))
       .on(RoomEvent.TrackSubscribed, (track) => {
-        // Audio lawan bicara diputar apa adanya; tidak pernah diproses efek.
-        if (track.kind === Track.Kind.Audio) track.attach();
+        if (track.kind === Track.Kind.Audio) {
+          // Audio lawan bicara diputar apa adanya; tidak pernah diproses efek.
+          const el = track.attach() as HTMLAudioElement;
+          el.autoplay = true;
+          audioEls.set(track.sid ?? el.id ?? String(audioEls.size), el);
+          void applySink(el);
+          void el.play().catch(() => opts.onState({ status: "connected", remotes: remotes(), reason: "Ketuk layar untuk mengizinkan suara" }));
+        }
+        if (track.kind === Track.Kind.Video && remoteVideoEl) track.attach(remoteVideoEl);
+        emit("connected");
+      })
+      .on(RoomEvent.TrackUnsubscribed, (track) => {
+        for (const el of track.detach()) el.remove();
+        if (track.kind === Track.Kind.Audio) {
+          for (const [k, v] of audioEls) if (!v.isConnected) audioEls.delete(k);
+        }
         emit("connected");
       });
 
@@ -151,11 +193,34 @@ export const liveKitProvider: CallProvider = {
         const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
         if (el && pub?.track) pub.track.attach(el);
       },
+      speakerCapability,
+      async setSpeaker(on) {
+        if (!canSetSink) return null;
+        const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
+        const outputs = devices.filter((d) => d.kind === "audiooutput");
+        if (outputs.length < 2) return null;
+        const target =
+          (on ? outputs.find((d) => /speaker|speakerphone/i.test(d.label)) : outputs.find((d) => /earpiece|receiver|headset/i.test(d.label))) ??
+          outputs.find((d) => d.deviceId === "default") ??
+          outputs[0];
+        if (!target) return null;
+        speakerSinkId = target.deviceId;
+        for (const el of audioEls.values()) await applySink(el);
+        return on;
+      },
       attachRemoteMedia(el) {
+        remoteVideoEl = el;
         const track = firstRemoteVideo();
         if (el && track) track.attach(el);
       },
       async disconnect() {
+        for (const el of audioEls.values()) {
+          el.pause();
+          el.srcObject = null;
+          el.remove();
+        }
+        audioEls.clear();
+        remoteVideoEl = null;
         await room.disconnect();
         emit("disconnected");
       },

@@ -21,6 +21,21 @@ export function isNative(): boolean {
   return Boolean(cap?.isNativePlatform?.());
 }
 
+/**
+ * Apakah receiver latar native benar-benar terpasang di APK ini.
+ *
+ * Ini kapabilitas TERPISAH dari "FCM sudah dikonfigurasi" dan "token perangkat
+ * terdaftar". Pengiriman saat proses aplikasi dimatikan hanya mungkin bila
+ * wadah Android menyertakan `FirebaseMessagingService` MCM, yang wajib
+ * menandai dirinya lewat `window.MCMNative.backgroundReceiver = true`.
+ * Selama penanda itu tidak ada, aplikasi TIDAK boleh mengklaim kemampuan itu.
+ */
+export function nativeReceiverInstalled(): boolean {
+  if (typeof window === "undefined") return false;
+  const bridge = (window as unknown as { MCMNative?: { backgroundReceiver?: boolean } }).MCMNative;
+  return isNative() && bridge?.backgroundReceiver === true;
+}
+
 async function loadPlugin(name: string): Promise<AnyPlugin | null> {
   try {
     const mod = (await import(/* @vite-ignore */ name)) as Record<string, unknown>;

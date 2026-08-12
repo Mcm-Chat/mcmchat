@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
-import { notifyEvent } from "@/lib/push/push.functions";
+import { notifyTaskAssigned } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ProductVariant = Tables<"product_variants">;
@@ -116,17 +116,9 @@ export async function createPreparationJob(input: {
   const { data, error } = await supabase.rpc("create_preparation_job", args as never);
   if (error) throw new Error(friendly(error.message, "Gagal membuat perintah penyiapan"));
   const job = data as unknown as { id: string; code: string; token: string; expires_at: string };
-  void notifyEvent({
-    data: {
-      kind: "task_assigned",
-      category: "tasks",
-      userId: input.assignedUserId,
-      title: "Tugas penyiapan baru",
-      body: `${job.code} • ${input.items.length} item untuk ${input.customerName || "pelanggan"}`,
-      route: `/tasks/${job.id}`,
-      jobId: job.id,
-    },
-  }).catch(() => undefined);
+  // Push hanya setelah tugas benar-benar tersimpan; target ditentukan server
+  // dari baris tugas itu sendiri, bukan dari input klien.
+  void notifyTaskAssigned({ data: { jobId: job.id } }).catch(() => undefined);
   return job;
 }
 

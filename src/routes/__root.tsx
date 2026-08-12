@@ -11,8 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider } from "@/lib/auth";
+import { AuthProvider, useAuth } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { usePushSession } from "@/lib/push/use-push";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { initOutboxFlush } from "@/lib/api/outbox";
@@ -130,6 +131,13 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Sesi push dipasang sekali; tidak pernah memicu dialog izin sendiri. */
+function PushSession() {
+  const { user } = useAuth();
+  usePushSession(user?.id);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -148,6 +156,7 @@ function RootComponent() {
       <AuthProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <PushSession />
         <IncomingCallListener />
         <Toaster position="top-center" richColors closeButton />
       </AuthProvider>

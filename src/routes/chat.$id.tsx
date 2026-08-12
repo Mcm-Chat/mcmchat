@@ -19,6 +19,8 @@ import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
 import { deleteForEveryone, deleteForMe, editMessage, sendMessage, toggleReaction, type MessageRow } from "@/lib/api/chat";
 import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
 import { createLedger } from "@/lib/api/ledger";
+import { getCallConfig } from "@/lib/calls/calls.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";
@@ -319,10 +321,20 @@ function ChatRoom() {
     }
   };
 
+  const loadCallConfig = useServerFn(getCallConfig);
+
   const call = async (kind: "audio" | "video") => {
     if (!userId || !conv) return;
     try {
-      const created = await startCall(userId, id, kind, conv.members.filter((m) => m.id !== userId).map((m) => m.id));
+      // Jangan pernah membuat panggilan berdering bila penyedia belum
+      // terhubung — lawan bicara tidak boleh menerima panggilan yang mustahil
+      // tersambung.
+      const cfg = await loadCallConfig().catch(() => ({ configured: false }));
+      if (!cfg.configured) {
+        toast.error("Penyedia panggilan belum terhubung. Hubungi admin untuk mengaktifkan.");
+        return;
+      }
+      const created = await startCall(id, kind);
       void navigate({ to: "/call/$id", params: { id: created.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Panggilan gagal dimulai");

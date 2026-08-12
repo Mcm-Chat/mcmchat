@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
-import { notifyEvent } from "@/lib/push/push.functions";
+import { notifyLedgerPayment } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type LedgerRow = Tables<"ledgers">;
@@ -93,20 +93,8 @@ export async function recordPayment(ledgerId: string, amount: number, method: st
   });
   if (error) throw new Error(friendly(error.message, "Pembayaran gagal dicatat"));
   const row = data as unknown as LedgerRow;
-  const notifyUser = row.counterpart_user_id ?? null;
-  if (notifyUser) {
-    void notifyEvent({
-      data: {
-        kind: "ledger",
-        category: "ledger",
-        userId: notifyUser,
-        title: "Pembayaran dicatat",
-        body: `Pembayaran ${amount} untuk ${row.counterpart_name || "catatan hutang"}`,
-        route: `/ledger/${row.id}`,
-        ledgerId: row.id,
-      },
-    }).catch(() => undefined);
-  }
+  // Server memverifikasi pemanggil terkait catatan ini dan memilih pihak lawan.
+  void notifyLedgerPayment({ data: { ledgerId: row.id } }).catch(() => undefined);
   return row;
 }
 
