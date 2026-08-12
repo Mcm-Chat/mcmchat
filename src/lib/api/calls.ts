@@ -16,55 +16,44 @@ export const CALL_PROVIDER_NOTICE =
 
 export const RING_TIMEOUT_MS = 45_000;
 
-export async function startCall(initiatorId: string, conversationId: string, kind: CallRow["kind"], participantIds: string[]) {
-  const call = unwrap(
-    await supabase
-      .from("calls")
-      .insert({
-        initiator_id: initiatorId,
-        conversation_id: conversationId,
-        kind,
-        status: "ringing",
-        provider: "livekit",
-        room_name: `mcm-${crypto.randomUUID()}`,
-      })
-      .select("*")
-      .single(),
-    "Gagal memulai panggilan",
-  );
-  const { error } = await supabase
-    .from("call_participants")
-    .insert([...new Set([initiatorId, ...participantIds])].map((id) => ({ call_id: call.id, user_id: id })));
-  if (error) throw new Error(friendly(error.message, "Gagal menambahkan peserta"));
-  // Notifikasi panggilan masuk (channel prioritas tinggi) — gagal kirim tidak
-  // boleh membatalkan panggilan itu sendiri.
+/**
+ * Panggilan dibuat lewat satu transaksi server (`create_call_tx`): baris
+ * `calls` dan seluruh `call_participants` commit bersamaan, sehingga penerima
+ * sudah menjadi peserta ketika event realtime INSERT terlihat. Peserta diambil
+ * server dari anggota percakapan — klien tidak bisa menyisipkan orang lain.
+ */
+export async function startCall(conversationId: string, kind: CallRow["kind"], maxParticipants = 8) {
+  const { data, error } = await supabase.rpc("create_call_tx", {
+    _conversation: conversationId,
+    _kind: kind,
+    _max_participants: maxParticipants,
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal memulai panggilan"));
+  const call = data as unknown as CallRow;
+  // Notifikasi panggilan masuk — gagal kirim tidak membatalkan panggilan.
   void notifyIncomingCall({ data: { callId: call.id } }).catch(() => undefined);
   return call;
 }
 
 export async function endCall(callId: string, status: CallRow["status"], durationSec: number, reason?: string) {
-  const { error } = await supabase
-    .from("calls")
-    .update({
-      status,
-      duration_sec: Math.max(0, Math.round(durationSec)),
-      ended_at: new Date().toISOString(),
-      ...(reason ? { end_reason: reason } : {}),
-    })
-    .eq("id", callId);
+  const { error } = await supabase.rpc("end_call", {
+    _call: callId,
+    _status: status,
+    _duration: Math.max(0, Math.round(durationSec)),
+    _reason: reason ?? undefined,
+  });
   if (error) throw new Error(friendly(error.message, "Gagal mengakhiri panggilan"));
 }
 
-/** Penerima menjawab: status naik ke `ongoing` dan waktu jawab tercatat. */
-export async function answerCall(callId: string, userId: string) {
-  const now = new Date().toISOString();
-  const { error } = await supabase
-    .from("calls")
-    .update({ status: "ongoing", answered_at: now, started_at: now })
-    .eq("id", callId)
-    .eq("status", "ringing");
+/**
+ * Penerima menjawab lewat compare-and-set di server sehingga tap ganda,
+ * pemanggil yang mencoba menjawab sendiri, atau panggilan yang sudah berakhir
+ * tidak pernah menghasilkan state ganda.
+ */
+export async function answerCall(callId: string) {
+  const { data, error } = await supabase.rpc("answer_call", { _call: callId });
   if (error) throw new Error(friendly(error.message, "Gagal menjawab panggilan"));
-  await supabase.from("call_participants").update({ joined_at: now }).eq("call_id", callId).eq("user_id", userId);
+  return data as unknown as CallRow;
 }
 
 export async function declineCall(callId: string) {
@@ -83,6 +72,24 @@ export async function expireStaleCalls() {
 export async function getCall(callId: string): Promise<CallRow | null> {
   const { data } = await supabase.from("calls").select("*").eq("id", callId).maybeSingle();
   return data ?? null;
+}
+
+/**
+ * Pemulihan panggilan masuk saat aplikasi kembali ke depan atau realtime baru
+ * tersambung: event INSERT yang terlewat tetap muncul karena kita membaca
+ * ulang panggilan `ringing` yang masih hidup.
+ */
+export async function listRingingCalls(userId: string): Promise<CallRow[]> {
+  await expireStaleCalls().catch(() => undefined);
+  const since = new Date(Date.now() - RING_TIMEOUT_MS).toISOString();
+  const { data } = await supabase
+    .from("calls")
+    .select("*")
+    .eq("status", "ringing")
+    .gt("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  return (data ?? []).filter((c) => c.initiator_id !== userId);
 }
 
 /** Ikuti perubahan satu panggilan (dijawab, ditolak, berakhir) secara realtime. */
