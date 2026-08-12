@@ -37,7 +37,8 @@ import { labelHari, rupiah } from "@/lib/mcm/format";
 import type { Message } from "@/lib/mcm/types";
 
 export const Route = createFileRoute("/chat/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({ hl: typeof search['hl'] === "string" ? (search['hl'] as string) : undefined }),
+  validateSearch: (search: Record<string, unknown>): { hl?: string } =>
+    typeof search['hl'] === "string" ? { hl: search['hl'] } : {},
   head: () => ({
     meta: [
       { title: "Percakapan — MCM" },
