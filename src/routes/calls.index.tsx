@@ -70,12 +70,7 @@ function CallsPage() {
       return;
     }
     try {
-      const created = await startCall(
-        userId,
-        c.conversation_id,
-        c.kind,
-        c.participants.map((p) => p.user_id),
-      );
+      const created = await startCall(c.conversation_id, c.kind);
       void navigate({ to: "/call/$id", params: { id: created.id } });
     } catch {
       setNotice(true);

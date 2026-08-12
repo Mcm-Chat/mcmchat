@@ -267,7 +267,7 @@ export function useCall(opts: {
       voiceApplied,
       answer: () => {
         if (!userId || !call) return;
-        void answerCall(call.id, userId)
+        void answerCall(call.id)
           .then(() => join({ ...call, status: "ongoing" }))
           .catch((e: unknown) => setReason(e instanceof Error ? e.message : "Gagal menjawab"));
       },
