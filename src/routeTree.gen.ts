@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as CallIdRouteImport } from './routes/call.$id'
@@ -62,6 +63,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/call/$id': typeof CallIdRoute
   '/catalog/$id': typeof CatalogIdRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/call/$id': typeof CallIdRoute
   '/catalog/$id': typeof CatalogIdRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/call/$id': typeof CallIdRoute
   '/catalog/$id': typeof CatalogIdRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/register'
+    | '/support'
     | '/terms'
     | '/call/$id'
     | '/catalog/$id'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/register'
+    | '/support'
     | '/terms'
     | '/call/$id'
     | '/catalog/$id'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/privacy'
     | '/register'
+    | '/support'
     | '/terms'
     | '/call/$id'
     | '/catalog/$id'
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
+  SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   CallIdRoute: typeof CallIdRoute
   CatalogIdRoute: typeof CatalogIdRoute
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -522,6 +542,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
+  SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   CallIdRoute: CallIdRoute,
   CatalogIdRoute: CatalogIdRoute,
