@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery, useQueryClient, type InfiniteData } from "@
 import { useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listContacts, listRequests } from "./contacts";
-import { compareMessages, listConversations, listMessages, MESSAGE_PAGE_SIZE, type MessageRow } from "./chat";
+import { compareMessages, cursorOf, listConversations, listMessages, MESSAGE_PAGE_SIZE, type MessageCursor, type MessageRow } from "./chat";
 import { listCalls } from "./calls";
 import { listLedgers } from "./ledger";
 import { listOrders, listSales } from "./sales";
@@ -36,10 +36,12 @@ export function useMessages(cid: string, uid?: string) {
   const query = useInfiniteQuery({
     queryKey: qk.messages(cid),
     enabled: !!uid && !!cid,
-    initialPageParam: null as string | null,
+    initialPageParam: null as MessageCursor | null,
     queryFn: ({ pageParam }) => listMessages(cid, uid!, { before: pageParam }),
+    // Halaman dikembalikan menaik, jadi elemen pertama adalah pesan tertua —
+    // kursor berikutnya memakai pasangan (created_at, id) miliknya.
     getNextPageParam: (last: MessageRow[]) =>
-      last.length < MESSAGE_PAGE_SIZE ? undefined : (last[0]?.created_at ?? undefined),
+      last.length < MESSAGE_PAGE_SIZE || !last[0] ? undefined : cursorOf(last[0]),
   });
   const messages = useMemo(() => {
     const pages = (query.data as InfiniteData<MessageRow[]> | undefined)?.pages ?? [];

@@ -26,7 +26,7 @@ import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/pr
 import { SaleDialog } from "@/components/mcm/sale-dialog";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
-import { discardEntry, enqueueText, retryEntry, setOutboxSentHandler, useOutbox } from "@/lib/api/outbox";
+import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "@/lib/api/outbox";
 import { useConnectionState } from "@/lib/realtime/connection";
 import { useTyping } from "@/lib/api/presence";
 import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
@@ -170,13 +170,14 @@ function ChatRoom() {
   };
 
   // Saat entri outbox berhasil terkirim, muat ulang halaman pesan percakapan itu.
-  useEffect(() => {
-    setOutboxSentHandler((entry) => {
-      void qc.invalidateQueries({ queryKey: qk.messages(entry.conversationId) });
-      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
-    });
-    return () => setOutboxSentHandler(null);
-  }, [qc, userId]);
+  useEffect(
+    () =>
+      onOutboxSent((entry) => {
+        void qc.invalidateQueries({ queryKey: qk.messages(entry.conversationId) });
+        void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+      }),
+    [qc, userId],
+  );
 
   const blocked = block?.iBlocked ?? false;
   const blockedByOther = block?.blockedMe ?? false;

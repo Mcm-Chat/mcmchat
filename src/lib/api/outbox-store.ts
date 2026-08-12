@@ -10,6 +10,25 @@ import type { OutboxEntry } from "./outbox";
 const DB_NAME = "mcm";
 const STORE = "outbox";
 const LS_KEY = "mcm.outbox.v1";
+/** Versi skema entri. Entri dengan versi lain/rusak dibuang saat dimuat. */
+export const OUTBOX_SCHEMA = 1;
+
+/** Buang entri rusak/versi lama supaya antrean tidak macet oleh data invalid. */
+export function sanitizeEntries(input: unknown): OutboxEntry[] {
+  if (!Array.isArray(input)) return [];
+  return input.filter((e): e is OutboxEntry => {
+    if (!e || typeof e !== "object") return false;
+    const v = e as Partial<OutboxEntry> & { schema?: number };
+    if (v.schema !== undefined && v.schema !== OUTBOX_SCHEMA) return false;
+    return (
+      typeof v.clientId === "string" &&
+      typeof v.conversationId === "string" &&
+      typeof v.senderId === "string" &&
+      typeof v.body === "string" &&
+      typeof v.createdAt === "string"
+    );
+  });
+}
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -35,8 +54,7 @@ function openDb(): Promise<IDBDatabase> {
 function readLocal(): OutboxEntry[] {
   if (typeof localStorage === "undefined") return [];
   try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(LS_KEY) ?? "[]");
-    return Array.isArray(parsed) ? (parsed as OutboxEntry[]).filter((e) => typeof e?.clientId === "string") : [];
+    return sanitizeEntries(JSON.parse(localStorage.getItem(LS_KEY) ?? "[]"));
   } catch {
     return [];
   }
@@ -55,11 +73,13 @@ export async function loadEntries(): Promise<OutboxEntry[]> {
   if (!idbAvailable()) return readLocal();
   try {
     const db = await openDb();
-    const fromIdb = await new Promise<OutboxEntry[]>((resolve, reject) => {
-      const req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
-      req.onsuccess = () => resolve((req.result ?? []) as OutboxEntry[]);
-      req.onerror = () => reject(req.error);
-    });
+    const fromIdb = sanitizeEntries(
+      await new Promise<unknown[]>((resolve, reject) => {
+        const req = db.transaction(STORE, "readonly").objectStore(STORE).getAll();
+        req.onsuccess = () => resolve((req.result ?? []) as unknown[]);
+        req.onerror = () => reject(req.error);
+      }),
+    );
     // Migrasi satu kali dari penyimpanan lama.
     const legacy = readLocal();
     if (legacy.length > 0) {
@@ -86,7 +106,7 @@ export async function saveEntries(entries: OutboxEntry[]): Promise<void> {
       const tx = db.transaction(STORE, "readwrite");
       const store = tx.objectStore(STORE);
       store.clear();
-      for (const e of entries) store.put(e);
+      for (const e of entries) store.put({ ...e, schema: OUTBOX_SCHEMA });
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });

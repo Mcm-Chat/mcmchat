@@ -47,6 +47,8 @@ type Managed = {
   key: string;
   factory: SubscriptionFactory;
   channel: RealtimeChannel | null;
+  /** Status channel ini sendiri; status global adalah agregat semua channel. */
+  status: "connecting" | "online" | "error";
   attempt: number;
   timer: ReturnType<typeof setTimeout> | null;
   refs: number;
@@ -54,6 +56,29 @@ type Managed = {
 };
 
 const managed = new Map<string, Managed>();
+
+function browserOffline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
+/**
+ * Status global dihitung ulang dari seluruh channel, bukan ditimpa oleh channel
+ * terakhir yang berubah. Tanpa ini, satu channel yang berhasil menyambung
+ * membuat indikator hijau padahal channel pesan masih putus.
+ */
+function recompute() {
+  if (browserOffline()) {
+    setState("offline");
+    return;
+  }
+  if (managed.size === 0) {
+    setState("online");
+    return;
+  }
+  const all = [...managed.values()];
+  if (all.every((e) => e.status === "online")) setState("online");
+  else setState("connecting");
+}
 
 function teardown(entry: Managed) {
   if (entry.timer) clearTimeout(entry.timer);
@@ -65,18 +90,21 @@ function teardown(entry: Managed) {
 function connect(entry: Managed) {
   if (entry.closed) return;
   teardown(entry);
-  setState(entry.attempt === 0 ? "connecting" : state === "online" ? "connecting" : state);
+  entry.status = "connecting";
+  recompute();
   const channel = entry.factory(`${entry.key}#${entry.attempt}`);
   entry.channel = channel;
   channel.subscribe((status) => {
     if (entry.closed) return;
     if (status === "SUBSCRIBED") {
       entry.attempt = 0;
-      setState(typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "online");
+      entry.status = "online";
+      recompute();
       return;
     }
     if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-      setState(typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "connecting");
+      entry.status = "error";
+      recompute();
       const delay = backoffDelay(entry.attempt);
       entry.attempt += 1;
       entry.timer = setTimeout(() => connect(entry), delay);
@@ -91,7 +119,7 @@ function connect(entry: Managed) {
 export function registerSubscription(key: string, factory: SubscriptionFactory): () => void {
   let entry = managed.get(key);
   if (!entry) {
-    entry = { key, factory, channel: null, attempt: 0, timer: null, refs: 0, closed: false };
+    entry = { key, factory, channel: null, status: "connecting", attempt: 0, timer: null, refs: 0, closed: false };
     managed.set(key, entry);
     connect(entry);
   }
@@ -104,6 +132,7 @@ export function registerSubscription(key: string, factory: SubscriptionFactory):
     current.closed = true;
     teardown(current);
     managed.delete(key);
+    recompute();
   };
 }
 
@@ -113,7 +142,7 @@ export function reconnectAll() {
     entry.attempt = 0;
     connect(entry);
   }
-  if (managed.size === 0) setState(typeof navigator !== "undefined" && navigator.onLine === false ? "offline" : "online");
+  recompute();
 }
 
 let wired = false;
@@ -124,19 +153,24 @@ export function initConnectionWatcher(): () => void {
   wired = true;
 
   const goOnline = () => {
-    setState("connecting");
     reconnectAll();
   };
   const goOffline = () => setState("offline");
   window.addEventListener("online", goOnline);
   window.addEventListener("offline", goOffline);
-  if (navigator.onLine === false) setState("offline");
+  recompute();
 
+  // Supabase memancarkan SIGNED_IN berulang (mis. saat tab kembali fokus).
+  // Menyambung ulang hanya ketika token benar-benar berubah mencegah siklus
+  // resubscribe tak berujung yang membuat pesan hilang di tengah jalan.
+  let lastToken: string | null = null;
   const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
-      if (session?.access_token) supabase.realtime.setAuth(session.access_token);
-      reconnectAll();
-    }
+    if (event !== "TOKEN_REFRESHED" && event !== "SIGNED_IN" && event !== "SIGNED_OUT") return;
+    const token = session?.access_token ?? null;
+    if (token === lastToken) return;
+    lastToken = token;
+    if (token) supabase.realtime.setAuth(token);
+    reconnectAll();
   });
 
   return () => {

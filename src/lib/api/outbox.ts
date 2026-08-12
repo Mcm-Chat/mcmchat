@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { sendMessage } from "./chat";
+import { sendMessage, type MessageRow } from "./chat";
+import { classifyFailure } from "./errors";
 import { loadEntries, saveEntries } from "./outbox-store";
 import { backoffDelay, getConnectionState, onConnectionChange } from "@/lib/realtime/connection";
 
@@ -72,33 +73,27 @@ export function outboxSize(): number {
   return queue.length;
 }
 
-function isDuplicateError(message: string): boolean {
-  const m = message.toLowerCase();
-  return m.includes("duplicate") || m.includes("sudah ada") || m.includes("unique");
-}
+/** Batas percobaan otomatis sebelum entri menunggu keputusan pengguna. */
+export const MAX_ATTEMPTS = 6;
+
+export type SentListener = (entry: OutboxEntry, row: MessageRow | null) => void;
+
+const sentListeners = new Set<SentListener>();
 
 /**
- * Error yang tidak akan pernah sembuh dengan mencoba lagi (RLS/izin, validasi,
- * percakapan hilang). Entri seperti ini berhenti otomatis dan menunggu
- * keputusan pengguna, supaya tidak berputar tanpa batas.
+ * Beberapa layar boleh mendengarkan hasil kirim sekaligus (daftar chat, ruang
+ * chat, badge). Handler tunggal dulu membuat pendaftar terakhir menimpa yang
+ * lain, sehingga cache layar lain tidak pernah disegarkan.
  */
-function isPermanentError(message: string): boolean {
-  const m = message.toLowerCase();
-  return (
-    m.includes("tidak memiliki akses") ||
-    m.includes("row-level security") ||
-    m.includes("permission denied") ||
-    m.includes("violates foreign key") ||
-    m.includes("invalid input") ||
-    m.includes("not-null")
-  );
+export function onOutboxSent(listener: SentListener): () => void {
+  sentListeners.add(listener);
+  return () => {
+    sentListeners.delete(listener);
+  };
 }
 
-let onSent: ((entry: OutboxEntry) => void) | null = null;
-
-/** Dipanggil UI agar cache pesan disegarkan tepat setelah entri berhasil terkirim. */
-export function setOutboxSentHandler(handler: ((entry: OutboxEntry) => void) | null) {
-  onSent = handler;
+function emitSent(entry: OutboxEntry, row: MessageRow | null) {
+  for (const l of sentListeners) l(entry, row);
 }
 
 async function attempt(clientId: string) {
@@ -113,7 +108,7 @@ async function attempt(clientId: string) {
   entry.status = "sending";
   emit();
   try {
-    await sendMessage({
+    const row = await sendMessage({
       conversationId: entry.conversationId,
       senderId: entry.senderId,
       body: entry.body,
@@ -122,22 +117,23 @@ async function attempt(clientId: string) {
     });
     queue = queue.filter((e) => e.clientId !== clientId);
     emit();
-    onSent?.(entry);
+    emitSent(entry, row);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Gagal mengirim";
-    if (isDuplicateError(message)) {
+    const kind = classifyFailure(err as Error);
+    if (kind === "duplicate") {
       // Sudah tersimpan di server pada percobaan sebelumnya.
       queue = queue.filter((e) => e.clientId !== clientId);
       emit();
-      onSent?.(entry);
+      emitSent(entry, null);
       return;
     }
     entry.attempts += 1;
     entry.status = "failed";
     entry.error = message;
-    entry.permanent = isPermanentError(message);
+    entry.permanent = kind === "permanent";
     emit();
-    if (!entry.permanent && entry.attempts < 6) {
+    if (!entry.permanent && entry.attempts < MAX_ATTEMPTS) {
       const t = setTimeout(() => {
         timers.delete(clientId);
         void attempt(clientId);
@@ -236,5 +232,5 @@ export function __resetOutbox() {
   timers.clear();
   queue = [];
   loaded = true;
-  onSent = null;
+  sentListeners.clear();
 }
