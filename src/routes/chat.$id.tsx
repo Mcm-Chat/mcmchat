@@ -656,6 +656,9 @@ function ChatRoom() {
         onOpenChange={setConfirmClear}
         title="Bersihkan percakapan?"
         description="Semua pesan di chat ini akan dihapus dari perangkat Anda."
+        onOpenChange={setConfirmClear}
+        title="Bersihkan percakapan?"
+        description="Semua pesan di chat ini akan dihapus dari perangkat Anda."
         confirmLabel="Bersihkan"
         onConfirm={() => {
           update((d) => {
