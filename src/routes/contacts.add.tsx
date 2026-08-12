@@ -82,6 +82,11 @@ function AddContactPage() {
 
   const sendRequest = () => {
     if (!result || result === "notfound") return;
+    const existing = state.contacts.find((c) => c.pin === result.pin);
+    if (existing?.status === "blocked") {
+      toast.error(`${existing.name} diblokir. Buka blokir dulu di daftar kontak.`);
+      return;
+    }
     if (result.status === "contact") {
       toast.info("Sudah menjadi kontak Anda");
       navigate({ to: "/contacts" });
