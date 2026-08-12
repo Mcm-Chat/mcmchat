@@ -10,8 +10,9 @@ export function routeFromPush(data: Partial<PushData> | null | undefined): strin
   if (!data) return "/chat";
   if (data.route && data.route.startsWith("/") && !data.route.startsWith("//")) return data.route;
   switch (data.kind) {
-    case "message":
     case "call":
+      return data.callId ? `/call/${data.callId}` : "/calls";
+    case "message":
       return data.conversationId
         ? `/chat/${data.conversationId}${data.messageId ? `?m=${data.messageId}` : ""}`
         : "/chat";
@@ -32,6 +33,7 @@ export function routeFromPush(data: Partial<PushData> | null | undefined): strin
 export function groupKeyFromPush(data: Partial<PushData>): string {
   return (
     data.group ??
+    data.callId ??
     data.conversationId ??
     data.jobId ??
     data.orderId ??

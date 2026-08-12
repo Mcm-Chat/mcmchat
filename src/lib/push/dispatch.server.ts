@@ -88,6 +88,7 @@ export type EventPush = {
   title: string;
   body: string;
   route: string;
+  callId?: string | undefined;
   jobId?: string | undefined;
   orderId?: string | undefined;
   ledgerId?: string | undefined;
@@ -104,7 +105,9 @@ export async function dispatchEventPush(event: EventPush): Promise<FcmResult> {
   if (rows.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
 
   const channel =
-    event.category === "tasks"
+    event.category === "calls"
+      ? CHANNELS.calls.id
+      : event.category === "tasks"
       ? CHANNELS.tasks.id
       : event.category === "sales"
         ? CHANNELS.sales.id
@@ -122,8 +125,9 @@ export async function dispatchEventPush(event: EventPush): Promise<FcmResult> {
     const payload: PushData = {
       kind: event.kind,
       channel,
-      group: event.jobId ?? event.orderId ?? event.ledgerId ?? event.kind,
+      group: event.callId ?? event.jobId ?? event.orderId ?? event.ledgerId ?? event.kind,
       route: event.route,
+      ...(event.callId ? { callId: event.callId } : {}),
       ...(event.jobId ? { jobId: event.jobId } : {}),
       ...(event.orderId ? { orderId: event.orderId } : {}),
       ...(event.ledgerId ? { ledgerId: event.ledgerId } : {}),

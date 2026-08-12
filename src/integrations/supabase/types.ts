@@ -169,13 +169,16 @@ export type Database = {
       }
       calls: {
         Row: {
+          answered_at: string | null
           conversation_id: string | null
           created_at: string
           duration_sec: number
+          end_reason: string | null
           ended_at: string | null
           id: string
           initiator_id: string
           kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
           provider: string
           room_name: string | null
           started_at: string | null
@@ -183,13 +186,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          answered_at?: string | null
           conversation_id?: string | null
           created_at?: string
           duration_sec?: number
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           initiator_id: string
           kind?: Database["public"]["Enums"]["call_kind"]
+          max_participants?: number
           provider?: string
           room_name?: string | null
           started_at?: string | null
@@ -197,13 +203,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          answered_at?: string | null
           conversation_id?: string | null
           created_at?: string
           duration_sec?: number
+          end_reason?: string | null
           ended_at?: string | null
           id?: string
           initiator_id?: string
           kind?: Database["public"]["Enums"]["call_kind"]
+          max_participants?: number
           provider?: string
           room_name?: string | null
           started_at?: string | null
@@ -1910,6 +1919,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      expire_stale_calls: { Args: never; Returns: number }
       find_profile_by_pin: {
         Args: { _pin: string }
         Returns: {

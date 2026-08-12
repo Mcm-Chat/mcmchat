@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowDownLeft, ArrowUpRight, Phone, PhoneCall, PhoneMissed, Video } from "lucide-react";
 import {
   AlertDialog,
@@ -17,7 +18,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls } from "@/lib/api/queries";
-import type { CallHistoryItem } from "@/lib/api/calls";
+import { startCall, type CallHistoryItem } from "@/lib/api/calls";
+import { getCallConfig } from "@/lib/calls/calls.functions";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -50,7 +52,35 @@ function CallsPage() {
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
   const [tab, setTab] = useState("semua");
   const [notice, setNotice] = useState(false);
+  const [configured, setConfigured] = useState<boolean | null>(null);
   const navigate = useNavigate();
+  const loadConfig = useServerFn(getCallConfig);
+
+  useEffect(() => {
+    void loadConfig()
+      .then((c) => setConfigured(c.configured))
+      .catch(() => setConfigured(false));
+  }, [loadConfig]);
+
+  /** Panggil ulang: membuat panggilan nyata baru, bukan mengulang riwayat. */
+  const redial = async (c: CallHistoryItem) => {
+    if (!userId || !c.conversation_id) return;
+    if (configured === false) {
+      setNotice(true);
+      return;
+    }
+    try {
+      const created = await startCall(
+        userId,
+        c.conversation_id,
+        c.kind,
+        c.participants.map((p) => p.user_id),
+      );
+      void navigate({ to: "/call/$id", params: { id: created.id } });
+    } catch {
+      setNotice(true);
+    }
+  };
 
   const list = (calls ?? [])
     .filter((c) => (tab === "takterjawab" ? c.status === "missed" : true))
@@ -123,7 +153,7 @@ function CallsPage() {
                     </p>
                   </div>
                 </button>
-                <Button variant="ghost" size="icon" aria-label={`Panggil ${other?.display_name ?? "pengguna"}`} onClick={() => setNotice(true)}>
+                <Button variant="ghost" size="icon" aria-label={`Panggil ${other?.display_name ?? "pengguna"}`} onClick={() => void redial(c)}>
                   {c.kind === "video" ? <Video className="size-5" /> : <Phone className="size-5" />}
                 </Button>
               </li>
@@ -131,17 +161,22 @@ function CallsPage() {
           })}
         </ul>
       )}
-      <div className="px-4 py-6">
-        <ProtoNote>Panggilan suara/video real-time belum diaktifkan. Riwayat panggilan tetap tercatat.</ProtoNote>
-      </div>
+      {configured === false && (
+        <div className="px-4 py-6">
+          <ProtoNote>
+            Penyedia panggilan (LiveKit) belum terhubung. Panggilan tidak bisa tersambung sampai admin mengisi kredensialnya —
+            riwayat panggilan tetap tercatat.
+          </ProtoNote>
+        </div>
+      )}
 
       <AlertDialog open={notice} onOpenChange={setNotice}>
         <AlertDialogContent className="max-w-[340px] rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Panggilan belum dikonfigurasi</AlertDialogTitle>
+            <AlertDialogTitle>Penyedia panggilan belum terhubung</AlertDialogTitle>
             <AlertDialogDescription>
-              Fitur panggilan suara dan video akan aktif setelah kredensial penyedia panggilan (WebRTC/SFU/TURN) dikonfigurasi
-              oleh admin. Belum ada panggilan tiruan yang akan dimulai.
+              Panggilan suara dan video akan aktif setelah admin mengisi kredensial LiveKit (URL, API key, API secret). Tidak ada
+              panggilan tiruan yang dibuat.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

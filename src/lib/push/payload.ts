@@ -38,6 +38,7 @@ export type PushData = {
   route: string;
   conversationId?: string;
   messageId?: string;
+  callId?: string;
   jobId?: string;
   orderId?: string;
   ledgerId?: string;
