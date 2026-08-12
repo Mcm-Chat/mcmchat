@@ -1,13 +1,14 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listContacts, listRequests } from "./contacts";
-import { listConversations, listMessages } from "./chat";
+import { compareMessages, listConversations, listMessages, MESSAGE_PAGE_SIZE, type MessageRow } from "./chat";
 import { listCalls } from "./calls";
 import { listLedgers } from "./ledger";
 import { listOrders, listSales } from "./sales";
 import { listProducts, myBusiness } from "./business";
 import { listReceipts, markDelivered } from "./receipts";
+import { registerSubscription } from "@/lib/realtime/connection";
 
 export const qk = {
   conversations: (uid: string) => ["conversations", uid] as const,
@@ -27,8 +28,39 @@ export const qk = {
 export const useConversations = (uid?: string) =>
   useQuery({ queryKey: qk.conversations(uid ?? ""), queryFn: () => listConversations(uid!), enabled: !!uid });
 
-export const useMessages = (cid: string, uid?: string) =>
-  useQuery({ queryKey: qk.messages(cid), queryFn: () => listMessages(cid, uid!), enabled: !!uid && !!cid });
+/**
+ * Pesan dimuat per halaman (terbaru dulu) dan digabung menaik dengan urutan
+ * stabil. Halaman lama diambil hanya saat pengguna menggulir ke atas.
+ */
+export function useMessages(cid: string, uid?: string) {
+  const query = useInfiniteQuery({
+    queryKey: qk.messages(cid),
+    enabled: !!uid && !!cid,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) => listMessages(cid, uid!, { before: pageParam }),
+    getNextPageParam: (last: MessageRow[]) =>
+      last.length < MESSAGE_PAGE_SIZE ? undefined : (last[0]?.created_at ?? undefined),
+  });
+  const messages = useMemo(() => {
+    const pages = (query.data as InfiniteData<MessageRow[]> | undefined)?.pages ?? [];
+    const seen = new Set<string>();
+    const flat: MessageRow[] = [];
+    for (const page of pages)
+      for (const m of page)
+        if (!seen.has(m.id)) {
+          seen.add(m.id);
+          flat.push(m);
+        }
+    return flat.sort(compareMessages);
+  }, [query.data]);
+  return {
+    messages,
+    isLoading: query.isLoading,
+    hasOlder: query.hasNextPage,
+    isFetchingOlder: query.isFetchingNextPage,
+    fetchOlder: query.fetchNextPage,
+  };
+}
 
 /** Tanda terima untuk pesan yang saya kirim di percakapan ini. */
 export const useReceipts = (cid: string, myMessageIds: string[], uid?: string) =>
@@ -68,26 +100,57 @@ export const useSales = (bid?: string) =>
  */
 export function useRealtimeSync(uid?: string) {
   const qc = useQueryClient();
+  const convTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!uid) return;
-    const channel = supabase
-      .channel(`mcm-sync-${uid}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
-        const row = (payload.new ?? payload.old) as { conversation_id?: string; sender_id?: string } | null;
-        if (row?.conversation_id) void qc.invalidateQueries({ queryKey: qk.messages(row.conversation_id) });
+    // Daftar percakapan disegarkan dengan debounce agar burst pesan tidak
+    // memicu pemuatan ulang berulang-ulang.
+    const refreshConversations = () => {
+      if (convTimer.current) clearTimeout(convTimer.current);
+      convTimer.current = setTimeout(() => {
         void qc.invalidateQueries({ queryKey: qk.conversations(uid) });
-        // Penerima langsung mencatat delivery receipt untuk pesan masuk.
-        if (payload.eventType === "INSERT" && row?.conversation_id && row.sender_id && row.sender_id !== uid) {
-          void markDelivered(row.conversation_id).then(() =>
-            qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" }),
-          );
-        }
-      })
+      }, 400);
+    };
+
+    const applyInsert = (row: MessageRow) => {
+      qc.setQueryData<InfiniteData<MessageRow[]>>(qk.messages(row.conversation_id), (prev) => {
+        if (!prev || prev.pages.length === 0) return prev;
+        const exists = prev.pages.some((p) => p.some((m) => m.id === row.id));
+        if (exists) return prev;
+        const pages = prev.pages.map((p, i) => (i === 0 ? [...p, row].sort(compareMessages) : p));
+        return { ...prev, pages };
+      });
+    };
+
+    const applyDelete = (row: { id?: string; conversation_id?: string }) => {
+      if (!row.conversation_id || !row.id) return;
+      qc.setQueryData<InfiniteData<MessageRow[]>>(qk.messages(row.conversation_id), (prev) =>
+        prev ? { ...prev, pages: prev.pages.map((p) => p.filter((m) => m.id !== row.id)) } : prev,
+      );
+    };
+
+    const unsubscribe = registerSubscription(`mcm-sync-${uid}`, (name) =>
+      supabase
+        .channel(name)
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
+          const row = (payload.new ?? payload.old) as MessageRow | null;
+          if (!row?.conversation_id) return;
+          if (payload.eventType === "INSERT") applyInsert(row);
+          else if (payload.eventType === "DELETE") applyDelete(row);
+          else void qc.invalidateQueries({ queryKey: qk.messages(row.conversation_id) });
+          refreshConversations();
+          // Penerima mencatat delivery receipt untuk pesan masuk.
+          if (payload.eventType === "INSERT" && row.sender_id && row.sender_id !== uid) {
+            void markDelivered(row.conversation_id).then(() =>
+              qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" }),
+            );
+          }
+        })
       .on("postgres_changes", { event: "*", schema: "public", table: "message_receipts" }, () => {
         void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "conversation_members" }, () => {
-        void qc.invalidateQueries({ queryKey: qk.conversations(uid) });
+        refreshConversations();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "ledgers" }, () => {
         void qc.invalidateQueries({ queryKey: qk.ledgers(uid) });
@@ -98,10 +161,11 @@ export function useRealtimeSync(uid?: string) {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
         void qc.invalidateQueries({ queryKey: qk.calls(uid) });
-      })
-      .subscribe();
+      }),
+    );
     return () => {
-      void supabase.removeChannel(channel);
+      if (convTimer.current) clearTimeout(convTimer.current);
+      unsubscribe();
     };
   }, [uid, qc]);
 }
