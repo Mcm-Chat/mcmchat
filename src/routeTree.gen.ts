@@ -14,6 +14,8 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as CallIdRouteImport } from './routes/call.$id'
+import { Route as CallsIndexRouteImport } from './routes/calls.index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
@@ -44,6 +46,16 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallIdRoute = CallIdRouteImport.update({
+  id: '/call/$id',
+  path: '/call/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallsIndexRoute = CallsIndexRouteImport.update({
+  id: '/calls/',
+  path: '/calls/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatIndexRoute = ChatIndexRouteImport.update({
   id: '/chat/',
   path: '/chat/',
@@ -71,8 +83,10 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/call/$id': typeof CallIdRoute
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
+  '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
 }
@@ -82,8 +96,10 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/call/$id': typeof CallIdRoute
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
+  '/calls': typeof CallsIndexRoute
   '/chat': typeof ChatIndexRoute
   '/contacts': typeof ContactsIndexRoute
 }
@@ -94,8 +110,10 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/call/$id': typeof CallIdRoute
   '/chat/$id': typeof ChatIdRoute
   '/contacts/add': typeof ContactsAddRoute
+  '/calls/': typeof CallsIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/contacts/': typeof ContactsIndexRoute
 }
@@ -107,8 +125,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
+    | '/call/$id'
     | '/chat/$id'
     | '/contacts/add'
+    | '/calls/'
     | '/chat/'
     | '/contacts/'
   fileRoutesByTo: FileRoutesByTo
@@ -118,8 +138,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
+    | '/call/$id'
     | '/chat/$id'
     | '/contacts/add'
+    | '/calls'
     | '/chat'
     | '/contacts'
   id:
@@ -129,8 +151,10 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
+    | '/call/$id'
     | '/chat/$id'
     | '/contacts/add'
+    | '/calls/'
     | '/chat/'
     | '/contacts/'
   fileRoutesById: FileRoutesById
@@ -141,8 +165,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
+  CallIdRoute: typeof CallIdRoute
   ChatIdRoute: typeof ChatIdRoute
   ContactsAddRoute: typeof ContactsAddRoute
+  CallsIndexRoute: typeof CallsIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
   ContactsIndexRoute: typeof ContactsIndexRoute
 }
@@ -184,6 +210,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call/$id': {
+      id: '/call/$id'
+      path: '/call/$id'
+      fullPath: '/call/$id'
+      preLoaderRoute: typeof CallIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calls/': {
+      id: '/calls/'
+      path: '/calls'
+      fullPath: '/calls/'
+      preLoaderRoute: typeof CallsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat/': {
       id: '/chat/'
       path: '/chat'
@@ -221,8 +261,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
+  CallIdRoute: CallIdRoute,
   ChatIdRoute: ChatIdRoute,
   ContactsAddRoute: ContactsAddRoute,
+  CallsIndexRoute: CallsIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
   ContactsIndexRoute: ContactsIndexRoute,
 }
