@@ -79,7 +79,10 @@ const MCMContext = createContext<Ctx | null>(null);
 export function MCMProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<MCMState>(() => createDemoState());
   const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const loaded = useRef(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     try {
@@ -121,7 +124,7 @@ export function MCMProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(() => ({ state, ready, update, resetDemo }), [state, ready, update, resetDemo]);
-  return <MCMContext.Provider value={value}>{children}</MCMContext.Provider>;
+  return <MCMContext.Provider value={value}>{mounted ? children : null}</MCMContext.Provider>;
 }
 
 export function useMCM() {
