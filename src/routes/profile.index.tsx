@@ -75,6 +75,8 @@ function ProfilePage() {
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");
   const [removeAvatarOpen, setRemoveAvatarOpen] = useState(false);
+  const [audienceOpen, setAudienceOpen] = useState(false);
+  const [audienceCount, setAudienceCount] = useState(0);
 
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
