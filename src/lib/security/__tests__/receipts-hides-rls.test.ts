@@ -44,7 +44,7 @@ const canWriteReceipt = (actor: string, rowUser: string, messageId: string) =>
 const canReadReceipt = (actor: string, messageId: string) => msgVisible(messageId, actor);
 const canWriteHide = (actor: string, rowUser: string, messageId: string) =>
   rowUser === actor && msgVisible(messageId, actor);
-const canReadHide = canWriteHide;
+const canReadHide = (actor: string, messageId: string) => canWriteHide(actor, actor, messageId);
 
 describe("message_receipts RLS", () => {
   it("policy insert & update mengikat user_id = auth.uid() dan keanggotaan percakapan", () => {
