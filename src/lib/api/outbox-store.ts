@@ -9,7 +9,7 @@ import type { OutboxEntry } from "./outbox";
  */
 const DB_NAME = "mcm";
 const STORE = "outbox";
-const LS_KEY = "mcm.outbox.v1";
+const lsKey = (userId: string) => `mcm:${userId}:outbox.v1`;
 /** Versi skema entri. Entri dengan versi lain/rusak dibuang saat dimuat. */
 export const OUTBOX_SCHEMA = 1;
 
@@ -51,26 +51,27 @@ function openDb(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-function readLocal(): OutboxEntry[] {
+function readLocal(userId: string): OutboxEntry[] {
   if (typeof localStorage === "undefined") return [];
   try {
-    return sanitizeEntries(JSON.parse(localStorage.getItem(LS_KEY) ?? "[]"));
+    return sanitizeEntries(JSON.parse(localStorage.getItem(lsKey(userId)) ?? "[]")).filter((e) => e.senderId === userId);
   } catch {
     return [];
   }
 }
 
-function writeLocal(entries: OutboxEntry[]) {
+function writeLocal(userId: string, entries: OutboxEntry[]) {
   if (typeof localStorage === "undefined") return;
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify(entries));
+    localStorage.setItem(lsKey(userId), JSON.stringify(entries));
   } catch {
     /* kuota penuh: antrean tetap hidup di memori sesi ini */
   }
 }
 
-export async function loadEntries(): Promise<OutboxEntry[]> {
-  if (!idbAvailable()) return readLocal();
+/** Antrean selalu dibaca/ditulis per akun: entri akun lain tidak pernah ikut. */
+export async function loadEntries(userId: string): Promise<OutboxEntry[]> {
+  if (!idbAvailable()) return readLocal(userId);
   try {
     const db = await openDb();
     const fromIdb = sanitizeEntries(
@@ -79,25 +80,26 @@ export async function loadEntries(): Promise<OutboxEntry[]> {
         req.onsuccess = () => resolve((req.result ?? []) as unknown[]);
         req.onerror = () => reject(req.error);
       }),
-    );
+    ).filter((e) => e.senderId === userId);
     // Migrasi satu kali dari penyimpanan lama.
-    const legacy = readLocal();
+    const legacy = readLocal(userId);
     if (legacy.length > 0) {
       const known = new Set(fromIdb.map((e) => e.clientId));
       const merged = [...fromIdb, ...legacy.filter((e) => !known.has(e.clientId))];
-      await saveEntries(merged);
-      writeLocal([]);
+      await saveEntries(userId, merged);
+      writeLocal(userId, []);
       return merged;
     }
     return fromIdb;
   } catch {
-    return readLocal();
+    return readLocal(userId);
   }
 }
 
-export async function saveEntries(entries: OutboxEntry[]): Promise<void> {
+export async function saveEntries(userId: string, entries: OutboxEntry[]): Promise<void> {
+  const own = entries.filter((e) => e.senderId === userId);
   if (!idbAvailable()) {
-    writeLocal(entries);
+    writeLocal(userId, own);
     return;
   }
   try {
@@ -105,12 +107,22 @@ export async function saveEntries(entries: OutboxEntry[]): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
       const store = tx.objectStore(STORE);
-      store.clear();
-      for (const e of entries) store.put({ ...e, schema: OUTBOX_SCHEMA });
+      const req = store.getAll();
+      req.onsuccess = () => {
+        for (const row of (req.result ?? []) as OutboxEntry[]) {
+          if (row.senderId === userId) store.delete(row.clientId);
+        }
+        for (const e of own) store.put({ ...e, schema: OUTBOX_SCHEMA });
+      };
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
   } catch {
-    writeLocal(entries);
+    writeLocal(userId, own);
   }
+}
+
+/** Hapus seluruh antrean milik satu akun (dipakai saat logout / ganti akun). */
+export async function clearEntries(userId: string): Promise<void> {
+  await saveEntries(userId, []);
 }
