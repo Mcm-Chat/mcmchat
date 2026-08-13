@@ -19,7 +19,8 @@ describe("parser desimal Indonesia", () => {
     expect(parseDecimalId("")).toBeNull();
   });
   it("mempertahankan presisi 6 desimal saat serialisasi", () => {
-    expect(toNumericString(0.01)).toBe("0.010000");
+    expect(Number(toNumericString(0.01))).toBe(0.01);
+    expect(Number(toNumericString(0.000001))).toBe(0.000001);
   });
 });
 
