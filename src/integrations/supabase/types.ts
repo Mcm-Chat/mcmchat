@@ -2489,6 +2489,27 @@ export type Database = {
         }
         Returns: Json
       }
+      respond_contact_request: {
+        Args: {
+          _action: Database["public"]["Enums"]["contact_request_status"]
+          _request: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          message: string
+          requester_id: string
+          status: Database["public"]["Enums"]["contact_request_status"]
+          target_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contact_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       revoke_my_push_devices: {
         Args: { _push_token?: string }
         Returns: number

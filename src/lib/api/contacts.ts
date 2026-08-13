@@ -84,22 +84,11 @@ export async function sendContactRequest(userId: string, targetId: string, messa
 }
 
 export async function respondToRequest(request: Tables<"contact_requests">, action: "accepted" | "rejected" | "blocked") {
-  const { error } = await supabase.from("contact_requests").update({ status: action }).eq("id", request.id);
+  // Menerima permintaan harus menulis dua baris kontak (milik penerima dan
+  // milik pengirim). Dari sesi penerima, baris milik pengirim ditolak RLS,
+  // jadi seluruh proses dijalankan oleh fungsi database tervalidasi.
+  const { error } = await supabase.rpc("respond_contact_request", { _request: request.id, _action: action });
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui permintaan"));
-  if (action === "accepted") {
-    await supabase.from("contacts").upsert(
-      [
-        { owner_id: request.target_id, contact_id: request.requester_id },
-        { owner_id: request.requester_id, contact_id: request.target_id },
-      ],
-      { onConflict: "owner_id,contact_id" },
-    );
-  }
-  if (action === "blocked") {
-    await supabase
-      .from("contacts")
-      .upsert({ owner_id: request.target_id, contact_id: request.requester_id, is_blocked: true }, { onConflict: "owner_id,contact_id" });
-  }
 }
 
 export async function setBlocked(userId: string, contactId: string, blocked: boolean) {
