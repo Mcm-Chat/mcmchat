@@ -363,7 +363,7 @@ function ProfilePage() {
                 key={key}
                 type="button"
                 onClick={() => void changeAvatarPrivacy(key)}
-                className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                className={`flex min-h-11 items-center justify-between rounded-xl border px-3 py-2 text-sm ${
                   avatarPrivacy === key ? "border-primary bg-primary/10" : "border-border"
                 }`}
               >
@@ -372,6 +372,16 @@ function ProfilePage() {
               </button>
             ))}
           </div>
+          {needsAudience(avatarPrivacy) && (
+            <button
+              type="button"
+              onClick={() => setAudienceOpen(true)}
+              className="flex min-h-11 w-full items-center justify-between rounded-xl bg-muted px-3 py-2 text-sm"
+            >
+              <span className="text-muted-foreground">{audienceSummary(avatarPrivacy, audienceCount)}</span>
+              <span className="text-primary">Pilih kontak</span>
+            </button>
+          )}
           <p className="text-[11px] text-muted-foreground">
             Pengguna yang Anda blokir tidak pernah melihat foto profil, apa pun pilihannya.
           </p>
