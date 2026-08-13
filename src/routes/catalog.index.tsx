@@ -6,8 +6,10 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-parts";
+import { AiDescriptionButton } from "@/components/mcm/ai-description";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -229,10 +231,20 @@ function CatalogIndex() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Deskripsi</Label>
-                    <Input
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>Deskripsi</Label>
+                      <AiDescriptionButton
+                        name={form.name}
+                        category={form.category}
+                        price={Number(form.price) || undefined}
+                        currentDescription={form.description}
+                        onApply={(text) => setForm((f) => ({ ...f, description: text }))}
+                      />
+                    </div>
+                    <Textarea
                       value={form.description}
                       onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                      rows={4}
                       placeholder="Opsional"
                     />
                   </div>
