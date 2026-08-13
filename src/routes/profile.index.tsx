@@ -233,6 +233,7 @@ function ProfilePage() {
   };
 
   const changeAvatarPrivacy = async (value: AvatarPrivacy) => {
+    console.log("[dbg] changeAvatarPrivacy", value, "userId=", userId);
     if (!userId) return;
     const prev = avatarPrivacy;
     setAvatarPrivacyState(value);
