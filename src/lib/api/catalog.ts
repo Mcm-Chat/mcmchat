@@ -354,6 +354,8 @@ export type PhotoInput = {
   location_label?: string;
   location_accuracy?: number | null;
   group_label?: string;
+  source_type?: "camera" | "gallery" | "preparation";
+  location_mode?: "auto" | "manual" | "none";
 };
 
 export async function addProductPhotos(
@@ -371,6 +373,7 @@ export async function addProductPhotos(
     "Gagal memuat urutan foto",
   );
   let nextSort = (existing[0]?.sort_order ?? -1) + 1;
+  const { data: auth } = await supabase.auth.getUser();
   for (const d of drafts) {
     const up = await uploadProductPhoto(businessId, d.file, d.fileName);
     const { error } = await supabase.from("product_photos").insert({
@@ -385,9 +388,22 @@ export async function addProductPhotos(
       location_label: d.location_label ?? "",
       location_accuracy: d.location_accuracy ?? null,
       group_label: d.group_label ?? "",
+      source_type: d.source_type ?? "gallery",
+      location_mode:
+        d.location_mode ??
+        (d.location_lat != null && d.location_lng != null
+          ? "auto"
+          : (d.location_url ?? "") !== ""
+            ? "manual"
+            : "none"),
+      created_by: auth.user?.id ?? null,
       sort_order: nextSort++,
     });
-    if (error) throw new Error(friendly(error.message, "Gagal menyimpan foto"));
+    if (error) {
+      // Jangan tinggalkan file yatim di Storage saat insert baris gagal.
+      await removeObject("product-photos", up.path).catch(() => undefined);
+      throw new Error(friendly(error.message, "Gagal menyimpan foto"));
+    }
   }
 }
 
@@ -398,8 +414,11 @@ export async function updatePhotoLocation(
     location_lat?: number | null;
     location_lng?: number | null;
     location_label?: string;
+    location_mode?: "auto" | "manual" | "none";
+    caption?: string;
   },
 ) {
+  // Update hanya menyentuh baris foto ini; lokasi foto lain tidak ikut berubah.
   const { error } = await supabase.from("product_photos").update(patch).eq("id", photoId);
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui lokasi foto"));
 }
