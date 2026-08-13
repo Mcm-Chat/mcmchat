@@ -1,0 +1,17 @@
+ext {
+    // Versi terpusat MCM. Naikkan versionCode setiap unggahan ke Play Console.
+    mcmVersionCode = 1
+    mcmVersionName = "1.0.0"
+
+    minSdkVersion = 23
+    compileSdkVersion = 35
+    targetSdkVersion = 35
+    androidxActivityVersion = '1.9.2'
+    androidxAppCompatVersion = '1.7.0'
+    androidxCoordinatorLayoutVersion = '1.2.0'
+    androidxCoreVersion = '1.13.1'
+    androidxFragmentVersion = '1.8.4'
+    coreSplashScreenVersion = '1.0.1'
+    androidxWebkitVersion = '1.12.1'
+    firebaseMessagingVersion = '24.0.3'
+}
