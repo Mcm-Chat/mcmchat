@@ -31,7 +31,7 @@ harus dikerjakan pemilik domain (lihat §7).
 |---|---|---|---|---|
 | `mcmchat.id` A | `185.158.133.1` | **tidak ada** (NXRRSET, hanya SOA) | – | **FAIL** |
 | `mcmchat.id` AAAA | tidak perlu | tidak ada | – | PASS (benar kosong) |
-| `mcmchat.id` NS | Cloudflare | `nsid1-4.rumahweb.*` | 21600 | **FAIL** |
+| `mcmchat.id` NS | `norah.ns.cloudflare.com`, `remy.ns.cloudflare.com` | `nsid1-4.rumahweb.*` | 21600 | **FAIL** |
 | `_lovable` TXT | `lovable_verify=…` | **tidak ada** | – | **FAIL** |
 | `www` A/CNAME | apex/redirect | **tidak ada** | – | **FAIL** |
 | `mcmchat.id` MX | – | `10 mx1.titan.email`, `20 mx2.titan.email` | 14400 | PASS (Titan aktif) |
@@ -133,9 +133,48 @@ Tidak ada referensi Lovable/preview pada UI publik.
 
 ## 7. Tindakan pemilik yang masih dibutuhkan (tanpa password/OTP)
 
-Pilih **satu** jalur. Jalur A paling sederhana karena email Titan tidak tersentuh.
+**Nameserver Cloudflare yang ditetapkan untuk zona ini:**
 
-### Jalur A — tetap kelola DNS di Rumahweb (disarankan)
+```
+norah.ns.cloudflare.com
+remy.ns.cloudflare.com
+```
+
+Probe ulang 13 Agustus 2026 ± 10:00 UTC: NS publik **masih**
+`nsid1-4.rumahweb.*` (TTL 21600), A dan `_lovable` TXT masih kosong. Jadi
+peralihan ke Cloudflare **belum** terjadi di registrar.
+
+Pilih **satu** jalur.
+
+### Jalur B — pindah NS ke Cloudflare (jalur yang dipilih)
+1. Di dashboard Cloudflare zona `mcmchat.id`, **salin dulu** record email yang
+   sekarang hidup di Rumahweb, kalau tidak email Titan mati saat NS berpindah:
+   - `MX` `@` → `mx1.titan.email` prioritas 10
+   - `MX` `@` → `mx2.titan.email` prioritas 20
+   - `TXT` `@` → `v=spf1 include:spf.titan.email ~all`
+2. Tambahkan record aplikasi, semuanya **DNS only (awan abu-abu)**:
+   - `A` `@` → `185.158.133.1`
+   - `A` `www` → `185.158.133.1`
+   - `TXT` `_lovable` → nilai `lovable_verify=…` persis dari dialog Lovable
+     (ambil ulang; jangan pakai nilai lama dari Entri).
+3. Di registrar `.id` (PANDI via Rumahweb), ubah nameserver menjadi **tepat
+   dua** entri berikut dan hapus keempat NS Rumahweb:
+   - `norah.ns.cloudflare.com`
+   - `remy.ns.cloudflare.com`
+4. Tunggu delegasi berubah (biasanya 15 menit–4 jam; TTL NS lama 21600 detik /
+   6 jam). Verifikasi: `dig NS mcmchat.id +short` mengembalikan kedua NS
+   Cloudflare, lalu `dig A mcmchat.id +short` mengembalikan `185.158.133.1`.
+5. Di Lovable: **Project Settings → Domains** → hapus kedua entri
+   "Action required" → **Connect Domain** → `mcmchat.id` → salin TXT yang
+   ditampilkan → **Connect Domain** lagi untuk `www.mcmchat.id` → tetapkan
+   `mcmchat.id` sebagai **Primary**.
+6. Tunggu status Verifying → Setting up → **Active**, lalu Publish.
+
+Sampai status Active, biarkan semua record **DNS only**. Proxy oranye baru
+boleh dipertimbangkan setelah sertifikat terbit — dan untuk MCM tetap
+**tidak disarankan** (lihat §4).
+
+### Jalur A — cadangan: tetap kelola DNS di Rumahweb
 1. Masuk ke panel DNS Rumahweb untuk `mcmchat.id`.
 2. Tambah record:
    - `A` — nama `@` — nilai `185.158.133.1` — TTL 3600
@@ -151,15 +190,9 @@ Pilih **satu** jalur. Jalur A paling sederhana karena email Titan tidak tersentu
    redirect 301 di aplikasi menjadi lapisan cadangan).
 5. Tunggu status berubah Verifying → Setting up → **Active**, lalu Publish.
 
-### Jalur B — pindah NS ke Cloudflare
-1. Di Cloudflare, **salin dulu** MX Titan (`10 mx1.titan.email`,
-   `20 mx2.titan.email`) dan TXT `v=spf1 include:spf.titan.email ~all`.
-2. Tambahkan A `@` dan A `www` → `185.158.133.1`, **DNS only (abu-abu)**.
-3. Tambahkan TXT `_lovable` dari dialog Lovable.
-4. Baru ubah nameserver di registrar (PANDI/Rumahweb) ke NS Cloudflare.
-5. Lanjut langkah 4–5 Jalur A.
-
-Risiko Jalur B: bila MX/SPF lupa disalin, email Titan mati saat NS berpindah.
+Jalur A hanya dipakai bila peralihan NS ke Cloudflare dibatalkan. Jangan
+jalankan Jalur A dan B setengah-setengah: setelah NS pindah ke Cloudflare,
+panel Rumahweb tidak lagi otoritatif dan perubahan di sana tidak berefek.
 
 ## 8. Keamanan email domain
 
