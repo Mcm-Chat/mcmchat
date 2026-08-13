@@ -85,6 +85,9 @@ export type Database = {
           created_at: string
           id: string
           role: Database["public"]["Enums"]["business_role"]
+          staff_display_name: string
+          staff_pin: string | null
+          staff_pin_confirmed_at: string | null
           updated_at: string
           user_id: string
         }
@@ -93,6 +96,9 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["business_role"]
+          staff_display_name?: string
+          staff_pin?: string | null
+          staff_pin_confirmed_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -101,6 +107,9 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["business_role"]
+          staff_display_name?: string
+          staff_pin?: string | null
+          staff_pin_confirmed_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1368,6 +1377,9 @@ export type Database = {
           customer_id: string | null
           customer_name: string
           customer_user_id: string | null
+          delivered_at: string | null
+          delivered_message_id: string | null
+          delivered_pin: string | null
           expires_at: string
           id: string
           notes: string
@@ -1390,6 +1402,9 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string
           customer_user_id?: string | null
+          delivered_at?: string | null
+          delivered_message_id?: string | null
+          delivered_pin?: string | null
           expires_at?: string
           id?: string
           notes?: string
@@ -1412,6 +1427,9 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string
           customer_user_id?: string | null
+          delivered_at?: string | null
+          delivered_message_id?: string | null
+          delivered_pin?: string | null
           expires_at?: string
           id?: string
           notes?: string
@@ -2205,6 +2223,17 @@ export type Database = {
         Args: { _biz: string; _uid: string }
         Returns: Database["public"]["Enums"]["business_role"]
       }
+      business_staff_directory: {
+        Args: { _business: string }
+        Returns: {
+          avatar_color: string
+          display_name: string
+          pin_confirmed_at: string
+          role: Database["public"]["Enums"]["business_role"]
+          staff_pin: string
+          user_id: string
+        }[]
+      }
       can_manage_business: {
         Args: { _biz: string; _uid: string }
         Returns: boolean
@@ -2232,6 +2261,15 @@ export type Database = {
         Returns: boolean
       }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
+      confirm_staff_pin: {
+        Args: {
+          _business: string
+          _label?: string
+          _pin: string
+          _role?: Database["public"]["Enums"]["business_role"]
+        }
+        Returns: Json
+      }
       conversation_overview: {
         Args: never
         Returns: {
@@ -2297,6 +2335,10 @@ export type Database = {
       }
       create_sale_tx: { Args: { _payload: Json }; Returns: Json }
       customer_pin: { Args: { _customer: string }; Returns: string }
+      deliver_preparation_job: {
+        Args: { _job: string; _link: string }
+        Returns: Json
+      }
       device_from_action_token: {
         Args: { _token: string }
         Returns: {
