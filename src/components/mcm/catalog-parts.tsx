@@ -177,10 +177,17 @@ export function EditLocationDialog({
     location_label: string;
     location_lat: number | null;
     location_lng: number | null;
+    location_mode: "auto" | "manual" | "none";
   }) => void;
 }) {
   const [url, setUrl] = useState(initial.location_url);
   const [label, setLabel] = useState(initial.location_label);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    extractCoords(initial.location_url),
+  );
+  const [mode, setMode] = useState<"auto" | "manual" | "none">(
+    initial.location_url ? "manual" : "none",
+  );
 
   const useCurrent = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -190,8 +197,10 @@ export function EditLocationDialog({
     toast.info("Mengambil lokasi…");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const link = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+        const link = mapsUrlFor(pos.coords.latitude, pos.coords.longitude);
         setUrl(link);
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setMode("auto");
         toast.success("Lokasi diambil dari GPS");
       },
       () => toast.error("Lokasi tidak tersedia."),
@@ -218,7 +227,11 @@ export function EditLocationDialog({
             <Label>Link Maps</Label>
             <Input
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setCoords(extractCoords(e.target.value));
+                setMode(e.target.value.trim() ? "manual" : "none");
+              }}
               placeholder="https://maps.google.com/…"
             />
             <Button
@@ -237,11 +250,17 @@ export function EditLocationDialog({
             type="button"
             className="w-full rounded-xl"
             onClick={() => {
+              const safe = sanitizeMapsUrl(url);
+              if (safe === null) {
+                toast.error("Link lokasi harus berupa alamat https yang valid.");
+                return;
+              }
               onSave({
-                location_url: url.trim(),
+                location_url: safe,
                 location_label: label.trim(),
-                location_lat: null,
-                location_lng: null,
+                location_lat: coords?.lat ?? null,
+                location_lng: coords?.lng ?? null,
+                location_mode: safe === "" ? "none" : mode,
               });
               onOpenChange(false);
             }}
