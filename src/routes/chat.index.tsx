@@ -28,12 +28,12 @@ import { qk, useContacts, useConversations } from "@/lib/api/queries";
 import { deriveStatus, indexReceipts, listReceipts, markDelivered } from "@/lib/api/receipts";
 import { waktuRelatif } from "@/lib/mcm/format";
 
-type SendSearch = { send?: string; variant?: string };
+type SendSearch = { send?: string | undefined; variant?: string | undefined };
 
 export const Route = createFileRoute("/chat/")({
   validateSearch: (search: Record<string, unknown>): SendSearch => ({
-    send: typeof search.send === "string" ? search.send : undefined,
-    variant: typeof search.variant === "string" ? search.variant : undefined,
+    send: typeof search["send"] === "string" ? search["send"] : undefined,
+    variant: typeof search["variant"] === "string" ? search["variant"] : undefined,
   }),
   head: () => ({
     meta: [
