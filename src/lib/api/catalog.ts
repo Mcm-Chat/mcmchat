@@ -226,20 +226,43 @@ export type VariantInput = {
   price: number;
   sku?: string;
   sort_order?: number;
+  /** weight: jumlah berat pada satuan tampilan (boleh desimal, mis. 0,01 g). */
+  display_quantity?: string | number | null;
+  /** count: isi per satuan tampilan (bilangan bulat > 0). */
+  units_per_display?: string | number | null;
 };
 
 export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
+  const draft: VariantDraft = {
+    name: input.name,
+    stock_kind: input.stock_type,
+    display_unit: input.display_unit,
+    ...(input.base_unit !== undefined ? { base_unit: input.base_unit } : {}),
+    display_quantity: input.display_quantity ?? 1,
+    units_per_display: input.units_per_display ?? input.conversion_factor ?? 1,
+    price: input.price,
+    quantity_precision: input.precision_scale ?? null,
+  };
+  const check = validateVariantDraft(draft);
+  if (!check.ok) throw new Error(check.message);
+  const v = check.value;
+
+  // Desimal dikirim sebagai string ternormalisasi agar presisi NUMERIC utuh.
   const payload = {
     business_id: input.business_id,
     product_id: input.product_id,
-    name: input.name,
+    name: v.name,
     stock_type: input.stock_type,
-    base_unit: input.stock_type === "weight" ? "g" : (input.base_unit ?? input.display_unit),
-    display_unit: input.display_unit,
-    precision_scale: input.precision_scale ?? (input.stock_type === "weight" ? 0.01 : 1),
-    conversion_factor: input.stock_type === "count" ? (input.conversion_factor ?? 1) : 1,
+    base_unit: v.base_unit,
+    display_unit: v.display_unit,
+    precision_scale: toNumericString(v.quantity_precision),
+    base_quantity_grams:
+      v.base_quantity_grams === null ? null : toNumericString(v.base_quantity_grams),
+    units_per_display: v.units_per_display,
+    conversion_factor: toNumericString(v.units_per_display ?? 1),
+    needs_review: false,
     allow_decimal: input.allow_decimal ?? input.stock_type === "weight",
-    price: input.price,
+    price: toNumericString(v.price, 2),
     sku: input.sku ?? "",
     sort_order: input.sort_order ?? 0,
   };
