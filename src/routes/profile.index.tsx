@@ -649,6 +649,7 @@ function ProfilePage() {
                       <div className="flex shrink-0 items-center gap-1">
                         <select
                           className="rounded-lg border border-input bg-background px-2 py-1 text-xs"
+                          aria-label={`Ubah peran ${m.profile?.display_name ?? "anggota"}`}
                           value={m.role}
                           onChange={(e) =>
                             void changeRole(m.id, e.target.value as BusinessMemberRow["role"])
