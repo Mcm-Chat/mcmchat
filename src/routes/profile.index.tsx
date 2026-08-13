@@ -31,13 +31,16 @@ import { canManage, MEMBER_SAFE_COLUMNS, ROLE_LABEL, type BusinessMemberRow } fr
 import { useMyBusiness } from "@/lib/api/queries";
 import { AvatarEditor } from "@/components/mcm/avatar-editor";
 import { UserAvatar } from "@/components/mcm/user-avatar";
+import { AvatarAudienceDialog } from "@/components/mcm/avatar-audience-dialog";
 import {
   AVATAR_PRIVACY_LABEL,
   commitAvatar,
+  listAvatarAudience,
   removeAvatar,
   setAvatarPrivacy,
   type AvatarPrivacy,
 } from "@/lib/api/avatar";
+import { audienceModeFor, audienceSummary, needsAudience } from "@/lib/media/avatar-audience";
 import { readScreenSecurity, type ScreenSecurityStatus } from "@/lib/security/screen-privacy";
 import {
   getSettings,
