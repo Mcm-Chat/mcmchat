@@ -734,22 +734,6 @@ function ProfilePage() {
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </button>
-              <button
-                type="button"
-                onClick={() => void navigate({ to: "/settings/domain" })}
-                className="flex w-full items-center gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-muted/60"
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Globe className="size-4" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium">Verifikasi domain</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Status TXT _lovable, record A www, dan panduan langkah demi langkah
-                  </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
               <SettingRow
                 icon={Shield}
                 label="Kunci aplikasi"
