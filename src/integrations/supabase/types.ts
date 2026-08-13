@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      avatar_audience: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          owner_id: string
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode: string
+          owner_id: string
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          owner_id?: string
+          target_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       background_action_log: {
         Row: {
           action: string
@@ -1663,7 +1690,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_color: string
+          avatar_privacy: string
           avatar_url: string | null
+          avatar_version: number
           bio: string
           created_at: string
           display_name: string
@@ -1675,7 +1704,9 @@ export type Database = {
         }
         Insert: {
           avatar_color?: string
+          avatar_privacy?: string
           avatar_url?: string | null
+          avatar_version?: number
           bio?: string
           created_at?: string
           display_name?: string
@@ -1687,7 +1718,9 @@ export type Database = {
         }
         Update: {
           avatar_color?: string
+          avatar_privacy?: string
           avatar_url?: string | null
+          avatar_version?: number
           bio?: string
           created_at?: string
           display_name?: string
@@ -2188,6 +2221,10 @@ export type Database = {
       }
       can_sell_business: {
         Args: { _biz: string; _uid: string }
+        Returns: boolean
+      }
+      can_view_avatar: {
+        Args: { _owner: string; _viewer: string }
         Returns: boolean
       }
       can_view_status: {
