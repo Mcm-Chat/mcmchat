@@ -21,8 +21,21 @@ export const canManage = (role?: BusinessMemberRow["role"] | null) => role === "
 export const canSell = (role?: BusinessMemberRow["role"] | null) =>
   role === "owner" || role === "admin" || role === "agent" || role === "cashier";
 
+/**
+ * Kolom `business_members` yang boleh dibaca klien. `staff_pin` sengaja
+ * dikecualikan: PIN pegawai hanya boleh keluar lewat RPC
+ * `business_staff_directory` untuk pemilik/admin.
+ */
+export const MEMBER_SAFE_COLUMNS =
+  "id, business_id, user_id, role, staff_display_name, staff_pin_confirmed_at, created_at, updated_at";
+
+export type SafeBusinessMemberRow = Omit<BusinessMemberRow, "staff_pin">;
+
 export async function myBusiness(userId: string): Promise<{ business: BusinessRow; role: BusinessMemberRow["role"] } | null> {
-  const memberships = unwrap(await supabase.from("business_members").select("*").eq("user_id", userId).limit(1), "Gagal memuat bisnis");
+  const memberships = unwrap(
+    await supabase.from("business_members").select(MEMBER_SAFE_COLUMNS).eq("user_id", userId).limit(1),
+    "Gagal memuat bisnis",
+  );
   const m = memberships[0];
   if (!m) return null;
   const business = unwrap(await supabase.from("businesses").select("*").eq("id", m.business_id).maybeSingle(), "Bisnis tidak ditemukan");
