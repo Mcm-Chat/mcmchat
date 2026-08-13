@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, production]
+  merge_group:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  db-security-regression:
+    name: Regresi keamanan database
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      # Gate wajib: PIN, izin bucket avatar, hapus anggota jalur admin,
+      # keanggotaan percakapan, dan invariant RLS lainnya.
+      - name: Uji invariant keamanan DB
+        run: bun run test:security
+
+  quality:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bunx tsgo --noEmit
+      - run: bun run lint
+      - run: bun run test
+      - run: bun run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+  dependency-audit:
+    name: Audit dependensi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Audit (gagal pada high/critical)
+        run: bun audit --audit-level=high
+
+  production-gate:
+    name: Gate sebelum merge ke production
+    if: github.event_name == 'pull_request' && github.base_ref == 'production'
+    needs: [db-security-regression, quality, dependency-audit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Semua gate keamanan lolos
+        run: echo "Regresi keamanan DB, typecheck, test, build, dan audit dependensi lolos."
