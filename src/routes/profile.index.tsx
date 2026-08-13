@@ -406,6 +406,7 @@ function ProfilePage() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
+                aria-label="Unggah foto profil"
                 onChange={onAvatarPick}
                 disabled={uploading}
               />
@@ -424,6 +425,7 @@ function ProfilePage() {
                   accept="image/*"
                   capture="environment"
                   className="hidden"
+                  aria-label="Ambil foto profil dengan kamera"
                   onChange={onAvatarPick}
                   disabled={uploading}
                 />
@@ -434,6 +436,7 @@ function ProfilePage() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   className="hidden"
+                  aria-label="Pilih foto profil dari galeri"
                   onChange={onAvatarPick}
                   disabled={uploading}
                 />
