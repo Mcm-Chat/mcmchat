@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { cn } from "@/lib/utils";
 import { durasi, tanggalPanjang, jam } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
