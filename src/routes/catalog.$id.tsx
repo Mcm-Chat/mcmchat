@@ -284,7 +284,9 @@ function CatalogDetail() {
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
                   onHistory={() => setMovementsFor(v)}
-                  onSend={() => void navigate({ href: `/chat?send=${product.id}&variant=${v.id}` })}
+                  onSend={() =>
+                    void navigate({ to: "/chat", search: { send: product.id, variant: v.id } })
+                  }
                   onEditLocation={(ph) => setEditLocationPhoto(ph)}
                   onDeletePhoto={(ph) =>
                     void (async () => {

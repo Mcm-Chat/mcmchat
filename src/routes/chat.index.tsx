@@ -326,6 +326,20 @@ function ChatIndex() {
         </MobileHeader>
       }
     >
+      {sendProductId && (
+        <div className="flex items-center justify-between gap-2 border-b border-border bg-primary/10 px-3 py-2 text-[13px]">
+          <span className="min-w-0">Pilih percakapan tujuan kartu produk.</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 rounded-lg"
+            onClick={() => void navigate({ to: "/chat", search: {} })}
+          >
+            Batal
+          </Button>
+        </div>
+      )}
+
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-2">
           <TabsTrigger value="semua">Semua</TabsTrigger>
