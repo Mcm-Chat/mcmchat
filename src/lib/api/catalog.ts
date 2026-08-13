@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { removeObject, uploadProductPhoto } from "./storage";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import {
   COUNT_UNIT_LIST,
   VARIANT_MESSAGES,
@@ -270,7 +270,7 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
     return unwrap(
       await supabase
         .from("product_variants")
-        .update(payload)
+        .update(payload as unknown as TablesUpdate<"product_variants">)
         .eq("id", input.id)
         .select("*")
         .single(),
@@ -278,7 +278,11 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
     );
   }
   const created = unwrap(
-    await supabase.from("product_variants").insert(payload).select("*").single(),
+    await supabase
+      .from("product_variants")
+      .insert(payload as unknown as TablesInsert<"product_variants">)
+      .select("*")
+      .single(),
     "Gagal membuat varian",
   );
   const { error } = await supabase.from("inventory_balances").upsert(
