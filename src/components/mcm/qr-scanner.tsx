@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { Camera, Image as ImageIcon, SwitchCamera } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  Image as ImageIcon,
+  Loader2,
+  RefreshCw,
+  Settings,
+  SwitchCamera,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { normalizePin, isValidPin } from "@/lib/api/contacts";
+import { openAppSettings } from "@/lib/push/permissions";
 
 /** Ambil PIN dari isi QR: "mcm://pin/A2B3-C4D5", URL, atau PIN polos. */
 export function extractPin(raw: string): string | null {
@@ -24,6 +33,17 @@ export function extractPin(raw: string): string | null {
   }
   return null;
 }
+
+type CamPhase = "idle" | "requesting" | "streaming" | "denied" | "missing" | "busy" | "unsupported";
+
+const PHASE_COPY: Record<Exclude<CamPhase, "idle" | "requesting" | "streaming">, string> = {
+  denied:
+    "Izin kamera ditolak. Aktifkan izin kamera untuk aplikasi ini, lalu tekan Coba lagi — atau pindai QR dari galeri foto.",
+  missing: "Tidak ada kamera yang terdeteksi di perangkat ini. Gunakan pindai dari galeri foto.",
+  busy: "Kamera sedang dipakai aplikasi lain. Tutup aplikasi tersebut lalu tekan Coba lagi.",
+  unsupported:
+    "Peramban ini tidak mendukung akses kamera. Buka lewat aplikasi MCM atau pindai dari galeri foto.",
+};
 
 export function QrScannerDialog({
   open,
@@ -41,7 +61,8 @@ export function QrScannerDialog({
   const doneRef = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [facing, setFacing] = useState<"environment" | "user">("environment");
-  const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<CamPhase>("idle");
+  const [attempt, setAttempt] = useState(0);
 
   const stop = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -66,10 +87,11 @@ export function QrScannerDialog({
   useEffect(() => {
     if (!open) {
       stop();
+      setPhase("idle");
       return;
     }
     doneRef.current = false;
-    setError(null);
+    setPhase("requesting");
     let cancelled = false;
 
     const tick = () => {
@@ -95,7 +117,8 @@ export function QrScannerDialog({
     void (async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error("Kamera tidak tersedia di peramban ini");
+          if (!cancelled) setPhase("unsupported");
+          return;
         }
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: facing },
@@ -111,10 +134,19 @@ export function QrScannerDialog({
           video.srcObject = stream;
           await video.play().catch(() => undefined);
         }
+        setPhase("streaming");
         rafRef.current = requestAnimationFrame(tick);
-      } catch {
-        setError(
-          "Tidak bisa membuka kamera. Izinkan akses kamera, atau pindai dari galeri foto di bawah.",
+      } catch (err) {
+        if (cancelled) return;
+        const name = err instanceof Error ? err.name : "";
+        setPhase(
+          name === "NotAllowedError" || name === "SecurityError"
+            ? "denied"
+            : name === "NotFoundError" || name === "OverconstrainedError"
+              ? "missing"
+              : name === "NotReadableError" || name === "AbortError"
+                ? "busy"
+                : "denied",
         );
       }
     })();
@@ -123,7 +155,7 @@ export function QrScannerDialog({
       cancelled = true;
       stop();
     };
-  }, [open, facing, accept, stop]);
+  }, [open, facing, attempt, accept, stop]);
 
   const scanFile = async (file: File | undefined) => {
     if (!file) return;
@@ -165,9 +197,44 @@ export function QrScannerDialog({
             aria-label="Pratinjau kamera pemindai QR"
           />
           <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-primary/80" />
-          {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/90 p-4 text-center text-xs text-muted-foreground">
-              {error}
+          {phase === "requesting" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/90 p-4 text-center text-xs text-muted-foreground">
+              <Loader2 className="size-5 animate-spin text-primary" />
+              Meminta izin kamera… setujui permintaan izin yang muncul.
+            </div>
+          )}
+          {phase !== "idle" && phase !== "requesting" && phase !== "streaming" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
+              <CameraOff className="size-6 text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">{PHASE_COPY[phase]}</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => setAttempt((a) => a + 1)}
+                >
+                  <RefreshCw className="size-4" /> Coba lagi
+                </Button>
+                {phase === "denied" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      void openAppSettings().then((ok) => {
+                        if (!ok)
+                          toast.info(
+                            "Buka setelan peramban/aplikasi → Izin → Kamera untuk mengizinkan MCM.",
+                          );
+                      });
+                    }}
+                  >
+                    <Settings className="size-4" /> Buka setelan
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -177,6 +244,7 @@ export function QrScannerDialog({
             type="button"
             variant="secondary"
             className="h-11 flex-1 rounded-xl"
+            disabled={phase !== "streaming"}
             onClick={() => setFacing((f) => (f === "environment" ? "user" : "environment"))}
           >
             <SwitchCamera className="size-4" /> Ganti kamera
