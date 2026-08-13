@@ -140,8 +140,14 @@ function FinancePage() {
           title="Keuangan"
           subtitle="Piutang, utang, dan penjualan bisnis"
           actions={
-            <Button size="sm" className="h-11 rounded-xl" onClick={() => setLedgerFormOpen(true)}>
-              <Plus className="size-4" /> Catat
+            <Button
+              size="icon"
+              variant="secondary"
+              aria-label="Catat utang atau piutang"
+              className="size-11 shrink-0 rounded-xl"
+              onClick={() => setLedgerFormOpen(true)}
+            >
+              <Plus className="size-5" />
             </Button>
           }
         >
@@ -376,12 +382,14 @@ function FinancePage() {
         </div>
       )}
 
-      {mainTab === "catatan" && (
+      {mainTab === "catatan" && filteredLedgers.length > 0 && (
         <Button
-          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 h-14 rounded-full px-5 shadow-lg"
+          size="icon"
+          aria-label="Catat utang atau piutang"
+          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 size-14 rounded-full shadow-lg"
           onClick={() => setLedgerFormOpen(true)}
         >
-          <Plus className="size-5" /> Catat Utang/Piutang
+          <Plus className="size-6" />
         </Button>
       )}
 

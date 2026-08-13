@@ -99,15 +99,15 @@ export function EmptyState({
   action?: ReactNode | undefined;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-8 py-14 text-center">
-      <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+    <div className="mx-auto flex max-w-xs flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+      <div className="flex size-16 items-center justify-center rounded-2xl border border-border/60 bg-primary/10 text-primary">
         <Icon className="size-7" />
       </div>
-      <div>
-        <p className="font-semibold">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <div className="space-y-1.5">
+        <p className="text-[15px] font-semibold tracking-[-0.01em]">{title}</p>
+        <p className="text-[13px] leading-5 text-balance text-muted-foreground">{description}</p>
       </div>
-      {action}
+      {action && <div className="pt-1">{action}</div>}
     </div>
   );
 }
