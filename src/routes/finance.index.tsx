@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import {
+  ContactSummaryRow,
+  DailySummaryRow,
   FinanceSummaryCard,
   LedgerListItem,
   OrderListItem,
@@ -19,6 +21,7 @@ import { useLedgers, useMyBusiness, useOrders, useSales, qk } from "@/lib/api/qu
 import { useQueryClient } from "@tanstack/react-query";
 import { OPEN_STATUSES, type LedgerRow } from "@/lib/api/ledger";
 import { financeSummary, salesPayload } from "@/lib/api/finance";
+import { contactSummary, dailySummary } from "@/lib/api/ledger-summary";
 import { updateOrderStatus, type OrderRow, type SalesRecordRow } from "@/lib/api/sales";
 import { rupiah, tanggal } from "@/lib/mcm/format";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +90,14 @@ function FinancePage() {
   const [ledgerFormOpen, setLedgerFormOpen] = useState(false);
 
   const summary = useMemo(() => financeSummary(ledgers ?? [], sales ?? []), [ledgers, sales]);
+  const daily = useMemo(
+    () => (userId ? dailySummary(ledgers ?? [], userId) : []),
+    [ledgers, userId],
+  );
+  const byContact = useMemo(
+    () => (userId ? contactSummary(ledgers ?? [], userId) : []),
+    [ledgers, userId],
+  );
 
   const filteredLedgers = useMemo(() => {
     const all = ledgers ?? [];
@@ -170,10 +181,48 @@ function FinancePage() {
       <Tabs value={mainTab} onValueChange={setMainTab}>
         <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-2">
           <TabsTrigger value="catatan">Catatan</TabsTrigger>
+          <TabsTrigger value="ringkasan">Ringkasan</TabsTrigger>
           <TabsTrigger value="penjualan">Penjualan</TabsTrigger>
           <TabsTrigger value="pesanan">Pesanan</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {mainTab === "ringkasan" && (
+        <div className="space-y-5 px-4 py-4 pb-24">
+          {loading || ledgersLoading ? (
+            <LoadingSkeleton rows={4} avatar={false} />
+          ) : byContact.length === 0 ? (
+            <EmptyState
+              icon={Wallet}
+              title="Belum ada ringkasan"
+              description="Ringkasan harian dan saldo per kontak muncul setelah ada catatan utang piutang."
+            />
+          ) : (
+            <>
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold">Saldo per kontak</h2>
+                <ul className="space-y-3">
+                  {byContact.map((row) => (
+                    <li key={row.key}>
+                      <ContactSummaryRow row={row} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <section className="space-y-2">
+                <h2 className="text-sm font-semibold">Ringkasan harian</h2>
+                <ul className="space-y-2">
+                  {daily.map((row) => (
+                    <li key={row.day}>
+                      <DailySummaryRow row={row} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </>
+          )}
+        </div>
+      )}
 
       {mainTab === "catatan" && (
         <div className="space-y-3 px-4 py-4 pb-24">
