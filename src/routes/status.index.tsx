@@ -56,7 +56,14 @@ function Ring({ group, onClick }: { group: StatusGroup; onClick: () => void }) {
           {thumb ? (
             <img src={thumb} alt="" className="size-full rounded-full object-cover" />
           ) : (
-            <MCMAvatar initials={initialsOf(name)} color={group.profile?.avatar_color ?? "#0ea5e9"} size="md" />
+            <UserAvatar
+              userId={group.ownerId}
+              path={group.profile?.avatar_url}
+              version={group.profile?.avatar_version}
+              name={name}
+              color={group.profile?.avatar_color ?? "#0ea5e9"}
+              size="md"
+            />
           )}
         </span>
       </span>
@@ -81,7 +88,14 @@ function GroupRow({ group, onClick }: { group: StatusGroup; onClick: () => void 
           {thumb ? (
             <img src={thumb} alt="" className="size-full rounded-full object-cover" />
           ) : (
-            <MCMAvatar initials={initialsOf(name)} color={group.profile?.avatar_color ?? "#0ea5e9"} size="md" />
+            <UserAvatar
+              userId={group.ownerId}
+              path={group.profile?.avatar_url}
+              version={group.profile?.avatar_version}
+              name={name}
+              color={group.profile?.avatar_color ?? "#0ea5e9"}
+              size="md"
+            />
           )}
         </span>
       </span>
