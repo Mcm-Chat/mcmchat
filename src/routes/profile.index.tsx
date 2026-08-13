@@ -680,6 +680,16 @@ function ProfilePage() {
       {draftFile && (
         <AvatarEditor file={draftFile} onCancel={() => setDraftFile(null)} onApply={applyAvatar} />
       )}
+
+      {userId && (
+        <AvatarAudienceDialog
+          open={audienceOpen}
+          userId={userId}
+          privacy={avatarPrivacy}
+          onOpenChange={setAudienceOpen}
+          onSaved={setAudienceCount}
+        />
+      )}
     </AppShell>
   );
 }
