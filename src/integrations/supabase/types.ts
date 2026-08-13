@@ -2219,6 +2219,13 @@ export type Database = {
         }
         Returns: Json
       }
+      blocked_between: {
+        Args: { _other: string }
+        Returns: {
+          blocked_me: boolean
+          i_blocked: boolean
+        }[]
+      }
       business_role_of: {
         Args: { _biz: string; _uid: string }
         Returns: Database["public"]["Enums"]["business_role"]
