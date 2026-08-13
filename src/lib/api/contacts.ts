@@ -145,6 +145,100 @@ export async function setBlocked(userId: string, contactId: string, blocked: boo
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui blokir"));
 }
 
+export type ContactSource = "manual" | "qr_scan" | "request" | "import";
+
+/**
+ * Simpan profil hasil pindai ke buku kontak pribadi pemindai.
+ * Idempoten: menekan Simpan dua kali tidak membuat baris ganda.
+ */
+export async function saveContact(
+  userId: string,
+  contactId: string,
+  source: ContactSource = "manual",
+  alias?: string | null,
+) {
+  if (userId === contactId) throw new Error("PIN ini milik Anda sendiri.");
+  const { error } = await supabase
+    .from("contacts")
+    .upsert(
+      { owner_id: userId, contact_id: contactId, source, alias: alias ?? null },
+      { onConflict: "owner_id,contact_id", ignoreDuplicates: true },
+    );
+  if (error)
+    throw new Error(
+      friendly(error.message, "Kontak gagal disimpan. Periksa koneksi lalu coba lagi."),
+    );
+}
+
+export async function removeContact(userId: string, contactId: string) {
+  const { error } = await supabase
+    .from("contacts")
+    .delete()
+    .eq("owner_id", userId)
+    .eq("contact_id", contactId);
+  if (error) throw new Error(friendly(error.message, "Kontak gagal dihapus."));
+}
+
+export async function cancelContactRequest(userId: string, targetId: string) {
+  const { error } = await supabase
+    .from("contact_requests")
+    .update({ status: "cancelled" })
+    .eq("requester_id", userId)
+    .eq("target_id", targetId)
+    .eq("status", "pending");
+  if (error) throw new Error(friendly(error.message, "Permintaan gagal dibatalkan."));
+}
+
+export type ContactRelation = {
+  self: boolean;
+  saved: boolean;
+  blockedByMe: boolean;
+  blockedMe: boolean;
+  outgoingPending: boolean;
+  incomingRequest: Tables<"contact_requests"> | null;
+};
+
+/** Status relasi antara pemindai dan profil hasil pindai. */
+export async function getContactRelation(
+  userId: string,
+  targetId: string,
+): Promise<ContactRelation> {
+  if (userId === targetId)
+    return {
+      self: true,
+      saved: false,
+      blockedByMe: false,
+      blockedMe: false,
+      outgoingPending: false,
+      incomingRequest: null,
+    };
+  const [row, requests, blocks] = await Promise.all([
+    supabase
+      .from("contacts")
+      .select("id, is_blocked")
+      .eq("owner_id", userId)
+      .eq("contact_id", targetId)
+      .maybeSingle(),
+    supabase
+      .from("contact_requests")
+      .select("*")
+      .eq("status", "pending")
+      .or(
+        `and(requester_id.eq.${userId},target_id.eq.${targetId}),and(requester_id.eq.${targetId},target_id.eq.${userId})`,
+      ),
+    isBlockedBetween(userId, targetId),
+  ]);
+  const pending = requests.data ?? [];
+  return {
+    self: false,
+    saved: !!row.data,
+    blockedByMe: !!row.data?.is_blocked,
+    blockedMe: blocks.blockedMe,
+    outgoingPending: pending.some((r) => r.requester_id === userId),
+    incomingRequest: pending.find((r) => r.target_id === userId) ?? null,
+  };
+}
+
 export async function isBlockedBetween(_userId: string, otherId: string) {
   // Buku kontak lawan bicara tidak boleh dibaca langsung; status blokir dua
   // arah diambil lewat fungsi database yang tervalidasi.
