@@ -239,6 +239,8 @@ function ProfilePage() {
     try {
       await setAvatarPrivacy(userId, value);
       await refresh();
+      // Mode berbasis daftar tidak berguna tanpa pemilih, jadi buka langsung.
+      if (needsAudience(value)) setAudienceOpen(true);
     } catch (err) {
       setAvatarPrivacyState(prev);
       toast.error(err instanceof Error ? err.message : "Gagal menyimpan privasi foto profil");
