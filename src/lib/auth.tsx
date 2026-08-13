@@ -32,10 +32,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     // Kolom `pin` tidak lagi termasuk grant tabel; PIN sendiri diambil via RPC.
+    // `avatar_privacy` dan `avatar_version` wajib ikut: tanpa keduanya, layar
+    // profil mengembalikan pilihan privasi ke "contacts" setelah refresh dan
+    // cache-buster avatar tidak pernah berubah.
     const [p, s, pin] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, display_name, bio, avatar_url, avatar_color, is_online, last_seen_at, created_at, updated_at")
+        .select(
+          "id, display_name, bio, avatar_url, avatar_color, avatar_privacy, avatar_version, is_online, last_seen_at, created_at, updated_at",
+        )
         .eq("id", uid)
         .maybeSingle(),
       supabase.from("user_settings").select("*").eq("user_id", uid).maybeSingle(),
