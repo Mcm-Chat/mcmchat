@@ -47,6 +47,7 @@ import { previewOf } from "@/lib/api/chat";
 import type { MessageStatus } from "@/lib/api/receipts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { MCMAvatar, StatusBadge } from "./primitives";
+import { UserAvatar } from "./user-avatar";
 
 export const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤝", "👍", "🙏", "🔥", "☕", "💰", "✅", "❤️", "🎉", "😅", "🤔"];
 
