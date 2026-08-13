@@ -2,6 +2,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { removeObject, uploadProductPhoto } from "./storage";
 import type { Tables } from "@/integrations/supabase/types";
+import {
+  COUNT_UNIT_LIST,
+  VARIANT_MESSAGES,
+  WEIGHT_UNIT_LIST,
+  WEIGHT_UNIT_TO_GRAM,
+  decimalMultiply,
+  toNumericString,
+  validateVariantDraft,
+  type VariantDraft,
+} from "@/lib/mcm/decimal";
 
 export type ProductRow = Tables<"products">;
 export type VariantRow = Tables<"product_variants">;
@@ -11,15 +21,9 @@ export type PhotoRow = Tables<"product_photos">;
 export type StockType = VariantRow["stock_type"];
 export type MovementType = MovementRow["movement_type"];
 
-export const WEIGHT_UNITS = ["mg", "g", "ons", "kg"] as const;
-export const COUNT_UNITS = ["pcs", "botol", "karton", "koli", "sak"] as const;
-
-export const WEIGHT_TO_BASE_G: Record<(typeof WEIGHT_UNITS)[number], number> = {
-  mg: 0.001,
-  g: 1,
-  ons: 100,
-  kg: 1000,
-};
+export const WEIGHT_UNITS = WEIGHT_UNIT_LIST;
+export const COUNT_UNITS = COUNT_UNIT_LIST;
+export const WEIGHT_TO_BASE_G = WEIGHT_UNIT_TO_GRAM;
 
 export const MOVEMENT_LABEL: Record<MovementType, string> = {
   preparation: "Penyiapan",
@@ -36,16 +40,19 @@ export function toBase(
   unit: string,
 ): number {
   if (variant.stock_type === "weight") {
-    const factor = WEIGHT_TO_BASE_G[unit as (typeof WEIGHT_UNITS)[number]];
-    if (!factor) throw new Error("Satuan berat tidak dikenal");
-    return Math.round(qty * factor * 100) / 100;
+    const factor = WEIGHT_TO_BASE_G[unit as keyof typeof WEIGHT_TO_BASE_G];
+    if (!factor) throw new Error(VARIANT_MESSAGES.unit);
+    // Presisi gram 6 desimal: 0,01 g dan 1 mg tidak boleh dibulatkan hilang.
+    return decimalMultiply(qty, factor);
   }
+  // Hitungan selalu bilangan bulat base unit; tidak pernah dikonversi ke gram.
   return Math.round(qty * (variant.conversion_factor || 1));
 }
 
 /** Format qty_base menjadi tampilan ramah pengguna sesuai satuan tampilan varian. */
 export function formatQty(
-  variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal">,
+  variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal"> &
+    Partial<Pick<VariantRow, "units_per_display">>,
   qtyBase: number,
 ): string {
   const nf = (v: number, maxFrac: number) =>
@@ -54,11 +61,11 @@ export function formatQty(
     const unit = (WEIGHT_UNITS as readonly string[]).includes(variant.display_unit)
       ? variant.display_unit
       : "g";
-    const factor = WEIGHT_TO_BASE_G[unit as (typeof WEIGHT_UNITS)[number]] ?? 1;
+    const factor = WEIGHT_TO_BASE_G[unit as keyof typeof WEIGHT_TO_BASE_G] ?? 1;
     const value = qtyBase / factor;
-    return `${nf(value, 2)} ${unit}`;
+    return `${nf(value, 6)} ${unit}`;
   }
-  const factor = variant.conversion_factor || 1;
+  const factor = Number(variant.units_per_display ?? variant.conversion_factor) || 1;
   const value = qtyBase / factor;
   return `${nf(value, variant.allow_decimal ? 2 : 0)} ${variant.display_unit || "pcs"}`;
 }
