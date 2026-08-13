@@ -418,7 +418,16 @@ function CatalogDetail() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Deskripsi</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label>Deskripsi</Label>
+                <AiDescriptionButton
+                  name={editForm.name}
+                  category={editForm.category}
+                  price={Number(editForm.price) || undefined}
+                  currentDescription={editForm.description}
+                  onApply={(text) => setEditForm((f) => ({ ...f, description: text }))}
+                />
+              </div>
               <Textarea
                 value={editForm.description}
                 onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
