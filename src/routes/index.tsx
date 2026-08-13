@@ -31,15 +31,15 @@ export const Route = createFileRoute("/")({
             {
               "@type": "Organization",
               name: "MCM",
-              url: "https://mcmchat.id",
-              logo: "https://mcmchat.id/icon-512.png",
+              url: "https://mcmchat.ai",
+              logo: "https://mcmchat.ai/icon-512.png",
             },
             {
               "@type": "SoftwareApplication",
               name: "MCM — Private Chat, Calls & Smart Ledger",
               applicationCategory: "CommunicationApplication",
               operatingSystem: "Android, Web",
-              url: "https://mcmchat.id",
+              url: "https://mcmchat.ai",
               description:
                 "Chat privat berbasis PIN, panggilan suara & video, catatan utang-piutang bersama, serta katalog dan keuangan bisnis.",
               featureList: [

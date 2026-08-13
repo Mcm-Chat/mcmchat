@@ -28,4 +28,4 @@ Disallow: /photo
 Disallow: /settings
 Disallow: /api/
 
-Sitemap: https://mcmchat.id/sitemap.xml
+Sitemap: https://mcmchat.ai/sitemap.xml

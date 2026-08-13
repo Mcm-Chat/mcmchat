@@ -127,7 +127,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "MCM",
-          url: "https://mcmchat.id",
+          url: "https://mcmchat.ai",
         }),
       },
     ],
@@ -143,6 +143,11 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Google Search Console ownership (custom domain mcmchat.ai) */}
+        <meta
+          name="google-site-verification"
+          content="fOepNPCGHSh_nuODqnInyJzsRPhcMRFfSecl5EsrJzE"
+        />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background text-foreground">
