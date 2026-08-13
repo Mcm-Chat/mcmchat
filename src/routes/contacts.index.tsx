@@ -208,7 +208,17 @@ function ContactsPage() {
           <ul className="divide-y divide-border/70 pb-24">
             {filteredIncoming.map((r) => (
               <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-                <MCMAvatar initials={initialsOf(r.profile?.display_name ?? "MC")} color={r.profile?.avatar_color ?? "from-slate-500 to-slate-700"} />
+                {r.profile ? (
+                  <UserAvatar
+                    userId={r.requester_id}
+                    path={r.profile.avatar_url}
+                    version={r.profile.avatar_version}
+                    name={r.profile.display_name}
+                    color={r.profile.avatar_color}
+                  />
+                ) : (
+                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{r.profile?.display_name ?? "Pengguna"}</p>
                   <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
@@ -233,7 +243,17 @@ function ContactsPage() {
           <ul className="divide-y divide-border/70 pb-24">
             {filteredOutgoing.map((r) => (
               <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-                <MCMAvatar initials={initialsOf(r.profile?.display_name ?? "MC")} color={r.profile?.avatar_color ?? "from-slate-500 to-slate-700"} />
+                {r.profile ? (
+                  <UserAvatar
+                    userId={r.target_id}
+                    path={r.profile.avatar_url}
+                    version={r.profile.avatar_version}
+                    name={r.profile.display_name}
+                    color={r.profile.avatar_color}
+                  />
+                ) : (
+                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{r.profile?.display_name ?? "Pengguna"}</p>
                   <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
