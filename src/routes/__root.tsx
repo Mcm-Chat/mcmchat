@@ -143,6 +143,11 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Google Search Console ownership (custom domain mcmchat.ai) */}
+        <meta
+          name="google-site-verification"
+          content="fOepNPCGHSh_nuODqnInyJzsRPhcMRFfSecl5EsrJzE"
+        />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background text-foreground">
