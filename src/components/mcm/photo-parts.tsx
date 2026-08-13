@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { MCMAvatar, StatusBadge } from "./primitives";
+import { UserAvatar } from "./user-avatar";
 import { compressImage, dataUrlToBlob, koordinat, useGeolocation } from "@/lib/mcm/geo";
 import type { MessageLocation } from "@/lib/mcm/types";
 import type { ConversationView } from "@/lib/api/chat";
