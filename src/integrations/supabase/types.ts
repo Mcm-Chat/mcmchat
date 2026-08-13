@@ -305,6 +305,8 @@ export type Database = {
           is_favorite: boolean
           note: string
           owner_id: string
+          source: string
+          starred: boolean
           updated_at: string
         }
         Insert: {
@@ -316,6 +318,8 @@ export type Database = {
           is_favorite?: boolean
           note?: string
           owner_id: string
+          source?: string
+          starred?: boolean
           updated_at?: string
         }
         Update: {
@@ -327,9 +331,19 @@ export type Database = {
           is_favorite?: boolean
           note?: string
           owner_id?: string
+          source?: string
+          starred?: boolean
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contacts_contact_profile_fk"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversation_members: {
         Row: {

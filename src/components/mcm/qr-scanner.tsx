@@ -21,20 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { normalizePin, isValidPin } from "@/lib/api/contacts";
+import { parseContactScan } from "@/lib/contacts/scan";
 import { openAppSettings } from "@/lib/push/permissions";
 
-/** Ambil PIN dari isi QR: "mcm://pin/A2B3-C4D5", URL, atau PIN polos. */
+/** Ambil PIN dari isi QR: `mcm://contact/<pin>`, tautan MCM, payload JSON, atau PIN polos. */
 export function extractPin(raw: string): string | null {
-  const text = raw.trim();
-  const direct = normalizePin(text.replace(/^mcm:\/\/pin\//i, ""));
-  if (isValidPin(direct)) return direct;
-  const match = text.toUpperCase().match(/[2-9A-HJ-NP-Z]{4}-?[2-9A-HJ-NP-Z]{4}/);
-  if (match) {
-    const pin = normalizePin(match[0]);
-    if (isValidPin(pin)) return pin;
-  }
-  return null;
+  return parseContactScan(raw);
 }
 
 type CamPhase = "idle" | "requesting" | "streaming" | "denied" | "missing" | "busy" | "unsupported";
