@@ -328,8 +328,8 @@ function ProfilePage() {
               color={profile.avatar_color}
               size="lg"
             />
-            <label className="absolute -right-1 -bottom-1 flex size-6 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Camera className="size-3.5" />
+            <label className="absolute -right-1 -bottom-1 flex size-11 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
+              <Camera className="size-5" />
               <span className="sr-only">Ubah foto profil</span>
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
             </label>
@@ -338,16 +338,16 @@ function ProfilePage() {
             <p className="truncate text-base font-semibold">{profile.display_name}</p>
             <p className="truncate text-xs text-muted-foreground">{profile.bio || "Belum ada bio"}</p>
             <div className="mt-1 flex gap-3 text-[11px]">
-              <label className="cursor-pointer text-primary">
+              <label className="inline-flex min-h-11 cursor-pointer items-center text-primary">
                 Kamera
                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onAvatarPick} disabled={uploading} />
               </label>
-              <label className="cursor-pointer text-primary">
+              <label className="inline-flex min-h-11 cursor-pointer items-center text-primary">
                 Galeri
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
               </label>
               {profile.avatar_url && (
-                <button type="button" className="text-destructive" onClick={() => setRemoveAvatarOpen(true)}>
+                <button type="button" className="inline-flex min-h-11 items-center text-destructive" onClick={() => setRemoveAvatarOpen(true)}>
                   Hapus
                 </button>
               )}
