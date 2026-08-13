@@ -60,7 +60,7 @@ export async function loadFeed(userId: string): Promise<FeedPayload> {
   const ownerIds = [...new Set(rows.map((r) => r.owner_id))];
   const [{ data: itemRows }, { data: profileRows }] = await Promise.all([
     supabase.from("status_items").select("*").in("status_id", statusIds).order("sort_order"),
-    supabase.from("profiles").select("id, display_name, avatar_url, avatar_color").in("id", ownerIds),
+    supabase.from("profiles").select("id, display_name, avatar_url, avatar_color, avatar_version").in("id", ownerIds),
   ]);
   const items = ((itemRows ?? []) as unknown as StatusItem[]).map((i) => ({
     ...i,
@@ -186,7 +186,7 @@ export async function listViewers(statusId: string): Promise<ViewerRow[]> {
   const ids = [...new Set((views ?? []).map((v) => v.viewer_id))];
   const profiles: Record<string, OwnerProfile> = {};
   if (ids.length > 0) {
-    const { data } = await supabase.from("profiles").select("id, display_name, avatar_url, avatar_color").in("id", ids);
+    const { data } = await supabase.from("profiles").select("id, display_name, avatar_url, avatar_color, avatar_version").in("id", ids);
     for (const p of data ?? []) profiles[p.id] = p as OwnerProfile;
   }
   return (views ?? []).map((v) => ({

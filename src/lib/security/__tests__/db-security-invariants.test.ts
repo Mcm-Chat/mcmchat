@@ -165,6 +165,28 @@ describe("pengecekan keanggotaan percakapan", () => {
     );
     expect(has(/revoke all on function public\.can_manage_business\(uuid, uuid\) from anon/)).toBe(true);
   });
+
+  it("staff_pin tidak pernah masuk grant select tabel business_members", () => {
+    // Grant SELECT tingkat tabel membatalkan REVOKE kolom, jadi bentuk akhir
+    // wajib berupa grant kolom eksplisit tanpa staff_pin.
+    expect(has(/revoke select on public\.business_members from authenticated/)).toBe(true);
+    expect(has(/revoke all on public\.business_members from anon/)).toBe(true);
+
+    // Bentuk akhir yang menentukan: setiap grant SELECT seluruh tabel harus
+    // sudah dibatalkan oleh REVOKE, dan grant kolom datang setelahnya.
+    const revokeAt = sql.search(/revoke select on public\.business_members from authenticated/);
+    const columnGrantAt = sql.search(/grant select\s*\([^)]*\)\s*on public\.business_members to authenticated/);
+    expect(columnGrantAt).toBeGreaterThan(revokeAt);
+
+    const grants = sql.match(/grant select[^;]*on public\.business_members to \w+/g) ?? [];
+    for (const g of grants) {
+      expect(g).not.toMatch(/to anon/);
+      const at = sql.indexOf(g);
+      // grant seluruh tabel hanya boleh ada sebelum REVOKE
+      if (!/grant select\s*\(/.test(g)) expect(at).toBeLessThan(revokeAt);
+      else expect(g).not.toMatch(/\bstaff_pin\b(?!_confirmed_at)/);
+    }
+  });
 });
 
 describe("kode klien tidak membaca kolom PIN langsung", () => {
@@ -183,6 +205,21 @@ describe("kode klien tidak membaca kolom PIN langsung", () => {
       const calls = src.match(/from\(\s*["'](profiles|customers)["']\s*\)[\s\S]{0,200}?select\(([^)]*)\)/g) ?? [];
       for (const c of calls) {
         if (/\bpin\b/.test(c) || /select\(\s*["']\*["']\s*\)/.test(c)) offenders.push(`${file}: ${c}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("tidak ada select('*') pada business_members", () => {
+    const offenders: string[] = [];
+    for (const file of walk(path.resolve(process.cwd(), "src"))) {
+      if (file.includes("integrations/supabase")) continue;
+      const src = readFileSync(file, "utf8");
+      const calls = src.match(/from\(\s*["']business_members["']\s*\)[\s\S]{0,200}?select\(([^)]*)\)/g) ?? [];
+      for (const c of calls) {
+        if (/select\(\s*["']\*["']\s*\)/.test(c) || /\bstaff_pin\b(?!_confirmed_at)/.test(c)) {
+          offenders.push(`${file}: ${c}`);
+        }
       }
     }
     expect(offenders).toEqual([]);

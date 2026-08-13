@@ -124,7 +124,15 @@ export function subscribeIncomingCalls(userId: string, onIncoming: (call: CallRo
   };
 }
 
-export type CallHistoryItem = CallRow & { participants: { user_id: string; display_name: string; avatar_color: string }[] };
+export type CallParticipantProfile = {
+  user_id: string;
+  display_name: string;
+  avatar_color: string;
+  avatar_url: string | null;
+  avatar_version: number;
+};
+
+export type CallHistoryItem = CallRow & { participants: CallParticipantProfile[] };
 
 export async function listCalls(userId: string): Promise<CallHistoryItem[]> {
   const mine = unwrap(await supabase.from("call_participants").select("call_id").eq("user_id", userId), "Gagal memuat panggilan");
@@ -135,7 +143,10 @@ export async function listCalls(userId: string): Promise<CallHistoryItem[]> {
     supabase.from("call_participants").select("call_id, user_id").in("call_id", ids),
   ]);
   const profileIds = [...new Set((parts.data ?? []).map((p) => p.user_id))];
-  const { data: profiles } = await supabase.from("profiles").select("id, display_name, avatar_color").in("id", profileIds);
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, display_name, avatar_color, avatar_url, avatar_version")
+    .in("id", profileIds);
   const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
   return (calls.data ?? []).map((c) => ({
     ...c,
@@ -145,6 +156,8 @@ export async function listCalls(userId: string): Promise<CallHistoryItem[]> {
         user_id: p.user_id,
         display_name: pmap.get(p.user_id)?.display_name ?? "Pengguna",
         avatar_color: pmap.get(p.user_id)?.avatar_color ?? "#0ea5e9",
+        avatar_url: pmap.get(p.user_id)?.avatar_url ?? null,
+        avatar_version: pmap.get(p.user_id)?.avatar_version ?? 0,
       })),
   }));
 }

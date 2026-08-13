@@ -27,7 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { useRequireAuth } from "@/lib/api/guard";
-import { canManage, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/business";
+import { canManage, MEMBER_SAFE_COLUMNS, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/business";
 import { useMyBusiness } from "@/lib/api/queries";
 import { AvatarEditor } from "@/components/mcm/avatar-editor";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -63,7 +63,9 @@ export const Route = createFileRoute("/profile/")({
   component: ProfilePage,
 });
 
-type MemberWithProfile = BusinessMemberRow & { profile: { display_name: string; pin: string } | null };
+type MemberWithProfile = Omit<BusinessMemberRow, "staff_pin"> & {
+  profile: { display_name: string; pin: string } | null;
+};
 
 function ProfilePage() {
   const { userId, profile, loading } = useRequireAuth();
@@ -109,7 +111,7 @@ function ProfilePage() {
       });
       void supabase
         .from("business_members")
-        .select("*")
+        .select(MEMBER_SAFE_COLUMNS)
         .eq("business_id", b.id)
         .then(async ({ data }) => {
           const rows = data ?? [];

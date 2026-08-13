@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatListItem } from "@/components/mcm/chat-parts";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -152,7 +153,14 @@ function ChatIndex() {
                               setGroupMembers((p) => (v ? [...p, c.contact_id] : p.filter((x) => x !== c.contact_id)))
                             }
                           />
-                          <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} size="sm" />
+                          <UserAvatar
+                            userId={c.contact_id}
+                            path={c.profile.avatar_url}
+                            version={c.profile.avatar_version}
+                            name={c.profile.display_name}
+                            color={c.profile.avatar_color}
+                            size="sm"
+                          />
                           <span className="min-w-0 flex-1 truncate text-sm">{c.profile.display_name}</span>
                         </label>
                       ))}
@@ -186,7 +194,14 @@ function ChatIndex() {
                           className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-muted"
                           onClick={() => void openDirect(c.contact_id)}
                         >
-                          <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} size="sm" />
+                          <UserAvatar
+                            userId={c.contact_id}
+                            path={c.profile.avatar_url}
+                            version={c.profile.avatar_version}
+                            name={c.profile.display_name}
+                            color={c.profile.avatar_color}
+                            size="sm"
+                          />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">{c.profile.display_name}</span>
                             <span className="block truncate font-mono text-[11px] text-muted-foreground">{c.profile.pin}</span>

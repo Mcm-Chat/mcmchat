@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, waktuRelatif } from "@/lib/mcm/format";
@@ -131,7 +132,17 @@ function CallsPage() {
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   onClick={() => void navigate({ to: "/call/$id", params: { id: c.id } })}
                 >
-                  <MCMAvatar initials={(other?.display_name ?? "MC").slice(0, 2).toUpperCase()} color={other?.avatar_color ?? "from-slate-500 to-slate-700"} />
+                  {other ? (
+                    <UserAvatar
+                      userId={other.user_id}
+                      path={other.avatar_url}
+                      version={other.avatar_version}
+                      name={other.display_name}
+                      color={other.avatar_color}
+                    />
+                  ) : (
+                    <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className={`truncate text-sm font-semibold ${isMissed ? "text-destructive" : ""}`}>{other?.display_name ?? "Pengguna MCM"}</p>
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">

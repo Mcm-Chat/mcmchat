@@ -46,6 +46,7 @@ export type OwnerProfile = {
   display_name: string;
   avatar_url: string | null;
   avatar_color: string;
+  avatar_version?: number;
 };
 
 export type StatusGroup = {

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { MCMAvatar, StatusBadge } from "./primitives";
+import { UserAvatar } from "./user-avatar";
 import { compressImage, dataUrlToBlob, koordinat, useGeolocation } from "@/lib/mcm/geo";
 import type { MessageLocation } from "@/lib/mcm/types";
 import type { ConversationView } from "@/lib/api/chat";
@@ -197,7 +198,18 @@ export function PhotoFlow({
                       selected.includes(c.id) ? "border-primary bg-primary/10" : "border-border",
                     )}
                   >
-                    <MCMAvatar initials={initialsOf(c.title_resolved)} color={c.other?.avatar_color ?? "#0ea5e9"} size="sm" />
+                    {c.other ? (
+                      <UserAvatar
+                        userId={c.other.id}
+                        path={c.other.avatar_url}
+                        version={c.other.avatar_version}
+                        name={c.title_resolved}
+                        color={c.other.avatar_color}
+                        size="sm"
+                      />
+                    ) : (
+                      <MCMAvatar initials={initialsOf(c.title_resolved)} color="#0ea5e9" size="sm" />
+                    )}
                     <span className="w-full truncate text-center text-[11px]">{c.title_resolved}</span>
                   </button>
                 ))}
@@ -221,7 +233,18 @@ export function PhotoFlow({
                 }}
                 className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/50"
               >
-                <MCMAvatar initials={initialsOf(c.title_resolved)} color={c.other?.avatar_color ?? "#0ea5e9"} size="sm" />
+                {c.other ? (
+                  <UserAvatar
+                    userId={c.other.id}
+                    path={c.other.avatar_url}
+                    version={c.other.avatar_version}
+                    name={c.title_resolved}
+                    color={c.other.avatar_color}
+                    size="sm"
+                  />
+                ) : (
+                  <MCMAvatar initials={initialsOf(c.title_resolved)} color="#0ea5e9" size="sm" />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate text-sm font-medium">{c.title_resolved}</span>
@@ -264,7 +287,18 @@ export function PhotoFlow({
           <div className="mt-2 flex flex-wrap gap-1.5">
             {selectedConvs.map((c) => (
               <span key={c.id} className="flex max-w-full items-center gap-1.5 rounded-full bg-muted py-1 pr-2.5 pl-1">
-                <MCMAvatar initials={initialsOf(c.title_resolved)} color={c.other?.avatar_color ?? "#0ea5e9"} size="xs" />
+                {c.other ? (
+                  <UserAvatar
+                    userId={c.other.id}
+                    path={c.other.avatar_url}
+                    version={c.other.avatar_version}
+                    name={c.title_resolved}
+                    color={c.other.avatar_color}
+                    size="xs"
+                  />
+                ) : (
+                  <MCMAvatar initials={initialsOf(c.title_resolved)} color="#0ea5e9" size="xs" />
+                )}
                 <span className="truncate text-xs font-medium">{c.title_resolved}</span>
               </span>
             ))}

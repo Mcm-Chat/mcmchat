@@ -5,6 +5,7 @@ import { CircleDashed, Plus, Settings2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { StatusViewer } from "@/components/mcm/status-viewer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -55,7 +56,14 @@ function Ring({ group, onClick }: { group: StatusGroup; onClick: () => void }) {
           {thumb ? (
             <img src={thumb} alt="" className="size-full rounded-full object-cover" />
           ) : (
-            <MCMAvatar initials={initialsOf(name)} color={group.profile?.avatar_color ?? "#0ea5e9"} size="md" />
+            <UserAvatar
+              userId={group.ownerId}
+              path={group.profile?.avatar_url}
+              version={group.profile?.avatar_version}
+              name={name}
+              color={group.profile?.avatar_color ?? "#0ea5e9"}
+              size="md"
+            />
           )}
         </span>
       </span>
@@ -80,7 +88,14 @@ function GroupRow({ group, onClick }: { group: StatusGroup; onClick: () => void 
           {thumb ? (
             <img src={thumb} alt="" className="size-full rounded-full object-cover" />
           ) : (
-            <MCMAvatar initials={initialsOf(name)} color={group.profile?.avatar_color ?? "#0ea5e9"} size="md" />
+            <UserAvatar
+              userId={group.ownerId}
+              path={group.profile?.avatar_url}
+              version={group.profile?.avatar_version}
+              name={name}
+              color={group.profile?.avatar_color ?? "#0ea5e9"}
+              size="md"
+            />
           )}
         </span>
       </span>

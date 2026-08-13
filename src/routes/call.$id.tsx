@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { cn } from "@/lib/utils";
 import { durasi, tanggalPanjang, jam } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
@@ -57,7 +58,7 @@ async function fetchCall(id: string, userId: string): Promise<CallHistoryItem | 
   const ids = [...new Set((parts ?? []).map((p) => p.user_id))];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_color")
+    .select("id, display_name, avatar_color, avatar_url, avatar_version")
     .in("id", ids.length ? ids : [userId]);
   const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
   return {
@@ -66,6 +67,8 @@ async function fetchCall(id: string, userId: string): Promise<CallHistoryItem | 
       user_id: p.user_id,
       display_name: pmap.get(p.user_id)?.display_name ?? "Pengguna",
       avatar_color: pmap.get(p.user_id)?.avatar_color ?? "#0ea5e9",
+      avatar_url: pmap.get(p.user_id)?.avatar_url ?? null,
+      avatar_version: pmap.get(p.user_id)?.avatar_version ?? 0,
     })),
   };
 }
@@ -202,7 +205,17 @@ function CallScreen() {
           </div>
 
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
-            {!isVideo && <MCMAvatar initials={initials} color={other?.avatar_color ?? "from-slate-500 to-slate-700"} size="xl" />}
+            {!isVideo && other && (
+              <UserAvatar
+                userId={other.user_id}
+                path={other.avatar_url}
+                version={other.avatar_version}
+                name={other.display_name}
+                color={other.avatar_color}
+                size="xl"
+              />
+            )}
+            {!isVideo && !other && <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />}
             <h2 className="text-2xl font-semibold">{name}</h2>
             <p className="text-sm text-navy-foreground/75">{phaseLabel}</p>
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
@@ -340,7 +353,18 @@ function CallScreen() {
       </div>
 
       <div className="mt-8 flex flex-col items-center gap-3">
-        <MCMAvatar initials={initials} color={other?.avatar_color ?? "from-slate-500 to-slate-700"} size="xl" />
+        {other ? (
+          <UserAvatar
+            userId={other.user_id}
+            path={other.avatar_url}
+            version={other.avatar_version}
+            name={other.display_name}
+            color={other.avatar_color}
+            size="xl"
+          />
+        ) : (
+          <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />
+        )}
         <h2 className="text-2xl font-semibold">{name}</h2>
         <p className="flex items-center gap-1.5 text-sm text-navy-foreground/70">
           {detail.status === "missed" && <PhoneMissed className="size-4 text-destructive" />}
