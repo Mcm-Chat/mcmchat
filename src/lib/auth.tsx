@@ -2,6 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { myPin } from "@/lib/api/pins";
+import { setActiveUser } from "@/lib/session-scope";
+import { __resetAvatarCache } from "@/lib/api/avatar";
+import { clearSignedUrlCache } from "@/lib/api/storage";
+import { resetOutboxForAccount } from "@/lib/api/outbox";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type Profile = Tables<"profiles">;
@@ -25,7 +29,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * Identitas akun aktif adalah sumber kebenaran untuk seluruh data lokal.
+   * Saat berganti (termasuk logout), cache media, signed URL, antrean outbox,
+   * langganan realtime, dan key localStorage akun lama dibuang.
+   */
+  const applyAccount = useCallback((uid: string | null) => {
+    if (!setActiveUser(uid)) return;
+    __resetAvatarCache();
+    clearSignedUrlCache();
+    void supabase.removeAllChannels();
+    resetOutboxForAccount();
+  }, []);
+
   const load = useCallback(async (uid: string | undefined) => {
+    applyAccount(uid ?? null);
     if (!uid) {
       setProfile(null);
       setSettings(null);
@@ -48,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
     setProfile(p.data ? ({ ...p.data, pin } as Profile) : null);
     setSettings(s.data ?? null);
-  }, []);
+  }, [applyAccount]);
 
   useEffect(() => {
     let active = true;
