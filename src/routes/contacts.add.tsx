@@ -6,7 +6,9 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { MCMAvatar } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { PinCard } from "@/components/mcm/pin-card";
-import { ScanQrButton } from "@/components/mcm/qr-scanner";
+import { QrScannerDialog } from "@/components/mcm/qr-scanner";
+import { ScanResultSheet } from "@/components/mcm/scan-result-sheet";
+import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +46,28 @@ function AddContactPage() {
   const [found, setFound] = useState<ProfileLite | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanned, setScanned] = useState<ProfileLite | null>(null);
+  const [temporary, setTemporary] = useState<ProfileLite | null>(null);
+
+  const handleScan = async (value: string) => {
+    setPin(value);
+    if (profile && normalizePin(value) === normalizePin(profile.pin)) {
+      toast.info("Ini adalah PIN Anda sendiri.");
+      return;
+    }
+    try {
+      const result = await findByPin(value);
+      if (!result) {
+        toast.error("Pengguna tidak ditemukan.");
+        setSearched(true);
+        return;
+      }
+      setScanned(result);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Pengguna tidak ditemukan.");
+    }
+  };
 
   const search = async (value: string = pin) => {
     if (!isValidPin(value)) {
@@ -120,13 +144,14 @@ function AddContactPage() {
             </div>
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
-          <ScanQrButton
-            onResult={(scanned) => {
-              setPin(scanned);
-              toast.success(`PIN terbaca: ${scanned}`);
-              void search(scanned);
-            }}
-          />
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-12 w-full rounded-xl"
+            onClick={() => setScannerOpen(true)}
+          >
+            <Camera className="size-4" /> Pindai QR dengan kamera
+          </Button>
           <p className="text-center text-[11px] text-muted-foreground">
             Kamera hanya dipakai untuk membaca QR; tidak ada foto yang disimpan.
           </p>
@@ -170,7 +195,51 @@ function AddContactPage() {
             </Button>
           </div>
         )}
+        {temporary && (
+          <div className="card-soft space-y-2 p-4">
+            <p className="text-xs text-muted-foreground">
+              Dipakai sementara (tidak disimpan ke kontak)
+            </p>
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                userId={temporary.id}
+                path={temporary.avatar_url}
+                version={temporary.avatar_version}
+                name={temporary.display_name}
+                color={temporary.avatar_color}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{temporary.display_name}</p>
+                <p className="font-mono text-xs text-muted-foreground">{temporary.pin}</p>
+              </div>
+              <Button
+                variant="ghost"
+                className="h-11 rounded-xl"
+                onClick={() => setTemporary(null)}
+              >
+                Selesai
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
+
+      <QrScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onResult={(value) => void handleScan(value)}
+      />
+      {userId && (
+        <ScanResultSheet
+          open={!!scanned}
+          profile={scanned}
+          userId={userId}
+          onOpenChange={(v) => !v && setScanned(null)}
+          onScanAgain={() => setScannerOpen(true)}
+          onManualPin={() => document.getElementById("pin")?.focus()}
+          onUseWithoutSaving={({ profile: p }) => setTemporary(p)}
+        />
+      )}
     </AppShell>
   );
 }
