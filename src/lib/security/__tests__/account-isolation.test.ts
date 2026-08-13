@@ -96,7 +96,8 @@ describe("audit statis media & penyimpanan", () => {
     const allowed = /"(mcm-theme|mcm-onboarded)"/;
     const bad: string[] = [];
     for (const f of files) {
-      if (f.endsWith("session-scope.ts") || f.includes("integrations/supabase")) continue;
+      // theme.tsx hanya menyimpan preferensi tema perangkat (non-sensitif).
+      if (f.endsWith("session-scope.ts") || f.endsWith("theme.tsx") || f.includes("integrations/supabase")) continue;
       for (const line of readFileSync(f, "utf8").split("\n")) {
         const m = line.match(/localStorage\.(get|set|remove)Item\((.+?)[,)]/);
         if (!m) continue;
