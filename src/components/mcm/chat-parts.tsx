@@ -520,6 +520,7 @@ export function MessageBubble({
       </div>
     );
   }
+  const isSticker = message.kind === "sticker";
   return (
     <div
       className={cn(
@@ -540,7 +541,9 @@ export function MessageBubble({
         <div
           className={cn(
             "bubble-elevate relative rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45]",
-            mine
+            isSticker
+              ? "bubble-elevate-none bg-transparent px-0 py-0 shadow-none"
+              : mine
               ? cn(
                   "bg-bubble-out text-bubble-out-foreground",
                   grouped ? "rounded-br-lg" : "rounded-br-sm",
@@ -567,6 +570,8 @@ export function MessageBubble({
           )}
           {message.kind === "document" ? (
             <DocumentBubble message={message} />
+          ) : isSticker ? (
+            <StickerBubble message={message} />
           ) : message.kind === "image" ? (
             <div className="space-y-1">
               <ImageBubble message={message} />
@@ -601,7 +606,7 @@ export function MessageBubble({
           <div
             className={cn(
               "mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums",
-              mine ? "opacity-85" : "text-muted-foreground",
+              isSticker ? "text-muted-foreground" : mine ? "opacity-85" : "text-muted-foreground",
             )}
           >
             {message.edited_at && <span>diedit</span>}
