@@ -45,6 +45,7 @@ import type { ConversationView, MessageRow } from "@/lib/api/chat";
 import { useStatusMedia } from "@/lib/status/hooks";
 import { previewOf } from "@/lib/api/chat";
 import type { MessageStatus } from "@/lib/api/receipts";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { MCMAvatar, StatusBadge } from "./primitives";
 
 export const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤝", "👍", "🙏", "🔥", "☕", "💰", "✅", "❤️", "🎉", "😅", "🤔"];
@@ -89,7 +90,17 @@ export function ChatListItem({
   return (
     <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 active:bg-muted/60">
       <Link to="/chat/$id" params={{ id: conv.id }} className="flex min-w-0 flex-1 items-center gap-3">
-        <MCMAvatar initials={initialsOf(name)} color={conv.other?.avatar_color ?? "#0ea5e9"} />
+        {conv.other ? (
+          <UserAvatar
+            userId={conv.other.id}
+            path={conv.other.avatar_url}
+            version={conv.other.avatar_version ?? 0}
+            name={name}
+            color={conv.other.avatar_color}
+          />
+        ) : (
+          <MCMAvatar initials={initialsOf(name)} color="#0ea5e9" />
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <p className="truncate text-[15px] leading-5 font-semibold tracking-[-0.01em]">{name}</p>
