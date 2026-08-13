@@ -113,6 +113,7 @@ function ChatRoom() {
   const [selection, setSelection] = useState<string[]>([]);
   const [confirmAll, setConfirmAll] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [stickerOpen, setStickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
