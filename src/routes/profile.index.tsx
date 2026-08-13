@@ -627,6 +627,20 @@ function ProfilePage() {
           void signOut().then(() => navigate({ to: "/login" }));
         }}
       />
+
+      <ConfirmDialog
+        open={removeAvatarOpen}
+        onOpenChange={setRemoveAvatarOpen}
+        title="Hapus foto profil?"
+        description="Kontak akan kembali melihat inisial nama Anda."
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => void deleteAvatar()}
+      />
+
+      {draftFile && (
+        <AvatarEditor file={draftFile} onCancel={() => setDraftFile(null)} onApply={applyAvatar} />
+      )}
     </AppShell>
   );
 }
