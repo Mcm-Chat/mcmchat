@@ -3,6 +3,12 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  formatDecimalId,
+  fromGrams,
+  isWeightUnit,
+  validateVariantDraft,
+} from "@/lib/mcm/decimal";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import {
   ConfirmDialog,
