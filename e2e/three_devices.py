@@ -121,7 +121,8 @@ async def stage2(pages):
 
     # UI shows the contact on both sides
     await A.goto(BASE + "/contacts", wait_until="networkidle")
-    await A.wait_for_timeout(2500)
+    await C.get_by_role("tab", name="Kontak", exact=True).click()
+    await A.wait_for_timeout(3000)
     aBody = await A.inner_text("body")
     cBody = await C.inner_text("body")
     seen = STATE["users"]["C"]["pin"] in aBody and STATE["users"]["A"]["pin"] in cBody
