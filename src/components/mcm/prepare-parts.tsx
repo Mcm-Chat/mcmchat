@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   confirmStaffPin,
@@ -85,6 +86,9 @@ export function CreatePreparationDialog({
   const [sending, setSending] = useState(false);
   const [staffPin, setStaffPin] = useState("");
   const [contactId, setContactId] = useState("");
+  const [deadlineHours, setDeadlineHours] = useState("168");
+  const [requirePhoto, setRequirePhoto] = useState(true);
+  const [requireLocation, setRequireLocation] = useState(true);
   const [manualCustomer, setManualCustomer] = useState("");
   const [savingPin, setSavingPin] = useState(false);
 
@@ -120,7 +124,10 @@ export function CreatePreparationDialog({
       toast.error(`${v.name} hanya menerima jumlah bulat`);
       return;
     }
-    setItems((p) => [...p, { key: crypto.randomUUID(), variant_id: v.id, qty: n, unit: activeUnit }]);
+    setItems((p) => [
+      ...p,
+      { key: crypto.randomUUID(), variant_id: v.id, qty: n, unit: activeUnit, require_photo: requirePhoto, require_location: requireLocation },
+    ]);
     setQty("1");
   };
 
@@ -148,6 +155,7 @@ export function CreatePreparationDialog({
         customerName: resolvedCustomerName,
         customerUserId: resolvedCustomerUser,
         notes,
+        expiresHours: Math.max(1, Number(deadlineHours) || 168),
         items: items.map(({ key: _key, ...rest }) => rest),
       });
       rememberToken(job.id, job.token);
@@ -315,13 +323,35 @@ export function CreatePreparationDialog({
             Nomor tersimpan di kolom khusus pegawai dan hanya bisa dilihat pemilik/admin bisnis.
           </p>
         </div>
+        <div className="space-y-3 rounded-xl border border-border p-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="prep-deadline">Tenggat (jam dari sekarang)</Label>
+            <Input
+              id="prep-deadline"
+              inputMode="numeric"
+              className="h-11"
+              value={deadlineHours}
+              onChange={(e) => setDeadlineHours(e.target.value.replace(/\D/g, ""))}
+            />
+          </div>
+          <label className="flex min-h-11 items-center justify-between gap-3 text-sm">
+            Wajib foto barang
+            <Switch checked={requirePhoto} onCheckedChange={setRequirePhoto} />
+          </label>
+          <label className="flex min-h-11 items-center justify-between gap-3 text-sm">
+            Wajib lokasi GPS
+            <Switch checked={requireLocation} onCheckedChange={setRequireLocation} />
+          </label>
+          <p className="text-[11px] text-muted-foreground">Berlaku untuk item yang ditambahkan setelah opsi ini diubah.</p>
+        </div>
+
         <div className="space-y-1.5">
           <Label htmlFor="prep-notes">Catatan untuk pegawai</Label>
           <Textarea id="prep-notes" maxLength={300} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
         <DialogFooter>
-          <Button className="w-full rounded-xl" disabled={sending} onClick={() => void submit()}>
+          <Button className="h-11 w-full rounded-xl" disabled={sending} onClick={() => void submit()}>
             <Send className="size-4" /> Kirim ke PIN MCM pegawai
           </Button>
         </DialogFooter>

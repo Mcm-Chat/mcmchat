@@ -1,47 +1,68 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { getActiveUserId, onAccountSwitch, scopedKey } from "@/lib/session-scope";
 
-const KEY = "mcm-theme";
+/** Key global hanya menyimpan tema terakhir yang dipakai di perangkat ini
+ *  (dipakai skrip pra-hidrasi agar tidak ada kedip). Preferensi sebenarnya
+ *  disimpan per akun: `mcm:<userId>:theme`. */
+const LAST_KEY = "mcm:last-theme";
 export type Theme = "light" | "dark";
 
-/** Skrip pra-hidrasi: memasang class tema sebelum paint agar tidak ada kedip. */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var t=localStorage.getItem("${KEY}")==="light"?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.dataset.theme=t;}catch(e){}})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var t=localStorage.getItem("${LAST_KEY}")==="light"?"light":"dark";document.documentElement.classList.toggle("dark",t==="dark");document.documentElement.dataset.theme=t;}catch(e){}})();`;
 
 type ThemeContextValue = { theme: Theme; setTheme: (next: Theme) => void };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+function apply(theme: Theme) {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.dataset["theme"] = theme;
+}
+
+function readStored(userId: string | null): Theme {
+  try {
+    const scoped = localStorage.getItem(scopedKey("theme", userId));
+    if (scoped === "light" || scoped === "dark") return scoped;
+  } catch {
+    /* storage tidak tersedia */
+  }
+  return "dark";
+}
+
 /**
- * Satu-satunya tempat tema disimpan dan diterapkan ke DOM. Route tidak boleh
- * menyentuh `document.documentElement` — membuka halaman apa pun (termasuk
- * Profil) tidak mengubah tema.
+ * Satu-satunya pihak yang menerapkan class tema ke `document.documentElement`.
+ * Route mana pun dilarang memutasi tema saat mount/unmount.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
 
   useEffect(() => {
-    const stored = localStorage.getItem(KEY);
-    const next: Theme = stored === "light" ? "light" : "dark";
-    setThemeState(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-    document.documentElement.dataset['theme'] = next;
+    const load = (userId: string | null) => {
+      const next = readStored(userId);
+      setThemeState(next);
+      apply(next);
+    };
+    load(getActiveUserId());
+    // Pergantian akun memuat ulang preferensi akun baru; preferensi akun lama
+    // sudah dihapus oleh purgeLocalScope sehingga tidak bocor antar akun.
+    return onAccountSwitch((next) => load(next));
   }, []);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
     try {
-      localStorage.setItem(KEY, next);
+      localStorage.setItem(scopedKey("theme"), next);
+      localStorage.setItem(LAST_KEY, next);
     } catch {
-      /* penyimpanan lokal bisa diblokir; tema tetap berlaku untuk sesi ini */
+      /* storage tidak tersedia */
     }
-    document.documentElement.classList.toggle("dark", next === "dark");
-    document.documentElement.dataset['theme'] = next;
+    apply(next);
   }, []);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-/** Hanya membaca/menulis melalui provider global; tidak pernah menyentuh DOM sendiri. */
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme harus dipakai di dalam ThemeProvider");
