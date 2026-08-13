@@ -706,6 +706,7 @@ function ChatRoom() {
           onNewSale={business ? () => setSaleOpen(true) : undefined}
           onNewPreparation={business ? () => setPrepOpen(true) : undefined}
           onLocation={() => setPhotoOpen(true)}
+          onSticker={() => setStickerOpen(true)}
           editing={!!editingId}
           onCancelEdit={() => {
             setEditingId(null);
