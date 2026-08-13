@@ -21,6 +21,7 @@ import {
   Send,
   ShoppingCart,
   Smile,
+  Sticker,
   Square,
   Trash2,
   Wallet,
