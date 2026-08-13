@@ -29,8 +29,15 @@ import { useTheme } from "@/lib/theme";
 import { useRequireAuth } from "@/lib/api/guard";
 import { canManage, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/business";
 import { useMyBusiness } from "@/lib/api/queries";
-import { uploadChatMedia } from "@/lib/api/storage";
-import { useSignedUrl } from "@/lib/api/use-signed-url";
+import { AvatarEditor } from "@/components/mcm/avatar-editor";
+import { UserAvatar } from "@/components/mcm/user-avatar";
+import {
+  AVATAR_PRIVACY_LABEL,
+  commitAvatar,
+  removeAvatar,
+  setAvatarPrivacy,
+  type AvatarPrivacy,
+} from "@/lib/api/avatar";
 import { readScreenSecurity, type ScreenSecurityStatus } from "@/lib/security/screen-privacy";
 import {
   getSettings,
@@ -63,7 +70,9 @@ function ProfilePage() {
   const { refresh, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const avatarUrl = useSignedUrl("avatars", profile?.avatar_url ?? null);
+  const [draftFile, setDraftFile] = useState<File | null>(null);
+  const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");
+  const [removeAvatarOpen, setRemoveAvatarOpen] = useState(false);
 
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -87,6 +96,7 @@ function ProfilePage() {
     if (profile) {
       setName(profile.display_name);
       setBio(profile.bio);
+      setAvatarPrivacyState(((profile as { avatar_privacy?: string }).avatar_privacy as AvatarPrivacy) ?? "contacts");
     }
   }, [profile]);
 
@@ -155,21 +165,51 @@ function ProfilePage() {
     }
   };
 
-  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Foto yang baru dipilih hanya masuk ke draft editor. Tidak ada unggahan
+   * maupun perubahan `profiles.avatar_*` sebelum tombol “Pasang foto profil”.
+   */
+  const onAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file || !userId) return;
+    if (!file) return;
+    setDraftFile(file);
+  };
+
+  const applyAvatar = async (blob: Blob) => {
+    if (!userId) return;
     setUploading(true);
     try {
-      const up = await uploadChatMedia(`avatars/${userId}`, file, file.name);
-      const { error } = await supabase.from("profiles").update({ avatar_url: up.path }).eq("id", userId);
-      if (error) throw new Error(error.message);
+      await commitAvatar(userId, blob);
       await refresh();
-      toast.success("Foto profil diperbarui");
-    } catch {
-      toast.error("Gagal mengunggah foto profil");
+      setDraftFile(null);
+      toast.success("Foto profil dipasang");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const deleteAvatar = async () => {
+    if (!userId) return;
+    try {
+      await removeAvatar(userId);
+      await refresh();
+      toast.success("Foto profil dihapus");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus foto profil");
+    }
+  };
+
+  const changeAvatarPrivacy = async (value: AvatarPrivacy) => {
+    if (!userId) return;
+    const prev = avatarPrivacy;
+    setAvatarPrivacyState(value);
+    try {
+      await setAvatarPrivacy(userId, value);
+      await refresh();
+    } catch (err) {
+      setAvatarPrivacyState(prev);
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan privasi foto profil");
     }
   };
 
@@ -251,23 +291,61 @@ function ProfilePage() {
       <div className="space-y-4 px-4 py-4 pb-24">
         <div className="card-soft flex items-center gap-3 p-4">
           <div className="relative">
-            <MCMAvatar
-              initials={profile.display_name.slice(0, 2).toUpperCase()}
+            <UserAvatar
+              userId={profile.id}
+              path={profile.avatar_url}
+              version={(profile as { avatar_version?: number }).avatar_version ?? 0}
+              name={profile.display_name}
               color={profile.avatar_color}
               size="lg"
             />
-            {avatarUrl && (
-              <img src={avatarUrl} alt={profile.display_name} className="absolute inset-0 size-16 rounded-full object-cover" />
-            )}
             <label className="absolute -right-1 -bottom-1 flex size-6 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Camera className="size-3.5" />
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => void onAvatarChange(e)} disabled={uploading} />
+              <span className="sr-only">Ubah foto profil</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
             </label>
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{profile.display_name}</p>
             <p className="truncate text-xs text-muted-foreground">{profile.bio || "Belum ada bio"}</p>
+            <div className="mt-1 flex gap-3 text-[11px]">
+              <label className="cursor-pointer text-primary">
+                Kamera
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onAvatarPick} disabled={uploading} />
+              </label>
+              <label className="cursor-pointer text-primary">
+                Galeri
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
+              </label>
+              {profile.avatar_url && (
+                <button type="button" className="text-destructive" onClick={() => setRemoveAvatarOpen(true)}>
+                  Hapus
+                </button>
+              )}
+            </div>
           </div>
+        </div>
+
+        <div className="card-soft space-y-2 p-4">
+          <p className="text-sm font-semibold">Siapa yang dapat melihat foto profil</p>
+          <div className="grid gap-2">
+            {(Object.keys(AVATAR_PRIVACY_LABEL) as AvatarPrivacy[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => void changeAvatarPrivacy(key)}
+                className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                  avatarPrivacy === key ? "border-primary bg-primary/10" : "border-border"
+                }`}
+              >
+                <span>{AVATAR_PRIVACY_LABEL[key]}</span>
+                {avatarPrivacy === key && <span className="text-xs text-primary">Aktif</span>}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Pengguna yang Anda blokir tidak pernah melihat foto profil, apa pun pilihannya.
+          </p>
         </div>
 
         <PinCard pin={profile.pin} name={profile.display_name} subtitle={profile.bio} />
@@ -549,6 +627,20 @@ function ProfilePage() {
           void signOut().then(() => navigate({ to: "/login" }));
         }}
       />
+
+      <ConfirmDialog
+        open={removeAvatarOpen}
+        onOpenChange={setRemoveAvatarOpen}
+        title="Hapus foto profil?"
+        description="Kontak akan kembali melihat inisial nama Anda."
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => void deleteAvatar()}
+      />
+
+      {draftFile && (
+        <AvatarEditor file={draftFile} onCancel={() => setDraftFile(null)} onApply={applyAvatar} />
+      )}
     </AppShell>
   );
 }

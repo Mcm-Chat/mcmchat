@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
 import { PhotoFlow } from "@/components/mcm/photo-parts";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -381,7 +382,11 @@ function ChatRoom() {
             title={
               <span className="flex items-center gap-2">
                 <span className="relative shrink-0">
-                  <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} size="sm" />
+                  {conv.other ? (
+                    <UserAvatar userId={conv.other.id} path={conv.other.avatar_url} version={conv.other.avatar_version ?? 0} name={conv.title_resolved} color={conv.other.avatar_color} size="sm" />
+                  ) : (
+                    <MCMAvatar initials={initialsOf(conv.title_resolved)} color="#0ea5e9" size="sm" />
+                  )}
                   {conv.other && onlineIds.has(conv.other.id) && (
                     <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-success" />
                   )}
@@ -442,7 +447,11 @@ function ChatRoom() {
         {messages.length === 0 && (
           <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <MCMAvatar initials={initialsOf(conv.title_resolved)} color={conv.other?.avatar_color ?? "#0ea5e9"} />
+              {conv.other ? (
+                <UserAvatar userId={conv.other.id} path={conv.other.avatar_url} version={conv.other.avatar_version ?? 0} name={conv.title_resolved} color={conv.other.avatar_color} />
+              ) : (
+                <MCMAvatar initials={initialsOf(conv.title_resolved)} color="#0ea5e9" />
+              )}
             </span>
             <p className="text-sm font-semibold">Mulai percakapan dengan {conv.title_resolved}</p>
             <p className="text-xs text-muted-foreground">Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.</p>
@@ -628,7 +637,7 @@ function ChatRoom() {
             <ul className="space-y-1">
               {conv.members.map((m) => (
                 <li key={m.id} className="flex items-center gap-2 text-sm">
-                  <MCMAvatar initials={initialsOf(m.display_name)} color={m.avatar_color} size="xs" />
+                  <UserAvatar userId={m.id} path={m.avatar_url} version={m.avatar_version ?? 0} name={m.display_name} color={m.avatar_color} size="xs" />
                   <span className="truncate">{m.display_name}</span>
                   <span className="ml-auto font-mono text-[11px] text-muted-foreground">{m.pin}</span>
                 </li>

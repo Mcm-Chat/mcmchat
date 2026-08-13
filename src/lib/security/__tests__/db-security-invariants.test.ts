@@ -98,10 +98,19 @@ describe("izin bucket avatars", () => {
   it("can_read_avatar_object membatasi ke pemilik, kontak, dan lawan percakapan", () => {
     const fn = sql.slice(lastIndexOfPattern(/create or replace function public\.can_read_avatar_object\(_name text\)/));
     expect(fn).toMatch(/auth\.uid\(\) is not null/);
-    expect(fn).toMatch(/storage\.foldername\(_name\)\)\[1\] = auth\.uid\(\)::text/);
-    expect(fn).toMatch(/public\.contacts/);
-    expect(fn).toMatch(/public\.conversation_members/);
+    // Objek avatar selalu berada di folder <owner_id>/..., dan keputusan akses
+    // didelegasikan ke can_view_avatar (pemilik, kontak, percakapan, privasi, blokir).
+    expect(fn).toMatch(/storage\.foldername\(_name\)\)\[1\]/);
+    expect(fn).toMatch(/public\.can_view_avatar\(/);
     expect(has(/grant execute on function public\.can_read_avatar_object\(text\) to anon/)).toBe(false);
+  });
+
+  it("can_view_avatar menghormati privasi avatar dan blokir", () => {
+    const fn = sql.slice(lastIndexOfPattern(/create or replace function public\.can_view_avatar\(/));
+    expect(fn).toMatch(/avatar_privacy/);
+    expect(fn).toMatch(/is_blocked = true/);
+    expect(fn).toMatch(/public\.contacts/);
+    expect(has(/grant execute on function public\.can_view_avatar\(uuid, uuid\) to anon/)).toBe(false);
   });
 });
 

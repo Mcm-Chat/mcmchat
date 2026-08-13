@@ -7,7 +7,7 @@ import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type MessageRow = Tables<"messages">;
 export type ConversationRow = Tables<"conversations">;
-export type MemberProfile = { id: string; display_name: string; pin: string; avatar_color: string; avatar_url: string | null };
+export type MemberProfile = { id: string; display_name: string; pin: string; avatar_color: string; avatar_url: string | null; avatar_version?: number };
 
 /** Ringkasan per percakapan dari RPC `conversation_overview`. */
 type OverviewRow = {
@@ -90,7 +90,7 @@ export async function listConversations(userId: string): Promise<ConversationVie
   const profileIds = [...new Set((allMembers.data ?? []).map((m) => m.user_id))];
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_color, avatar_url")
+    .select("id, display_name, avatar_color, avatar_url, avatar_version")
     .in("id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"]);
   const pmap = new Map(
     (profiles ?? []).map((p) => [p.id, { ...p, pin: "" } as MemberProfile]),
