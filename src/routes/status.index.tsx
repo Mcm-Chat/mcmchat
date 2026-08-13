@@ -5,6 +5,7 @@ import { CircleDashed, Plus, Settings2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { StatusViewer } from "@/components/mcm/status-viewer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
