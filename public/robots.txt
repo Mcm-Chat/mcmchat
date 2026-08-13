@@ -12,3 +12,20 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /chat
+Disallow: /status
+Disallow: /tasks
+Disallow: /ledger
+Disallow: /finance
+Disallow: /catalog
+Disallow: /business
+Disallow: /calls
+Disallow: /call
+Disallow: /contacts
+Disallow: /profile
+Disallow: /prepare
+Disallow: /photo
+Disallow: /settings
+Disallow: /api/
+
+Sitemap: https://mcmchat.id/sitemap.xml
