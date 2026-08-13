@@ -27,7 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { useRequireAuth } from "@/lib/api/guard";
-import { canManage, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/business";
+import { canManage, MEMBER_SAFE_COLUMNS, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/business";
 import { useMyBusiness } from "@/lib/api/queries";
 import { AvatarEditor } from "@/components/mcm/avatar-editor";
 import { UserAvatar } from "@/components/mcm/user-avatar";
