@@ -141,7 +141,11 @@ export function StatusEditor({
       return;
     }
     const hit = hitLayer(p.x, p.y);
-    if (hit) dragId.current = hit.id;
+    if (hit) {
+      dragId.current = hit.id;
+      // Satu snapshot riwayat di awal geseran.
+      dispatch({ type: "update", id: hit.id, patch: {} as Partial<Layer> });
+    }
   };
 
   const onMove = (e: React.PointerEvent) => {
@@ -153,7 +157,11 @@ export function StatusEditor({
       lastPoint.current = p;
       dispatch({ type: "appendPoint", id: drawingId.current, point: p });
     } else if (dragId.current)
-      dispatch({ type: "update", id: dragId.current, patch: { x: p.x, y: p.y } as Partial<Layer> });
+      dispatch({
+        type: "updateLive",
+        id: dragId.current,
+        patch: { x: p.x, y: p.y } as Partial<Layer>,
+      });
   };
 
   const onUp = () => {
