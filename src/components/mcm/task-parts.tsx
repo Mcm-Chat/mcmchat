@@ -9,9 +9,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ConfirmDialog } from "@/components/mcm/primitives";
 import { waktuRelatif } from "@/lib/mcm/format";
 import { recallToken, rememberToken } from "@/lib/api/prepare";
-import { revokeTaskJob, rotateTaskToken, taskUrl, TASK_STATUS_LABEL, type JobWithItems } from "@/lib/api/tasks";
+import {
+  revokeTaskJob,
+  rotateTaskToken,
+  taskUrl,
+  TASK_STATUS_LABEL,
+  type JobWithItems,
+} from "@/lib/api/tasks";
 
-export function taskStatusTone(status: string): "success" | "warning" | "neutral" | "danger" | "primary" {
+export function taskStatusTone(
+  status: string,
+): "success" | "warning" | "neutral" | "danger" | "primary" {
   if (status === "completed") return "success";
   if (status === "cancelled") return "danger";
   if (status === "draft" || status === "sent") return "neutral";
@@ -20,7 +28,11 @@ export function taskStatusTone(status: string): "success" | "warning" | "neutral
 
 export function TaskStatusBadge({ status }: { status: string }) {
   return (
-    <Badge variant={status === "completed" ? "default" : status === "cancelled" ? "destructive" : "secondary"}>
+    <Badge
+      variant={
+        status === "completed" ? "default" : status === "cancelled" ? "destructive" : "secondary"
+      }
+    >
       {TASK_STATUS_LABEL[status] ?? status}
     </Badge>
   );
@@ -103,13 +115,31 @@ export function ManagerTaskCard({
             Buka detail
           </Link>
         </Button>
-        <Button size="sm" variant="secondary" className="rounded-lg" disabled={!token} onClick={() => setQrOpen(true)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-lg"
+          disabled={!token}
+          onClick={() => setQrOpen(true)}
+        >
           <QrCode className="size-4" /> Barcode
         </Button>
-        <Button size="sm" variant="secondary" className="rounded-lg" disabled={!token} onClick={() => void copy()}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-lg"
+          disabled={!token}
+          onClick={() => void copy()}
+        >
           <Copy className="size-4" /> Salin link
         </Button>
-        <Button size="sm" variant="ghost" className="rounded-lg" disabled={busy} onClick={() => void rotate()}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="rounded-lg"
+          disabled={busy}
+          onClick={() => void rotate()}
+        >
           <RefreshCw className="size-4" /> Terbitkan ulang
         </Button>
         {job.conversation_id && (
@@ -120,7 +150,12 @@ export function ManagerTaskCard({
           </Button>
         )}
         {!job.revoked_at && (
-          <Button size="sm" variant="ghost" className="rounded-lg text-destructive" onClick={() => setRevokeOpen(true)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="rounded-lg text-destructive"
+            onClick={() => setRevokeOpen(true)}
+          >
             <X className="size-4" /> Cabut
           </Button>
         )}
@@ -163,7 +198,9 @@ export function EmployeeTaskCard({ job }: { job: JobWithItems }) {
         <span className="font-semibold">{job.code}</span>
         <TaskStatusBadge status={job.status} />
       </div>
-      <p className="truncate text-xs text-muted-foreground">Pelanggan: {job.customer_name || "—"}</p>
+      <p className="truncate text-xs text-muted-foreground">
+        Pelanggan: {job.customer_name || "—"}
+      </p>
       <p className="text-xs text-muted-foreground">
         {done}/{total} item selesai · {waktuRelatif(job.created_at)}
       </p>

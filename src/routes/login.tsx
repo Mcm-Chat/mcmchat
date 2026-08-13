@@ -17,7 +17,10 @@ export const Route = createFileRoute("/login")({
     meta: [
       ...canonical("/login").meta,
       { title: "Masuk ke MCM" },
-      { name: "description", content: "Masuk ke akun MCM dengan email dan kata sandi atau akun Google Anda." },
+      {
+        name: "description",
+        content: "Masuk ke akun MCM dengan email dan kata sandi atau akun Google Anda.",
+      },
       { property: "og:title", content: "Masuk ke MCM" },
       { property: "og:description", content: "Masuk ke akun MCM Anda." },
     ],
@@ -53,16 +56,22 @@ function LoginPage() {
     }
     setErrors({});
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
     setLoading(false);
     if (error) {
-      toast.error(error.message.includes("Invalid login") ? "Email atau kata sandi salah." : "Gagal masuk. Coba lagi.");
+      toast.error(
+        error.message.includes("Invalid login")
+          ? "Email atau kata sandi salah."
+          : "Gagal masuk. Coba lagi.",
+      );
       return;
     }
     toast.success("Berhasil masuk.");
     void navigate({ to: "/chat", replace: true });
   };
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +79,9 @@ function LoginPage() {
         <div className="text-center">
           <img src={logo} alt="Logo MCM" width={512} height={512} className="mx-auto size-16" />
           <h1 className="mt-3 text-2xl font-bold">Masuk ke MCM</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Kelola chat, panggilan, dan catatan keuangan Anda.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Kelola chat, panggilan, dan catatan keuangan Anda.
+          </p>
         </div>
         <form className="card-soft space-y-4 p-5" onSubmit={(e) => void submit(e)} noValidate>
           <div className="space-y-1.5">
@@ -83,9 +94,9 @@ function LoginPage() {
               maxLength={160}
               placeholder="nama@email.com"
               onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={!!errors['email']}
+              aria-invalid={!!errors["email"]}
             />
-            {errors['email'] && <p className="text-xs text-destructive">{errors['email']}</p>}
+            {errors["email"] && <p className="text-xs text-destructive">{errors["email"]}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Kata sandi</Label>
@@ -97,9 +108,9 @@ function LoginPage() {
               maxLength={72}
               placeholder="Minimal 6 karakter"
               onChange={(e) => setPassword(e.target.value)}
-              aria-invalid={!!errors['password']}
+              aria-invalid={!!errors["password"]}
             />
-            {errors['password'] && <p className="text-xs text-destructive">{errors['password']}</p>}
+            {errors["password"] && <p className="text-xs text-destructive">{errors["password"]}</p>}
           </div>
           <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
             {loading && <Loader2 className="size-4 animate-spin" />} Masuk

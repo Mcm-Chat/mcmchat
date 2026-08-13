@@ -60,7 +60,10 @@ export async function loadFeed(userId: string): Promise<FeedPayload> {
   const ownerIds = [...new Set(rows.map((r) => r.owner_id))];
   const [{ data: itemRows }, { data: profileRows }] = await Promise.all([
     supabase.from("status_items").select("*").in("status_id", statusIds).order("sort_order"),
-    supabase.from("profiles").select("id, display_name, avatar_url, avatar_color, avatar_version").in("id", ownerIds),
+    supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url, avatar_color, avatar_version")
+      .in("id", ownerIds),
   ]);
   const items = ((itemRows ?? []) as unknown as StatusItem[]).map((i) => ({
     ...i,
@@ -167,7 +170,10 @@ export async function markStatusViewed(item: StatusItem, userId: string, share: 
   if (item.owner_id === userId || !share) return;
   await supabase
     .from("status_views")
-    .upsert({ item_id: item.id, viewer_id: userId, status_id: item.status_id }, { onConflict: "item_id,viewer_id" });
+    .upsert(
+      { item_id: item.id, viewer_id: userId, status_id: item.status_id },
+      { onConflict: "item_id,viewer_id" },
+    );
 }
 
 export type ViewerRow = {
@@ -180,13 +186,20 @@ export type ViewerRow = {
 
 export async function listViewers(statusId: string): Promise<ViewerRow[]> {
   const [{ data: views }, { data: reactions }] = await Promise.all([
-    supabase.from("status_views").select("item_id, viewer_id, viewed_at").eq("status_id", statusId).order("viewed_at", { ascending: false }),
+    supabase
+      .from("status_views")
+      .select("item_id, viewer_id, viewed_at")
+      .eq("status_id", statusId)
+      .order("viewed_at", { ascending: false }),
     supabase.from("status_reactions").select("item_id, user_id, emoji").eq("status_id", statusId),
   ]);
   const ids = [...new Set((views ?? []).map((v) => v.viewer_id))];
   const profiles: Record<string, OwnerProfile> = {};
   if (ids.length > 0) {
-    const { data } = await supabase.from("profiles").select("id, display_name, avatar_url, avatar_color, avatar_version").in("id", ids);
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url, avatar_color, avatar_version")
+      .in("id", ids);
     for (const p of data ?? []) profiles[p.id] = p as OwnerProfile;
   }
   return (views ?? []).map((v) => ({
@@ -194,7 +207,9 @@ export async function listViewers(statusId: string): Promise<ViewerRow[]> {
     viewed_at: v.viewed_at,
     item_id: v.item_id,
     profile: profiles[v.viewer_id] ?? null,
-    emoji: (reactions ?? []).find((r) => r.user_id === v.viewer_id && r.item_id === v.item_id)?.emoji ?? null,
+    emoji:
+      (reactions ?? []).find((r) => r.user_id === v.viewer_id && r.item_id === v.item_id)?.emoji ??
+      null,
   }));
 }
 
@@ -202,7 +217,10 @@ export async function listViewers(statusId: string): Promise<ViewerRow[]> {
 export async function reactToStatus(item: StatusItem, userId: string, emoji: string) {
   await supabase
     .from("status_reactions")
-    .upsert({ item_id: item.id, user_id: userId, status_id: item.status_id, emoji }, { onConflict: "item_id,user_id" });
+    .upsert(
+      { item_id: item.id, user_id: userId, status_id: item.status_id, emoji },
+      { onConflict: "item_id,user_id" },
+    );
   await replyToStatus(item, userId, emoji);
 }
 
@@ -237,19 +255,29 @@ export async function deleteStatusItem(item: StatusItem) {
     .from("status_items")
     .select("id", { count: "exact", head: true })
     .eq("status_id", item.status_id);
-  if ((count ?? 0) === 0) await supabase.from("statuses").update({ deleted_at: new Date().toISOString() }).eq("id", item.status_id);
+  if ((count ?? 0) === 0)
+    await supabase
+      .from("statuses")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", item.status_id);
 }
 
 export async function deleteStatus(statusId: string, items: StatusItem[]) {
-  const { error } = await supabase.from("statuses").update({ deleted_at: new Date().toISOString() }).eq("id", statusId);
+  const { error } = await supabase
+    .from("statuses")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", statusId);
   if (error) throw new Error(friendly(error.message, "Status gagal dihapus"));
   const paths = items.flatMap((i) => [i.media_path, i.thumb_path]).filter((p): p is string => !!p);
   if (paths.length > 0) await supabase.storage.from("status-media").remove(paths);
 }
 
 export async function setStatusMuted(userId: string, ownerId: string, muted: boolean) {
-  if (muted) await supabase.from("status_mutes").upsert({ user_id: userId, muted_user_id: ownerId });
-  else await supabase.from("status_mutes").delete().eq("user_id", userId).eq("muted_user_id", ownerId);
+  if (muted)
+    await supabase.from("status_mutes").upsert({ user_id: userId, muted_user_id: ownerId });
+  else
+    await supabase.from("status_mutes").delete().eq("user_id", userId).eq("muted_user_id", ownerId);
 }
 
-export const statusMediaUrl = (path: string | null) => (path ? signedUrl("status-media", path) : Promise.resolve(null));
+export const statusMediaUrl = (path: string | null) =>
+  path ? signedUrl("status-media", path) : Promise.resolve(null);

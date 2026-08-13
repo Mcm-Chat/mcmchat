@@ -4,7 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, MessageSquare, ShieldAlert, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { EmptyState, LoadingSkeleton, ConfirmDialog, StatusBadge } from "@/components/mcm/primitives";
+import {
+  EmptyState,
+  LoadingSkeleton,
+  ConfirmDialog,
+  StatusBadge,
+} from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,18 +22,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { rupiah, tanggal, waktuRelatif } from "@/lib/mcm/format";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/api/guard";
-import { getLedger, LEDGER_STATUS_LABEL, recordPayment, remaining, updateStatus, type LedgerRow } from "@/lib/api/ledger";
+import {
+  getLedger,
+  LEDGER_STATUS_LABEL,
+  recordPayment,
+  remaining,
+  updateStatus,
+  type LedgerRow,
+} from "@/lib/api/ledger";
 import { qk } from "@/lib/api/queries";
 
 export const Route = createFileRoute("/ledger/$id")({
   head: () => ({
     meta: [
       { title: "Detail catatan — MCM" },
-      { name: "description", content: "Detail utang piutang MCM: pembayaran, linimasa aktivitas, dan persetujuan." },
+      {
+        name: "description",
+        content: "Detail utang piutang MCM: pembayaran, linimasa aktivitas, dan persetujuan.",
+      },
       { property: "og:title", content: "Detail catatan — MCM" },
       { property: "og:description", content: "Riwayat pembayaran dan persetujuan catatan utang." },
     ],
@@ -51,15 +72,27 @@ function LedgerDetail() {
     if (!id) return;
     const channel = supabase
       .channel(`ledger-detail-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "ledgers", filter: `id=eq.${id}` }, () => {
-        void qc.invalidateQueries({ queryKey: qk.ledger(id) });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "ledger_payments", filter: `ledger_id=eq.${id}` }, () => {
-        void qc.invalidateQueries({ queryKey: qk.ledger(id) });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "ledger_events", filter: `ledger_id=eq.${id}` }, () => {
-        void qc.invalidateQueries({ queryKey: qk.ledger(id) });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ledgers", filter: `id=eq.${id}` },
+        () => {
+          void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ledger_payments", filter: `ledger_id=eq.${id}` },
+        () => {
+          void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ledger_events", filter: `ledger_id=eq.${id}` },
+        () => {
+          void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+        },
+      )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
@@ -68,7 +101,13 @@ function LedgerDetail() {
 
   const [payOpen, setPayOpen] = useState(false);
   const [pay, setPay] = useState({ amount: "", method: "transfer", note: "" });
-  const [confirm, setConfirm] = useState<null | { status: LedgerRow["status"]; title: string; description: string; label: string; destructive?: boolean }>(null);
+  const [confirm, setConfirm] = useState<null | {
+    status: LedgerRow["status"];
+    title: string;
+    description: string;
+    label: string;
+    destructive?: boolean;
+  }>(null);
 
   const ledger = data?.ledger;
   const isOwner = ledger?.owner_id === userId;
@@ -130,7 +169,9 @@ function LedgerDetail() {
           description="Catatan ini mungkin sudah dihapus atau Anda tidak memiliki akses."
           action={
             <div className="flex gap-2">
-              <Button variant="outline" className="rounded-xl" onClick={() => void refetch()}>Coba lagi</Button>
+              <Button variant="outline" className="rounded-xl" onClick={() => void refetch()}>
+                Coba lagi
+              </Button>
               <Button asChild className="rounded-xl">
                 <Link to="/finance">Kembali ke Keuangan</Link>
               </Button>
@@ -142,38 +183,72 @@ function LedgerDetail() {
   }
 
   const canApprove = isCounterpart && ledger.status === "pending_approval";
-  const canPay = (isOwner || isCounterpart) && (ledger.status === "active" || ledger.status === "partially_paid");
-  const canMarkPaid = (isOwner || isCounterpart) && sisa === 0 && ledger.status !== "paid" && ledger.status !== "cancelled" && ledger.status !== "rejected";
-  const canDispute = (isOwner || isCounterpart) && !["disputed", "cancelled", "rejected"].includes(ledger.status);
+  const canPay =
+    (isOwner || isCounterpart) &&
+    (ledger.status === "active" || ledger.status === "partially_paid");
+  const canMarkPaid =
+    (isOwner || isCounterpart) &&
+    sisa === 0 &&
+    ledger.status !== "paid" &&
+    ledger.status !== "cancelled" &&
+    ledger.status !== "rejected";
+  const canDispute =
+    (isOwner || isCounterpart) && !["disputed", "cancelled", "rejected"].includes(ledger.status);
   const canCancel = isOwner && !["cancelled", "paid"].includes(ledger.status);
 
   return (
-    <AppShell nav={false} header={<MobileHeader back title="Detail catatan" subtitle={ledger.counterpart_name} />}>
+    <AppShell
+      nav={false}
+      header={<MobileHeader back title="Detail catatan" subtitle={ledger.counterpart_name} />}
+    >
       <div className="space-y-4 px-4 py-4 pb-10">
         <div className="card-soft space-y-3 p-4">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-sm text-muted-foreground">{ledger.type === "receivable" ? "Piutang saya" : "Saya berutang"}</p>
+              <p className="text-sm text-muted-foreground">
+                {ledger.type === "receivable" ? "Piutang saya" : "Saya berutang"}
+              </p>
               <p className="text-2xl font-bold">{rupiah(sisa)}</p>
-              <p className="text-xs text-muted-foreground">dari total {rupiah(Number(ledger.amount))} • dibayar {rupiah(Number(ledger.paid_amount))}</p>
+              <p className="text-xs text-muted-foreground">
+                dari total {rupiah(Number(ledger.amount))} • dibayar{" "}
+                {rupiah(Number(ledger.paid_amount))}
+              </p>
             </div>
-            <StatusBadge tone={ledger.status === "paid" ? "success" : ledger.status === "rejected" || ledger.status === "disputed" ? "danger" : ledger.status === "pending_approval" ? "warning" : "primary"}>
+            <StatusBadge
+              tone={
+                ledger.status === "paid"
+                  ? "success"
+                  : ledger.status === "rejected" || ledger.status === "disputed"
+                    ? "danger"
+                    : ledger.status === "pending_approval"
+                      ? "warning"
+                      : "primary"
+              }
+            >
               {LEDGER_STATUS_LABEL[ledger.status]}
             </StatusBadge>
           </div>
           {ledger.note && <p className="text-sm">{ledger.note}</p>}
-          {ledger.due_date && <p className="text-xs text-muted-foreground">Jatuh tempo {tanggal(ledger.due_date)}</p>}
+          {ledger.due_date && (
+            <p className="text-xs text-muted-foreground">Jatuh tempo {tanggal(ledger.due_date)}</p>
+          )}
         </div>
 
         {canApprove && (
           <div className="card-soft space-y-2 p-4">
             <p className="text-sm font-semibold">Menunggu persetujuan Anda</p>
-            <p className="text-xs text-muted-foreground">Catatan ini berlaku setelah Anda menyetujuinya.</p>
+            <p className="text-xs text-muted-foreground">
+              Catatan ini berlaku setelah Anda menyetujuinya.
+            </p>
             <div className="flex gap-2">
               <Button className="flex-1 rounded-xl" onClick={() => void runStatus("active")}>
                 <CheckCircle2 className="size-4" /> Setujui
               </Button>
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => void runStatus("rejected")}>
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl"
+                onClick={() => void runStatus("rejected")}
+              >
                 <XCircle className="size-4" /> Tolak
               </Button>
             </div>
@@ -189,7 +264,12 @@ function LedgerDetail() {
             className="rounded-xl"
             disabled={!canMarkPaid}
             onClick={() =>
-              setConfirm({ status: "paid", title: "Tandai lunas?", description: "Catatan ini akan ditandai lunas.", label: "Tandai lunas" })
+              setConfirm({
+                status: "paid",
+                title: "Tandai lunas?",
+                description: "Catatan ini akan ditandai lunas.",
+                label: "Tandai lunas",
+              })
             }
           >
             <CheckCircle2 className="size-4" /> Tandai lunas
@@ -203,7 +283,10 @@ function LedgerDetail() {
           ) : (
             <ul className="space-y-2">
               {data.payments.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                <li
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-xl border border-border p-3"
+                >
                   <CheckCircle2 className="size-5 shrink-0 text-success" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{rupiah(Number(p.amount))}</p>
@@ -250,7 +333,14 @@ function LedgerDetail() {
             className="rounded-xl text-destructive"
             disabled={!canDispute}
             onClick={() =>
-              setConfirm({ status: "disputed", title: "Sengketakan catatan?", description: "Catatan akan ditandai disengketakan hingga kedua pihak menyelesaikannya.", label: "Sengketakan", destructive: true })
+              setConfirm({
+                status: "disputed",
+                title: "Sengketakan catatan?",
+                description:
+                  "Catatan akan ditandai disengketakan hingga kedua pihak menyelesaikannya.",
+                label: "Sengketakan",
+                destructive: true,
+              })
             }
           >
             <ShieldAlert className="size-4" /> Sengketakan
@@ -262,7 +352,13 @@ function LedgerDetail() {
             variant="ghost"
             className="w-full rounded-xl text-destructive"
             onClick={() =>
-              setConfirm({ status: "cancelled", title: "Batalkan catatan?", description: "Catatan yang dibatalkan tidak bisa diaktifkan kembali.", label: "Batalkan", destructive: true })
+              setConfirm({
+                status: "cancelled",
+                title: "Batalkan catatan?",
+                description: "Catatan yang dibatalkan tidak bisa diaktifkan kembali.",
+                label: "Batalkan",
+                destructive: true,
+              })
             }
           >
             <XCircle className="size-4" /> Batalkan catatan
@@ -284,12 +380,17 @@ function LedgerDetail() {
                 inputMode="numeric"
                 maxLength={12}
                 value={pay.amount}
-                onChange={(e) => setPay((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))}
+                onChange={(e) =>
+                  setPay((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))
+                }
               />
             </div>
             <div className="space-y-1.5">
               <Label>Metode</Label>
-              <Select value={pay.method} onValueChange={(v) => setPay((p) => ({ ...p, method: v }))}>
+              <Select
+                value={pay.method}
+                onValueChange={(v) => setPay((p) => ({ ...p, method: v }))}
+              >
                 <SelectTrigger className="w-full rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
@@ -302,7 +403,13 @@ function LedgerDetail() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pay-note">Catatan</Label>
-              <Input id="pay-note" maxLength={80} value={pay.note} onChange={(e) => setPay((p) => ({ ...p, note: e.target.value }))} placeholder="Opsional" />
+              <Input
+                id="pay-note"
+                maxLength={80}
+                value={pay.note}
+                onChange={(e) => setPay((p) => ({ ...p, note: e.target.value }))}
+                placeholder="Opsional"
+              />
             </div>
           </div>
           <DialogFooter className="flex-row justify-end gap-2">

@@ -42,7 +42,8 @@ function openDb(): Promise<IDBDatabase> {
       const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = () => {
         const db = req.result;
-        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: "clientId" });
+        if (!db.objectStoreNames.contains(STORE))
+          db.createObjectStore(STORE, { keyPath: "clientId" });
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -54,7 +55,9 @@ function openDb(): Promise<IDBDatabase> {
 function readLocal(userId: string): OutboxEntry[] {
   if (typeof localStorage === "undefined") return [];
   try {
-    return sanitizeEntries(JSON.parse(localStorage.getItem(lsKey(userId)) ?? "[]")).filter((e) => e.senderId === userId);
+    return sanitizeEntries(JSON.parse(localStorage.getItem(lsKey(userId)) ?? "[]")).filter(
+      (e) => e.senderId === userId,
+    );
   } catch {
     return [];
   }

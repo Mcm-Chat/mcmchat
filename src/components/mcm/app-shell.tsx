@@ -1,5 +1,13 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, CircleDashed, ClipboardList, MessageCircle, Package, User, Wallet } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleDashed,
+  ClipboardList,
+  MessageCircle,
+  Package,
+  User,
+  Wallet,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,13 +23,19 @@ const NAV = [
   { to: "/profile", label: "Profil", icon: User, match: "/profile" },
 ] as const;
 
-export function BottomNavigation({ badges }: { badges?: Partial<Record<string, number>> | undefined }) {
+export function BottomNavigation({
+  badges,
+}: {
+  badges?: Partial<Record<string, number>> | undefined;
+}) {
   const { user } = useAuth();
   const { data: convs } = useConversations(user?.id);
   const { data: ledgers } = useLedgers(user?.id);
   const auto: Record<string, number> = {
     "/chat": (convs ?? []).filter((c) => !c.me.is_archived).reduce((s, c) => s + c.unread, 0),
-    "/finance": (ledgers ?? []).filter((l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id).length,
+    "/finance": (ledgers ?? []).filter(
+      (l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id,
+    ).length,
   };
   const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -95,18 +109,20 @@ export function MobileHeader({
             size="icon"
             aria-label="Kembali"
             className="size-11 shrink-0"
-            onClick={() => (onBack ? onBack() : window.history.length > 1 ? window.history.back() : navigate({ to: "/chat" }))}
+            onClick={() =>
+              onBack
+                ? onBack()
+                : window.history.length > 1
+                  ? window.history.back()
+                  : navigate({ to: "/chat" })
+            }
           >
             <ArrowLeft className="size-5" />
           </Button>
         )}
         <div className="min-w-0 flex-1">
           <div className="truncate text-base leading-tight font-semibold">{title}</div>
-          {subtitle && (
-            <div className="truncate text-xs text-muted-foreground">
-              {subtitle}
-            </div>
-          )}
+          {subtitle && <div className="truncate text-xs text-muted-foreground">{subtitle}</div>}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
       </div>

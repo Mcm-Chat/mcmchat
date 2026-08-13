@@ -29,7 +29,9 @@ export function previewBase(variant: ProductVariant, qty: number, unit: string):
 export function formatBase(variant: ProductVariant, qtyBase: number | string | null): string {
   const n = Number(qtyBase ?? 0);
   if (variant.stock_type === "weight") {
-    return n >= 1000 ? `${(n / 1000).toLocaleString("id-ID", { maximumFractionDigits: 3 })} kg` : `${n.toFixed(2)} g`;
+    return n >= 1000
+      ? `${(n / 1000).toLocaleString("id-ID", { maximumFractionDigits: 3 })} kg`
+      : `${n.toFixed(2)} g`;
   }
   return `${Number.isInteger(n) ? n : n.toFixed(2)} ${variant.base_unit}`;
 }
@@ -75,14 +77,16 @@ export type StaffMember = {
 export async function listStaff(businessId: string): Promise<StaffMember[]> {
   const { data, error } = await supabase.rpc("business_staff_directory", { _business: businessId });
   if (error) throw new Error(friendly(error.message, "Gagal memuat pegawai"));
-  return ((data ?? []) as Array<{
-    user_id: string;
-    role: string;
-    display_name: string;
-    avatar_color: string;
-    staff_pin: string | null;
-    pin_confirmed_at: string | null;
-  }>).map((r) => ({
+  return (
+    (data ?? []) as Array<{
+      user_id: string;
+      role: string;
+      display_name: string;
+      avatar_color: string;
+      staff_pin: string | null;
+      pin_confirmed_at: string | null;
+    }>
+  ).map((r) => ({
     id: r.user_id,
     role: r.role,
     name: r.display_name || "Pegawai",
@@ -113,16 +117,35 @@ export async function confirmStaffPin(input: {
     _label: input.label ?? "",
   });
   if (error) throw new Error(friendly(error.message, "Gagal menyimpan PIN pegawai"));
-  const row = data as unknown as { user_id: string; role: string; pin: string; name: string; confirmed_at: string };
-  return { id: row.user_id, role: row.role, name: row.name, pin: row.pin, confirmedAt: row.confirmed_at, color: "emerald" };
+  const row = data as unknown as {
+    user_id: string;
+    role: string;
+    pin: string;
+    name: string;
+    confirmed_at: string;
+  };
+  return {
+    id: row.user_id,
+    role: row.role,
+    name: row.name,
+    pin: row.pin,
+    confirmedAt: row.confirmed_at,
+    color: "emerald",
+  };
 }
 
 /**
  * Mengirim perintah penyiapan ke PIN MCM pegawai: pesan berisi rincian dan
  * tautan pengisian masuk ke chat pribadi pegawai (dibuat bila belum ada).
  */
-export async function deliverPreparationJob(jobId: string, link: string): Promise<{ conversationId: string; pin: string }> {
-  const { data, error } = await supabase.rpc("deliver_preparation_job", { _job: jobId, _link: link });
+export async function deliverPreparationJob(
+  jobId: string,
+  link: string,
+): Promise<{ conversationId: string; pin: string }> {
+  const { data, error } = await supabase.rpc("deliver_preparation_job", {
+    _job: jobId,
+    _link: link,
+  });
   if (error) throw new Error(friendly(error.message, "Gagal mengirim tugas ke pegawai"));
   const row = data as unknown as { conversation_id: string; pin: string };
   return { conversationId: row.conversation_id, pin: row.pin };
@@ -161,10 +184,10 @@ export async function createPreparationJob(input: {
     _notes: input.notes ?? "",
     _expires_hours: input.expiresHours ?? 168,
   };
-  if (input.conversationId) args['_conversation'] = input.conversationId;
-  if (input.customerId) args['_customer'] = input.customerId;
-  if (input.customerUserId) args['_customer_user'] = input.customerUserId;
-  if (input.orderId) args['_order'] = input.orderId;
+  if (input.conversationId) args["_conversation"] = input.conversationId;
+  if (input.customerId) args["_customer"] = input.customerId;
+  if (input.customerUserId) args["_customer_user"] = input.customerUserId;
+  if (input.orderId) args["_order"] = input.orderId;
   const { data, error } = await supabase.rpc("create_preparation_job", args as never);
   if (error) throw new Error(friendly(error.message, "Gagal membuat perintah penyiapan"));
   const job = data as unknown as { id: string; code: string; token: string; expires_at: string };
@@ -188,7 +211,11 @@ export async function listJobsForConversation(conversationId: string): Promise<J
 
 export async function getJob(jobId: string): Promise<JobWithItems> {
   const row = unwrap(
-    await supabase.from("preparation_jobs").select("*, items:preparation_job_items(*)").eq("id", jobId).single(),
+    await supabase
+      .from("preparation_jobs")
+      .select("*, items:preparation_job_items(*)")
+      .eq("id", jobId)
+      .single(),
     "Tugas tidak ditemukan",
   );
   return row as unknown as JobWithItems;

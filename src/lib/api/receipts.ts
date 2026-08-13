@@ -1,7 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-export type ReceiptRow = Pick<Tables<"message_receipts">, "message_id" | "user_id" | "delivered_at" | "read_at">;
+export type ReceiptRow = Pick<
+  Tables<"message_receipts">,
+  "message_id" | "user_id" | "delivered_at" | "read_at"
+>;
 
 /**
  * Status centang pesan keluar.
@@ -36,7 +39,10 @@ export function indexReceipts(rows: ReceiptRow[]): Map<string, ReceiptRow[]> {
 }
 
 /** Ambil tanda terima untuk sekumpulan pesan (biasanya pesan milik saya). */
-export async function listReceipts(messageIds: string[], excludeUserId?: string): Promise<ReceiptRow[]> {
+export async function listReceipts(
+  messageIds: string[],
+  excludeUserId?: string,
+): Promise<ReceiptRow[]> {
   if (messageIds.length === 0) return [];
   const { data } = await supabase
     .from("message_receipts")

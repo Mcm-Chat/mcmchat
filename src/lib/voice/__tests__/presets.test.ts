@@ -17,7 +17,10 @@ describe("voice presets", () => {
   });
 
   it("preset off menghasilkan audio normal", () => {
-    expect(effectiveParams({ ...DEFAULT_VOICE_PREFS, enabled: true, preset: "off" })).toEqual({ ...NEUTRAL, denoise: 0 });
+    expect(effectiveParams({ ...DEFAULT_VOICE_PREFS, enabled: true, preset: "off" })).toEqual({
+      ...NEUTRAL,
+      denoise: 0,
+    });
   });
 
   it("membatasi parameter ekstrem ke rentang aman", () => {

@@ -15,7 +15,10 @@ export function LegalPage({
   sections: LegalSection[];
 }) {
   return (
-    <AppShell nav={false} header={<MobileHeader title={title} subtitle={`Diperbarui ${updatedAt}`} back />}>
+    <AppShell
+      nav={false}
+      header={<MobileHeader title={title} subtitle={`Diperbarui ${updatedAt}`} back />}
+    >
       <div className="space-y-5 px-4 py-5 pb-10">
         <p className="text-sm leading-relaxed text-muted-foreground">{intro}</p>
         {sections.map((s) => (

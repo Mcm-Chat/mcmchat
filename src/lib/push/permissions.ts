@@ -13,8 +13,14 @@ export const PERM_LABEL: Record<PermKey, { title: string; desc: string }> = {
   notifications: { title: "Notifikasi", desc: "Pesan masuk, panggilan, tugas, dan pembayaran." },
   camera: { title: "Kamera", desc: "Diminta hanya saat Anda memotret produk atau bukti tugas." },
   microphone: { title: "Mikrofon", desc: "Diminta hanya saat merekam pesan suara atau panggilan." },
-  location: { title: "Lokasi", desc: "Diminta hanya saat Anda melampirkan lokasi. Tidak pernah di latar belakang." },
-  photos: { title: "Foto & media", desc: "Memakai Photo Picker Android; MCM tidak meminta akses seluruh file." },
+  location: {
+    title: "Lokasi",
+    desc: "Diminta hanya saat Anda melampirkan lokasi. Tidak pernah di latar belakang.",
+  },
+  photos: {
+    title: "Foto & media",
+    desc: "Memakai Photo Picker Android; MCM tidak meminta akses seluruh file.",
+  },
 };
 
 export const STATE_LABEL: Record<PermState, string> = {
@@ -74,7 +80,8 @@ export async function checkPermission(key: PermKey): Promise<PermState> {
     }
     if (key === "camera" || key === "photos") {
       const cam = await plugin("@capacitor/camera");
-      const check = cam?.["checkPermissions"] as (() => Promise<{ camera: string; photos: string }>) | undefined;
+      const check = cam?.["checkPermissions"] as
+        (() => Promise<{ camera: string; photos: string }>) | undefined;
       if (!check) return "unsupported";
       const res = await check();
       return normalize(key === "camera" ? res.camera : res.photos);
@@ -88,7 +95,9 @@ export async function checkPermission(key: PermKey): Promise<PermState> {
 
   switch (key) {
     case "notifications":
-      return typeof Notification === "undefined" ? "unsupported" : normalize(Notification.permission);
+      return typeof Notification === "undefined"
+        ? "unsupported"
+        : normalize(Notification.permission);
     case "camera":
       return webQuery("camera" as PermissionName);
     case "microphone":
@@ -112,14 +121,16 @@ export async function requestPermission(key: PermKey): Promise<PermState> {
     }
     if (key === "camera" || key === "photos") {
       const cam = await plugin("@capacitor/camera");
-      const req = cam?.["requestPermissions"] as ((o: unknown) => Promise<{ camera: string; photos: string }>) | undefined;
+      const req = cam?.["requestPermissions"] as
+        ((o: unknown) => Promise<{ camera: string; photos: string }>) | undefined;
       if (!req) return "unsupported";
       const res = await req({ permissions: [key] });
       return normalize(key === "camera" ? res.camera : res.photos);
     }
     if (key === "location") {
       const geo = await plugin("@capacitor/geolocation");
-      const req = geo?.["requestPermissions"] as ((o: unknown) => Promise<{ location: string }>) | undefined;
+      const req = geo?.["requestPermissions"] as
+        ((o: unknown) => Promise<{ location: string }>) | undefined;
       // Hanya izin saat aplikasi dipakai — tidak pernah background location.
       return req ? normalize((await req({ permissions: ["location"] })).location) : "unsupported";
     }
@@ -130,7 +141,9 @@ export async function requestPermission(key: PermKey): Promise<PermState> {
   }
   if (key === "camera" || key === "microphone") {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia(key === "camera" ? { video: true } : { audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia(
+        key === "camera" ? { video: true } : { audio: true },
+      );
       stream.getTracks().forEach((t) => t.stop());
       return "granted";
     } catch {

@@ -92,9 +92,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "zoom":
       return { ...state, zoom: clamp(action.zoom, 1, 4) };
     case "rotate":
-      return { ...state, rotation: (((state.rotation + 90) % 360) as EditorState["rotation"]) };
+      return { ...state, rotation: ((state.rotation + 90) % 360) as EditorState["rotation"] };
     case "flip":
-      return action.axis === "h" ? { ...state, flipH: !state.flipH } : { ...state, flipV: !state.flipV };
+      return action.axis === "h"
+        ? { ...state, flipH: !state.flipH }
+        : { ...state, flipV: !state.flipV };
     case "adjust":
       return { ...state, [action.key]: clamp(action.value, 0, 200) } as EditorState;
     case "filter":
@@ -106,7 +108,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "mask.clear":
       return { ...state, masks: [] };
     case "background":
-      return { ...state, background: action.mode, backgroundColor: action.color ?? state.backgroundColor };
+      return {
+        ...state,
+        background: action.mode,
+        backgroundColor: action.color ?? state.backgroundColor,
+      };
     default:
       return state;
   }
@@ -132,16 +138,28 @@ export function historyReducer(history: EditorHistory, action: HistoryAction): E
   if (action.type === "undo") {
     const prev = history.past[history.past.length - 1];
     if (!prev) return history;
-    return { past: history.past.slice(0, -1), present: prev, future: [history.present, ...history.future] };
+    return {
+      past: history.past.slice(0, -1),
+      present: prev,
+      future: [history.present, ...history.future],
+    };
   }
   if (action.type === "redo") {
     const next = history.future[0];
     if (!next) return history;
-    return { past: [...history.past, history.present], present: next, future: history.future.slice(1) };
+    return {
+      past: [...history.past, history.present],
+      present: next,
+      future: history.future.slice(1),
+    };
   }
   if (action.type === "reset") {
     if (isPristine(history.present)) return history;
-    return { past: [...history.past, history.present].slice(-HISTORY_LIMIT), present: INITIAL_EDITOR_STATE, future: [] };
+    return {
+      past: [...history.past, history.present].slice(-HISTORY_LIMIT),
+      present: INITIAL_EDITOR_STATE,
+      future: [],
+    };
   }
   const present = editorReducer(history.present, action);
   if (present === history.present) return history;
@@ -196,7 +214,11 @@ export function fitWithin(w: number, h: number, max: number): { width: number; h
 }
 
 /** Ukuran keluaran final berdasar rasio crop, dibatasi MAX_OUTPUT_PX. */
-export function outputSize(state: EditorState, sourceW: number, sourceH: number): { width: number; height: number } {
+export function outputSize(
+  state: EditorState,
+  sourceW: number,
+  sourceH: number,
+): { width: number; height: number } {
   const swapped = state.rotation === 90 || state.rotation === 270;
   const baseW = (swapped ? sourceH : sourceW) * state.crop.w;
   const baseH = (swapped ? sourceW : sourceH) * state.crop.h;
@@ -211,10 +233,17 @@ export function outputSize(state: EditorState, sourceW: number, sourceH: number)
 }
 
 /** Crop terpusat sesuai rasio preset (dipakai saat preset berubah). */
-export function centeredCrop(preset: AspectPreset, sourceW: number, sourceH: number): EditorState["crop"] {
+export function centeredCrop(
+  preset: AspectPreset,
+  sourceW: number,
+  sourceH: number,
+): EditorState["crop"] {
   const ratio = ASPECT_RATIO[preset];
   if (!ratio || sourceW <= 0 || sourceH <= 0) return { x: 0, y: 0, w: 1, h: 1 };
-  const targetPx = sourceW / sourceH > ratio ? { w: sourceH * ratio, h: sourceH } : { w: sourceW, h: sourceW / ratio };
+  const targetPx =
+    sourceW / sourceH > ratio
+      ? { w: sourceH * ratio, h: sourceH }
+      : { w: sourceW, h: sourceW / ratio };
   const w = targetPx.w / sourceW;
   const h = targetPx.h / sourceH;
   return { w, h, x: (1 - w) / 2, y: (1 - h) / 2 };

@@ -3,28 +3,54 @@ import { Check, Copy, QrCode, Share2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 export function copyText(value: string, message = "Disalin ke papan klip") {
   const done = () => toast.success(message);
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(value).then(done).catch(() => toast.error("Gagal menyalin"));
+    navigator.clipboard
+      .writeText(value)
+      .then(done)
+      .catch(() => toast.error("Gagal menyalin"));
   } else {
     toast.error("Papan klip tidak tersedia di peramban ini");
   }
 }
 
-export function QRCard({ pin, label, className }: { pin: string; label: string; className?: string }) {
+export function QRCard({
+  pin,
+  label,
+  className,
+}: {
+  pin: string;
+  label: string;
+  className?: string;
+}) {
   return (
     <div className={cn("card-soft flex flex-col items-center gap-3 p-5", className)}>
       <div className="rounded-2xl bg-white p-3">
-        <QRCodeSVG value={`mcm://pin/${pin}`} size={168} level="M" bgColor="#ffffff" fgColor="#14212f" />
+        <QRCodeSVG
+          value={`mcm://pin/${pin}`}
+          size={168}
+          level="M"
+          bgColor="#ffffff"
+          fgColor="#14212f"
+        />
       </div>
       <div className="text-center">
         <p className="text-sm font-semibold">{label}</p>
         <p className="font-mono text-lg tracking-[0.2em]">{pin}</p>
-        <p className="mt-1 text-xs text-muted-foreground">Pindai untuk mengirim permintaan kontak</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Pindai untuk mengirim permintaan kontak
+        </p>
       </div>
     </div>
   );
@@ -65,14 +91,18 @@ export function PinCard({ pin, name, subtitle }: { pin: string; name: string; su
             <DialogContent className="max-w-[340px] rounded-2xl">
               <DialogHeader>
                 <DialogTitle>QR Code PIN</DialogTitle>
-                <DialogDescription>Tunjukkan kode ini agar orang lain bisa menambahkan Anda.</DialogDescription>
+                <DialogDescription>
+                  Tunjukkan kode ini agar orang lain bisa menambahkan Anda.
+                </DialogDescription>
               </DialogHeader>
               <QRCard pin={pin} label={name} />
               <Button
                 type="button"
                 variant="outline"
                 className="rounded-xl"
-                onClick={() => copyText(`Tambahkan saya di MCM dengan PIN ${pin}`, "Undangan disalin")}
+                onClick={() =>
+                  copyText(`Tambahkan saya di MCM dengan PIN ${pin}`, "Undangan disalin")
+                }
               >
                 <Share2 className="size-4" /> Salin teks undangan
               </Button>

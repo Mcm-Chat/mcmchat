@@ -29,15 +29,7 @@ export type VoiceParams = {
 };
 
 export type PresetId =
-  | "off"
-  | "natural"
-  | "deep"
-  | "bright"
-  | "warm"
-  | "robot"
-  | "radio"
-  | "privacy"
-  | "custom";
+  "off" | "natural" | "deep" | "bright" | "warm" | "robot" | "radio" | "privacy" | "custom";
 
 export type VoicePreset = {
   id: PresetId;
@@ -181,12 +173,16 @@ export const DEFAULT_VOICE_PREFS: VoicePrefs = {
 };
 
 export function normalizePrefs(input: Partial<VoicePrefs> | null | undefined): VoicePrefs {
-  const preset = PRESET_MAP.has(input?.preset as PresetId) ? (input?.preset as PresetId) : DEFAULT_VOICE_PREFS.preset;
+  const preset = PRESET_MAP.has(input?.preset as PresetId)
+    ? (input?.preset as PresetId)
+    : DEFAULT_VOICE_PREFS.preset;
   const intensity = Number(input?.intensity);
   return {
     enabled: Boolean(input?.enabled),
     preset,
-    intensity: Number.isFinite(intensity) ? Math.min(1, Math.max(0, intensity)) : DEFAULT_VOICE_PREFS.intensity,
+    intensity: Number.isFinite(intensity)
+      ? Math.min(1, Math.max(0, intensity))
+      : DEFAULT_VOICE_PREFS.intensity,
     custom: clampParams(input?.custom),
   };
 }
@@ -194,6 +190,7 @@ export function normalizePrefs(input: Partial<VoicePrefs> | null | undefined): V
 /** Parameter efektif yang dikirim ke pipeline audio. */
 export function effectiveParams(prefs: VoicePrefs): VoiceParams {
   if (!prefs.enabled || prefs.preset === "off") return { ...NEUTRAL, denoise: 0 };
-  const base = prefs.preset === "custom" ? prefs.custom : (PRESET_MAP.get(prefs.preset)?.params ?? NEUTRAL);
+  const base =
+    prefs.preset === "custom" ? prefs.custom : (PRESET_MAP.get(prefs.preset)?.params ?? NEUTRAL);
   return prefs.preset === "custom" ? clampParams(base) : applyIntensity(base, prefs.intensity);
 }

@@ -20,13 +20,7 @@ export type ChannelKey = keyof typeof CHANNELS;
 export type NotifCategory = "chat" | "group" | "calls" | "tasks" | "sales" | "ledger";
 
 export type PushKind =
-  | "message"
-  | "call"
-  | "task_assigned"
-  | "task_completed"
-  | "sale"
-  | "order"
-  | "ledger";
+  "message" | "call" | "task_assigned" | "task_completed" | "sale" | "order" | "ledger";
 
 export type PushData = {
   kind: PushKind;

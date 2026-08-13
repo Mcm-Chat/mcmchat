@@ -33,7 +33,11 @@ export const issueCallToken = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!participant) {
-      return { configured: true as const, allowed: false as const, reason: "Anda bukan peserta panggilan ini" };
+      return {
+        configured: true as const,
+        allowed: false as const,
+        reason: "Anda bukan peserta panggilan ini",
+      };
     }
 
     const { data: call } = await context.supabase
@@ -41,13 +45,31 @@ export const issueCallToken = createServerFn({ method: "POST" })
       .select("id, kind, status, room_name")
       .eq("id", data.callId)
       .maybeSingle();
-    if (!call) return { configured: true as const, allowed: false as const, reason: "Panggilan tidak ditemukan" };
-    if (call.status === "ended" || call.status === "missed" || call.status === "declined" || call.status === "failed") {
-      return { configured: true as const, allowed: false as const, reason: "Panggilan sudah berakhir" };
+    if (!call)
+      return {
+        configured: true as const,
+        allowed: false as const,
+        reason: "Panggilan tidak ditemukan",
+      };
+    if (
+      call.status === "ended" ||
+      call.status === "missed" ||
+      call.status === "declined" ||
+      call.status === "failed"
+    ) {
+      return {
+        configured: true as const,
+        allowed: false as const,
+        reason: "Panggilan sudah berakhir",
+      };
     }
     // Room dibuat server saat panggilan dibuat; tanpa itu token tidak diterbitkan.
     if (!call.room_name) {
-      return { configured: true as const, allowed: false as const, reason: "Panggilan tidak valid" };
+      return {
+        configured: true as const,
+        allowed: false as const,
+        reason: "Panggilan tidak valid",
+      };
     }
 
     const { data: profile } = await context.supabase
@@ -64,5 +86,12 @@ export const issueCallToken = createServerFn({ method: "POST" })
       canPublishVideo: call.kind === "video",
       ttlSec: 900,
     });
-    return { configured: true as const, allowed: true as const, url: cfg.url, token, room, expiresAt };
+    return {
+      configured: true as const,
+      allowed: true as const,
+      url: cfg.url,
+      token,
+      room,
+      expiresAt,
+    };
   });

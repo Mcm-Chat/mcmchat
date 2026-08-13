@@ -8,7 +8,8 @@ export type ValidationResult = { ok: true; mime: AllowedMime } | { ok: false; er
 
 /** Deteksi tipe dari magic bytes, bukan dari nama berkas atau `file.type`. */
 export function sniffMime(bytes: Uint8Array): AllowedMime | null {
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return "image/jpeg";
   if (
     bytes.length >= 8 &&
     bytes[0] === 0x89 &&
@@ -35,11 +36,15 @@ export function extensionAllowed(name: string): boolean {
   return ["jpg", "jpeg", "png", "webp"].includes(ext);
 }
 
-export async function validateImageFile(file: File | Blob, name?: string): Promise<ValidationResult> {
+export async function validateImageFile(
+  file: File | Blob,
+  name?: string,
+): Promise<ValidationResult> {
   if (file.size === 0) return { ok: false, error: "Berkas kosong." };
   if (file.size > MAX_INPUT_BYTES) return { ok: false, error: "Ukuran foto melebihi 12 MB." };
   const fileName = name ?? (file instanceof File ? file.name : "");
-  if (fileName && !extensionAllowed(fileName)) return { ok: false, error: "Format berkas tidak didukung." };
+  if (fileName && !extensionAllowed(fileName))
+    return { ok: false, error: "Format berkas tidak didukung." };
   const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
   const mime = sniffMime(head);
   if (!mime) return { ok: false, error: "Berkas bukan gambar JPEG/PNG/WebP yang valid." };

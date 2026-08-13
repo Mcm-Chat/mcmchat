@@ -1,5 +1,16 @@
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, Camera, Check, Image as ImageIcon, Loader2, MapPin, Search, Send, Users, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  Check,
+  Image as ImageIcon,
+  Loader2,
+  MapPin,
+  Search,
+  Send,
+  Users,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,9 +26,20 @@ import type { ConversationView } from "@/lib/api/chat";
 import { sendMessage } from "@/lib/api/chat";
 import { cn } from "@/lib/utils";
 
-export function LocationCard({ location, compact }: { location: MessageLocation; compact?: boolean }) {
+export function LocationCard({
+  location,
+  compact,
+}: {
+  location: MessageLocation;
+  compact?: boolean;
+}) {
   return (
-    <div className={cn("rounded-xl border border-border bg-card p-2.5 text-card-foreground", compact && "text-xs")}>
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-card p-2.5 text-card-foreground",
+        compact && "text-xs",
+      )}
+    >
       <div className="flex items-start gap-2">
         <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
           <MapPin className="size-4" />
@@ -83,7 +105,10 @@ export function PhotoFlow({
   const geo = useGeolocation();
 
   const list = useMemo(
-    () => conversations.filter((c) => !c.me.is_archived && c.title_resolved.toLowerCase().includes(q.trim().toLowerCase())),
+    () =>
+      conversations.filter(
+        (c) => !c.me.is_archived && c.title_resolved.toLowerCase().includes(q.trim().toLowerCase()),
+      ),
     [conversations, q],
   );
   const recent = useMemo(() => list.slice(0, 3), [list]);
@@ -161,7 +186,9 @@ export function PhotoFlow({
         });
         ids.push(msg.id);
       }
-      toast.success(selected.length === 1 ? "Foto terkirim" : `Foto terkirim ke ${selected.length} chat`);
+      toast.success(
+        selected.length === 1 ? "Foto terkirim" : `Foto terkirim ke ${selected.length} chat`,
+      );
       onDone(selected, ids[0]!);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Foto gagal dikirim");
@@ -171,10 +198,13 @@ export function PhotoFlow({
     }
   };
 
-  const toggle = (id: string) => setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggle = (id: string) =>
+    setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   const sendLabel =
-    selected.length > 1 ? `Kirim ke ${selected.length} chat` : `Kirim ke ${selectedConvs[0]?.title_resolved.split(" ")[0] ?? "penerima"}`;
+    selected.length > 1
+      ? `Kirim ke ${selected.length} chat`
+      : `Kirim ke ${selectedConvs[0]?.title_resolved.split(" ")[0] ?? "penerima"}`;
 
   if (step === "penerima") {
     return (
@@ -182,11 +212,19 @@ export function PhotoFlow({
         <div className="space-y-3 px-4 pt-2 pb-3">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} maxLength={60} onChange={(e) => setQ(e.target.value)} placeholder="Cari kontak atau grup" className="h-10 rounded-xl pl-9" />
+            <Input
+              value={q}
+              maxLength={60}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Cari kontak atau grup"
+              className="h-10 rounded-xl pl-9"
+            />
           </div>
           {!q && recent.length > 0 && (
             <div>
-              <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Terakhir dihubungi</p>
+              <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                Terakhir dihubungi
+              </p>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {recent.map((c) => (
                   <button
@@ -208,9 +246,15 @@ export function PhotoFlow({
                         size="sm"
                       />
                     ) : (
-                      <MCMAvatar initials={initialsOf(c.title_resolved)} color="#0ea5e9" size="sm" />
+                      <MCMAvatar
+                        initials={initialsOf(c.title_resolved)}
+                        color="#0ea5e9"
+                        size="sm"
+                      />
                     )}
-                    <span className="w-full truncate text-center text-[11px]">{c.title_resolved}</span>
+                    <span className="w-full truncate text-center text-[11px]">
+                      {c.title_resolved}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -248,23 +292,39 @@ export function PhotoFlow({
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate text-sm font-medium">{c.title_resolved}</span>
-                    {c.type === "group" && <Users className="size-3.5 shrink-0 text-muted-foreground" />}
+                    {c.type === "group" && (
+                      <Users className="size-3.5 shrink-0 text-muted-foreground" />
+                    )}
                   </span>
                   <span className="block truncate font-mono text-[11px] text-muted-foreground">
-                    {c.type === "group" ? `Grup • ${c.members.length} anggota` : (c.other?.pin ?? "Kontak")}
+                    {c.type === "group"
+                      ? `Grup • ${c.members.length} anggota`
+                      : (c.other?.pin ?? "Kontak")}
                   </span>
                 </span>
-                <Checkbox checked={selected.includes(c.id)} aria-label={`Pilih ${c.title_resolved}`} className="pointer-events-none" />
+                <Checkbox
+                  checked={selected.includes(c.id)}
+                  aria-label={`Pilih ${c.title_resolved}`}
+                  className="pointer-events-none"
+                />
               </div>
             </li>
           ))}
-          {list.length === 0 && <li className="px-4 py-10 text-center text-sm text-muted-foreground">Tidak ada hasil.</li>}
+          {list.length === 0 && (
+            <li className="px-4 py-10 text-center text-sm text-muted-foreground">
+              Tidak ada hasil.
+            </li>
+          )}
         </ul>
         <div className="sticky bottom-0 flex gap-2 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
           <Button variant="ghost" className="rounded-xl" onClick={onCancel}>
             Batal
           </Button>
-          <Button className="flex-1 rounded-xl" disabled={selected.length === 0} onClick={() => setStep("review")}>
+          <Button
+            className="flex-1 rounded-xl"
+            disabled={selected.length === 0}
+            onClick={() => setStep("review")}
+          >
             Lanjut{selected.length > 0 ? ` (${selected.length})` : ""}
           </Button>
         </div>
@@ -279,14 +339,22 @@ export function PhotoFlow({
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold text-muted-foreground">Kirim ke</p>
             {!fixed && (
-              <Button variant="ghost" size="sm" className="h-7 rounded-lg text-xs" onClick={() => setStep("penerima")}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 rounded-lg text-xs"
+                onClick={() => setStep("penerima")}
+              >
                 Ubah
               </Button>
             )}
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {selectedConvs.map((c) => (
-              <span key={c.id} className="flex max-w-full items-center gap-1.5 rounded-full bg-muted py-1 pr-2.5 pl-1">
+              <span
+                key={c.id}
+                className="flex max-w-full items-center gap-1.5 rounded-full bg-muted py-1 pr-2.5 pl-1"
+              >
                 {c.other ? (
                   <UserAvatar
                     userId={c.other.id}
@@ -310,16 +378,33 @@ export function PhotoFlow({
           {preview ? (
             <div className="relative overflow-hidden rounded-2xl border border-border">
               <img src={preview} alt="Pratinjau foto" className="max-h-72 w-full object-cover" />
-              <Button size="icon" variant="secondary" className="absolute top-2 right-2 size-8 rounded-full" aria-label="Hapus foto" onClick={() => setPreview("")}>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute top-2 right-2 size-8 rounded-full"
+                aria-label="Hapus foto"
+                onClick={() => setPreview("")}
+              >
                 <X className="size-4" />
               </Button>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="h-20 flex-col rounded-2xl" disabled={busy} onClick={() => cameraRef.current?.click()}>
-                {busy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />} <span className="text-xs">Kamera</span>
+              <Button
+                variant="outline"
+                className="h-20 flex-col rounded-2xl"
+                disabled={busy}
+                onClick={() => cameraRef.current?.click()}
+              >
+                {busy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />}{" "}
+                <span className="text-xs">Kamera</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col rounded-2xl" disabled={busy} onClick={() => galleryRef.current?.click()}>
+              <Button
+                variant="outline"
+                className="h-20 flex-col rounded-2xl"
+                disabled={busy}
+                onClick={() => galleryRef.current?.click()}
+              >
                 <ImageIcon className="size-5" /> <span className="text-xs">Galeri</span>
               </Button>
             </div>
@@ -369,7 +454,12 @@ export function PhotoFlow({
                 </p>
               )}
               {geo.status === "idle" && !geo.location && (
-                <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs" onClick={geo.request}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 rounded-lg text-xs"
+                  onClick={geo.request}
+                >
                   Ambil lokasi sekarang
                 </Button>
               )}
@@ -384,7 +474,12 @@ export function PhotoFlow({
                         : "Lokasi manual dipakai"}
                   </p>
                   <LocationCard location={geo.location} />
-                  <Button size="sm" variant="ghost" className="h-7 rounded-lg text-xs" onClick={geo.request}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 rounded-lg text-xs"
+                    onClick={geo.request}
+                  >
                     Perbarui lokasi GPS
                   </Button>
                 </>
@@ -393,10 +488,20 @@ export function PhotoFlow({
                 <div className="space-y-2 rounded-xl border border-destructive/40 bg-destructive/10 p-2.5">
                   <p className="text-xs font-medium text-destructive">{geo.error}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs" onClick={geo.request}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-lg text-xs"
+                      onClick={geo.request}
+                    >
                       Coba Lagi
                     </Button>
-                    <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs" onClick={() => setManualOpen((v) => !v)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-lg text-xs"
+                      onClick={() => setManualOpen((v) => !v)}
+                    >
                       Pilih lokasi manual
                     </Button>
                     <Button
@@ -414,10 +519,26 @@ export function PhotoFlow({
                   {manualOpen && (
                     <div className="space-y-2 pt-1">
                       <div className="grid grid-cols-2 gap-2">
-                        <Input value={manual.lat} onChange={(e) => setManual((p) => ({ ...p, lat: e.target.value }))} placeholder="Latitude" inputMode="decimal" className="h-9 rounded-lg text-xs" />
-                        <Input value={manual.lng} onChange={(e) => setManual((p) => ({ ...p, lng: e.target.value }))} placeholder="Longitude" inputMode="decimal" className="h-9 rounded-lg text-xs" />
+                        <Input
+                          value={manual.lat}
+                          onChange={(e) => setManual((p) => ({ ...p, lat: e.target.value }))}
+                          placeholder="Latitude"
+                          inputMode="decimal"
+                          className="h-9 rounded-lg text-xs"
+                        />
+                        <Input
+                          value={manual.lng}
+                          onChange={(e) => setManual((p) => ({ ...p, lng: e.target.value }))}
+                          placeholder="Longitude"
+                          inputMode="decimal"
+                          className="h-9 rounded-lg text-xs"
+                        />
                       </div>
-                      <Button size="sm" className="h-8 w-full rounded-lg text-xs" onClick={applyManual}>
+                      <Button
+                        size="sm"
+                        className="h-8 w-full rounded-lg text-xs"
+                        onClick={applyManual}
+                      >
                         Pakai koordinat ini
                       </Button>
                     </div>
@@ -445,11 +566,22 @@ export function PhotoFlow({
       </div>
 
       <div className="sticky bottom-0 flex gap-2 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
-        <Button variant="ghost" size="icon" className="rounded-xl" aria-label="Kembali" onClick={fixed ? onCancel : () => setStep("penerima")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-xl"
+          aria-label="Kembali"
+          onClick={fixed ? onCancel : () => setStep("penerima")}
+        >
           <ArrowLeft className="size-4" />
         </Button>
-        <Button className="flex-1 rounded-xl" disabled={!preview || busy} onClick={() => void send()}>
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} {sendLabel}
+        <Button
+          className="flex-1 rounded-xl"
+          disabled={!preview || busy}
+          onClick={() => void send()}
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}{" "}
+          {sendLabel}
         </Button>
       </div>
     </div>

@@ -17,7 +17,10 @@ export const Route = createFileRoute("/")({
           "Masuk ke MCM: komunikasi privat berbasis PIN, panggilan suara/video, catatan utang-piutang bersama, dan alat bisnis.",
       },
       { property: "og:title", content: "MCM — Chat Privat, Panggilan & Catatan Utang" },
-      { property: "og:description", content: "Identitas publik berupa PIN unik. Nomor telepon Anda tidak pernah ditampilkan." },
+      {
+        property: "og:description",
+        content: "Identitas publik berupa PIN unik. Nomor telepon Anda tidak pernah ditampilkan.",
+      },
     ],
   }),
   component: Splash,
@@ -43,7 +46,9 @@ function Splash() {
       <img src={logo} alt="Logo MCM" width={512} height={512} className="size-28 animate-pulse" />
       <div className="text-center">
         <h1 className="text-3xl font-extrabold tracking-tight">MCM</h1>
-        <p className="mt-1 text-sm text-navy-foreground/75">Private Chat, Calls &amp; Smart Ledger</p>
+        <p className="mt-1 text-sm text-navy-foreground/75">
+          Private Chat, Calls &amp; Smart Ledger
+        </p>
       </div>
       <div className="absolute bottom-10 flex items-center gap-2 text-xs text-navy-foreground/70">
         <ShieldCheck className="size-4" /> Privasi terlindungi

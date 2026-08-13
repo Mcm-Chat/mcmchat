@@ -81,7 +81,10 @@ export const Route = createFileRoute("/api/public/push/actions")({
             const { dispatchMessagePush } = await import("@/lib/push/dispatch.server");
             await dispatchMessagePush(messageId);
           }
-          return json({ ok: true, duplicate: Boolean((result as { duplicate?: boolean }).duplicate) });
+          return json({
+            ok: true,
+            duplicate: Boolean((result as { duplicate?: boolean }).duplicate),
+          });
         }
 
         if (parsed.action === "read") {

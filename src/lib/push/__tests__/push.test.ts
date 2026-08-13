@@ -30,11 +30,15 @@ describe("notificationTitle", () => {
 
 describe("routeFromPush", () => {
   it("membuka pesan tepat di percakapan", () => {
-    expect(routeFromPush({ kind: "message", conversationId: "c1", messageId: "m1" })).toBe("/chat/c1?m=m1");
+    expect(routeFromPush({ kind: "message", conversationId: "c1", messageId: "m1" })).toBe(
+      "/chat/c1?m=m1",
+    );
   });
 
   it("menolak rute absolut/eksternal", () => {
-    expect(routeFromPush({ kind: "message", route: "//evil.com", conversationId: "c1" })).toBe("/chat/c1");
+    expect(routeFromPush({ kind: "message", route: "//evil.com", conversationId: "c1" })).toBe(
+      "/chat/c1",
+    );
   });
 
   it("punya fallback aman", () => {

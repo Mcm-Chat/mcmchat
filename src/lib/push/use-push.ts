@@ -12,7 +12,13 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { attachPushListeners, ensureChannels, isNative, nativeReceiverInstalled, registerNativePush } from "./native";
+import {
+  attachPushListeners,
+  ensureChannels,
+  isNative,
+  nativeReceiverInstalled,
+  registerNativePush,
+} from "./native";
 import { checkPermission, requestPermission } from "./permissions";
 
 export type PushState = {
@@ -25,7 +31,12 @@ export type PushState = {
   reason?: string | undefined;
 };
 
-let state: PushState = { native: false, receiverInstalled: false, permission: "unsupported", registered: false };
+let state: PushState = {
+  native: false,
+  receiverInstalled: false,
+  permission: "unsupported",
+  registered: false,
+};
 const listeners = new Set<() => void>();
 let registeredForUser: string | null = null;
 let inFlight: Promise<void> | null = null;
@@ -57,7 +68,10 @@ async function registerOnce(userId: string) {
       typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 60) : "Android",
     );
     if (res.registered) registeredForUser = userId;
-    emit({ registered: res.registered, ...(res.reason ? { reason: res.reason } : { reason: undefined }) });
+    emit({
+      registered: res.registered,
+      ...(res.reason ? { reason: res.reason } : { reason: undefined }),
+    });
   })().finally(() => {
     inFlight = null;
   });

@@ -8,7 +8,11 @@ export const Route = createFileRoute("/terms")({
     meta: [
       ...canonical("/terms").meta,
       { title: "Syarat Layanan — MCM" },
-      { name: "description", content: "Ketentuan penggunaan aplikasi chat bisnis MCM: akun, konten, pembayaran, dan penghentian layanan." },
+      {
+        name: "description",
+        content:
+          "Ketentuan penggunaan aplikasi chat bisnis MCM: akun, konten, pembayaran, dan penghentian layanan.",
+      },
       { property: "og:title", content: "Syarat Layanan — MCM" },
       { property: "og:description", content: "Ketentuan penggunaan aplikasi MCM." },
       { property: "og:type", content: "article" },

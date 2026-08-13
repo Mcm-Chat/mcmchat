@@ -9,7 +9,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCallConfig, issueCallToken } from "./calls.functions";
-import { getCallProvider, type CallSessionHandle, type ProviderState, type RemoteInfo } from "./provider";
+import {
+  getCallProvider,
+  type CallSessionHandle,
+  type ProviderState,
+  type RemoteInfo,
+} from "./provider";
 import {
   answerCall,
   declineCall,
@@ -76,8 +81,15 @@ export function useCall(opts: {
   const [call, setCall] = useState<CallRow | null>(null);
   const [remotes, setRemotes] = useState<RemoteInfo[]>([]);
   const [durationSec, setDuration] = useState(0);
-  const [controls, setControls] = useState<CallControlsState>({ muted: false, cameraOn: false, speakerOn: true });
-  const [pipelineState, setPipelineState] = useState<PipelineState>({ status: "idle", latencyMs: 0 });
+  const [controls, setControls] = useState<CallControlsState>({
+    muted: false,
+    cameraOn: false,
+    speakerOn: true,
+  });
+  const [pipelineState, setPipelineState] = useState<PipelineState>({
+    status: "idle",
+    latencyMs: 0,
+  });
   const [voiceFallback, setVoiceFallback] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
   const [speakerSupported, setSpeakerSupported] = useState(false);
@@ -204,7 +216,10 @@ export function useCall(opts: {
     if (!userId) return;
     let alive = true;
     void (async () => {
-      const [cfg, row] = await Promise.all([config().catch(() => ({ configured: false })), getCall(callId)]);
+      const [cfg, row] = await Promise.all([
+        config().catch(() => ({ configured: false })),
+        getCall(callId),
+      ]);
       if (!alive) return;
       if (!row) {
         setPhase("error");
@@ -212,7 +227,12 @@ export function useCall(opts: {
         return;
       }
       setCall(row);
-      if (row.status === "ended" || row.status === "missed" || row.status === "declined" || row.status === "failed") {
+      if (
+        row.status === "ended" ||
+        row.status === "missed" ||
+        row.status === "declined" ||
+        row.status === "failed"
+      ) {
         endedRef.current = true;
         setPhase("ended");
         return;
@@ -262,7 +282,11 @@ export function useCall(opts: {
   // Timer durasi.
   useEffect(() => {
     if (phase !== "connected") return;
-    const t = setInterval(() => setDuration(startedRef.current ? Math.floor((Date.now() - startedRef.current) / 1000) : 0), 500);
+    const t = setInterval(
+      () =>
+        setDuration(startedRef.current ? Math.floor((Date.now() - startedRef.current) / 1000) : 0),
+      500,
+    );
     return () => clearInterval(t);
   }, [phase]);
 

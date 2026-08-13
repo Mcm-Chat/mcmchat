@@ -97,12 +97,23 @@ describe("audit statis media & penyimpanan", () => {
     const bad: string[] = [];
     for (const f of files) {
       // theme.tsx hanya menyimpan preferensi tema perangkat (non-sensitif).
-      if (f.endsWith("session-scope.ts") || f.endsWith("theme.tsx") || f.includes("integrations/supabase")) continue;
+      if (
+        f.endsWith("session-scope.ts") ||
+        f.endsWith("theme.tsx") ||
+        f.includes("integrations/supabase")
+      )
+        continue;
       for (const line of readFileSync(f, "utf8").split("\n")) {
         const m = line.match(/localStorage\.(get|set|remove)Item\((.+?)[,)]/);
         if (!m) continue;
         const arg = m[2] ?? "";
-        if (allowed.test(arg) || arg.includes("Key") || arg.includes("scopedKey") || arg.includes("`mcm:${")) continue;
+        if (
+          allowed.test(arg) ||
+          arg.includes("Key") ||
+          arg.includes("scopedKey") ||
+          arg.includes("`mcm:${")
+        )
+          continue;
         bad.push(`${f}: ${line.trim()}`);
       }
     }

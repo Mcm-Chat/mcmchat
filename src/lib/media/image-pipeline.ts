@@ -15,7 +15,12 @@ import {
   type MaskRegion,
 } from "./image-editor";
 
-export type LoadedImage = { bitmap: ImageBitmap; width: number; height: number; dispose: () => void };
+export type LoadedImage = {
+  bitmap: ImageBitmap;
+  width: number;
+  height: number;
+  dispose: () => void;
+};
 
 /** Muat berkas menjadi bitmap dengan orientasi EXIF sudah dikoreksi. */
 export async function loadImage(file: Blob): Promise<LoadedImage> {
@@ -34,7 +39,12 @@ export async function loadImage(file: Blob): Promise<LoadedImage> {
   const scaled = await createImageBitmap(canvas);
   canvas.width = 0;
   canvas.height = 0;
-  return { bitmap: scaled, width: fitted.width, height: fitted.height, dispose: () => scaled.close() };
+  return {
+    bitmap: scaled,
+    width: fitted.width,
+    height: fitted.height,
+    dispose: () => scaled.close(),
+  };
 }
 
 function drawMask(ctx: CanvasRenderingContext2D, mask: MaskRegion, w: number, h: number) {
@@ -88,7 +98,13 @@ export function renderToCanvas(img: LoadedImage, state: EditorState): HTMLCanvas
   } else {
     ctx.save();
     ctx.filter = "blur(24px)";
-    ctx.drawImage(img.bitmap, -out.width * 0.1, -out.height * 0.1, out.width * 1.2, out.height * 1.2);
+    ctx.drawImage(
+      img.bitmap,
+      -out.width * 0.1,
+      -out.height * 0.1,
+      out.width * 1.2,
+      out.height * 1.2,
+    );
     ctx.restore();
   }
 

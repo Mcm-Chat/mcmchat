@@ -94,7 +94,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { name: "theme-color", content: "#0f1b2a" },
       { property: "og:title", content: "MCM — Chat Privat, Panggilan & Catatan Utang" },
-      { property: "og:description", content: "Chat & panggilan privat berbasis PIN, catatan utang bersama, dan katalog bisnis." },
+      {
+        property: "og:description",
+        content: "Chat & panggilan privat berbasis PIN, catatan utang bersama, dan katalog bisnis.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -165,15 +168,15 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-      <AuthProvider>
-        <AccountCacheGuard />
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <PushSession />
-        <IncomingCallListener />
-        <ScreenPrivacyGuard />
-        <Toaster position="top-center" richColors closeButton />
-      </AuthProvider>
+        <AuthProvider>
+          <AccountCacheGuard />
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <PushSession />
+          <IncomingCallListener />
+          <ScreenPrivacyGuard />
+          <Toaster position="top-center" richColors closeButton />
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

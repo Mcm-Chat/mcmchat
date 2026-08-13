@@ -28,7 +28,8 @@ export interface Contact {
   requestMessage?: string | undefined;
 }
 
-export type MessageKind = "text" | "image" | "document" | "voice" | "poll" | "system" | "ledger" | "order";
+export type MessageKind =
+  "text" | "image" | "document" | "voice" | "poll" | "system" | "ledger" | "order";
 
 export interface Reaction {
   emoji: string;
@@ -105,13 +106,7 @@ export interface CallLog {
 }
 
 export type LedgerStatus =
-  | "menunggu"
-  | "aktif"
-  | "sebagian"
-  | "lunas"
-  | "ditolak"
-  | "disengketakan"
-  | "dibatalkan";
+  "menunggu" | "aktif" | "sebagian" | "lunas" | "ditolak" | "disengketakan" | "dibatalkan";
 
 export interface LedgerPayment {
   id: ID;

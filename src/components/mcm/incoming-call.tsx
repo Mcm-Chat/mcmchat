@@ -12,7 +12,12 @@ import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { declineCall, listRingingCalls, subscribeIncomingCalls, type CallRow } from "@/lib/api/calls";
+import {
+  declineCall,
+  listRingingCalls,
+  subscribeIncomingCalls,
+  type CallRow,
+} from "@/lib/api/calls";
 import { onConnectionChange } from "@/lib/realtime/connection";
 
 type Incoming = { call: CallRow; name: string; color: string };
@@ -34,7 +39,11 @@ export function IncomingCallListener() {
         .then((rows) => {
           const row = rows[0];
           if (!row) return;
-          setIncoming((cur) => (cur?.call.id === row.id ? cur : { call: row, name: "Pengguna MCM", color: "from-slate-500 to-slate-700" }));
+          setIncoming((cur) =>
+            cur?.call.id === row.id
+              ? cur
+              : { call: row, name: "Pengguna MCM", color: "from-slate-500 to-slate-700" },
+          );
           void supabase
             .from("profiles")
             .select("display_name, avatar_color")
@@ -43,7 +52,11 @@ export function IncomingCallListener() {
             .then(({ data }) =>
               setIncoming((cur) =>
                 cur?.call.id === row.id
-                  ? { ...cur, name: data?.display_name ?? cur.name, color: data?.avatar_color ?? cur.color }
+                  ? {
+                      ...cur,
+                      name: data?.display_name ?? cur.name,
+                      color: data?.avatar_color ?? cur.color,
+                    }
                   : cur,
               ),
             );

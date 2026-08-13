@@ -33,7 +33,10 @@ export const Route = createFileRoute("/call/$id")({
   head: () => ({
     meta: [
       { title: "Panggilan — MCM" },
-      { name: "description", content: "Layar panggilan suara dan video MCM dengan efek suara privasi premium." },
+      {
+        name: "description",
+        content: "Layar panggilan suara dan video MCM dengan efek suara privasi premium.",
+      },
       { property: "og:title", content: "Panggilan — MCM" },
       { property: "og:description", content: "Panggilan suara & video privat MCM." },
     ],
@@ -54,7 +57,10 @@ const STATUS_LABEL: Record<string, string> = {
 async function fetchCall(id: string, userId: string): Promise<CallHistoryItem | null> {
   const { data: call, error } = await supabase.from("calls").select("*").eq("id", id).maybeSingle();
   if (error || !call) return null;
-  const { data: parts } = await supabase.from("call_participants").select("call_id, user_id").eq("call_id", id);
+  const { data: parts } = await supabase
+    .from("call_participants")
+    .select("call_id, user_id")
+    .eq("call_id", id);
   const ids = [...new Set((parts ?? []).map((p) => p.user_id))];
   const { data: profiles } = await supabase
     .from("profiles")
@@ -147,7 +153,11 @@ function CallScreen() {
           <Button variant="secondary" className="rounded-xl" onClick={load}>
             Coba lagi
           </Button>
-          <Button variant="secondary" className="rounded-xl" onClick={() => void navigate({ to: "/calls" })}>
+          <Button
+            variant="secondary"
+            className="rounded-xl"
+            onClick={() => void navigate({ to: "/calls" })}
+          >
             Kembali
           </Button>
         </div>
@@ -155,11 +165,16 @@ function CallScreen() {
     );
   }
 
-  const other = detail.participants.find((p) => p.user_id !== userId) ?? detail.participants[0] ?? null;
+  const other =
+    detail.participants.find((p) => p.user_id !== userId) ?? detail.participants[0] ?? null;
   const name = other?.display_name ?? "Pengguna MCM";
   const initials = name.slice(0, 2).toUpperCase();
   const isVideo = detail.kind === "video";
-  const live = session.phase === "outgoing" || session.phase === "incoming" || session.phase === "connecting" || session.phase === "connected";
+  const live =
+    session.phase === "outgoing" ||
+    session.phase === "incoming" ||
+    session.phase === "connecting" ||
+    session.phase === "connected";
   const voiceActive = session.voiceApplied;
   const voiceFallback = session.voiceFallback;
 
@@ -179,7 +194,12 @@ function CallScreen() {
       <div className="app-gradient relative flex min-h-screen flex-col px-6 py-8 text-navy-foreground">
         {isVideo && (
           <>
-            <video ref={remoteVideo} autoPlay playsInline className="absolute inset-0 size-full object-cover opacity-90" />
+            <video
+              ref={remoteVideo}
+              autoPlay
+              playsInline
+              className="absolute inset-0 size-full object-cover opacity-90"
+            />
             <video
               ref={localVideo}
               autoPlay
@@ -201,7 +221,9 @@ function CallScreen() {
             >
               <ArrowLeft className="size-5" />
             </Button>
-            <h1 className="text-base font-semibold">{isVideo ? "Panggilan video" : "Panggilan suara"}</h1>
+            <h1 className="text-base font-semibold">
+              {isVideo ? "Panggilan video" : "Panggilan suara"}
+            </h1>
           </div>
 
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
@@ -215,14 +237,17 @@ function CallScreen() {
                 size="xl"
               />
             )}
-            {!isVideo && !other && <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />}
+            {!isVideo && !other && (
+              <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />
+            )}
             <h2 className="text-2xl font-semibold">{name}</h2>
             <p className="text-sm text-navy-foreground/75">{phaseLabel}</p>
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             <VoicePrivacyBadge active={voiceActive} className="mt-1" />
             {voiceFallback ? (
               <p className="mt-1 text-xs text-navy-foreground/70">
-                Voice Privacy tidak tersedia di perangkat ini — panggilan berlanjut dengan mikrofon apa adanya.
+                Voice Privacy tidak tersedia di perangkat ini — panggilan berlanjut dengan mikrofon
+                apa adanya.
               </p>
             ) : null}
             {session.pipelineState.reason && (
@@ -232,7 +257,12 @@ function CallScreen() {
 
           <div className="mt-auto space-y-6 pt-10">
             <div className="flex justify-center">
-              <Button size="sm" variant="secondary" className="rounded-xl" onClick={() => setVoiceOpen(true)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="rounded-xl"
+                onClick={() => setVoiceOpen(true)}
+              >
                 <Sparkles className="mr-1.5 size-4" />
                 Efek Suara
               </Button>
@@ -369,7 +399,8 @@ function CallScreen() {
         <p className="flex items-center gap-1.5 text-sm text-navy-foreground/70">
           {detail.status === "missed" && <PhoneMissed className="size-4 text-destructive" />}
           {isVideo ? <Video className="size-4" /> : <PhoneIcon className="size-4" />}
-          {isVideo ? "Panggilan video" : "Panggilan suara"} • {STATUS_LABEL[detail.status] ?? detail.status}
+          {isVideo ? "Panggilan video" : "Panggilan suara"} •{" "}
+          {STATUS_LABEL[detail.status] ?? detail.status}
         </p>
       </div>
 
@@ -377,13 +408,16 @@ function CallScreen() {
         <div className="mt-6 rounded-2xl border border-amber-300/40 bg-amber-400/15 p-4 text-sm">
           <p className="font-semibold">Belum terhubung</p>
           <p className="mt-1 text-navy-foreground/80">
-            {CALL_PROVIDER_NOTICE} Admin perlu mengisi kredensial LiveKit (URL, API key, API secret) agar media panggilan aktif.
+            {CALL_PROVIDER_NOTICE} Admin perlu mengisi kredensial LiveKit (URL, API key, API secret)
+            agar media panggilan aktif.
           </p>
         </div>
       )}
 
       {session.phase === "error" && session.reason && (
-        <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4 text-sm">{session.reason}</div>
+        <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4 text-sm">
+          {session.reason}
+        </div>
       )}
 
       <div className="mt-6 space-y-3 rounded-2xl bg-white/10 p-4 text-sm">
@@ -406,15 +440,27 @@ function CallScreen() {
                 : "Nonaktif — suara asli Anda yang dikirim."}
             </p>
           </div>
-          <Button size="sm" variant="secondary" className="rounded-xl" onClick={() => setVoiceOpen(true)}>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="rounded-xl"
+            onClick={() => setVoiceOpen(true)}
+          >
             Atur
           </Button>
         </div>
-        <VoicePrivacyBadge active={entitlement.active && voicePrefs.enabled && voicePrefs.preset !== "off"} className="mt-3" />
+        <VoicePrivacyBadge
+          active={entitlement.active && voicePrefs.enabled && voicePrefs.preset !== "off"}
+          className="mt-3"
+        />
       </div>
 
       <div className="mt-auto space-y-3 pt-8">
-        <Button variant="ghost" className="w-full rounded-xl text-navy-foreground/80 hover:bg-white/10" asChild>
+        <Button
+          variant="ghost"
+          className="w-full rounded-xl text-navy-foreground/80 hover:bg-white/10"
+          asChild
+        >
           <Link to="/calls">Kembali ke riwayat</Link>
         </Button>
       </div>
@@ -464,7 +510,9 @@ function ControlButton({
         onClick={onClick}
         className={cn(
           "size-14 rounded-full border border-white/20",
-          active ? "bg-white text-navy hover:bg-white/90" : "bg-white/15 text-white hover:bg-white/25",
+          active
+            ? "bg-white text-navy hover:bg-white/90"
+            : "bg-white/15 text-white hover:bg-white/25",
         )}
       >
         <Icon className="size-6" />

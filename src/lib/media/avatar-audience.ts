@@ -29,10 +29,14 @@ export function requiresEmptyConfirm(privacy: AvatarPrivacy, selectedCount: numb
 /** Ringkasan yang ditampilkan di bawah opsi privasi. */
 export function audienceSummary(privacy: AvatarPrivacy, selectedCount: number): string {
   if (privacy === "contacts_except") {
-    return selectedCount === 0 ? "0 dikecualikan — sama dengan semua kontak" : `${selectedCount} dikecualikan`;
+    return selectedCount === 0
+      ? "0 dikecualikan — sama dengan semua kontak"
+      : `${selectedCount} dikecualikan`;
   }
   if (privacy === "only_share") {
-    return selectedCount === 0 ? "Belum ada penerima — sama dengan tidak seorang pun" : `${selectedCount} dipilih`;
+    return selectedCount === 0
+      ? "Belum ada penerima — sama dengan tidak seorang pun"
+      : `${selectedCount} dipilih`;
   }
   return "";
 }
@@ -44,7 +48,9 @@ export function filterAudienceCandidates<T extends { display_name: string; pin: 
 ): T[] {
   const q = query.trim().toLowerCase();
   if (!q) return items;
-  return items.filter((i) => i.display_name.toLowerCase().includes(q) || i.pin.toLowerCase().includes(q));
+  return items.filter(
+    (i) => i.display_name.toLowerCase().includes(q) || i.pin.toLowerCase().includes(q),
+  );
 }
 
 /** Toggle seleksi yang stabil (tanpa duplikat, urutan dipertahankan). */

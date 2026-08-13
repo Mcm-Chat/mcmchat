@@ -22,7 +22,9 @@ export function scopedKey(name: string, userId: string | null = activeUserId): s
   return `${PREFIX}${userId ?? "anon"}:${name}`;
 }
 
-export function onAccountSwitch(fn: (next: string | null, previous: string | null) => void): () => void {
+export function onAccountSwitch(
+  fn: (next: string | null, previous: string | null) => void,
+): () => void {
   switchListeners.add(fn);
   return () => switchListeners.delete(fn);
 }

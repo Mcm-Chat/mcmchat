@@ -6,13 +6,19 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:web": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:security": "vitest run src/lib/security/__tests__",
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "verify:assetlinks": "node scripts/verify-assetlinks.mjs",
+    "verify:aab": "node scripts/verify-aab.mjs",
+    "android:sync": "cap sync android",
+    "android:bundle": "cd android && ./gradlew bundleRelease",
+    "android:debug-apk": "cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

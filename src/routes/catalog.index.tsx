@@ -9,7 +9,14 @@ import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-pa
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useMyBusiness } from "@/lib/api/queries";
 import { createBusiness } from "@/lib/api/business";
@@ -20,7 +27,10 @@ export const Route = createFileRoute("/catalog/")({
   head: () => ({
     meta: [
       { title: "Katalog — MCM" },
-      { name: "description", content: "Kelola katalog produk, varian, dan stok bisnis Anda di MCM." },
+      {
+        name: "description",
+        content: "Kelola katalog produk, varian, dan stok bisnis Anda di MCM.",
+      },
       { property: "og:title", content: "Katalog — MCM" },
       { property: "og:description", content: "Katalog produk dan inventori bisnis MCM." },
     ],
@@ -52,13 +62,18 @@ function CatalogIndex() {
     enabled: !!businessId,
   });
 
-  const categories = useMemo(() => ["Semua", ...Array.from(new Set((products ?? []).map((p) => p.category)))], [products]);
+  const categories = useMemo(
+    () => ["Semua", ...Array.from(new Set((products ?? []).map((p) => p.category)))],
+    [products],
+  );
   const visible = useMemo(() => {
     const term = q.trim().toLowerCase();
     return (products ?? []).filter((p) => {
       if (cat !== "Semua" && p.category !== cat) return false;
       if (!term) return true;
-      return [p.name, p.description, p.sku].filter(Boolean).some((v) => String(v).toLowerCase().includes(term));
+      return [p.name, p.description, p.sku]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term));
     });
   }, [products, q, cat]);
 
@@ -92,11 +107,19 @@ function CatalogIndex() {
                   <div className="space-y-3">
                     <div className="space-y-1.5">
                       <Label>Nama bisnis</Label>
-                      <Input value={bizForm.name} onChange={(e) => setBizForm((f) => ({ ...f, name: e.target.value }))} placeholder="Contoh: Toko Kopi Nusa" />
+                      <Input
+                        value={bizForm.name}
+                        onChange={(e) => setBizForm((f) => ({ ...f, name: e.target.value }))}
+                        placeholder="Contoh: Toko Kopi Nusa"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <Label>Kategori</Label>
-                      <Input value={bizForm.category} onChange={(e) => setBizForm((f) => ({ ...f, category: e.target.value }))} placeholder="Contoh: Kuliner" />
+                      <Input
+                        value={bizForm.category}
+                        onChange={(e) => setBizForm((f) => ({ ...f, category: e.target.value }))}
+                        placeholder="Contoh: Kuliner"
+                      />
                     </div>
                   </div>
                   <DialogFooter>
@@ -108,7 +131,11 @@ function CatalogIndex() {
                           return;
                         }
                         try {
-                          await createBusiness(userId, bizForm.name.trim(), bizForm.category.trim() || "Umum");
+                          await createBusiness(
+                            userId,
+                            bizForm.name.trim(),
+                            bizForm.category.trim() || "Umum",
+                          );
                           setBizOpen(false);
                           void qc.invalidateQueries({ queryKey: ["business", userId] });
                           toast.success("Bisnis dibuat");
@@ -177,19 +204,37 @@ function CatalogIndex() {
                 <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label>Nama produk</Label>
-                    <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Contoh: Kopi Arabika" />
+                    <Input
+                      value={form.name}
+                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="Contoh: Kopi Arabika"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Kategori</Label>
-                    <Input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Contoh: Minuman" />
+                    <Input
+                      value={form.category}
+                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                      placeholder="Contoh: Minuman"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Harga dasar (Rp)</Label>
-                    <Input type="number" min={0} value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} placeholder="0" />
+                    <Input
+                      type="number"
+                      min={0}
+                      value={form.price}
+                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                      placeholder="0"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Deskripsi</Label>
-                    <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Opsional" />
+                    <Input
+                      value={form.description}
+                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                      placeholder="Opsional"
+                    />
                   </div>
                 </div>
                 <DialogFooter>
@@ -218,7 +263,9 @@ function CatalogIndex() {
                   type="button"
                   onClick={() => setCat(c)}
                   className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    cat === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    cat === c
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {c}
@@ -274,7 +321,9 @@ function ProductCard({ product }: { product: ProductWithVariants }) {
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{product.name}</p>
           <p className="text-xs text-muted-foreground">{product.category}</p>
-          <p className="mt-1 text-sm font-semibold text-primary">{priceLabel(Number(product.price))}</p>
+          <p className="mt-1 text-sm font-semibold text-primary">
+            {priceLabel(Number(product.price))}
+          </p>
         </div>
       </Link>
       {product.variants.length > 0 && (
@@ -301,4 +350,3 @@ function ProductCard({ product }: { product: ProductWithVariants }) {
     </div>
   );
 }
-

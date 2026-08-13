@@ -27,17 +27,26 @@ export function usePresence(uid?: string): Set<string> {
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           void channel.track({ at: new Date().toISOString() });
-          void supabase.from("profiles").update({ is_online: true, last_seen_at: new Date().toISOString() }).eq("id", uid);
+          void supabase
+            .from("profiles")
+            .update({ is_online: true, last_seen_at: new Date().toISOString() })
+            .eq("id", uid);
         }
       });
 
     const beat = setInterval(() => {
-      void supabase.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", uid);
+      void supabase
+        .from("profiles")
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq("id", uid);
     }, 60_000);
 
     return () => {
       clearInterval(beat);
-      void supabase.from("profiles").update({ is_online: false, last_seen_at: new Date().toISOString() }).eq("id", uid);
+      void supabase
+        .from("profiles")
+        .update({ is_online: false, last_seen_at: new Date().toISOString() })
+        .eq("id", uid);
       void supabase.removeChannel(channel);
     };
   }, [uid]);
@@ -64,7 +73,9 @@ export function useTyping(conversationId: string, uid?: string) {
 
   useEffect(() => {
     if (!uid || !conversationId) return;
-    const channel = supabase.channel(`typing:${conversationId}`, { config: { broadcast: { self: false } } });
+    const channel = supabase.channel(`typing:${conversationId}`, {
+      config: { broadcast: { self: false } },
+    });
     channelRef.current = channel;
 
     channel

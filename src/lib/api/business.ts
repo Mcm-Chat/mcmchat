@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { removeObject, uploadProductPhoto } from "./storage";
 import type { Tables } from "@/integrations/supabase/types";
+import { getActiveUserId, scopedKey } from "@/lib/session-scope";
 
 export type BusinessRow = Tables<"businesses">;
 export type BusinessMemberRow = Tables<"business_members">;
@@ -17,7 +18,8 @@ export const ROLE_LABEL: Record<BusinessMemberRow["role"], string> = {
   viewer: "Pengamat",
 };
 
-export const canManage = (role?: BusinessMemberRow["role"] | null) => role === "owner" || role === "admin";
+export const canManage = (role?: BusinessMemberRow["role"] | null) =>
+  role === "owner" || role === "admin";
 export const canSell = (role?: BusinessMemberRow["role"] | null) =>
   role === "owner" || role === "admin" || role === "agent" || role === "cashier";
 
@@ -31,27 +33,85 @@ export const MEMBER_SAFE_COLUMNS =
 
 export type SafeBusinessMemberRow = Omit<BusinessMemberRow, "staff_pin">;
 
-export async function myBusiness(userId: string): Promise<{ business: BusinessRow; role: BusinessMemberRow["role"] } | null> {
-  const memberships = unwrap(
-    await supabase.from("business_members").select(MEMBER_SAFE_COLUMNS).eq("user_id", userId).limit(1),
-    "Gagal memuat bisnis",
-  );
-  const m = memberships[0];
-  if (!m) return null;
-  const business = unwrap(await supabase.from("businesses").select("*").eq("id", m.business_id).maybeSingle(), "Bisnis tidak ditemukan");
-  return { business, role: m.role };
+export type BusinessMembership = { business: BusinessRow; role: BusinessMemberRow["role"] };
+
+/** Key preferensi bisnis aktif — selalu terikat akun yang sedang login. */
+const activeBusinessKey = (userId: string) => scopedKey("business.active", userId);
+
+export function getActiveBusinessId(userId: string | null = getActiveUserId()): string | null {
+  if (!userId || typeof localStorage === "undefined") return null;
+  return localStorage.getItem(activeBusinessKey(userId));
 }
 
-export async function createBusiness(userId: string, name: string, category: string): Promise<BusinessRow> {
+export function setActiveBusinessId(userId: string, businessId: string | null) {
+  if (typeof localStorage === "undefined") return;
+  if (businessId) localStorage.setItem(activeBusinessKey(userId), businessId);
+  else localStorage.removeItem(activeBusinessKey(userId));
+}
+
+/** Seluruh bisnis tempat pengguna menjadi anggota, urutan deterministik. */
+export async function listMyBusinesses(userId: string): Promise<BusinessMembership[]> {
+  const memberships = unwrap(
+    await supabase
+      .from("business_members")
+      .select(MEMBER_SAFE_COLUMNS)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true }),
+    "Gagal memuat bisnis",
+  );
+  if (memberships.length === 0) return [];
+  const businesses = unwrap(
+    await supabase
+      .from("businesses")
+      .select("*")
+      .in(
+        "id",
+        memberships.map((m) => m.business_id),
+      ),
+    "Gagal memuat bisnis",
+  );
+  const byId = new Map(businesses.map((b) => [b.id, b]));
+  return memberships
+    .map((m) => {
+      const business = byId.get(m.business_id);
+      return business ? { business, role: m.role } : null;
+    })
+    .filter((v): v is BusinessMembership => v !== null);
+}
+
+/**
+ * Bisnis aktif pengguna. Bila pengguna anggota lebih dari satu bisnis, pilihan
+ * eksplisit (tersimpan per akun) yang dipakai — bukan diam-diam yang pertama.
+ */
+export async function myBusiness(userId: string): Promise<BusinessMembership | null> {
+  const all = await listMyBusinesses(userId);
+  if (all.length === 0) return null;
+  const preferred = getActiveBusinessId(userId);
+  return all.find((m) => m.business.id === preferred) ?? all[0] ?? null;
+}
+
+export async function createBusiness(
+  userId: string,
+  name: string,
+  category: string,
+): Promise<BusinessRow> {
   return unwrap(
-    await supabase.from("businesses").insert({ owner_id: userId, name, category }).select("*").single(),
+    await supabase
+      .from("businesses")
+      .insert({ owner_id: userId, name, category })
+      .select("*")
+      .single(),
     "Gagal membuat bisnis",
   );
 }
 
 export async function listProducts(businessId: string): Promise<ProductWithPhotos[]> {
   const products = unwrap(
-    await supabase.from("products").select("*").eq("business_id", businessId).order("created_at", { ascending: false }),
+    await supabase
+      .from("products")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false }),
     "Gagal memuat produk",
   );
   if (products.length === 0) return [];
@@ -59,7 +119,10 @@ export async function listProducts(businessId: string): Promise<ProductWithPhoto
     await supabase
       .from("product_photos")
       .select("*")
-      .in("product_id", products.map((p) => p.id))
+      .in(
+        "product_id",
+        products.map((p) => p.id),
+      )
       .order("sort_order", { ascending: true }),
     "Gagal memuat foto produk",
   );
@@ -73,7 +136,13 @@ export function finalPrice(p: Pick<ProductRow, "price" | "discount_percent">) {
 export function matchesQuery(p: ProductWithPhotos, q: string) {
   const needle = q.trim().toLowerCase();
   if (!needle) return true;
-  return [p.name, p.category, p.sku, p.description, ...p.photos.flatMap((ph) => [ph.caption, ph.location_url, ph.location_label])]
+  return [
+    p.name,
+    p.category,
+    p.sku,
+    p.description,
+    ...p.photos.flatMap((ph) => [ph.caption, ph.location_url, ph.location_label]),
+  ]
     .filter(Boolean)
     .some((v) => String(v).toLowerCase().includes(needle));
 }
@@ -92,10 +161,19 @@ export type PhotoDraft = {
 };
 
 /** Simpan foto produk: setiap foto membawa lokasinya sendiri dan urutan dinormalisasi ulang. */
-export async function saveProductPhotos(businessId: string, productId: string, drafts: PhotoDraft[], removedIds: string[]) {
+export async function saveProductPhotos(
+  businessId: string,
+  productId: string,
+  drafts: PhotoDraft[],
+  removedIds: string[],
+) {
   if (removedIds.length > 0) {
-    const existing = unwrap(await supabase.from("product_photos").select("id, image_path").in("id", removedIds), "Gagal menghapus foto");
-    for (const row of existing) if (row.image_path) await removeObject("product-photos", row.image_path);
+    const existing = unwrap(
+      await supabase.from("product_photos").select("id, image_path").in("id", removedIds),
+      "Gagal menghapus foto",
+    );
+    for (const row of existing)
+      if (row.image_path) await removeObject("product-photos", row.image_path);
     await supabase.from("product_photos").delete().in("id", removedIds);
   }
   for (let i = 0; i < drafts.length; i++) {
@@ -123,5 +201,12 @@ export async function saveProductPhotos(businessId: string, productId: string, d
 }
 
 export async function listQuickReplies(businessId: string) {
-  return unwrap(await supabase.from("quick_replies").select("*").eq("business_id", businessId).order("shortcut"), "Gagal memuat balasan cepat");
+  return unwrap(
+    await supabase
+      .from("quick_replies")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("shortcut"),
+    "Gagal memuat balasan cepat",
+  );
 }

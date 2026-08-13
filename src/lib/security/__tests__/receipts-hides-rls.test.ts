@@ -58,7 +58,9 @@ describe("message_receipts RLS", () => {
   });
 
   it("select receipt tetap dibatasi anggota percakapan", () => {
-    expect(sql).toMatch(/create policy "member reads receipts" on public\.message_receipts[\s\S]*?is_conv_member/);
+    expect(sql).toMatch(
+      /create policy "member reads receipts" on public\.message_receipts[\s\S]*?is_conv_member/,
+    );
   });
 
   it("B/C tidak bisa menulis atau membaca receipt percakapan A", () => {
@@ -106,16 +108,23 @@ describe("audit grant SECURITY DEFINER", () => {
     const revokeAt = sql.lastIndexOf("revoke all on function %s from public, anon");
     expect(revokeAt).toBeGreaterThan(-1);
     const after = sql.slice(revokeAt);
-    expect(after).not.toMatch(/grant execute on function public\.[a-z_]+\([^)]*\) to (anon|public)/);
+    expect(after).not.toMatch(
+      /grant execute on function public\.[a-z_]+\([^)]*\) to (anon|public)/,
+    );
   });
 
   it("fungsi sensitif hanya untuk layanan internal", () => {
     expect(sql).toMatch(/revoke all on function public\.customer_pin\(uuid\) from authenticated/);
-    expect(sql).toMatch(/revoke all on function public\.can_view_avatar\(uuid, uuid\) from authenticated/);
+    expect(sql).toMatch(
+      /revoke all on function public\.can_view_avatar\(uuid, uuid\) from authenticated/,
+    );
   });
 
   it("setiap create function di migration mengunci search_path", () => {
-    const bodies = sql.match(/create or replace function public\.[\s\S]*?\$function\$|create or replace function public\.[\s\S]*?\$\$ *(language|;)/g) ?? [];
+    const bodies =
+      sql.match(
+        /create or replace function public\.[\s\S]*?\$function\$|create or replace function public\.[\s\S]*?\$\$ *(language|;)/g,
+      ) ?? [];
     expect(bodies.length).toBeGreaterThan(0);
   });
 });

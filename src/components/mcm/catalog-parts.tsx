@@ -4,13 +4,28 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/mcm/primitives";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import { formatQty, type PhotoRow, type VariantRow } from "@/lib/api/catalog";
 import { rupiah } from "@/lib/mcm/format";
 
-export function StockChip({ variant, balance }: { variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal" | "name">; balance: number }) {
+export function StockChip({
+  variant,
+  balance,
+}: {
+  variant: Pick<
+    VariantRow,
+    "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal" | "name"
+  >;
+  balance: number;
+}) {
   const low = balance <= 0;
   return (
     <StatusBadge tone={low ? "danger" : "primary"} className="whitespace-nowrap">
@@ -19,12 +34,30 @@ export function StockChip({ variant, balance }: { variant: Pick<VariantRow, "sto
   );
 }
 
-export function ProductThumb({ path, className }: { path?: string | null | undefined; className?: string | undefined }) {
+export function ProductThumb({
+  path,
+  className,
+}: {
+  path?: string | null | undefined;
+  className?: string | undefined;
+}) {
   const url = useSignedUrl("product-photos", path);
   if (!url) {
-    return <div className={`flex items-center justify-center rounded-xl bg-muted text-2xl ${className ?? "size-16"}`}>📦</div>;
+    return (
+      <div
+        className={`flex items-center justify-center rounded-xl bg-muted text-2xl ${className ?? "size-16"}`}
+      >
+        📦
+      </div>
+    );
   }
-  return <img src={url} alt="Foto produk" className={`rounded-xl object-cover ${className ?? "size-16"}`} />;
+  return (
+    <img
+      src={url}
+      alt="Foto produk"
+      className={`rounded-xl object-cover ${className ?? "size-16"}`}
+    />
+  );
 }
 
 async function copyLink(url: string) {
@@ -54,7 +87,11 @@ export function PhotoCard({
   return (
     <div className="card-soft overflow-hidden" data-testid={`gallery-photo-${index + 1}`}>
       {url ? (
-        <img src={url} alt={photo.caption || `Foto ${index + 1}`} className="h-36 w-full object-cover" />
+        <img
+          src={url}
+          alt={photo.caption || `Foto ${index + 1}`}
+          className="h-36 w-full object-cover"
+        />
       ) : (
         <div className="flex h-36 w-full items-center justify-center bg-muted text-3xl">📦</div>
       )}
@@ -62,7 +99,9 @@ export function PhotoCard({
         <p className="truncate text-xs font-semibold">{photo.caption || `Foto ${index + 1}`}</p>
         {hasLocation ? (
           <>
-            <p className="truncate text-[11px] text-muted-foreground">{photo.location_label || photo.location_url}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {photo.location_label || photo.location_url}
+            </p>
             <div className="flex flex-wrap gap-1.5">
               <a
                 href={photo.location_url}
@@ -73,10 +112,22 @@ export function PhotoCard({
               >
                 <MapPin className="size-3.5" /> Buka Lokasi
               </a>
-              <Button type="button" variant="outline" size="sm" className="h-8 rounded-lg text-[11px]" onClick={() => void copyLink(photo.location_url)}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-lg text-[11px]"
+                onClick={() => void copyLink(photo.location_url)}
+              >
                 <Copy className="size-3.5" /> Salin Link
               </Button>
-              <Button type="button" variant="outline" size="sm" className="h-8 rounded-lg text-[11px]" onClick={onEditLocation}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-lg text-[11px]"
+                onClick={onEditLocation}
+              >
                 <Pencil className="size-3.5" /> Edit Lokasi
               </Button>
             </div>
@@ -84,14 +135,26 @@ export function PhotoCard({
         ) : (
           <div className="flex flex-wrap gap-1.5">
             <p className="text-[11px] text-muted-foreground">Tanpa lokasi.</p>
-            <Button type="button" variant="outline" size="sm" className="h-8 rounded-lg text-[11px]" onClick={onEditLocation}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 rounded-lg text-[11px]"
+              onClick={onEditLocation}
+            >
               <Pencil className="size-3.5" /> Edit Lokasi
             </Button>
           </div>
         )}
         <div className="flex justify-end gap-2 pt-1">
           {actions}
-          <Button type="button" variant="ghost" size="sm" className="h-7 rounded-lg text-[11px] text-destructive" onClick={onDelete}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 rounded-lg text-[11px] text-destructive"
+            onClick={onDelete}
+          >
             Hapus
           </Button>
         </div>
@@ -109,7 +172,12 @@ export function EditLocationDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial: { location_url: string; location_label: string };
-  onSave: (v: { location_url: string; location_label: string; location_lat: number | null; location_lng: number | null }) => void;
+  onSave: (v: {
+    location_url: string;
+    location_label: string;
+    location_lat: number | null;
+    location_lng: number | null;
+  }) => void;
 }) {
   const [url, setUrl] = useState(initial.location_url);
   const [label, setLabel] = useState(initial.location_label);
@@ -140,12 +208,26 @@ export function EditLocationDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Label lokasi</Label>
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Contoh: Gudang A" />
+            <Input
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Contoh: Gudang A"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Link Maps</Label>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://maps.google.com/…" />
-            <Button type="button" variant="outline" size="sm" className="rounded-lg text-xs" onClick={useCurrent}>
+            <Input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://maps.google.com/…"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg text-xs"
+              onClick={useCurrent}
+            >
               <MapPin className="size-3.5" /> Ambil lokasi saat ini
             </Button>
           </div>
@@ -155,7 +237,12 @@ export function EditLocationDialog({
             type="button"
             className="w-full rounded-xl"
             onClick={() => {
-              onSave({ location_url: url.trim(), location_label: label.trim(), location_lat: null, location_lng: null });
+              onSave({
+                location_url: url.trim(),
+                location_label: label.trim(),
+                location_lat: null,
+                location_lng: null,
+              });
               onOpenChange(false);
             }}
           >

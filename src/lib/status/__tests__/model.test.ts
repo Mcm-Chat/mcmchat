@@ -53,7 +53,11 @@ describe("model status", () => {
   });
 
   it("mengelompokkan feed: milik saya dulu, lalu yang belum dilihat", () => {
-    const rows = [row("s1", "me", 0, "2026-01-01T00:00:00Z"), row("s2", "a", 1, "2026-01-02T00:00:00Z"), row("s3", "b", 0, "2026-01-03T00:00:00Z")];
+    const rows = [
+      row("s1", "me", 0, "2026-01-01T00:00:00Z"),
+      row("s2", "a", 1, "2026-01-02T00:00:00Z"),
+      row("s3", "b", 0, "2026-01-03T00:00:00Z"),
+    ];
     const items = [item("i1", "s1", "me"), item("i2", "s2", "a"), item("i3", "s3", "b")];
     const groups = groupFeed(rows, items, {}, "me", new Set(["i3"]));
     expect(groups.map((g) => g.ownerId)).toEqual(["me", "a", "b"]);
@@ -92,7 +96,14 @@ describe("editor status", () => {
   it("satu goresan hanya menghasilkan satu langkah undo", () => {
     let s = editorReducer(initialEditor, {
       type: "add",
-      layer: { id: "x", type: "stroke", tool: "pen", color: "#fff", width: 10, points: [{ x: 0, y: 0 }] },
+      layer: {
+        id: "x",
+        type: "stroke",
+        tool: "pen",
+        color: "#fff",
+        width: 10,
+        points: [{ x: 0, y: 0 }],
+      },
     });
     s = editorReducer(s, { type: "appendPoint", id: "x", point: { x: 5, y: 5 } });
     s = editorReducer(s, { type: "appendPoint", id: "x", point: { x: 9, y: 9 } });

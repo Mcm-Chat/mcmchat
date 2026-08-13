@@ -1,7 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, BellOff, ClipboardList, Info, Phone, RotateCw, Users, Video, Wallet, X } from "lucide-react";
+import {
+  ArrowDown,
+  BellOff,
+  ClipboardList,
+  Info,
+  Phone,
+  RotateCw,
+  Users,
+  Video,
+  Wallet,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
@@ -9,15 +20,34 @@ import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
-import { deleteForEveryone, deleteForMe, editMessage, sendMessage, toggleReaction, type MessageRow } from "@/lib/api/chat";
+import {
+  deleteForEveryone,
+  deleteForMe,
+  editMessage,
+  sendMessage,
+  toggleReaction,
+  type MessageRow,
+} from "@/lib/api/chat";
 import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -36,13 +66,21 @@ import { useTyping } from "@/lib/api/presence";
 import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
 
 export const Route = createFileRoute("/chat/$id")({
-  validateSearch: (search: Record<string, unknown>) => (typeof search['hl'] === "string" ? { hl: search['hl'] } : {}),
+  validateSearch: (search: Record<string, unknown>) =>
+    typeof search["hl"] === "string" ? { hl: search["hl"] } : {},
   head: () => ({
     meta: [
       { title: "Ruang Chat — MCM" },
-      { name: "description", content: "Kirim pesan, foto berlokasi, pesan suara, dan catatan utang langsung dari ruang chat MCM." },
+      {
+        name: "description",
+        content:
+          "Kirim pesan, foto berlokasi, pesan suara, dan catatan utang langsung dari ruang chat MCM.",
+      },
       { property: "og:title", content: "Ruang Chat — MCM" },
-      { property: "og:description", content: "Chat privat MCM dengan lampiran dan catatan keuangan." },
+      {
+        property: "og:description",
+        content: "Chat privat MCM dengan lampiran dan catatan keuangan.",
+      },
     ],
   }),
   component: ChatRoom,
@@ -101,16 +139,25 @@ function ChatRoom() {
       const { data } = await supabase
         .from("message_reactions")
         .select("message_id, emoji")
-        .in("message_id", messages.map((m) => m.id));
+        .in(
+          "message_id",
+          messages.map((m) => m.id),
+        );
       return data ?? [];
     },
     enabled: messages.length > 0,
   });
 
-  const myMessageIds = useMemo(() => messages.filter((m) => m.sender_id === userId).map((m) => m.id), [messages, userId]);
+  const myMessageIds = useMemo(
+    () => messages.filter((m) => m.sender_id === userId).map((m) => m.id),
+    [messages, userId],
+  );
   const { data: receiptRows } = useReceipts(id, myMessageIds, userId);
   const receiptIndex = useMemo(() => indexReceipts(receiptRows ?? []), [receiptRows]);
-  const otherMemberCount = useMemo(() => (conv?.members ?? []).filter((m) => m.id !== userId).length, [conv, userId]);
+  const otherMemberCount = useMemo(
+    () => (conv?.members ?? []).filter((m) => m.id !== userId).length,
+    [conv, userId],
+  );
 
   // Membuka ruang chat = pesan masuk dibaca. Server yang menulis receipt
   // (menghormati pengaturan privasi "laporan dibaca"), lalu pengirim menerima
@@ -139,7 +186,8 @@ function ChatRoom() {
   // memang miliknya sendiri.
   const lastSenderId = messages.at(-1)?.sender_id ?? null;
   useEffect(() => {
-    if (shouldAutoScroll({ atBottom, lastSenderId, userId })) bottomRef.current?.scrollIntoView({ block: "end" });
+    if (shouldAutoScroll({ atBottom, lastSenderId, userId }))
+      bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, pending.length, atBottom, lastSenderId, userId]);
 
   const onScroll = useCallback(() => {
@@ -230,7 +278,12 @@ function ChatRoom() {
       return;
     }
     try {
-      await sendMessage({ conversationId: id, senderId: userId, kind: "document", file: { blob: file, name: file.name } });
+      await sendMessage({
+        conversationId: id,
+        senderId: userId,
+        kind: "document",
+        file: { blob: file, name: file.name },
+      });
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Dokumen gagal dikirim");
@@ -242,7 +295,9 @@ function ChatRoom() {
     try {
       switch (action) {
         case "select":
-          setSelection((p) => (p.includes(message.id) ? p.filter((x) => x !== message.id) : [...p, message.id]));
+          setSelection((p) =>
+            p.includes(message.id) ? p.filter((x) => x !== message.id) : [...p, message.id],
+          );
           break;
         case "reply":
           setReply(message);
@@ -286,7 +341,6 @@ function ChatRoom() {
     }
   };
 
-
   const loadCallConfig = useServerFn(getCallConfig);
 
   const call = async (kind: "audio" | "video") => {
@@ -327,15 +381,36 @@ function ChatRoom() {
             title={`${selection.length} dipilih`}
             actions={
               <>
-                <Button variant="ghost" size="sm" onClick={() => void deleteForMe(selection, userId!).then(() => { setSelection([]); refresh(); })}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    void deleteForMe(selection, userId!).then(() => {
+                      setSelection([]);
+                      refresh();
+                    })
+                  }
+                >
                   Hapus untuk saya
                 </Button>
-                {messages.filter((m) => selection.includes(m.id)).every((m) => m.sender_id === userId) && (
-                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setConfirmAll(true)}>
+                {messages
+                  .filter((m) => selection.includes(m.id))
+                  .every((m) => m.sender_id === userId) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => setConfirmAll(true)}
+                  >
                     Hapus untuk semua
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" aria-label="Batal pilih" onClick={() => setSelection([])}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Batal pilih"
+                  onClick={() => setSelection([])}
+                >
                   <X className="size-5" />
                 </Button>
               </>
@@ -348,9 +423,20 @@ function ChatRoom() {
               <span className="flex items-center gap-2">
                 <span className="relative shrink-0">
                   {conv.other ? (
-                    <UserAvatar userId={conv.other.id} path={conv.other.avatar_url} version={conv.other.avatar_version ?? 0} name={conv.title_resolved} color={conv.other.avatar_color} size="sm" />
+                    <UserAvatar
+                      userId={conv.other.id}
+                      path={conv.other.avatar_url}
+                      version={conv.other.avatar_version ?? 0}
+                      name={conv.title_resolved}
+                      color={conv.other.avatar_color}
+                      size="sm"
+                    />
                   ) : (
-                    <MCMAvatar initials={initialsOf(conv.title_resolved)} color="#0ea5e9" size="sm" />
+                    <MCMAvatar
+                      initials={initialsOf(conv.title_resolved)}
+                      color="#0ea5e9"
+                      size="sm"
+                    />
                   )}
                   {conv.other && onlineIds.has(conv.other.id) && (
                     <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-success" />
@@ -373,18 +459,38 @@ function ChatRoom() {
             }
             actions={
               <>
-                <Button variant="ghost" size="icon" aria-label="Panggilan suara" onClick={() => void call("audio")}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Panggilan suara"
+                  onClick={() => void call("audio")}
+                >
                   <Phone className="size-5" />
                 </Button>
-                <Button variant="ghost" size="icon" aria-label="Panggilan video" onClick={() => void call("video")}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Panggilan video"
+                  onClick={() => void call("video")}
+                >
                   <Video className="size-5" />
                 </Button>
                 {business && (
-                  <Button variant="ghost" size="icon" aria-label="Buat perintah penyiapan" onClick={() => setPrepOpen(true)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Buat perintah penyiapan"
+                    onClick={() => setPrepOpen(true)}
+                  >
                     <ClipboardList className="size-5" />
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" aria-label="Detail chat" onClick={() => setDetailOpen(true)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Detail chat"
+                  onClick={() => setDetailOpen(true)}
+                >
                   <Info className="size-5" />
                 </Button>
               </>
@@ -398,13 +504,24 @@ function ChatRoom() {
           role="status"
           className="sticky top-0 z-10 bg-muted/90 px-4 py-1.5 text-center text-[11px] font-medium text-muted-foreground backdrop-blur"
         >
-          {connection === "connecting" ? "Menghubungkan kembali…" : "Offline — pesan dikirim otomatis saat koneksi kembali"}
+          {connection === "connecting"
+            ? "Menghubungkan kembali…"
+            : "Offline — pesan dikirim otomatis saat koneksi kembali"}
         </div>
       )}
-      <div ref={scrollRef} onScroll={onScroll} className="chat-canvas relative flex-1 overflow-y-auto px-2 py-3">
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="chat-canvas relative flex-1 overflow-y-auto px-2 py-3"
+      >
         {hasOlder && (
           <div className="mb-2 flex justify-center">
-            <Button variant="ghost" size="sm" disabled={isFetchingOlder} onClick={() => void fetchOlder()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={isFetchingOlder}
+              onClick={() => void fetchOlder()}
+            >
               {isFetchingOlder ? "Memuat pesan lama…" : "Muat pesan lama"}
             </Button>
           </div>
@@ -413,13 +530,21 @@ function ChatRoom() {
           <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               {conv.other ? (
-                <UserAvatar userId={conv.other.id} path={conv.other.avatar_url} version={conv.other.avatar_version ?? 0} name={conv.title_resolved} color={conv.other.avatar_color} />
+                <UserAvatar
+                  userId={conv.other.id}
+                  path={conv.other.avatar_url}
+                  version={conv.other.avatar_version ?? 0}
+                  name={conv.title_resolved}
+                  color={conv.other.avatar_color}
+                />
               ) : (
                 <MCMAvatar initials={initialsOf(conv.title_resolved)} color="#0ea5e9" />
               )}
             </span>
             <p className="text-sm font-semibold">Mulai percakapan dengan {conv.title_resolved}</p>
-            <p className="text-xs text-muted-foreground">Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.</p>
+            <p className="text-xs text-muted-foreground">
+              Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.
+            </p>
           </div>
         )}
         {messages.map((m, idx) => {
@@ -452,7 +577,9 @@ function ChatRoom() {
                 senderName={nameOf(m.sender_id)}
                 mine={mine}
                 showSender={conv.type !== "direct"}
-                reactions={(reactions ?? []).filter((r) => r.message_id === m.id).map((r) => r.emoji)}
+                reactions={(reactions ?? [])
+                  .filter((r) => r.message_id === m.id)
+                  .map((r) => r.emoji)}
                 status={status}
                 grouped={grouped}
                 selectable={selection.length > 0}
@@ -469,7 +596,9 @@ function ChatRoom() {
           <div key={entry.clientId} className="mb-1.5 flex justify-end px-2">
             <div
               className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${
-                entry.status === "failed" ? "border border-destructive/40 bg-destructive/10" : "bg-primary/70 text-primary-foreground"
+                entry.status === "failed"
+                  ? "border border-destructive/40 bg-destructive/10"
+                  : "bg-primary/70 text-primary-foreground"
               }`}
             >
               <p className="whitespace-pre-wrap break-words">{entry.body}</p>
@@ -484,7 +613,11 @@ function ChatRoom() {
                     >
                       <RotateCw className="size-3" /> Coba lagi
                     </button>
-                    <button type="button" className="font-medium underline" onClick={() => discardEntry(entry.clientId)}>
+                    <button
+                      type="button"
+                      className="font-medium underline"
+                      onClick={() => discardEntry(entry.clientId)}
+                    >
                       Buang
                     </button>
                   </>
@@ -518,7 +651,9 @@ function ChatRoom() {
       {blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">
           <p className="text-sm text-muted-foreground">
-            {blocked ? `Anda memblokir ${conv.other?.display_name ?? "kontak ini"}.` : "Anda tidak dapat mengirim pesan ke kontak ini."}
+            {blocked
+              ? `Anda memblokir ${conv.other?.display_name ?? "kontak ini"}.`
+              : "Anda tidak dapat mengirim pesan ke kontak ini."}
           </p>
           {blocked && (
             <Button
@@ -602,15 +737,26 @@ function ChatRoom() {
             <ul className="space-y-1">
               {conv.members.map((m) => (
                 <li key={m.id} className="flex items-center gap-2 text-sm">
-                  <UserAvatar userId={m.id} path={m.avatar_url} version={m.avatar_version ?? 0} name={m.display_name} color={m.avatar_color} size="xs" />
+                  <UserAvatar
+                    userId={m.id}
+                    path={m.avatar_url}
+                    version={m.avatar_version ?? 0}
+                    name={m.display_name}
+                    color={m.avatar_color}
+                    size="xs"
+                  />
                   <span className="truncate">{m.display_name}</span>
-                  <span className="ml-auto font-mono text-[11px] text-muted-foreground">{m.pin}</span>
+                  <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                    {m.pin}
+                  </span>
                 </li>
               ))}
             </ul>
             {(prepJobs ?? []).length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground">Perintah penyiapan percakapan ini</p>
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Perintah penyiapan percakapan ini
+                </p>
                 {(prepJobs ?? []).map((job) => (
                   <PreparationJobCard
                     key={job.id}

@@ -101,14 +101,20 @@ export type PushTarget = { token: string; sound: boolean; vibrate: boolean };
 export function isDeadTokenError(status: number, body: unknown): boolean {
   if (status === 404) return true;
   if (status !== 400 && status !== 403) return false;
-  const err = (body as { error?: { status?: string; details?: { errorCode?: string }[]; message?: string } } | null)?.error;
+  const err = (
+    body as {
+      error?: { status?: string; details?: { errorCode?: string }[]; message?: string };
+    } | null
+  )?.error;
   if (!err) return false;
   const codes = new Set<string>();
   if (err.status) codes.add(err.status);
   for (const d of err.details ?? []) if (d.errorCode) codes.add(d.errorCode);
-  if (codes.has("UNREGISTERED") || codes.has("NOT_FOUND") || codes.has("SENDER_ID_MISMATCH")) return true;
+  if (codes.has("UNREGISTERED") || codes.has("NOT_FOUND") || codes.has("SENDER_ID_MISMATCH"))
+    return true;
   // INVALID_ARGUMENT hanya dianggap token mati bila memang menyebut field token.
-  if (codes.has("INVALID_ARGUMENT")) return /registration token|message\.token|not a valid FCM/i.test(err.message ?? "");
+  if (codes.has("INVALID_ARGUMENT"))
+    return /registration token|message\.token|not a valid FCM/i.test(err.message ?? "");
   return false;
 }
 
@@ -120,7 +126,13 @@ export function isDeadTokenError(status: number, body: unknown): boolean {
 export async function sendPush(targets: PushTarget[], data: PushData): Promise<FcmResult> {
   const sa = readServiceAccount();
   if (!sa) {
-    return { configured: false, sent: 0, failed: 0, invalidTokens: [], reason: "FCM_SERVICE_ACCOUNT_JSON belum diatur" };
+    return {
+      configured: false,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "FCM_SERVICE_ACCOUNT_JSON belum diatur",
+    };
   }
   if (targets.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
 

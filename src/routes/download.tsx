@@ -15,7 +15,10 @@ export const Route = createFileRoute("/download")({
           "Unduh aplikasi MCM: chat privat, panggilan suara & video, Status, katalog produk, dan buku besar bisnis dalam satu aplikasi Android.",
       },
       { property: "og:title", content: "Unduh MCM untuk Android" },
-      { property: "og:description", content: "Chat privat, panggilan, dan pembukuan bisnis MCM di ponsel Anda." },
+      {
+        property: "og:description",
+        content: "Chat privat, panggilan, dan pembukuan bisnis MCM di ponsel Anda.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -24,9 +27,21 @@ export const Route = createFileRoute("/download")({
 });
 
 const FEATURES = [
-  { icon: ShieldCheck, title: "Privasi kelas produksi", desc: "Proteksi tangkapan layar, foto profil beraturan privasi, dan enkripsi transportasi." },
-  { icon: Bell, title: "Notifikasi interaktif", desc: "Balas pesan dan tandai dibaca langsung dari notifikasi Android." },
-  { icon: Wallet, title: "Bisnis dalam chat", desc: "Katalog, stok, penyiapan pegawai, penjualan, dan buku besar menyatu di ruang chat." },
+  {
+    icon: ShieldCheck,
+    title: "Privasi kelas produksi",
+    desc: "Proteksi tangkapan layar, foto profil beraturan privasi, dan enkripsi transportasi.",
+  },
+  {
+    icon: Bell,
+    title: "Notifikasi interaktif",
+    desc: "Balas pesan dan tandai dibaca langsung dari notifikasi Android.",
+  },
+  {
+    icon: Wallet,
+    title: "Bisnis dalam chat",
+    desc: "Katalog, stok, penyiapan pegawai, penjualan, dan buku besar menyatu di ruang chat.",
+  },
 ];
 
 function DownloadPage() {
@@ -34,7 +49,8 @@ function DownloadPage() {
     <main className="mx-auto min-h-screen w-full max-w-md bg-background px-5 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Unduh MCM</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        MCM — Private Chat, Calls &amp; Smart Ledger untuk Android. Versi web dapat langsung dipakai tanpa memasang apa pun.
+        MCM — Private Chat, Calls &amp; Smart Ledger untuk Android. Versi web dapat langsung dipakai
+        tanpa memasang apa pun.
       </p>
 
       <div className="card-soft mt-6 space-y-3 p-4">
@@ -42,8 +58,8 @@ function DownloadPage() {
           <Smartphone className="size-4 text-primary" /> Aplikasi Android
         </div>
         <p className="text-xs text-muted-foreground">
-          Rilis Play Store sedang dalam proses peninjauan. Sementara itu, pasang MCM sebagai aplikasi layar utama
-          melalui menu browser: <em>Tambahkan ke layar utama</em>.
+          Rilis Play Store sedang dalam proses peninjauan. Sementara itu, pasang MCM sebagai
+          aplikasi layar utama melalui menu browser: <em>Tambahkan ke layar utama</em>.
         </p>
         <Button asChild className="w-full rounded-xl">
           <Link to="/">Buka MCM versi web</Link>

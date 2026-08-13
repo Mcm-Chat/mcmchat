@@ -33,7 +33,9 @@ export async function loadTask(jobId: string): Promise<PrepTask | null> {
 
   const signed = new Map<string, string | null>();
   for (const p of photos ?? []) {
-    const { data } = await supabaseAdmin.storage.from("product-photos").createSignedUrl(p.storage_path, 3600);
+    const { data } = await supabaseAdmin.storage
+      .from("product-photos")
+      .createSignedUrl(p.storage_path, 3600);
     signed.set(p.id, data?.signedUrl ?? null);
   }
 
@@ -47,7 +49,8 @@ export async function loadTask(jobId: string): Promise<PrepTask | null> {
     completed_at: job.completed_at,
     business_name: (job as { businesses?: { name: string } | null }).businesses?.name ?? "MCM",
     items: (items ?? []).map((it) => {
-      const v = (it as { product_variants?: { base_unit: string; stock_type: string } | null }).product_variants;
+      const v = (it as { product_variants?: { base_unit: string; stock_type: string } | null })
+        .product_variants;
       return {
         id: it.id,
         product_name: it.product_name,

@@ -1,5 +1,16 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import { Eraser, FlipHorizontal, Highlighter, Pencil, Redo2, RotateCw, Smile, SquareDashedBottom, Type, Undo2 } from "lucide-react";
+import {
+  Eraser,
+  FlipHorizontal,
+  Highlighter,
+  Pencil,
+  Redo2,
+  RotateCw,
+  Smile,
+  SquareDashedBottom,
+  Type,
+  Undo2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +69,10 @@ export function StatusEditor({
   const hitLayer = (x: number, y: number): Layer | undefined =>
     [...state.layers]
       .reverse()
-      .find((l) => l.type !== "stroke" && Math.hypot(l.x - x, l.y - y) < ("size" in l ? l.size * 1.6 : 60));
+      .find(
+        (l) =>
+          l.type !== "stroke" && Math.hypot(l.x - x, l.y - y) < ("size" in l ? l.size * 1.6 : 60),
+      );
 
   const onDown = (e: React.PointerEvent) => {
     const p = toCanvas(e);
@@ -68,14 +82,31 @@ export function StatusEditor({
       drawingId.current = id;
       dispatch({
         type: "add",
-        layer: { id, type: "stroke", tool, color, width: tool === "pixelate" ? width * 2 : width, points: [p] },
+        layer: {
+          id,
+          type: "stroke",
+          tool,
+          color,
+          width: tool === "pixelate" ? width * 2 : width,
+          points: [p],
+        },
       });
       return;
     }
     if (tool === "text" && text.trim()) {
       dispatch({
         type: "add",
-        layer: { id: crypto.randomUUID(), type: "text", text: text.trim(), x: p.x, y: p.y, size: 56, color, bubble: true, font: "ui-sans-serif, system-ui, sans-serif" },
+        layer: {
+          id: crypto.randomUUID(),
+          type: "text",
+          text: text.trim(),
+          x: p.x,
+          y: p.y,
+          size: 56,
+          color,
+          bubble: true,
+          font: "ui-sans-serif, system-ui, sans-serif",
+        },
       });
       setText("");
       setTool("none");
@@ -88,7 +119,8 @@ export function StatusEditor({
   const onMove = (e: React.PointerEvent) => {
     const p = toCanvas(e);
     if (drawingId.current) dispatch({ type: "appendPoint", id: drawingId.current, point: p });
-    else if (dragId.current) dispatch({ type: "update", id: dragId.current, patch: { x: p.x, y: p.y } as Partial<Layer> });
+    else if (dragId.current)
+      dispatch({ type: "update", id: dragId.current, patch: { x: p.x, y: p.y } as Partial<Layer> });
   };
 
   const onUp = () => {
@@ -112,21 +144,68 @@ export function StatusEditor({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <ToolButton active={tool === "pen"} onClick={() => setTool(tool === "pen" ? "none" : "pen")} icon={<Pencil className="size-4" />} label="Pena" />
-        <ToolButton active={tool === "highlight"} onClick={() => setTool(tool === "highlight" ? "none" : "highlight")} icon={<Highlighter className="size-4" />} label="Stabilo" />
-        <ToolButton active={tool === "pixelate"} onClick={() => setTool(tool === "pixelate" ? "none" : "pixelate")} icon={<SquareDashedBottom className="size-4" />} label="Sensor" />
-        <ToolButton active={tool === "text"} onClick={() => setTool(tool === "text" ? "none" : "text")} icon={<Type className="size-4" />} label="Teks" />
-        <ToolButton active={tool === "sticker"} onClick={() => setTool(tool === "sticker" ? "none" : "sticker")} icon={<Smile className="size-4" />} label="Stiker" />
-        <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "rotate" })}>
+        <ToolButton
+          active={tool === "pen"}
+          onClick={() => setTool(tool === "pen" ? "none" : "pen")}
+          icon={<Pencil className="size-4" />}
+          label="Pena"
+        />
+        <ToolButton
+          active={tool === "highlight"}
+          onClick={() => setTool(tool === "highlight" ? "none" : "highlight")}
+          icon={<Highlighter className="size-4" />}
+          label="Stabilo"
+        />
+        <ToolButton
+          active={tool === "pixelate"}
+          onClick={() => setTool(tool === "pixelate" ? "none" : "pixelate")}
+          icon={<SquareDashedBottom className="size-4" />}
+          label="Sensor"
+        />
+        <ToolButton
+          active={tool === "text"}
+          onClick={() => setTool(tool === "text" ? "none" : "text")}
+          icon={<Type className="size-4" />}
+          label="Teks"
+        />
+        <ToolButton
+          active={tool === "sticker"}
+          onClick={() => setTool(tool === "sticker" ? "none" : "sticker")}
+          icon={<Smile className="size-4" />}
+          label="Stiker"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => dispatch({ type: "rotate" })}
+        >
           <RotateCw className="size-4" /> Putar
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "flip" })}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => dispatch({ type: "flip" })}
+        >
           <FlipHorizontal className="size-4" /> Cermin
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={!canUndo(state)} onClick={() => dispatch({ type: "undo" })}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!canUndo(state)}
+          onClick={() => dispatch({ type: "undo" })}
+        >
           <Undo2 className="size-4" />
         </Button>
-        <Button type="button" variant="outline" size="sm" disabled={!canRedo(state)} onClick={() => dispatch({ type: "redo" })}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!canRedo(state)}
+          onClick={() => dispatch({ type: "redo" })}
+        >
           <Redo2 className="size-4" />
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => dispatch({ type: "reset" })}>
@@ -137,7 +216,12 @@ export function StatusEditor({
       {tool === "text" && (
         <div className="space-y-1.5">
           <Label htmlFor="status-text">Ketik teks, lalu ketuk posisi pada foto</Label>
-          <Input id="status-text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Tulis sesuatu…" />
+          <Input
+            id="status-text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Tulis sesuatu…"
+          />
         </div>
       )}
 
@@ -151,14 +235,23 @@ export function StatusEditor({
               onClick={() =>
                 dispatch({
                   type: "add",
-                  layer: { id: crypto.randomUUID(), type: "sticker", emoji, x: CANVAS_W / 2, y: CANVAS_H / 2, size: 140 },
+                  layer: {
+                    id: crypto.randomUUID(),
+                    type: "sticker",
+                    emoji,
+                    x: CANVAS_W / 2,
+                    y: CANVAS_H / 2,
+                    size: 140,
+                  },
                 })
               }
             >
               {emoji}
             </button>
           ))}
-          <p className="w-full text-xs text-muted-foreground">Geser stiker/teks langsung di atas foto untuk memindahkan.</p>
+          <p className="w-full text-xs text-muted-foreground">
+            Geser stiker/teks langsung di atas foto untuk memindahkan.
+          </p>
         </div>
       )}
 
@@ -170,7 +263,10 @@ export function StatusEditor({
                 key={c}
                 type="button"
                 aria-label={`Warna ${c}`}
-                className={cn("size-7 rounded-full border-2", color === c ? "border-primary" : "border-border")}
+                className={cn(
+                  "size-7 rounded-full border-2",
+                  color === c ? "border-primary" : "border-border",
+                )}
                 style={{ background: c }}
                 onClick={() => setColor(c)}
               />
@@ -178,7 +274,14 @@ export function StatusEditor({
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Tebal</span>
-            <Slider value={[width]} min={6} max={60} step={2} onValueChange={([v]) => setWidth(v ?? 18)} className="flex-1" />
+            <Slider
+              value={[width]}
+              min={6}
+              max={60}
+              step={2}
+              onValueChange={([v]) => setWidth(v ?? 18)}
+              className="flex-1"
+            />
           </div>
         </div>
       )}
@@ -198,11 +301,13 @@ export function StatusEditor({
       </div>
 
       <div className="grid gap-2">
-        {([
-          ["Kecerahan", "brightness"],
-          ["Kontras", "contrast"],
-          ["Saturasi", "saturation"],
-        ] as const).map(([label, key]) => (
+        {(
+          [
+            ["Kecerahan", "brightness"],
+            ["Kontras", "contrast"],
+            ["Saturasi", "saturation"],
+          ] as const
+        ).map(([label, key]) => (
           <div key={key} className="flex items-center gap-3">
             <span className="w-20 text-xs text-muted-foreground">{label}</span>
             <Slider
@@ -210,7 +315,9 @@ export function StatusEditor({
               min={50}
               max={160}
               step={2}
-              onValueChange={([v]) => dispatch({ type: "adjust", patch: { [key]: (v ?? 100) / 100 } })}
+              onValueChange={([v]) =>
+                dispatch({ type: "adjust", patch: { [key]: (v ?? 100) / 100 } })
+              }
               className="flex-1"
             />
           </div>
@@ -220,7 +327,17 @@ export function StatusEditor({
   );
 }
 
-function ToolButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+function ToolButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
     <Button type="button" size="sm" variant={active ? "default" : "outline"} onClick={onClick}>
       {icon} {label}

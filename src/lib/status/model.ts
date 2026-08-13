@@ -137,9 +137,13 @@ export function groupFeed(
   }
   const byOwner = new Map<string, StatusGroup>();
   for (const row of rows) {
-    const its = (byStatus.get(row.status_id) ?? []).slice().sort((a, b) =>
-      a.sort_order === b.sort_order ? a.created_at.localeCompare(b.created_at) : a.sort_order - b.sort_order,
-    );
+    const its = (byStatus.get(row.status_id) ?? [])
+      .slice()
+      .sort((a, b) =>
+        a.sort_order === b.sort_order
+          ? a.created_at.localeCompare(b.created_at)
+          : a.sort_order - b.sort_order,
+      );
     const g = byOwner.get(row.owner_id) ?? {
       ownerId: row.owner_id,
       profile: profiles[row.owner_id] ?? null,
@@ -153,7 +157,8 @@ export function groupFeed(
     };
     g.items = g.items.concat(its);
     g.statusIds = g.statusIds.concat(row.status_id);
-    g.unseen += row.owner_id === myId ? 0 : its.filter((i) => !seen.has(i.id)).length || row.unseen_count;
+    g.unseen +=
+      row.owner_id === myId ? 0 : its.filter((i) => !seen.has(i.id)).length || row.unseen_count;
     g.muted = g.muted || row.muted;
     if (row.last_item_at > g.lastAt) g.lastAt = row.last_item_at;
     if (row.expires_at > g.expiresAt) g.expiresAt = row.expires_at;
@@ -161,9 +166,15 @@ export function groupFeed(
   }
   const groups = [...byOwner.values()].filter((g) => g.items.length > 0);
   for (const g of groups)
-    g.items.sort((a, b) => (a.created_at === b.created_at ? a.id.localeCompare(b.id) : a.created_at.localeCompare(b.created_at)));
+    g.items.sort((a, b) =>
+      a.created_at === b.created_at
+        ? a.id.localeCompare(b.id)
+        : a.created_at.localeCompare(b.created_at),
+    );
   const rank = (g: StatusGroup) => (g.mine ? 0 : g.muted ? 3 : g.unseen > 0 ? 1 : 2);
-  return groups.sort((a, b) => (rank(a) === rank(b) ? b.lastAt.localeCompare(a.lastAt) : rank(a) - rank(b)));
+  return groups.sort((a, b) =>
+    rank(a) === rank(b) ? b.lastAt.localeCompare(a.lastAt) : rank(a) - rank(b),
+  );
 }
 
 /** Slide pertama yang belum dilihat; jatuh ke 0 bila semua sudah dilihat. */
@@ -189,7 +200,11 @@ export function advance(
   if (ng < 0) return { groupIndex, itemIndex: 0, done: false };
   if (ng >= groups.length) return { groupIndex, itemIndex, done: true };
   const target = groups[ng]!;
-  return { groupIndex: ng, itemIndex: dir === 1 ? 0 : Math.max(0, target.items.length - 1), done: false };
+  return {
+    groupIndex: ng,
+    itemIndex: dir === 1 ? 0 : Math.max(0, target.items.length - 1),
+    done: false,
+  };
 }
 
 export const initialsOf = (name: string) =>

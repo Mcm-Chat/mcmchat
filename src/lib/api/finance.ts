@@ -6,17 +6,25 @@ import type { SalesRecordRow } from "./sales";
 /** Ringkasan keuangan untuk beranda Keuangan: piutang/utang terbuka, jatuh tempo, dan penjualan. */
 export function financeSummary(ledgers: LedgerRow[], sales: SalesRecordRow[]) {
   const open = ledgers.filter((l) => OPEN_STATUSES.includes(l.status));
-  const receivable = open.filter((l) => l.type === "receivable").reduce((s, l) => s + remaining(l), 0);
+  const receivable = open
+    .filter((l) => l.type === "receivable")
+    .reduce((s, l) => s + remaining(l), 0);
   const payable = open.filter((l) => l.type === "payable").reduce((s, l) => s + remaining(l), 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const dueLedgers = open.filter((l) => l.due_date && new Date(l.due_date).getTime() <= Date.now());
-  const overdue = dueLedgers.filter((l) => l.due_date && new Date(l.due_date).getTime() < today.getTime());
+  const overdue = dueLedgers.filter(
+    (l) => l.due_date && new Date(l.due_date).getTime() < today.getTime(),
+  );
 
   const startOfDay = today.getTime();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).getTime();
-  const salesToday = sales.filter((s) => new Date(s.created_at).getTime() >= startOfDay).reduce((s, r) => s + Number(r.total), 0);
-  const salesMonth = sales.filter((s) => new Date(s.created_at).getTime() >= startOfMonth).reduce((s, r) => s + Number(r.total), 0);
+  const salesToday = sales
+    .filter((s) => new Date(s.created_at).getTime() >= startOfDay)
+    .reduce((s, r) => s + Number(r.total), 0);
+  const salesMonth = sales
+    .filter((s) => new Date(s.created_at).getTime() >= startOfMonth)
+    .reduce((s, r) => s + Number(r.total), 0);
 
   return {
     receivable,
@@ -41,7 +49,11 @@ export function salesPayload(row: SalesRecordRow): SalesPayload {
 }
 
 export async function getSaleDetail(id: string) {
-  const { data, error } = await supabase.from("sales_records").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("sales_records")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw new Error("Gagal memuat rincian penjualan");
   return data;
 }

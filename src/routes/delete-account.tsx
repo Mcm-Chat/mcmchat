@@ -17,7 +17,11 @@ export const Route = createFileRoute("/delete-account")({
     meta: [
       ...canonical("/delete-account").meta,
       { title: "Hapus Akun — MCM" },
-      { name: "description", content: "Hapus akun MCM Anda beserta seluruh pesan, katalog, dan catatan keuangan secara permanen." },
+      {
+        name: "description",
+        content:
+          "Hapus akun MCM Anda beserta seluruh pesan, katalog, dan catatan keuangan secara permanen.",
+      },
       { property: "og:title", content: "Hapus Akun — MCM" },
       { property: "og:description", content: "Permintaan penghapusan akun dan data MCM." },
       { property: "og:type", content: "article" },
@@ -49,7 +53,10 @@ function DeleteAccountPage() {
   };
 
   return (
-    <AppShell nav={false} header={<MobileHeader title="Hapus akun" subtitle="Tindakan permanen" back />}>
+    <AppShell
+      nav={false}
+      header={<MobileHeader title="Hapus akun" subtitle="Tindakan permanen" back />}
+    >
       <div className="space-y-5 px-4 py-5 pb-10">
         <div className="flex gap-3 rounded-2xl border border-destructive/40 bg-destructive/10 p-4">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" />
@@ -68,14 +75,26 @@ function DeleteAccountPage() {
           <>
             <div className="space-y-2">
               <Label htmlFor="confirm">Ketik HAPUS untuk melanjutkan</Label>
-              <Input id="confirm" value={confirm} onChange={(e) => setConfirm(e.target.value.toUpperCase())} placeholder="HAPUS" autoComplete="off" />
+              <Input
+                id="confirm"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value.toUpperCase())}
+                placeholder="HAPUS"
+                autoComplete="off"
+              />
             </div>
-            <Button variant="destructive" className="w-full" disabled={confirm !== "HAPUS" || busy} onClick={() => void onDelete()}>
+            <Button
+              variant="destructive"
+              className="w-full"
+              disabled={confirm !== "HAPUS" || busy}
+              onClick={() => void onDelete()}
+            >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               Hapus akun saya permanen
             </Button>
             <p className="text-xs text-muted-foreground">
-              Setelah dihapus, Anda tidak dapat memulihkan data ini. Anda tetap bisa mendaftar ulang dengan email yang sama, namun akan memperoleh PIN baru.
+              Setelah dihapus, Anda tidak dapat memulihkan data ini. Anda tetap bisa mendaftar ulang
+              dengan email yang sama, namun akan memperoleh PIN baru.
             </p>
           </>
         ) : (

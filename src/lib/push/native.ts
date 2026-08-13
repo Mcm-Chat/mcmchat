@@ -50,13 +50,19 @@ async function loadPlugin(name: string): Promise<AnyPlugin | null> {
 async function storeActionToken(token: string) {
   const secure = await loadPlugin("@capacitor-community/secure-storage-plugin");
   if (secure && typeof (secure as unknown as { set?: unknown }).set === "function") {
-    await (secure as unknown as { set: (o: unknown) => Promise<unknown> }).set({ key: ACTION_TOKEN_KEY, value: token });
+    await (secure as unknown as { set: (o: unknown) => Promise<unknown> }).set({
+      key: ACTION_TOKEN_KEY,
+      value: token,
+    });
     return true;
   }
   const prefs = await loadPlugin("@capacitor/preferences");
   if (prefs && typeof (prefs as unknown as { set?: unknown }).set === "function") {
     // Fallback hanya untuk build dev; produksi wajib memakai secure storage.
-    await (prefs as unknown as { set: (o: unknown) => Promise<unknown> }).set({ key: ACTION_TOKEN_KEY, value: token });
+    await (prefs as unknown as { set: (o: unknown) => Promise<unknown> }).set({
+      key: ACTION_TOKEN_KEY,
+      value: token,
+    });
     return true;
   }
   return false;
@@ -65,7 +71,8 @@ async function storeActionToken(token: string) {
 async function clearActionToken() {
   for (const name of ["@capacitor-community/secure-storage-plugin", "@capacitor/preferences"]) {
     const plugin = await loadPlugin(name);
-    const remove = (plugin as unknown as { remove?: (o: unknown) => Promise<unknown> } | null)?.remove;
+    const remove = (plugin as unknown as { remove?: (o: unknown) => Promise<unknown> } | null)
+      ?.remove;
     if (remove) await remove({ key: ACTION_TOKEN_KEY }).catch(() => undefined);
   }
 }
@@ -73,7 +80,8 @@ async function clearActionToken() {
 /** Buat seluruh channel Android dengan nama berbahasa Indonesia. */
 export async function ensureChannels(sound: boolean, vibrate: boolean) {
   const push = await loadPlugin("@capacitor/push-notifications");
-  const create = (push as unknown as { createChannel?: (o: unknown) => Promise<unknown> } | null)?.createChannel;
+  const create = (push as unknown as { createChannel?: (o: unknown) => Promise<unknown> } | null)
+    ?.createChannel;
   if (!create) return;
   for (const ch of Object.values(CHANNELS)) {
     await create({
@@ -98,8 +106,11 @@ export async function registerNativePush(deviceName: string): Promise<RegisterRe
   const push = await loadPlugin("@capacitor/push-notifications");
   if (!push) return { registered: false, reason: "plugin push belum terpasang" };
 
-  const perm = (await (push as unknown as { requestPermissions: () => Promise<{ receive: string }> }).requestPermissions())
-    .receive;
+  const perm = (
+    await (
+      push as unknown as { requestPermissions: () => Promise<{ receive: string }> }
+    ).requestPermissions()
+  ).receive;
   if (perm !== "granted") return { registered: false, reason: "izin notifikasi ditolak" };
 
   await ensureChannels(true, true);
@@ -120,7 +131,8 @@ export async function registerNativePush(deviceName: string): Promise<RegisterRe
       if (payload.action_token) await storeActionToken(payload.action_token);
       resolve({ registered: true });
     }) as never);
-    void push.addListener?.("registrationError", (() => resolve({ registered: false, reason: "registrasi FCM gagal" })) as never);
+    void push.addListener?.("registrationError", (() =>
+      resolve({ registered: false, reason: "registrasi FCM gagal" })) as never);
     void (push as unknown as { register: () => Promise<void> }).register();
   });
 }
@@ -133,21 +145,30 @@ export async function revokeNativePush() {
   );
   await clearActionToken();
   const push = await loadPlugin("@capacitor/push-notifications");
-  const remove = (push as unknown as { removeAllDeliveredNotifications?: () => Promise<void> } | null)
-    ?.removeAllDeliveredNotifications;
+  const remove = (
+    push as unknown as { removeAllDeliveredNotifications?: () => Promise<void> } | null
+  )?.removeAllDeliveredNotifications;
   if (remove) await remove().catch(() => undefined);
 }
 
 /** Bersihkan notifikasi satu percakapan setelah dibuka/dibaca. */
 export async function clearConversationNotifications(conversationId: string) {
   const push = await loadPlugin("@capacitor/push-notifications");
-  const list = (push as unknown as { getDeliveredNotifications?: () => Promise<{ notifications: { id: string; data?: Record<string, string> }[] }> } | null)
-    ?.getDeliveredNotifications;
-  const removeSome = (push as unknown as { removeDeliveredNotifications?: (o: unknown) => Promise<void> } | null)
-    ?.removeDeliveredNotifications;
+  const list = (
+    push as unknown as {
+      getDeliveredNotifications?: () => Promise<{
+        notifications: { id: string; data?: Record<string, string> }[];
+      }>;
+    } | null
+  )?.getDeliveredNotifications;
+  const removeSome = (
+    push as unknown as { removeDeliveredNotifications?: (o: unknown) => Promise<void> } | null
+  )?.removeDeliveredNotifications;
   if (!list || !removeSome) return;
   const delivered = await list().catch(() => null);
-  const match = (delivered?.notifications ?? []).filter((n) => n.data?.["conversationId"] === conversationId);
+  const match = (delivered?.notifications ?? []).filter(
+    (n) => n.data?.["conversationId"] === conversationId,
+  );
   if (match.length > 0) await removeSome({ notifications: match }).catch(() => undefined);
 }
 
@@ -163,13 +184,17 @@ export function attachPushListeners(navigateTo: (route: string) => void): () => 
     const push = await loadPlugin("@capacitor/push-notifications");
     if (!push || disposed) return;
 
-    const received = await push.addListener?.("pushNotificationReceived", (async (n: { data?: PushData }) => {
+    const received = await push.addListener?.("pushNotificationReceived", (async (n: {
+      data?: PushData;
+    }) => {
       const conv = n.data?.conversationId;
       // Perangkat benar-benar menerima event → delivered, bukan sekadar online.
       if (conv) await supabase.rpc("mark_messages_delivered", { _conv: conv });
     }) as never);
 
-    const acted = await push.addListener?.("pushNotificationActionPerformed", (async (a: { notification?: { data?: PushData } }) => {
+    const acted = await push.addListener?.("pushNotificationActionPerformed", (async (a: {
+      notification?: { data?: PushData };
+    }) => {
       const data = a.notification?.data;
       if (data?.conversationId) await clearConversationNotifications(data.conversationId);
       navigateTo(routeFromPush(data));

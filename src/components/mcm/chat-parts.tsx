@@ -48,17 +48,45 @@ import type { MessageStatus } from "@/lib/api/receipts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { MCMAvatar, StatusBadge } from "./primitives";
 
-export const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤝", "👍", "🙏", "🔥", "☕", "💰", "✅", "❤️", "🎉", "😅", "🤔"];
+export const EMOJIS = [
+  "😀",
+  "😁",
+  "😂",
+  "🥹",
+  "😍",
+  "🤝",
+  "👍",
+  "🙏",
+  "🔥",
+  "☕",
+  "💰",
+  "✅",
+  "❤️",
+  "🎉",
+  "😅",
+  "🤔",
+];
 
 /**
  * Centang status pesan keluar — sumber kebenarannya `message_receipts`:
  * `sent` ✓ (tersimpan di server) · `delivered` ✓✓ netral · `read` ✓✓ aksen.
  */
 export function MessageTicks({ status, className }: { status: MessageStatus; className?: string }) {
-  const label = status === "read" ? "Sudah dibaca" : status === "delivered" ? "Sampai di perangkat penerima" : "Terkirim ke server";
+  const label =
+    status === "read"
+      ? "Sudah dibaca"
+      : status === "delivered"
+        ? "Sampai di perangkat penerima"
+        : "Terkirim ke server";
   const Icon = status === "sent" ? Check : CheckCheck;
   return (
-    <span role="img" aria-label={label} title={label} data-status={status} className={cn("inline-flex", className)}>
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      data-status={status}
+      className={cn("inline-flex", className)}
+    >
       <Icon className={cn("size-3.5", status === "read" && "text-tick-read")} />
     </span>
   );
@@ -89,7 +117,11 @@ export function ChatListItem({
   const name = conv.title_resolved;
   return (
     <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 active:bg-muted/60">
-      <Link to="/chat/$id" params={{ id: conv.id }} className="flex min-w-0 flex-1 items-center gap-3">
+      <Link
+        to="/chat/$id"
+        params={{ id: conv.id }}
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
         {conv.other ? (
           <UserAvatar
             userId={conv.other.id}
@@ -103,15 +135,31 @@ export function ChatListItem({
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <p className="truncate text-[15px] leading-5 font-semibold tracking-[-0.01em]">{name}</p>
+            <p className="truncate text-[15px] leading-5 font-semibold tracking-[-0.01em]">
+              {name}
+            </p>
             {conv.me.is_pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
             {conv.me.is_muted && <BellOff className="size-3 shrink-0 text-muted-foreground" />}
             {conv.type === "group" && <StatusBadge tone="primary">Grup</StatusBadge>}
-            <span className={cn("ml-auto shrink-0 text-[11px]", conv.unread > 0 ? "font-semibold text-primary" : "text-muted-foreground")}>{time}</span>
+            <span
+              className={cn(
+                "ml-auto shrink-0 text-[11px]",
+                conv.unread > 0 ? "font-semibold text-primary" : "text-muted-foreground",
+              )}
+            >
+              {time}
+            </span>
           </div>
           <div className="mt-1 flex items-center gap-1.5">
-            {outgoingStatus && <MessageTicks status={outgoingStatus} className="shrink-0 text-muted-foreground" />}
-            <p className={cn("truncate text-[13px] leading-4", conv.unread > 0 ? "text-foreground" : "text-muted-foreground")}>
+            {outgoingStatus && (
+              <MessageTicks status={outgoingStatus} className="shrink-0 text-muted-foreground" />
+            )}
+            <p
+              className={cn(
+                "truncate text-[13px] leading-4",
+                conv.unread > 0 ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
               {previewOf(conv.lastMessage)}
             </p>
             {conv.unread > 0 && (
@@ -124,7 +172,12 @@ export function ChatListItem({
       </Link>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label={`Opsi ${name}`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0"
+            aria-label={`Opsi ${name}`}
+          >
             <MoreVertical className="size-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -136,7 +189,8 @@ export function ChatListItem({
             <BellOff className="size-4" /> {conv.me.is_muted ? "Bunyikan" : "Bisukan"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onToggleArchive}>
-            <Archive className="size-4" /> {conv.me.is_archived ? "Keluarkan dari arsip" : "Arsipkan"}
+            <Archive className="size-4" />{" "}
+            {conv.me.is_archived ? "Keluarkan dari arsip" : "Arsipkan"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -145,9 +199,17 @@ export function ChatListItem({
 }
 
 /** Kartu lokasi yang menyatu dengan pesan foto/lokasi. */
-export function MessageLocationCard({ message, compact }: { message: MessageRow; compact?: boolean }) {
+export function MessageLocationCard({
+  message,
+  compact,
+}: {
+  message: MessageRow;
+  compact?: boolean;
+}) {
   if (message.location_lat == null || message.location_lng == null) return null;
-  const url = message.location_maps_url || `https://www.google.com/maps/search/?api=1&query=${message.location_lat},${message.location_lng}`;
+  const url =
+    message.location_maps_url ||
+    `https://www.google.com/maps/search/?api=1&query=${message.location_lat},${message.location_lng}`;
   return (
     <a
       href={url}
@@ -160,7 +222,9 @@ export function MessageLocationCard({ message, compact }: { message: MessageRow;
     >
       <MapPin className="size-4 shrink-0 text-primary" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{message.location_label || "Lokasi terlampir"}</span>
+        <span className="block truncate font-medium">
+          {message.location_label || "Lokasi terlampir"}
+        </span>
         <span className="block truncate text-muted-foreground">
           {message.location_lat.toFixed(5)}, {message.location_lng.toFixed(5)}
           {message.location_accuracy ? ` • ±${Math.round(message.location_accuracy)} m` : ""}
@@ -197,7 +261,10 @@ const PAYMENT_LABEL_ID: Record<string, string> = {
 };
 
 function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
-  const url = useSignedUrl("product-photos", (photo as { image_path?: string }).image_path ?? photo.id);
+  const url = useSignedUrl(
+    "product-photos",
+    (photo as { image_path?: string }).image_path ?? photo.id,
+  );
   const mapsUrl =
     photo.location_url ||
     (photo.location_lat != null && photo.location_lng != null
@@ -206,10 +273,19 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
   return (
     <div className="w-20 shrink-0 space-y-1">
       <div className="size-20 overflow-hidden rounded-lg bg-black/10">
-        {url ? <img src={url} alt="Foto produk" className="size-full object-cover" /> : <div className="size-full animate-pulse" />}
+        {url ? (
+          <img src={url} alt="Foto produk" className="size-full object-cover" />
+        ) : (
+          <div className="size-full animate-pulse" />
+        )}
       </div>
       {mapsUrl && (
-        <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex items-center gap-0.5 truncate text-[10px] font-semibold text-primary">
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-0.5 truncate text-[10px] font-semibold text-primary"
+        >
           <MapPin className="size-3 shrink-0" /> Buka Lokasi
         </a>
       )}
@@ -219,12 +295,20 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
 
 /** Kutipan slide status pada balasan/reaksi yang dikirim dari viewer status. */
 function StatusReplyQuote({ message }: { message: MessageRow }) {
-  const p = (message.payload ?? {}) as { type?: string; preview?: string; thumbPath?: string | null };
+  const p = (message.payload ?? {}) as {
+    type?: string;
+    preview?: string;
+    thumbPath?: string | null;
+  };
   const { data: url } = useStatusMedia(p.type === "status_reply" ? p.thumbPath : null);
   if (p.type !== "status_reply") return null;
   return (
     <div className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]">
-      {url ? <img src={url} alt="" className="size-8 rounded object-cover" /> : <div className="size-8 rounded bg-black/20" />}
+      {url ? (
+        <img src={url} alt="" className="size-8 rounded object-cover" />
+      ) : (
+        <div className="size-8 rounded bg-black/20" />
+      )}
       <span className="min-w-0">
         <span className="block font-medium">Membalas status</span>
         <span className="line-clamp-1 opacity-80">{p.preview}</span>
@@ -257,7 +341,9 @@ function SalesCard({ message }: { message: MessageRow }) {
               </span>
               <span className="shrink-0">{rupiah(Math.max(0, i.price - i.discount) * i.qty)}</span>
             </div>
-            {i.discount > 0 && <div className="text-[10px] opacity-75">Diskon item {rupiah(i.discount)}</div>}
+            {i.discount > 0 && (
+              <div className="text-[10px] opacity-75">Diskon item {rupiah(i.discount)}</div>
+            )}
             {(i.photos ?? []).length > 0 && (
               <div className="flex gap-1.5 overflow-x-auto pb-0.5">
                 {(i.photos ?? []).map((ph) => (
@@ -302,7 +388,12 @@ function SalesCard({ message }: { message: MessageRow }) {
 function ImageBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
   return url ? (
-    <img src={url} alt={message.body || "Foto terkirim"} loading="lazy" className="max-h-56 w-52 max-w-full rounded-xl object-cover" />
+    <img
+      src={url}
+      alt={message.body || "Foto terkirim"}
+      loading="lazy"
+      className="max-h-56 w-52 max-w-full rounded-xl object-cover"
+    />
   ) : (
     <div className="flex h-28 w-44 items-center justify-center rounded-xl bg-black/15">
       <ImageIcon className="size-7 opacity-70" />
@@ -335,13 +426,7 @@ function VoiceBubble({ message }: { message: MessageRow }) {
 }
 
 export type MessageAction =
-  | "select"
-  | "reply"
-  | "copy"
-  | "edit"
-  | "react"
-  | "delete-me"
-  | "delete-all";
+  "select" | "reply" | "copy" | "edit" | "react" | "delete-me" | "delete-all";
 
 export function MessageBubble({
   message,
@@ -375,7 +460,9 @@ export function MessageBubble({
   if (message.kind === "system") {
     return (
       <div className="my-2 flex justify-center">
-        <span className="rounded-full bg-muted/80 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">{message.body}</span>
+        <span className="rounded-full bg-muted/80 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
+          {message.body}
+        </span>
       </div>
     );
   }
@@ -400,13 +487,26 @@ export function MessageBubble({
           className={cn(
             "bubble-elevate relative rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45]",
             mine
-              ? cn("bg-bubble-out text-bubble-out-foreground", grouped ? "rounded-br-lg" : "rounded-br-sm")
-              : cn("border border-border/70 bg-bubble-in text-bubble-in-foreground", grouped ? "rounded-bl-lg" : "rounded-bl-sm"),
+              ? cn(
+                  "bg-bubble-out text-bubble-out-foreground",
+                  grouped ? "rounded-br-lg" : "rounded-br-sm",
+                )
+              : cn(
+                  "border border-border/70 bg-bubble-in text-bubble-in-foreground",
+                  grouped ? "rounded-bl-lg" : "rounded-bl-sm",
+                ),
           )}
         >
-          {showSender && !mine && !grouped && <p className="mb-0.5 text-[11px] font-semibold text-primary">{senderName}</p>}
+          {showSender && !mine && !grouped && (
+            <p className="mb-0.5 text-[11px] font-semibold text-primary">{senderName}</p>
+          )}
           {replyTo && (
-            <div className={cn("mb-1.5 rounded-lg border-l-2 px-2 py-1 text-[11px]", mine ? "border-current/50 bg-black/10" : "border-primary bg-muted")}>
+            <div
+              className={cn(
+                "mb-1.5 rounded-lg border-l-2 px-2 py-1 text-[11px]",
+                mine ? "border-current/50 bg-black/10" : "border-primary bg-muted",
+              )}
+            >
               <span className="font-medium">{replySenderName ?? "Pesan"}</span>
               <p className="line-clamp-2 opacity-80">{previewOf(replyTo)}</p>
             </div>
@@ -416,7 +516,9 @@ export function MessageBubble({
           ) : message.kind === "image" ? (
             <div className="space-y-1">
               <ImageBubble message={message} />
-              {message.body && <span className="block w-52 max-w-full break-words">{message.body}</span>}
+              {message.body && (
+                <span className="block w-52 max-w-full break-words">{message.body}</span>
+              )}
               <div className="w-52 max-w-full">
                 <MessageLocationCard message={message} compact />
               </div>
@@ -440,7 +542,12 @@ export function MessageBubble({
               <p className="break-words whitespace-pre-wrap">{message.body}</p>
             </>
           )}
-          <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums", mine ? "opacity-85" : "text-muted-foreground")}>
+          <div
+            className={cn(
+              "mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums",
+              mine ? "opacity-85" : "text-muted-foreground",
+            )}
+          >
             {message.edited_at && <span>diedit</span>}
             <span>{jam(message.created_at)}</span>
             {mine && <MessageTicks status={status} />}
@@ -469,7 +576,12 @@ export function MessageBubble({
           <DropdownMenuContent align={mine ? "end" : "start"}>
             <div className="flex gap-1 px-1 pb-1">
               {["👍", "❤️", "😂", "🙏", "🔥"].map((e) => (
-                <button key={e} type="button" className="rounded-md px-1.5 py-1 text-base hover:bg-muted" onClick={() => onAction("react", message, e)}>
+                <button
+                  key={e}
+                  type="button"
+                  className="rounded-md px-1.5 py-1 text-base hover:bg-muted"
+                  onClick={() => onAction("react", message, e)}
+                >
                   {e}
                 </button>
               ))}
@@ -494,7 +606,10 @@ export function MessageBubble({
               <Trash2 className="size-4" /> Hapus untuk saya
             </DropdownMenuItem>
             {mine && (
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onAction("delete-all", message)}>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onAction("delete-all", message)}
+              >
                 <Trash2 className="size-4 text-destructive" /> Hapus untuk semua
               </DropdownMenuItem>
             )}
@@ -593,7 +708,9 @@ export function ChatComposer({
     fn?.();
   };
   const matches = value.startsWith("/")
-    ? (quickReplies ?? []).filter((q) => q.shortcut.toLowerCase().startsWith(value.trim().toLowerCase()))
+    ? (quickReplies ?? []).filter((q) =>
+        q.shortcut.toLowerCase().startsWith(value.trim().toLowerCase()),
+      )
     : [];
 
   return (
@@ -601,7 +718,12 @@ export function ChatComposer({
       {matches.length > 0 && (
         <div className="max-h-40 overflow-y-auto border-b border-border/70">
           {matches.map((q) => (
-            <button key={q.shortcut} type="button" className="block w-full px-4 py-2 text-left transition-colors hover:bg-muted" onClick={() => onChange(q.text)}>
+            <button
+              key={q.shortcut}
+              type="button"
+              className="block w-full px-4 py-2 text-left transition-colors hover:bg-muted"
+              onClick={() => onChange(q.text)}
+            >
               <span className="text-xs font-semibold text-primary">{q.shortcut}</span>
               <span className="block truncate text-xs text-muted-foreground">{q.text}</span>
             </button>
@@ -654,10 +776,14 @@ export function ChatComposer({
                 { icon: Camera, label: "Foto/Kamera", fn: () => onAttach("camera") },
                 { icon: ImageIcon, label: "Foto & lokasi", fn: () => onAttach("image") },
                 ...(onLocation ? [{ icon: MapPin, label: "Lokasi", fn: onLocation }] : []),
-                ...(onSendProduct ? [{ icon: Package, label: "Kirim Produk", fn: onSendProduct }] : []),
+                ...(onSendProduct
+                  ? [{ icon: Package, label: "Kirim Produk", fn: onSendProduct }]
+                  : []),
                 ...(onNewSale ? [{ icon: ShoppingCart, label: "Penjualan", fn: onNewSale }] : []),
                 { icon: Wallet, label: "Catat Utang/Piutang", fn: onNewLedger },
-                ...(onNewPreparation ? [{ icon: ClipboardList, label: "Buat Penyiapan", fn: onNewPreparation }] : []),
+                ...(onNewPreparation
+                  ? [{ icon: ClipboardList, label: "Buat Penyiapan", fn: onNewPreparation }]
+                  : []),
                 { icon: Paperclip, label: "Dokumen", fn: () => onAttach("document") },
               ].map(({ icon: Icon, label, fn }) => (
                 <button
@@ -678,14 +804,25 @@ export function ChatComposer({
         <div className="flex flex-1 items-end rounded-3xl border border-input bg-background px-1.5 transition-colors focus-within:border-ring/60 focus-within:ring-2 focus-within:ring-ring/20">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-9 shrink-0 rounded-full text-muted-foreground" aria-label="Emoji" disabled={disabled}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 shrink-0 rounded-full text-muted-foreground"
+                aria-label="Emoji"
+                disabled={disabled}
+              >
                 <Smile className="size-5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 rounded-2xl p-2">
               <div className="grid grid-cols-8 gap-1">
                 {EMOJIS.map((e) => (
-                  <button key={e} type="button" className="rounded-md p-1 text-lg hover:bg-muted" onClick={() => onChange(value + e)}>
+                  <button
+                    key={e}
+                    type="button"
+                    className="rounded-md p-1 text-lg hover:bg-muted"
+                    onClick={() => onChange(value + e)}
+                  >
                     {e}
                   </button>
                 ))}
@@ -718,7 +855,13 @@ export function ChatComposer({
           </Button>
         </div>
         {value.trim() ? (
-          <Button size="icon" className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95" aria-label="Kirim" disabled={disabled} onClick={onSend}>
+          <Button
+            size="icon"
+            className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
+            aria-label="Kirim"
+            disabled={disabled}
+            onClick={onSend}
+          >
             <Send className="size-4.5" />
           </Button>
         ) : (

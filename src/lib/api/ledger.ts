@@ -19,7 +19,12 @@ export const LEDGER_STATUS_LABEL: Record<LedgerRow["status"], string> = {
 
 export const remaining = (l: LedgerRow) => Math.max(0, Number(l.amount) - Number(l.paid_amount));
 
-export const OPEN_STATUSES: LedgerRow["status"][] = ["pending_approval", "active", "partially_paid", "disputed"];
+export const OPEN_STATUSES: LedgerRow["status"][] = [
+  "pending_approval",
+  "active",
+  "partially_paid",
+  "disputed",
+];
 
 export async function listLedgers(userId: string): Promise<LedgerRow[]> {
   return unwrap(
@@ -33,10 +38,21 @@ export async function listLedgers(userId: string): Promise<LedgerRow[]> {
 }
 
 export async function getLedger(id: string) {
-  const ledger = unwrap(await supabase.from("ledgers").select("*").eq("id", id).maybeSingle(), "Catatan tidak ditemukan");
+  const ledger = unwrap(
+    await supabase.from("ledgers").select("*").eq("id", id).maybeSingle(),
+    "Catatan tidak ditemukan",
+  );
   const [payments, events] = await Promise.all([
-    supabase.from("ledger_payments").select("*").eq("ledger_id", id).order("paid_at", { ascending: false }),
-    supabase.from("ledger_events").select("*").eq("ledger_id", id).order("created_at", { ascending: false }),
+    supabase
+      .from("ledger_payments")
+      .select("*")
+      .eq("ledger_id", id)
+      .order("paid_at", { ascending: false }),
+    supabase
+      .from("ledger_events")
+      .select("*")
+      .eq("ledger_id", id)
+      .order("created_at", { ascending: false }),
   ]);
   return { ledger, payments: payments.data ?? [], events: events.data ?? [] };
 }
@@ -59,7 +75,8 @@ export type CreateLedgerInput = {
 export async function createLedger(input: CreateLedgerInput): Promise<LedgerRow> {
   if (!(input.amount > 0)) throw new Error("Nominal harus lebih dari nol");
   const paid = Math.min(input.paidAmount ?? 0, input.amount);
-  const status = input.status ?? (paid >= input.amount ? "paid" : paid > 0 ? "partially_paid" : "active");
+  const status =
+    input.status ?? (paid >= input.amount ? "paid" : paid > 0 ? "partially_paid" : "active");
   const row = unwrap(
     await supabase
       .from("ledgers")
@@ -81,12 +98,22 @@ export async function createLedger(input: CreateLedgerInput): Promise<LedgerRow>
       .single(),
     "Gagal membuat catatan",
   );
-  await supabase.from("ledger_events").insert({ ledger_id: row.id, actor_id: input.ownerId, label: "Catatan dibuat", detail: input.note ?? "" });
+  await supabase.from("ledger_events").insert({
+    ledger_id: row.id,
+    actor_id: input.ownerId,
+    label: "Catatan dibuat",
+    detail: input.note ?? "",
+  });
   return row;
 }
 
 /** Pembayaran parsial atomik lewat fungsi database (tidak bisa melebihi sisa tagihan). */
-export async function recordPayment(ledgerId: string, amount: number, method: string, note: string) {
+export async function recordPayment(
+  ledgerId: string,
+  amount: number,
+  method: string,
+  note: string,
+) {
   const { data, error } = await supabase.rpc("record_ledger_payment", {
     _ledger: ledgerId,
     _amount: amount,
@@ -103,13 +130,21 @@ export async function recordPayment(ledgerId: string, amount: number, method: st
 export async function updateStatus(ledgerId: string, status: LedgerRow["status"], actorId: string) {
   const { error } = await supabase.from("ledgers").update({ status }).eq("id", ledgerId);
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui status"));
-  await supabase.from("ledger_events").insert({ ledger_id: ledgerId, actor_id: actorId, label: `Status: ${LEDGER_STATUS_LABEL[status]}` });
+  await supabase.from("ledger_events").insert({
+    ledger_id: ledgerId,
+    actor_id: actorId,
+    label: `Status: ${LEDGER_STATUS_LABEL[status]}`,
+  });
 }
 
 export function totals(rows: LedgerRow[]) {
   const open = rows.filter((l) => OPEN_STATUSES.includes(l.status));
-  const receivable = open.filter((l) => l.type === "receivable").reduce((s, l) => s + remaining(l), 0);
+  const receivable = open
+    .filter((l) => l.type === "receivable")
+    .reduce((s, l) => s + remaining(l), 0);
   const payable = open.filter((l) => l.type === "payable").reduce((s, l) => s + remaining(l), 0);
-  const dueSoon = open.filter((l) => l.due_date && (new Date(l.due_date).getTime() - Date.now()) / 86400000 <= 7);
+  const dueSoon = open.filter(
+    (l) => l.due_date && (new Date(l.due_date).getTime() - Date.now()) / 86400000 <= 7,
+  );
   return { receivable, payable, dueSoon, open };
 }
