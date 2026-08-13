@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { BadgeCheck, ClipboardList, Copy, Link2, Plus, QrCode, RefreshCw, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
