@@ -2613,6 +2613,7 @@ export type Database = {
         | "order"
         | "sales_card"
         | "location"
+        | "product_card"
       order_status: "new" | "processing" | "shipped" | "completed" | "cancelled"
       payment_method: "cash" | "transfer" | "dp" | "credit"
       preparation_item_status: "pending" | "in_progress" | "done"
@@ -2801,6 +2802,7 @@ export const Constants = {
         "order",
         "sales_card",
         "location",
+        "product_card",
       ],
       order_status: ["new", "processing", "shipped", "completed", "cancelled"],
       payment_method: ["cash", "transfer", "dp", "credit"],
