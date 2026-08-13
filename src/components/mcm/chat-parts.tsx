@@ -738,6 +738,7 @@ export function ChatComposer({
   onSendProduct,
   onNewPreparation,
   onLocation,
+  onSticker,
   editing,
   onCancelEdit,
   replyPreview,
@@ -756,6 +757,7 @@ export function ChatComposer({
   onSendProduct?: (() => void) | undefined;
   onNewPreparation?: (() => void) | undefined;
   onLocation?: (() => void) | undefined;
+  onSticker?: (() => void) | undefined;
   editing?: boolean | undefined;
   onCancelEdit?: (() => void) | undefined;
   replyPreview?: MessageRow | undefined;
@@ -838,6 +840,7 @@ export function ChatComposer({
               {[
                 { icon: Camera, label: "Foto/Kamera", fn: () => onAttach("camera") },
                 { icon: ImageIcon, label: "Foto & lokasi", fn: () => onAttach("image") },
+                ...(onSticker ? [{ icon: Sticker, label: "Stiker", fn: onSticker }] : []),
                 ...(onLocation ? [{ icon: MapPin, label: "Lokasi", fn: onLocation }] : []),
                 ...(onSendProduct
                   ? [{ icon: Package, label: "Kirim Produk", fn: onSendProduct }]
