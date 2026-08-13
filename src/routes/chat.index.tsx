@@ -350,7 +350,16 @@ function ChatIndex() {
       ) : (
         <ul className="divide-y divide-border/70">
           {list.map((c) => (
-            <li key={c.id}>
+            <li key={c.id} className="relative">
+              {sendProductId && (
+                <button
+                  type="button"
+                  disabled={!!sendingTo}
+                  onClick={() => void sendCardTo(c.id)}
+                  aria-label={`Kirim kartu produk ke ${c.title_resolved}`}
+                  className="absolute inset-0 z-10 bg-primary/0 transition-colors hover:bg-primary/10 disabled:opacity-50"
+                />
+              )}
               <ChatListItem
                 conv={c}
                 time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
