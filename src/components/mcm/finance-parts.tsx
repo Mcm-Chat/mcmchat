@@ -20,20 +20,21 @@ export function FinanceSummaryCard({
   tone?: "primary" | "danger" | "warning" | "success" | undefined;
 }) {
   const map = {
-    primary: "bg-primary/10 text-primary",
-    danger: "bg-destructive/10 text-destructive",
-    warning: "bg-warning/20 text-warning-foreground dark:text-warning",
-    success: "bg-success/12 text-success",
+    primary: "bg-primary",
+    danger: "bg-destructive",
+    warning: "bg-warning",
+    success: "bg-success",
   };
   return (
-    <div className="card-soft p-3">
-      <span
-        className={cn("inline-flex rounded-lg px-2 py-0.5 text-[10px] font-semibold", map[tone])}
-      >
-        {label}
-      </span>
-      <p className="mt-2 text-base leading-tight font-bold">{value}</p>
-      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+    <div className="card-soft p-3.5">
+      <div className="flex items-center gap-1.5">
+        <span className={cn("size-1.5 shrink-0 rounded-full", map[tone])} aria-hidden />
+        <span className="truncate text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+          {label}
+        </span>
+      </div>
+      <p className="mt-1.5 text-lg leading-tight font-bold tracking-[-0.02em]">{value}</p>
+      {hint && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
