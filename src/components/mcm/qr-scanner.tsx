@@ -8,6 +8,9 @@ import {
   RefreshCw,
   Settings,
   SwitchCamera,
+  X,
+  Zap,
+  ZapOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -63,12 +66,16 @@ export function QrScannerDialog({
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [phase, setPhase] = useState<CamPhase>("idle");
   const [attempt, setAttempt] = useState(0);
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
   const stop = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     rafRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setTorchAvailable(false);
+    setTorchOn(false);
   }, []);
 
   const accept = useCallback(
@@ -135,6 +142,11 @@ export function QrScannerDialog({
           await video.play().catch(() => undefined);
         }
         setPhase("streaming");
+        const track = stream.getVideoTracks()[0];
+        const caps = (
+          track?.getCapabilities as (() => MediaTrackCapabilities & { torch?: boolean }) | undefined
+        )?.call(track);
+        setTorchAvailable(Boolean(caps?.torch));
         rafRef.current = requestAnimationFrame(tick);
       } catch (err) {
         if (cancelled) return;
@@ -177,6 +189,19 @@ export function QrScannerDialog({
     }
   };
 
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    const next = !torchOn;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: next }] } as MediaTrackConstraints);
+      setTorchOn(next);
+    } catch {
+      setTorchAvailable(false);
+      toast.info("Lampu flash tidak bisa diatur di perangkat ini.");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[360px] rounded-2xl">
@@ -187,7 +212,7 @@ export function QrScannerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted">
+        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black">
           <video
             ref={videoRef}
             playsInline
@@ -196,7 +221,35 @@ export function QrScannerDialog({
             className="size-full object-cover"
             aria-label="Pratinjau kamera pemindai QR"
           />
-          <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-primary/80" />
+          {/* Overlay panduan: area gelap + bingkai sudut + garis pindai */}
+          {phase === "streaming" && (
+            <>
+              <div className="pointer-events-none absolute inset-0 bg-black/45 [clip-path:polygon(0_0,100%_0,100%_100%,0_100%,0_14%,14%_14%,14%_86%,86%_86%,86%_14%,0_14%)]" />
+              <div className="pointer-events-none absolute inset-[14%]">
+                <span className="absolute -left-0.5 -top-0.5 size-8 rounded-tl-xl border-l-4 border-t-4 border-primary" />
+                <span className="absolute -right-0.5 -top-0.5 size-8 rounded-tr-xl border-r-4 border-t-4 border-primary" />
+                <span className="absolute -bottom-0.5 -left-0.5 size-8 rounded-bl-xl border-b-4 border-l-4 border-primary" />
+                <span className="absolute -bottom-0.5 -right-0.5 size-8 rounded-br-xl border-b-4 border-r-4 border-primary" />
+                <span className="absolute inset-x-2 top-1/2 h-0.5 animate-pulse rounded-full bg-primary/80" />
+              </div>
+              <p className="pointer-events-none absolute inset-x-4 bottom-3 text-center text-[11px] font-medium text-white drop-shadow">
+                Posisikan QR di dalam bingkai — pemindaian otomatis
+              </p>
+              {torchAvailable && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="secondary"
+                  aria-pressed={torchOn}
+                  aria-label={torchOn ? "Matikan lampu flash" : "Nyalakan lampu flash"}
+                  className="absolute right-3 top-3 size-11 rounded-full shadow-lg"
+                  onClick={() => void toggleTorch()}
+                >
+                  {torchOn ? <Zap className="size-5" /> : <ZapOff className="size-5" />}
+                </Button>
+              )}
+            </>
+          )}
           {phase === "requesting" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/90 p-4 text-center text-xs text-muted-foreground">
               <Loader2 className="size-5 animate-spin text-primary" />
@@ -239,11 +292,11 @@ export function QrScannerDialog({
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
             variant="secondary"
-            className="h-11 flex-1 rounded-xl"
+            className="h-12 rounded-xl"
             disabled={phase !== "streaming"}
             onClick={() => setFacing((f) => (f === "environment" ? "user" : "environment"))}
           >
@@ -252,10 +305,26 @@ export function QrScannerDialog({
           <Button
             type="button"
             variant="outline"
-            className="h-11 flex-1 rounded-xl"
+            className="h-12 rounded-xl"
             onClick={() => fileRef.current?.click()}
           >
             <ImageIcon className="size-4" /> Dari galeri
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 rounded-xl"
+            onClick={() => setAttempt((a) => a + 1)}
+          >
+            <RefreshCw className="size-4" /> Ulangi pindai
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-12 rounded-xl"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="size-4" /> Batal
           </Button>
         </div>
         <input
