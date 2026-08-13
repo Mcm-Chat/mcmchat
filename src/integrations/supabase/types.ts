@@ -2492,6 +2492,14 @@ export type Database = {
         Returns: Json
       }
       safe_uuid: { Args: { _t: string }; Returns: string }
+      set_avatar_privacy_audience: {
+        Args: {
+          _confirm_empty_only_share?: boolean
+          _privacy: string
+          _targets?: string[]
+        }
+        Returns: Json
+      }
       status_feed: {
         Args: never
         Returns: {

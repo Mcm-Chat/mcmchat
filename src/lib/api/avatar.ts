@@ -96,6 +96,28 @@ export async function setAvatarAudience(userId: string, mode: AudienceMode, targ
   if (ins.error) throw new Error(friendly(ins.error.message, "Gagal menyimpan audiens"));
 }
 
+/**
+ * Simpan mode privasi berbasis daftar + audiensnya dalam satu transaksi DB.
+ *
+ * Mode aktif hanya berubah bila daftar audiens juga tersimpan. Bila validasi
+ * gagal (target bukan kontak, atau `only_share` kosong tanpa konfirmasi),
+ * tidak ada perubahan sama sekali di server.
+ */
+export async function saveAvatarPrivacyAudience(
+  privacy: Extract<AvatarPrivacy, "contacts_except" | "only_share">,
+  targets: string[],
+  confirmEmptyOnlyShare = false,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("set_avatar_privacy_audience", {
+    _privacy: privacy,
+    _targets: targets,
+    _confirm_empty_only_share: confirmEmptyOnlyShare,
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal menyimpan privasi foto profil"));
+  const count = (data as { count?: number } | null)?.count;
+  return typeof count === "number" ? count : targets.length;
+}
+
 /* ------------------------------- resolver ------------------------------- */
 
 type CacheEntry = { url: string | null; version: number; exp: number };
