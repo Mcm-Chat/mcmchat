@@ -29,8 +29,15 @@ import { useTheme } from "@/lib/theme";
 import { useRequireAuth } from "@/lib/api/guard";
 import { canManage, ROLE_LABEL, type BusinessMemberRow } from "@/lib/api/business";
 import { useMyBusiness } from "@/lib/api/queries";
-import { uploadChatMedia } from "@/lib/api/storage";
-import { useSignedUrl } from "@/lib/api/use-signed-url";
+import { AvatarEditor } from "@/components/mcm/avatar-editor";
+import { UserAvatar } from "@/components/mcm/user-avatar";
+import {
+  AVATAR_PRIVACY_LABEL,
+  commitAvatar,
+  removeAvatar,
+  setAvatarPrivacy,
+  type AvatarPrivacy,
+} from "@/lib/api/avatar";
 import { readScreenSecurity, type ScreenSecurityStatus } from "@/lib/security/screen-privacy";
 import {
   getSettings,
@@ -63,7 +70,9 @@ function ProfilePage() {
   const { refresh, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const avatarUrl = useSignedUrl("avatars", profile?.avatar_url ?? null);
+  const [draftFile, setDraftFile] = useState<File | null>(null);
+  const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");
+  const [removeAvatarOpen, setRemoveAvatarOpen] = useState(false);
 
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -87,6 +96,7 @@ function ProfilePage() {
     if (profile) {
       setName(profile.display_name);
       setBio(profile.bio);
+      setAvatarPrivacyState(((profile as { avatar_privacy?: string }).avatar_privacy as AvatarPrivacy) ?? "contacts");
     }
   }, [profile]);
 
@@ -155,21 +165,51 @@ function ProfilePage() {
     }
   };
 
-  const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Foto yang baru dipilih hanya masuk ke draft editor. Tidak ada unggahan
+   * maupun perubahan `profiles.avatar_*` sebelum tombol “Pasang foto profil”.
+   */
+  const onAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file || !userId) return;
+    if (!file) return;
+    setDraftFile(file);
+  };
+
+  const applyAvatar = async (blob: Blob) => {
+    if (!userId) return;
     setUploading(true);
     try {
-      const up = await uploadChatMedia(`avatars/${userId}`, file, file.name);
-      const { error } = await supabase.from("profiles").update({ avatar_url: up.path }).eq("id", userId);
-      if (error) throw new Error(error.message);
+      await commitAvatar(userId, blob);
       await refresh();
-      toast.success("Foto profil diperbarui");
-    } catch {
-      toast.error("Gagal mengunggah foto profil");
+      setDraftFile(null);
+      toast.success("Foto profil dipasang");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const deleteAvatar = async () => {
+    if (!userId) return;
+    try {
+      await removeAvatar(userId);
+      await refresh();
+      toast.success("Foto profil dihapus");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus foto profil");
+    }
+  };
+
+  const changeAvatarPrivacy = async (value: AvatarPrivacy) => {
+    if (!userId) return;
+    const prev = avatarPrivacy;
+    setAvatarPrivacyState(value);
+    try {
+      await setAvatarPrivacy(userId, value);
+      await refresh();
+    } catch (err) {
+      setAvatarPrivacyState(prev);
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan privasi foto profil");
     }
   };
 
