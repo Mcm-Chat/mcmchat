@@ -28,7 +28,8 @@ import {
   type NewJobItem,
   type ProductVariant,
 } from "@/lib/api/prepare";
-import { useProducts } from "@/lib/api/queries";
+import { useContacts, useProducts } from "@/lib/api/queries";
+import { useAuth } from "@/lib/auth";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draf",
@@ -54,8 +55,9 @@ export function CreatePreparationDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   businessId: string;
-  conversationId: string;
-  customerName: string;
+  conversationId?: string | null;
+  /** Nama pelanggan bila dibuka dari ruang chat; dari menu Tugas dipilih di form. */
+  customerName?: string | undefined;
   customerUserId?: string | null;
   onCreated: (job: { id: string; code: string; token: string }) => void;
 }) {
@@ -71,6 +73,8 @@ export function CreatePreparationDialog({
     enabled: !!businessId && open,
   });
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const { data: contacts } = useContacts(customerName ? undefined : (user?.id ?? undefined));
 
   const [items, setItems] = useState<DraftItem[]>([]);
   const [variantId, setVariantId] = useState("");
@@ -80,6 +84,8 @@ export function CreatePreparationDialog({
   const [notes, setNotes] = useState("");
   const [sending, setSending] = useState(false);
   const [staffPin, setStaffPin] = useState("");
+  const [contactId, setContactId] = useState("");
+  const [manualCustomer, setManualCustomer] = useState("");
   const [savingPin, setSavingPin] = useState(false);
 
   const selectedStaff = (agents ?? []).find((a) => a.id === assignee);
@@ -125,14 +131,22 @@ export function CreatePreparationDialog({
       toast.error("Konfirmasi dulu nomor MCM pegawai ini");
       return;
     }
+    const picked = (contacts ?? []).find((c) => c.contact_id === contactId);
+    const resolvedCustomerName = customerName ?? (picked?.profile.display_name || manualCustomer.trim());
+    const resolvedCustomerUser = customerUserId ?? picked?.contact_id ?? null;
+    if (!resolvedCustomerName) {
+      toast.error("Isi nama pelanggan atau pilih dari kontak");
+      return;
+    }
+    if (sending) return;
     setSending(true);
     try {
       const job = await createPreparationJob({
         businessId,
         assignedUserId: assignee,
-        conversationId,
-        customerName,
-        customerUserId: customerUserId ?? null,
+        conversationId: conversationId ?? null,
+        customerName: resolvedCustomerName,
+        customerUserId: resolvedCustomerUser,
         notes,
         items: items.map(({ key: _key, ...rest }) => rest),
       });
@@ -156,9 +170,37 @@ export function CreatePreparationDialog({
         <DialogHeader>
           <DialogTitle>Perintah penyiapan</DialogTitle>
         </DialogHeader>
-        <p className="text-xs text-muted-foreground">
-          Tugas ini khusus untuk <strong>{customerName}</strong>. Setiap permintaan pelanggan selalu menjadi tugas, tautan, dan barcode terpisah.
-        </p>
+        {customerName ? (
+          <p className="text-xs text-muted-foreground">
+            Tugas ini khusus untuk <strong>{customerName}</strong>. Setiap permintaan pelanggan selalu menjadi tugas, tautan, dan barcode terpisah.
+          </p>
+        ) : (
+          <div className="space-y-2 rounded-xl border border-border p-3">
+            <Label>Pelanggan</Label>
+            <Select value={contactId} onValueChange={setContactId}>
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Pilih dari kontak (opsional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {(contacts ?? []).map((c) => (
+                  <SelectItem key={c.contact_id} value={c.contact_id}>
+                    {c.profile.display_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              className="h-11"
+              placeholder="atau tulis nama pelanggan"
+              maxLength={60}
+              value={manualCustomer}
+              onChange={(e) => setManualCustomer(e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Setiap pelanggan mendapat tugas, tautan, dan barcode terpisah walau pegawainya sama.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-3 rounded-xl border border-border p-3">
           <div className="space-y-1.5">

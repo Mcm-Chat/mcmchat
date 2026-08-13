@@ -19,6 +19,7 @@ import { IncomingCallListener } from "@/components/mcm/incoming-call";
 import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { initOutboxFlush } from "@/lib/api/outbox";
+import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -121,11 +122,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
-      <body>
+      <body className="bg-background text-foreground">
         {children}
         <Scripts />
       </body>
@@ -162,6 +164,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <AuthProvider>
         <AccountCacheGuard />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
@@ -171,6 +174,7 @@ function RootComponent() {
         <ScreenPrivacyGuard />
         <Toaster position="top-center" richColors closeButton />
       </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

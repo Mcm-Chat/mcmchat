@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Briefcase, Receipt, ShoppingBag, Wallet } from "lucide-react";
+import { Briefcase, Plus, Receipt, ShoppingBag, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { FinanceSummaryCard, LedgerListItem, OrderListItem, SalesListItem } from "@/components/mcm/finance-parts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { LedgerFormDialog } from "@/components/mcm/ledger-form";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useLedgers, useMyBusiness, useOrders, useSales, qk } from "@/lib/api/queries";
 import { useQueryClient } from "@tanstack/react-query";
@@ -39,6 +41,7 @@ function FinancePage() {
   const [mainTab, setMainTab] = useState("catatan");
   const [ledgerFilter, setLedgerFilter] = useState("semua");
   const [selectedSale, setSelectedSale] = useState<SalesRecordRow | null>(null);
+  const [ledgerFormOpen, setLedgerFormOpen] = useState(false);
 
   const summary = useMemo(() => financeSummary(ledgers ?? [], sales ?? []), [ledgers, sales]);
 
@@ -74,7 +77,15 @@ function FinancePage() {
   return (
     <AppShell
       header={
-        <MobileHeader title="Keuangan" subtitle="Piutang, utang, dan penjualan bisnis">
+        <MobileHeader
+          title="Keuangan"
+          subtitle="Piutang, utang, dan penjualan bisnis"
+          actions={
+            <Button size="sm" className="h-11 rounded-xl" onClick={() => setLedgerFormOpen(true)}>
+              <Plus className="size-4" /> Catat
+            </Button>
+          }
+        >
           <div className="grid grid-cols-2 gap-2 px-3 pb-3">
             <FinanceSummaryCard label="Piutang" value={rupiah(summary.receivable)} hint="Belum dibayar ke Anda" tone="success" />
             <FinanceSummaryCard label="Utang" value={rupiah(summary.payable)} hint="Belum Anda bayar" tone="danger" />
@@ -119,7 +130,16 @@ function FinancePage() {
           ) : ledgersError ? (
             <EmptyState icon={Wallet} title="Gagal memuat catatan" description="Terjadi kesalahan saat memuat data." action={<button className="text-sm text-primary underline" onClick={() => void refetchLedgers()}>Coba lagi</button>} />
           ) : filteredLedgers.length === 0 ? (
-            <EmptyState icon={Wallet} title="Belum ada catatan" description="Catatan utang piutang akan muncul di sini setelah transaksi dibuat." />
+            <EmptyState
+              icon={Wallet}
+              title="Belum ada catatan"
+              description="Catatan utang piutang akan muncul di sini setelah transaksi dibuat."
+              action={
+                <Button className="h-11 rounded-xl" onClick={() => setLedgerFormOpen(true)}>
+                  <Plus className="size-4" /> Tambah Catatan
+                </Button>
+              }
+            />
           ) : (
             <ul className="space-y-3">
               {filteredLedgers.map((l: LedgerRow) => (
@@ -178,6 +198,27 @@ function FinancePage() {
             </ul>
           )}
         </div>
+      )}
+
+      {mainTab === "catatan" && (
+        <Button
+          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 h-14 rounded-full px-5 shadow-lg"
+          onClick={() => setLedgerFormOpen(true)}
+        >
+          <Plus className="size-5" /> Catat Utang/Piutang
+        </Button>
+      )}
+
+      {userId && (
+        <LedgerFormDialog
+          open={ledgerFormOpen}
+          onOpenChange={setLedgerFormOpen}
+          ownerId={userId}
+          onCreated={() => {
+            void refetchLedgers();
+            setMainTab("catatan");
+          }}
+        />
       )}
 
       <Sheet open={!!selectedSale} onOpenChange={(v) => !v && setSelectedSale(null)}>

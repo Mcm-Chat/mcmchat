@@ -126,12 +126,11 @@ function ChatIndex() {
       header={
         <MobileHeader
           title="Chat"
-          variant="gradient"
           actions={
             <>
               <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Buat grup" className="size-9 text-navy-foreground hover:bg-white/15">
+                  <Button variant="ghost" size="icon" aria-label="Buat grup" className="size-11">
                     <Users className="size-5" />
                   </Button>
                 </DialogTrigger>
@@ -176,7 +175,7 @@ function ChatIndex() {
               </Dialog>
               <Dialog open={newOpen} onOpenChange={setNewOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Chat baru" className="size-9 text-navy-foreground hover:bg-white/15">
+                  <Button variant="ghost" size="icon" aria-label="Chat baru" className="size-11">
                     <MessageCirclePlus className="size-5" />
                   </Button>
                 </DialogTrigger>
@@ -224,13 +223,13 @@ function ChatIndex() {
         >
           <div className="px-3 pb-3">
             <div className="relative">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-navy-foreground/60" />
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 maxLength={60}
                 placeholder="Cari percakapan"
-                className="h-10 rounded-xl border-white/20 bg-white/10 pl-9 text-navy-foreground placeholder:text-navy-foreground/60"
+                className="h-11 rounded-xl pl-9"
               />
             </div>
           </div>

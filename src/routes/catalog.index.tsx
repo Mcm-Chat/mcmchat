@@ -64,7 +64,7 @@ function CatalogIndex() {
 
   if (loading || bizLoading) {
     return (
-      <AppShell header={<MobileHeader title="Katalog" variant="gradient" />}>
+      <AppShell header={<MobileHeader title="Katalog" />}>
         <LoadingSkeleton rows={4} avatar />
       </AppShell>
     );
@@ -74,7 +74,7 @@ function CatalogIndex() {
 
   if (!biz) {
     return (
-      <AppShell header={<MobileHeader title="Katalog" variant="gradient" />}>
+      <AppShell header={<MobileHeader title="Katalog" />}>
         <div className="space-y-4 px-4 py-6">
           <EmptyState
             icon={Package}
@@ -163,11 +163,10 @@ function CatalogIndex() {
         <MobileHeader
           title="Katalog"
           subtitle={`${biz.business.name} · ${ROLE_LABEL[biz.role]}`}
-          variant="gradient"
           actions={
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Tambah produk" className="size-9 text-navy-foreground hover:bg-white/15">
+                <Button variant="ghost" size="icon" aria-label="Tambah produk" className="size-11">
                   <Plus className="size-5" />
                 </Button>
               </DialogTrigger>
@@ -204,12 +203,12 @@ function CatalogIndex() {
         >
           <div className="space-y-2 px-3 pb-3">
             <div className="relative">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-navy-foreground/60" />
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari produk…"
-                className="rounded-xl border-white/20 bg-white/10 pl-9 text-navy-foreground placeholder:text-navy-foreground/60"
+                className="h-11 rounded-xl pl-9"
               />
             </div>
             <div className="flex gap-1.5 overflow-x-auto pb-0.5">
@@ -219,7 +218,7 @@ function CatalogIndex() {
                   type="button"
                   onClick={() => setCat(c)}
                   className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    cat === c ? "bg-white text-navy" : "bg-white/15 text-navy-foreground"
+                    cat === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {c}

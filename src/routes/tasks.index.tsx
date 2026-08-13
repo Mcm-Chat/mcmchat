@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Plus } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { CreatePreparationDialog } from "@/components/mcm/prepare-parts";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { EmployeeTaskCard, ManagerTaskCard } from "@/components/mcm/task-parts";
@@ -36,6 +38,8 @@ const TAB_STATUSES: Record<string, string[] | null> = {
 function TasksIndex() {
   const { userId, loading } = useRequireAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const {
     data: biz,
@@ -122,10 +126,14 @@ function TasksIndex() {
           description={bizError instanceof Error ? bizError.message : "Buat atau gabung ke sebuah bisnis untuk melihat tugas penyiapan."}
           action={
             bizError ? (
-              <Button className="rounded-xl" onClick={() => void refetchBiz()}>
+              <Button className="h-11 rounded-xl" onClick={() => void refetchBiz()}>
                 Coba lagi
               </Button>
-            ) : undefined
+            ) : (
+              <Button className="h-11 rounded-xl" onClick={() => void navigate({ to: "/business" })}>
+                Buka pengaturan bisnis
+              </Button>
+            )
           }
         />
       </AppShell>
@@ -134,7 +142,18 @@ function TasksIndex() {
 
   if (isManager) {
     return (
-      <AppShell header={<MobileHeader title="Perintah Penyiapan" variant="gradient" />}>
+      <AppShell
+        header={
+          <MobileHeader
+            title="Perintah Penyiapan"
+            actions={
+              <Button size="sm" className="h-11 rounded-xl" onClick={() => setCreateOpen(true)}>
+                <Plus className="size-4" /> Buat
+              </Button>
+            }
+          />
+        }
+      >
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="w-full justify-start overflow-x-auto rounded-none border-b border-border bg-transparent px-2">
             <TabsTrigger value="semua">Semua</TabsTrigger>
@@ -179,7 +198,16 @@ function TasksIndex() {
             }
           />
         ) : filteredManagerJobs.length === 0 ? (
-          <EmptyState icon={ClipboardList} title="Belum ada tugas" description="Buat perintah penyiapan dari halaman chat pelanggan." />
+          <EmptyState
+            icon={ClipboardList}
+            title="Belum ada tugas"
+            description="Buat perintah penyiapan untuk pelanggan; tautan dan barcode dikirim otomatis ke PIN MCM pegawai."
+            action={
+              <Button className="h-11 rounded-xl" onClick={() => setCreateOpen(true)}>
+                <Plus className="size-4" /> Buat Penyiapan
+              </Button>
+            }
+          />
         ) : (
           <ul className="space-y-2 p-3">
             {filteredManagerJobs.map((job: JobWithItems) => (
@@ -189,12 +217,31 @@ function TasksIndex() {
             ))}
           </ul>
         )}
+
+        <Button
+          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 h-14 rounded-full px-5 shadow-lg"
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="size-5" /> Buat Penyiapan
+        </Button>
+
+        {businessId && (
+          <CreatePreparationDialog
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            businessId={businessId}
+            onCreated={() => {
+              setTab("semua");
+              refreshManager();
+            }}
+          />
+        )}
       </AppShell>
     );
   }
 
   return (
-    <AppShell header={<MobileHeader title="Tugas Saya" variant="gradient" />}>
+    <AppShell header={<MobileHeader title="Tugas Saya" />}>
       {myJobsQuery.isLoading ? (
         <LoadingSkeleton rows={5} />
       ) : myJobsQuery.error ? (
