@@ -22,12 +22,19 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { createGroup, getOrCreateDirect } from "@/lib/api/chat";
+import { sendProductCard } from "@/lib/api/product-card";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useContacts, useConversations } from "@/lib/api/queries";
 import { deriveStatus, indexReceipts, listReceipts, markDelivered } from "@/lib/api/receipts";
 import { waktuRelatif } from "@/lib/mcm/format";
 
+type SendSearch = { send?: string; variant?: string };
+
 export const Route = createFileRoute("/chat/")({
+  validateSearch: (search: Record<string, unknown>): SendSearch => ({
+    send: typeof search.send === "string" ? search.send : undefined,
+    variant: typeof search.variant === "string" ? search.variant : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Chat — MCM" },
@@ -61,6 +68,8 @@ function ChatIndex() {
   const [newOpen, setNewOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
+  const { send: sendProductId, variant: sendVariantId } = Route.useSearch();
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
 
   const list = useMemo(() => {
     const all = conversations ?? [];
@@ -113,7 +122,37 @@ function ChatIndex() {
     void refresh();
   };
 
+  /** Kirim kartu produk terstruktur ke percakapan yang dipilih. */
+  const sendCardTo = async (conversationId: string) => {
+    if (!sendProductId || !userId || sendingTo) return;
+    setSendingTo(conversationId);
+    try {
+      await sendProductCard({
+        conversationId,
+        senderId: userId,
+        productId: sendProductId,
+        variantId: sendVariantId ?? null,
+      });
+      toast.success("Kartu produk terkirim");
+      void navigate({ to: "/chat/$id", params: { id: conversationId } });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengirim kartu produk");
+    } finally {
+      setSendingTo(null);
+    }
+  };
+
   const openDirect = async (contactId: string) => {
+    if (sendProductId) {
+      try {
+        const id = await getOrCreateDirect(userId!, contactId);
+        setNewOpen(false);
+        await sendCardTo(id);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gagal membuka chat");
+      }
+      return;
+    }
     try {
       const id = await getOrCreateDirect(userId!, contactId);
       setNewOpen(false);
