@@ -19,7 +19,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
 import { deleteForEveryone, deleteForMe, editMessage, sendMessage, toggleReaction, type MessageRow } from "@/lib/api/chat";
 import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
-import { createLedger } from "@/lib/api/ledger";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { startCall } from "@/lib/api/calls";
@@ -27,6 +26,7 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { scopedKey } from "@/lib/session-scope";
 import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";
 import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
+import { LedgerFormDialog } from "@/components/mcm/ledger-form";
 import { SaleDialog } from "@/components/mcm/sale-dialog";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
@@ -77,7 +77,6 @@ function ChatRoom() {
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
   const [saleOpen, setSaleOpen] = useState(false);
-  const [ledger, setLedger] = useState({ type: "receivable", amount: "", dueDate: "", note: "" });
   const docRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -287,41 +286,6 @@ function ChatRoom() {
     }
   };
 
-  const submitLedger = async () => {
-    if (!userId || !conv) return;
-    const amount = Number(ledger.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Nominal harus lebih dari nol");
-      return;
-    }
-    try {
-      const entry = await createLedger({
-        ownerId: userId,
-        counterpartUserId: conv.other?.id ?? null,
-        counterpartName: conv.other?.display_name ?? conv.title_resolved,
-        type: ledger.type as "receivable" | "payable",
-        amount,
-        dueDate: ledger.dueDate || null,
-        note: ledger.note,
-        conversationId: id,
-        status: "pending_approval",
-      });
-      await sendMessage({
-        conversationId: id,
-        senderId: userId,
-        kind: "ledger",
-        body: `Catatan ${ledger.type === "receivable" ? "piutang" : "utang"} Rp${amount.toLocaleString("id-ID")} menunggu persetujuan`,
-        payload: { ledgerId: entry.id },
-      });
-      setLedgerOpen(false);
-      setLedger({ type: "receivable", amount: "", dueDate: "", note: "" });
-      refresh();
-      void qc.invalidateQueries({ queryKey: qk.ledgers(userId) });
-      toast.success("Catatan dikirim untuk disetujui");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal membuat catatan");
-    }
-  };
 
   const loadCallConfig = useServerFn(getCallConfig);
 
@@ -690,44 +654,28 @@ function ChatRoom() {
         </SheetContent>
       </Sheet>
 
-      <Dialog open={ledgerOpen} onOpenChange={setLedgerOpen}>
-        <DialogContent className="rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Catatan utang bersama</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>Jenis</Label>
-              <Select value={ledger.type} onValueChange={(v) => setLedger((p) => ({ ...p, type: v }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="receivable">Piutang (mereka berutang)</SelectItem>
-                  <SelectItem value="payable">Utang (saya berutang)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="amount">Nominal (Rp)</Label>
-              <Input id="amount" inputMode="numeric" value={ledger.amount} onChange={(e) => setLedger((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="due">Jatuh tempo</Label>
-              <Input id="due" type="date" value={ledger.dueDate} onChange={(e) => setLedger((p) => ({ ...p, dueDate: e.target.value }))} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="note">Catatan</Label>
-              <Textarea id="note" maxLength={200} value={ledger.note} onChange={(e) => setLedger((p) => ({ ...p, note: e.target.value }))} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button className="w-full rounded-xl" onClick={() => void submitLedger()}>
-              <Wallet className="size-4" /> Kirim untuk disetujui
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {userId && conv && (
+        <LedgerFormDialog
+          open={ledgerOpen}
+          onOpenChange={setLedgerOpen}
+          ownerId={userId}
+          preset={{
+            counterpartUserId: conv.other?.id ?? null,
+            counterpartName: conv.other?.display_name ?? conv.title_resolved,
+            conversationId: id,
+          }}
+          onCreated={async (entry) => {
+            await sendMessage({
+              conversationId: id,
+              senderId: userId,
+              kind: "ledger",
+              body: `Catatan ${entry.type === "receivable" ? "piutang" : "utang"} Rp${Number(entry.amount).toLocaleString("id-ID")} menunggu persetujuan`,
+              payload: { ledgerId: entry.id },
+            });
+            refresh();
+          }}
+        />
+      )}
 
       {business && userId && (
         <SaleDialog

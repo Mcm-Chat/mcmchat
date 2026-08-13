@@ -76,11 +76,15 @@ export function MobileHeader({
   children?: ReactNode | undefined;
 }) {
   const navigate = useNavigate();
+  // Header memakai token global saja. Varian lama "gradient" dipertahankan di
+  // tipe agar route tidak perlu diubah, tetapi tidak lagi mengubah warna —
+  // seluruh menu tampil konsisten mengikuti tema akun.
+  void variant;
   return (
     <header
       className={cn(
         "sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]",
-        variant === "gradient" ? "app-gradient text-navy-foreground" : "bg-card/95 backdrop-blur",
+        "bg-card/95 text-foreground backdrop-blur",
       )}
     >
       <div className="flex items-center gap-2 px-3 py-3">
@@ -90,7 +94,7 @@ export function MobileHeader({
             variant="ghost"
             size="icon"
             aria-label="Kembali"
-            className={cn("size-9 shrink-0", variant === "gradient" && "text-navy-foreground hover:bg-white/15")}
+            className="size-11 shrink-0"
             onClick={() => (onBack ? onBack() : window.history.length > 1 ? window.history.back() : navigate({ to: "/chat" }))}
           >
             <ArrowLeft className="size-5" />
@@ -99,7 +103,7 @@ export function MobileHeader({
         <div className="min-w-0 flex-1">
           <div className="truncate text-base leading-tight font-semibold">{title}</div>
           {subtitle && (
-            <div className={cn("truncate text-xs", variant === "gradient" ? "text-navy-foreground/70" : "text-muted-foreground")}>
+            <div className="truncate text-xs text-muted-foreground">
               {subtitle}
             </div>
           )}
@@ -125,7 +129,7 @@ export function AppShell({
   className?: string | undefined;
 }) {
   return (
-    <div className="min-h-screen bg-navy/95 dark:bg-black/40">
+    <div className="min-h-screen bg-muted/40">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background shadow-2xl sm:min-h-[100dvh]">
         {header}
         <main className={cn("flex-1 overflow-x-hidden", className)}>{children}</main>

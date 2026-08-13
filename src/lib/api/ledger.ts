@@ -53,6 +53,7 @@ export type CreateLedgerInput = {
   conversationId?: string | null;
   paidAmount?: number;
   status?: LedgerRow["status"];
+  reminder?: boolean;
 };
 
 export async function createLedger(input: CreateLedgerInput): Promise<LedgerRow> {
@@ -73,6 +74,7 @@ export async function createLedger(input: CreateLedgerInput): Promise<LedgerRow>
         note: input.note ?? "",
         sales_record_id: input.salesRecordId ?? null,
         conversation_id: input.conversationId ?? null,
+        reminder: input.reminder ?? true,
         status,
       })
       .select("*")
