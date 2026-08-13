@@ -6,7 +6,12 @@ export type NotificationRow = Tables<"notifications">;
 
 export async function listNotifications(userId: string): Promise<NotificationRow[]> {
   return unwrap(
-    await supabase.from("notifications").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(100),
+    await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(100),
     "Gagal memuat notifikasi",
   );
 }
@@ -17,7 +22,11 @@ export async function markRead(id: string) {
 }
 
 export async function markAllRead(userId: string) {
-  const { error } = await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("is_read", false);
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("user_id", userId)
+    .eq("is_read", false);
   if (error) throw new Error(friendly(error.message, "Gagal menandai semua notifikasi"));
 }
 
@@ -25,7 +34,11 @@ export async function markAllRead(userId: string) {
 export function subscribeNotifications(userId: string, onChange: () => void) {
   const channel = supabase
     .channel(`mcm-notifications-${userId}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, onChange)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+      onChange,
+    )
     .subscribe();
   return () => {
     void supabase.removeChannel(channel);

@@ -21,6 +21,8 @@ describe("shouldAutoScroll", () => {
     expect(shouldAutoScroll({ atBottom: false, lastSenderId: "b", userId: "a" })).toBe(false);
   });
   it("aman saat pengguna belum dikenal", () => {
-    expect(shouldAutoScroll({ atBottom: false, lastSenderId: null, userId: undefined })).toBe(false);
+    expect(shouldAutoScroll({ atBottom: false, lastSenderId: null, userId: undefined })).toBe(
+      false,
+    );
   });
 });

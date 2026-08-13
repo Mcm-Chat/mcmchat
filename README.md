@@ -1,22 +1,51 @@
 # MCM — Private Chat, Calls & Smart Ledger
 
-Aplikasi mobile-first (TanStack Start + React + Tailwind + shadcn/ui) untuk chat berbasis PIN,
-panggilan, catatan utang-piutang, dan fitur bisnis. Seluruh data MVP tersimpan di localStorage.
+Aplikasi bisnis mobile-first (TanStack Start + React + Tailwind + shadcn/ui) dengan backend
+Supabase (Postgres + RLS + Realtime + Storage) dan pembungkus Android (Capacitor).
 
-## Fitur nyata (berfungsi penuh di MVP)
-- Splash, onboarding, login, registrasi + PIN otomatis, dan **Mode Demo** (status disimpan di localStorage).
-- App shell mobile-first: header + bottom navigation (Chat, Panggilan, Catatan, Bisnis, Profil), light/dark mode, radius 16px.
-- Identitas PIN: kartu PIN dengan salin + QR, tambah kontak lewat pencarian PIN (contoh `R8NA-K4Q7`), kirim/terima/tolak permintaan, blokir.
-- Chat: daftar chat + grup "Tim MCM", pencarian, unread badge, pin/mute, arsip; ruang chat dengan kirim pesan, reply, reaksi, status terkirim/dibaca, lampiran, quick action, dan saran "Buat catatan bersama".
-- Catatan utang-piutang: dashboard total piutang/utang/jatuh tempo/lunas, buat catatan baru dengan validasi, alur "Menunggu Persetujuan" → setuju/tolak, catat pembayaran sebagian, progress, timeline, ekspor CSV.
-- Bisnis: KPI, katalog 8 produk dengan pencarian & filter kategori, detail + tambah/edit produk, 4 pesanan dengan invoice, quick replies (`/harga`, `/alamat`, `/jam`, `/rekening`, `/katalog`, `/statuspesanan`), team inbox (open/pending/closed + assignee), siaran.
-- Profil & pengaturan: edit profil, PIN/QR, switch privasi/keamanan/notifikasi yang persist, perangkat aktif, dark mode, app lock, reset demo.
-- Semua perubahan state persist ke localStorage; notifikasi memakai `sonner`.
+> Status kejujuran: **bukan MVP localStorage lagi**. Seluruh data utama tersimpan di database
+> dengan RLS. Beberapa modul masih **BLOCKED** karena membutuhkan kredensial/provider eksternal
+> (Firebase, LiveKit, DNS, Play Console, billing). Matriks lengkap: [`PRODUCTION_READINESS.md`](./PRODUCTION_READINESS.md).
 
-## Fitur simulasi (belum production)
-- Panggilan suara/video: layar panggilan bertimer dengan kontrol mute, kamera, speaker, flip, tambah peserta — **Simulasi MVP**, bukan WebRTC nyata.
-- OTP registrasi memakai kode demo `123456`.
-- Pemindai QR, siaran pelanggan, pembayaran/ongkir, app lock, dan sinkronisasi antar-perangkat masih simulasi lokal.
-- Direktori pengguna hanya data demo di perangkat; pencarian PIN nyata memerlukan backend.
+## Modul nyata (berjalan di atas database)
+- **Auth & PIN**: registrasi/login Supabase, PIN MCM dibuat server-side; pencarian PIN hanya lewat RPC `SECURITY DEFINER`.
+- **Kontak**: permintaan kontak, terima/tolak (`respond_contact_request`), blokir dua arah (`blocked_between`).
+- **Chat realtime**: pesan, reply, reaksi, lampiran, lokasi, pagination cursor, indikator mengetik, hapus pesan.
+- **Receipts**: sumber kebenaran `message_receipts` + RPC `mark_messages_delivered` / `mark_messages_read`, menghormati privasi read receipt.
+- **Outbox offline**: antrean pesan **teks** persisten di IndexedDB per akun (lampiran belum persisten — lihat matriks).
+- **Status**: bucket privat, `status_feed()` sadar privasi, viewer full-screen, balasan status ke chat.
+- **Katalog & stok**: produk, varian, konversi unit, saldo & mutasi inventaris, foto produk multi + lokasi per foto.
+- **Penjualan & keuangan**: `create_sale_tx` atomik, catatan utang/piutang, pembayaran sebagian, ekspor.
+- **Penyiapan pegawai**: job bertoken, foto + GPS wajib, pembaruan katalog & stok otomatis, kirim link lewat chat.
+- **Panggilan**: sinyal panggilan di database + token LiveKit server-side (butuh secret, lihat di bawah).
+- **Privasi layar**: `FLAG_SECURE` **hanya pada APK Android native**; di browser/PWA hanya tirai privasi saat blur.
 
-Privasi terlindungi sesuai pengaturan aplikasi. Aplikasi ini berjalan dalam **mode demo** dan tidak menjanjikan enkripsi ujung-ke-ujung produksi.
+## Yang membutuhkan pihak ketiga (belum aktif di lingkungan ini)
+| Kebutuhan | Efek bila belum diisi |
+| --- | --- |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | Layar panggilan menampilkan **Belum terhubung**; tidak ada mikrofon dibuka |
+| `google-services.json` + service account FCM v1 | Push Android tidak terkirim; UI melaporkan status apa adanya |
+| Fingerprint Play App Signing | `bun run verify:assetlinks` gagal; App Links belum terverifikasi |
+| DNS `mcmchat.id` (NS masih Rumahweb) | Domain produksi belum resolve; lihat `DOMAIN_DNS_QA.md` |
+| Provider billing (Play Billing/Stripe) | Entitlement premium `not_configured`; tidak ada pembayaran palsu |
+
+## Tidak diklaim
+- **Bukan** end-to-end encrypted. Enkripsi in-transit (TLS) dan at-rest oleh penyedia database, bukan E2EE.
+- **Bukan** "tidak dapat dilacak".
+- Screenshot **tidak** terblokir di browser/PWA.
+- Belum ada AAB rilis yang benar-benar dibangun & ditandatangani di lingkungan ini.
+
+## Script
+| Perintah | Arti sebenarnya |
+| --- | --- |
+| `bun run dev` | dev server Vite |
+| `bun run build:web` (alias `build`) | bundle produksi TanStack/Nitro/Vite |
+| `bun run typecheck` | `tsgo --noEmit` |
+| `bun run test` / `test:security` | seluruh Vitest / hanya invariant keamanan |
+| `bun run lint` | ESLint |
+| `bun run verify:assetlinks` | gagal bila fingerprint App Links masih placeholder |
+| `bun run android:sync` / `android:bundle` / `android:debug-apk` | Capacitor sync, AAB rilis, APK debug |
+| `bun run verify:aab` | cek manifest bundle (SKIP jujur bila bundletool/AAB tidak ada) |
+
+Dokumen terkait: `PRODUCTION_READINESS.md`, `ANDROID_RELEASE.md`, `LIVE_CALLS.md`,
+`ANDROID_SCREEN_SECURITY.md`, `DOMAIN_DNS_QA.md`, `CI.md`, `PREMIUM_VOICE_EFFECTS.md`.

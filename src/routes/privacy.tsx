@@ -8,7 +8,10 @@ export const Route = createFileRoute("/privacy")({
     meta: [
       ...canonical("/privacy").meta,
       { title: "Kebijakan Privasi — MCM" },
-      { name: "description", content: "Bagaimana MCM mengumpulkan, memakai, menyimpan, dan menghapus data Anda." },
+      {
+        name: "description",
+        content: "Bagaimana MCM mengumpulkan, memakai, menyimpan, dan menghapus data Anda.",
+      },
       { property: "og:title", content: "Kebijakan Privasi — MCM" },
       { property: "og:description", content: "Kebijakan privasi aplikasi chat bisnis MCM." },
       { property: "og:type", content: "article" },
@@ -29,10 +32,21 @@ function PrivacyPage() {
           heading: "Data yang kami kumpulkan",
           body: (
             <ul className="list-disc space-y-1 pl-4">
-              <li>Identitas akun: email untuk masuk, nama tampilan, bio, foto profil, dan PIN unik MCM.</li>
-              <li>Isi komunikasi: pesan teks, foto, dokumen, pesan suara, dan reaksi yang Anda kirim.</li>
-              <li>Lokasi: hanya saat Anda menekan tombol kirim lokasi atau memotret produk dengan opsi lokasi aktif.</li>
-              <li>Data bisnis: katalog produk, stok, pesanan, penjualan, catatan utang-piutang, dan perintah penyiapan.</li>
+              <li>
+                Identitas akun: email untuk masuk, nama tampilan, bio, foto profil, dan PIN unik
+                MCM.
+              </li>
+              <li>
+                Isi komunikasi: pesan teks, foto, dokumen, pesan suara, dan reaksi yang Anda kirim.
+              </li>
+              <li>
+                Lokasi: hanya saat Anda menekan tombol kirim lokasi atau memotret produk dengan opsi
+                lokasi aktif.
+              </li>
+              <li>
+                Data bisnis: katalog produk, stok, pesanan, penjualan, catatan utang-piutang, dan
+                perintah penyiapan.
+              </li>
               <li>Data teknis: perangkat aktif dan waktu akses terakhir untuk keamanan akun.</li>
             </ul>
           ),

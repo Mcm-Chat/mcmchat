@@ -1,22 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 
-const ROUTES = ["chat.index", "status.index", "tasks.index", "catalog.index", "finance.index", "profile.index"];
+const ROUTES = [
+  "chat.index",
+  "status.index",
+  "tasks.index",
+  "catalog.index",
+  "finance.index",
+  "profile.index",
+];
 const read = (p: string) => readFileSync(p, "utf8");
 
 describe("tema global konsisten di enam menu", () => {
   it("tidak ada route yang memutasi tema saat dibuka", () => {
     for (const r of ROUTES) {
       const src = read(`src/routes/${r}.tsx`);
-      expect(src, `${r} tidak boleh menyentuh documentElement`).not.toMatch(/document\.documentElement/);
-      expect(src, `${r} tidak boleh memanggil setTheme di useEffect`).not.toMatch(/useEffect\([^)]*\)\s*=>\s*\{[^}]*setTheme\(/s);
+      expect(src, `${r} tidak boleh menyentuh documentElement`).not.toMatch(
+        /document\.documentElement/,
+      );
+      expect(src, `${r} tidak boleh memanggil setTheme di useEffect`).not.toMatch(
+        /useEffect\([^)]*\)\s*=>\s*\{[^}]*setTheme\(/s,
+      );
     }
   });
 
   it("tidak ada latar hardcode yang menabrak token tema", () => {
     for (const r of ROUTES) {
       const src = read(`src/routes/${r}.tsx`);
-      expect(src, `${r} memakai warna hardcode`).not.toMatch(/bg-white\b|bg-slate-\d|app-gradient|text-navy-foreground/);
+      expect(src, `${r} memakai warna hardcode`).not.toMatch(
+        /bg-white\b|bg-slate-\d|app-gradient|text-navy-foreground/,
+      );
     }
   });
 

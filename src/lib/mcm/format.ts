@@ -1,10 +1,13 @@
 export const rupiah = (value: number) =>
-  new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(
-    Math.round(value),
-  );
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(Math.round(value));
 
 export const rupiahShort = (value: number) => {
-  if (Math.abs(value) >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1).replace(".", ",")} jt`;
+  if (Math.abs(value) >= 1_000_000)
+    return `Rp ${(value / 1_000_000).toFixed(1).replace(".", ",")} jt`;
   if (Math.abs(value) >= 1_000) return `Rp ${Math.round(value / 1_000)} rb`;
   return rupiah(value);
 };
@@ -15,10 +18,21 @@ export const jam = (iso: string) =>
   new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
 
 export const tanggal = (iso: string) =>
-  new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: TZ });
+  new Date(iso).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: TZ,
+  });
 
 export const tanggalPanjang = (iso: string) =>
-  new Date(iso).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: TZ });
+  new Date(iso).toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: TZ,
+  });
 
 export const tanggalInput = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 

@@ -3,21 +3,56 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
-import { listCatalog, toBase, WEIGHT_UNITS, COUNT_UNITS, type ProductWithVariants, type VariantRow, type PhotoRow } from "@/lib/api/catalog";
-import { computeTotals, createSale, PAYMENT_LABEL, validateSale, type PaymentMethod, type SaleItemInput } from "@/lib/api/sales";
+import {
+  listCatalog,
+  toBase,
+  WEIGHT_UNITS,
+  COUNT_UNITS,
+  type ProductWithVariants,
+  type VariantRow,
+  type PhotoRow,
+} from "@/lib/api/catalog";
+import {
+  computeTotals,
+  createSale,
+  PAYMENT_LABEL,
+  validateSale,
+  type PaymentMethod,
+  type SaleItemInput,
+} from "@/lib/api/sales";
 import type { ContactWithProfile } from "@/lib/api/contacts";
 
 type CartItem = SaleItemInput & { key: string };
 
-function PhotoThumb({ path, selected, onClick }: { path: string; selected: boolean; onClick: () => void }) {
+function PhotoThumb({
+  path,
+  selected,
+  onClick,
+}: {
+  path: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
   const url = useSignedUrl("product-photos", path);
   return (
     <button
@@ -28,7 +63,11 @@ function PhotoThumb({ path, selected, onClick }: { path: string; selected: boole
         selected ? "border-primary" : "border-border",
       )}
     >
-      {url ? <img src={url} alt="Foto produk" className="size-full object-cover" /> : <div className="size-full animate-pulse bg-muted" />}
+      {url ? (
+        <img src={url} alt="Foto produk" className="size-full object-cover" />
+      ) : (
+        <div className="size-full animate-pulse bg-muted" />
+      )}
       {selected && (
         <span className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Check className="size-3" />
@@ -62,7 +101,12 @@ export function SaleDialog({
   onSuccess?: (result: { conversationId: string | null; already: boolean }) => void;
 }) {
   const contactRequired = !conversationId;
-  const { data: catalog, isLoading: catalogLoading, error: catalogError, refetch } = useQuery({
+  const {
+    data: catalog,
+    isLoading: catalogLoading,
+    error: catalogError,
+    refetch,
+  } = useQuery({
     queryKey: ["catalog-sale", businessId],
     queryFn: () => listCatalog(businessId),
     enabled: !!businessId && open,
@@ -118,7 +162,11 @@ export function SaleDialog({
   );
   const product = products.find((p) => p.id === productId) ?? null;
   const variant = product?.variants.find((v) => v.id === variantId) ?? null;
-  const unitOptions = variant ? (variant.stock_type === "weight" ? [...WEIGHT_UNITS] : [...COUNT_UNITS]) : [];
+  const unitOptions = variant
+    ? variant.stock_type === "weight"
+      ? [...WEIGHT_UNITS]
+      : [...COUNT_UNITS]
+    : [];
   const activeUnit = unit || variant?.display_unit || unitOptions[0] || "pcs";
 
   useEffect(() => {
@@ -200,11 +248,15 @@ export function SaleDialog({
   const removeItem = (key: string) => setItems((p) => p.filter((i) => i.key !== key));
 
   const totals = computeTotals(items, Number(discount) || 0, Number(extraFee) || 0);
-  const paid = paymentMethod === "cash" || paymentMethod === "transfer" ? totals.total : Number(paidAmount.replace(/\D/g, "")) || 0;
+  const paid =
+    paymentMethod === "cash" || paymentMethod === "transfer"
+      ? totals.total
+      : Number(paidAmount.replace(/\D/g, "")) || 0;
   const outstanding = Math.max(0, totals.total - paid);
 
   useEffect(() => {
-    if (paymentMethod === "cash" || paymentMethod === "transfer") setPaidAmount(String(totals.total));
+    if (paymentMethod === "cash" || paymentMethod === "transfer")
+      setPaidAmount(String(totals.total));
   }, [paymentMethod, totals.total]);
 
   const submit = async () => {
@@ -240,7 +292,7 @@ export function SaleDialog({
         extraFee: Number(extraFee) || 0,
         paymentMethod,
         paidAmount: paid,
-        dueDate: (paymentMethod === "dp" || paymentMethod === "credit") ? dueDate || null : null,
+        dueDate: paymentMethod === "dp" || paymentMethod === "credit" ? dueDate || null : null,
         note,
         customerName: finalCustomerName,
         customerUserId: finalCustomerUserId,
@@ -278,7 +330,11 @@ export function SaleDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {(contacts ?? []).length === 0 && <p className="text-xs text-muted-foreground">Belum ada kontak. Tambah kontak dulu.</p>}
+              {(contacts ?? []).length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Belum ada kontak. Tambah kontak dulu.
+                </p>
+              )}
             </section>
           )}
           {!contactRequired && (
@@ -294,7 +350,12 @@ export function SaleDialog({
             ) : catalogError ? (
               <div className="space-y-1.5 text-xs text-destructive">
                 <p>Gagal memuat katalog.</p>
-                <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs" onClick={() => void refetch()}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-lg text-xs"
+                  onClick={() => void refetch()}
+                >
                   Coba lagi
                 </Button>
               </div>
@@ -304,7 +365,12 @@ export function SaleDialog({
               <>
                 <div className="relative">
                   <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari produk" className="h-9 rounded-xl pl-8 text-sm" />
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Cari produk"
+                    className="h-9 rounded-xl pl-8 text-sm"
+                  />
                 </div>
                 <div className="flex max-h-28 flex-col gap-1 overflow-y-auto">
                   {filtered.map((p) => (
@@ -318,14 +384,20 @@ export function SaleDialog({
                       }}
                       className={cn(
                         "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs",
-                        productId === p.id ? "bg-primary/10 font-semibold text-primary" : "hover:bg-muted",
+                        productId === p.id
+                          ? "bg-primary/10 font-semibold text-primary"
+                          : "hover:bg-muted",
                       )}
                     >
                       <span className="truncate">{p.name}</span>
-                      <span className="shrink-0 text-muted-foreground">{rupiah(Number(p.price))}</span>
+                      <span className="shrink-0 text-muted-foreground">
+                        {rupiah(Number(p.price))}
+                      </span>
                     </button>
                   ))}
-                  {filtered.length === 0 && <p className="px-2 py-2 text-xs text-muted-foreground">Tidak ada hasil.</p>}
+                  {filtered.length === 0 && (
+                    <p className="px-2 py-2 text-xs text-muted-foreground">Tidak ada hasil.</p>
+                  )}
                 </div>
 
                 {product && (
@@ -340,13 +412,17 @@ export function SaleDialog({
                             onClick={() => setVariantId(v.id)}
                             className={cn(
                               "rounded-full border px-3 py-1 text-xs",
-                              variantId === v.id ? "border-primary bg-primary text-primary-foreground" : "border-border",
+                              variantId === v.id
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border",
                             )}
                           >
                             {v.name}
                           </button>
                         ))}
-                        {product.variants.length === 0 && <p className="text-xs text-muted-foreground">Belum ada varian.</p>}
+                        {product.variants.length === 0 && (
+                          <p className="text-xs text-muted-foreground">Belum ada varian.</p>
+                        )}
                       </div>
                     </div>
 
@@ -360,7 +436,11 @@ export function SaleDialog({
                               path={ph.image_path}
                               selected={selectedPhotoIds.includes(ph.id)}
                               onClick={() =>
-                                setSelectedPhotoIds((prev) => (prev.includes(ph.id) ? prev.filter((x) => x !== ph.id) : [...prev, ph.id]))
+                                setSelectedPhotoIds((prev) =>
+                                  prev.includes(ph.id)
+                                    ? prev.filter((x) => x !== ph.id)
+                                    : [...prev, ph.id],
+                                )
                               }
                             />
                           ))}
@@ -373,7 +453,12 @@ export function SaleDialog({
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
                             <Label className="text-xs">Jumlah</Label>
-                            <Input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} className="h-8 text-xs" />
+                            <Input
+                              inputMode="decimal"
+                              value={qty}
+                              onChange={(e) => setQty(e.target.value)}
+                              className="h-8 text-xs"
+                            />
                           </div>
                           <div className="space-y-1">
                             <Label className="text-xs">Satuan</Label>
@@ -411,7 +496,12 @@ export function SaleDialog({
                             />
                           </div>
                         </div>
-                        <Button type="button" size="sm" className="w-full rounded-lg text-xs" onClick={addItem}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full rounded-lg text-xs"
+                          onClick={addItem}
+                        >
                           <Plus className="size-3.5" /> Tambah ke keranjang
                         </Button>
                       </>
@@ -427,18 +517,30 @@ export function SaleDialog({
               <p className="text-xs font-semibold text-muted-foreground">Keranjang</p>
               <ul className="space-y-1.5">
                 {items.map((it) => (
-                  <li key={it.key} className="flex items-center gap-2 rounded-xl bg-muted px-2.5 py-2 text-xs">
+                  <li
+                    key={it.key}
+                    className="flex items-center gap-2 rounded-xl bg-muted px-2.5 py-2 text-xs"
+                  >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">
                         {it.name} — {it.variantName}
                       </span>
                       <span className="block text-muted-foreground">
-                        {it.qty} {it.unit} × {rupiah(it.price)} {it.discount > 0 ? `(−${rupiah(it.discount)})` : ""}
+                        {it.qty} {it.unit} × {rupiah(it.price)}{" "}
+                        {it.discount > 0 ? `(−${rupiah(it.discount)})` : ""}
                         {it.photoIds.length > 0 ? ` • ${it.photoIds.length} foto` : ""}
                       </span>
                     </span>
-                    <span className="shrink-0 font-semibold">{rupiah(Math.max(0, it.price - it.discount) * it.qty)}</span>
-                    <Button variant="ghost" size="icon" className="size-6" aria-label="Hapus item" onClick={() => removeItem(it.key)}>
+                    <span className="shrink-0 font-semibold">
+                      {rupiah(Math.max(0, it.price - it.discount) * it.qty)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-6"
+                      aria-label="Hapus item"
+                      onClick={() => removeItem(it.key)}
+                    >
                       <Trash2 className="size-3.5" />
                     </Button>
                   </li>
@@ -450,17 +552,30 @@ export function SaleDialog({
           <section className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-xs">Ongkir / biaya lain</Label>
-              <Input inputMode="numeric" value={extraFee} onChange={(e) => setExtraFee(e.target.value.replace(/\D/g, ""))} className="h-9 text-sm" />
+              <Input
+                inputMode="numeric"
+                value={extraFee}
+                onChange={(e) => setExtraFee(e.target.value.replace(/\D/g, ""))}
+                className="h-9 text-sm"
+              />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Diskon total</Label>
-              <Input inputMode="numeric" value={discount} onChange={(e) => setDiscount(e.target.value.replace(/\D/g, ""))} className="h-9 text-sm" />
+              <Input
+                inputMode="numeric"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value.replace(/\D/g, ""))}
+                className="h-9 text-sm"
+              />
             </div>
           </section>
 
           <section className="space-y-2">
             <Label className="text-xs">Metode pembayaran</Label>
-            <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}>
+            <Select
+              value={paymentMethod}
+              onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
+            >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -475,20 +590,36 @@ export function SaleDialog({
             {paymentMethod === "dp" && (
               <div className="space-y-1">
                 <Label className="text-xs">Jumlah dibayar (DP)</Label>
-                <Input inputMode="numeric" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value.replace(/\D/g, ""))} className="h-9 text-sm" />
+                <Input
+                  inputMode="numeric"
+                  value={paidAmount}
+                  onChange={(e) => setPaidAmount(e.target.value.replace(/\D/g, ""))}
+                  className="h-9 text-sm"
+                />
               </div>
             )}
             {(paymentMethod === "dp" || paymentMethod === "credit") && (
               <div className="space-y-1">
                 <Label className="text-xs">Jatuh tempo</Label>
-                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-9 text-sm" />
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="h-9 text-sm"
+                />
               </div>
             )}
           </section>
 
           <section className="space-y-1">
             <Label className="text-xs">Catatan</Label>
-            <Textarea value={note} maxLength={300} rows={2} onChange={(e) => setNote(e.target.value)} className="resize-none rounded-xl text-sm" />
+            <Textarea
+              value={note}
+              maxLength={300}
+              rows={2}
+              onChange={(e) => setNote(e.target.value)}
+              className="resize-none rounded-xl text-sm"
+            />
           </section>
 
           <section className="space-y-1 rounded-2xl border border-border p-3 text-xs">
@@ -522,8 +653,13 @@ export function SaleDialog({
           </section>
         </div>
         <DialogFooter className="border-t border-border px-4 py-3">
-          <Button className="w-full rounded-xl" disabled={submitting || items.length === 0} onClick={() => void submit()}>
-            {submitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Kirim
+          <Button
+            className="w-full rounded-xl"
+            disabled={submitting || items.length === 0}
+            onClick={() => void submit()}
+          >
+            {submitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}{" "}
+            Kirim
           </Button>
         </DialogFooter>
       </DialogContent>

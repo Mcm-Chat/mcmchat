@@ -4,14 +4,36 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { ConfirmDialog, EmptyState, LoadingSkeleton, StatusBadge } from "@/components/mcm/primitives";
-import { EditLocationDialog, PhotoCard, ProductThumb, priceLabel } from "@/components/mcm/catalog-parts";
+import {
+  ConfirmDialog,
+  EmptyState,
+  LoadingSkeleton,
+  StatusBadge,
+} from "@/components/mcm/primitives";
+import {
+  EditLocationDialog,
+  PhotoCard,
+  ProductThumb,
+  priceLabel,
+} from "@/components/mcm/catalog-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   COUNT_UNITS,
   MOVEMENT_LABEL,
@@ -61,7 +83,11 @@ function CatalogDetail() {
     isLoading,
     isError,
     refetch,
-  } = useQuery({ queryKey: ["catalog", "product", id], queryFn: () => getProduct(id), enabled: !!id });
+  } = useQuery({
+    queryKey: ["catalog", "product", id],
+    queryFn: () => getProduct(id),
+    enabled: !!id,
+  });
 
   const invalidate = () => void qc.invalidateQueries({ queryKey: ["catalog", "product", id] });
 
@@ -69,7 +95,10 @@ function CatalogDetail() {
   const [editForm, setEditForm] = useState({ name: "", category: "", description: "", price: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [variantOpen, setVariantOpen] = useState<VariantRow | null | "new">(null);
-  const [stockDialog, setStockDialog] = useState<{ variant: VariantRow; mode: "add" | "correct" } | null>(null);
+  const [stockDialog, setStockDialog] = useState<{
+    variant: VariantRow;
+    mode: "add" | "correct";
+  } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
   const addPhotoRef = useRef<HTMLInputElement>(null);
@@ -103,7 +132,12 @@ function CatalogDetail() {
   }
 
   const openEdit = () => {
-    setEditForm({ name: product.name, category: product.category, description: product.description, price: String(product.price) });
+    setEditForm({
+      name: product.name,
+      category: product.category,
+      description: product.description,
+      price: String(product.price),
+    });
     setEditOpen(true);
   };
 
@@ -176,7 +210,13 @@ function CatalogDetail() {
           back
           actions={
             <>
-              <Button variant="ghost" size="icon" aria-label="Edit produk" className="size-9" onClick={openEdit}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Edit produk"
+                className="size-9"
+                onClick={openEdit}
+              >
                 <MoreVertical className="size-5" />
               </Button>
             </>
@@ -189,7 +229,9 @@ function CatalogDetail() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-lg font-semibold">{product.name}</p>
-              <p className="text-sm text-muted-foreground">{product.description || "Tanpa deskripsi"}</p>
+              <p className="text-sm text-muted-foreground">
+                {product.description || "Tanpa deskripsi"}
+              </p>
             </div>
             <ProductThumb path={allPhotos[0]?.image_path} className="size-16" />
           </div>
@@ -198,7 +240,12 @@ function CatalogDetail() {
             <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={openEdit}>
               Edit produk
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 rounded-xl text-destructive" onClick={() => setDeleteOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-xl text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
               <Trash2 className="size-4" /> Hapus
             </Button>
           </div>
@@ -207,7 +254,12 @@ function CatalogDetail() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">Varian & stok</h2>
-            <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs" onClick={() => setVariantOpen("new")}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 rounded-lg text-xs"
+              onClick={() => setVariantOpen("new")}
+            >
               <Plus className="size-3.5" /> Tambah varian
             </Button>
           </div>
@@ -261,7 +313,13 @@ function CatalogDetail() {
               e.target.value = "";
             }}
           />
-          <Button type="button" variant="outline" className="w-full rounded-xl" disabled={uploading} onClick={() => addPhotoRef.current?.click()}>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-xl"
+            disabled={uploading}
+            onClick={() => addPhotoRef.current?.click()}
+          >
             <ImagePlus className="size-4" /> {uploading ? "Mengunggah…" : "Tambah foto"}
           </Button>
           {allPhotos.length === 0 ? (
@@ -289,16 +347,32 @@ function CatalogDetail() {
                     }
                     actions={
                       <div className="flex gap-1">
-                        <Button type="button" variant="ghost" size="icon" className="size-7 rounded-lg" aria-label="Naikkan" onClick={() => void movePhoto(ph.id, -1, allPhotos)}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 rounded-lg"
+                          aria-label="Naikkan"
+                          onClick={() => void movePhoto(ph.id, -1, allPhotos)}
+                        >
                           ↑
                         </Button>
-                        <Button type="button" variant="ghost" size="icon" className="size-7 rounded-lg" aria-label="Turunkan" onClick={() => void movePhoto(ph.id, 1, allPhotos)}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 rounded-lg"
+                          aria-label="Turunkan"
+                          onClick={() => void movePhoto(ph.id, 1, allPhotos)}
+                        >
                           ↓
                         </Button>
                       </div>
                     }
                   />
-                  {ph.preparation_job_id && <StatusBadge tone="success">Dari penyiapan</StatusBadge>}
+                  {ph.preparation_job_id && (
+                    <StatusBadge tone="success">Dari penyiapan</StatusBadge>
+                  )}
                 </div>
               ))}
             </div>
@@ -314,19 +388,33 @@ function CatalogDetail() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label>Nama produk</Label>
-              <Input value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} />
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Kategori</Label>
-              <Input value={editForm.category} onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))} />
+              <Input
+                value={editForm.category}
+                onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Harga (Rp)</Label>
-              <Input type="number" min={0} value={editForm.price} onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))} />
+              <Input
+                type="number"
+                min={0}
+                value={editForm.price}
+                onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Deskripsi</Label>
-              <Textarea value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} />
+              <Textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -387,13 +475,18 @@ function CatalogDetail() {
         />
       )}
 
-      {movementsFor && <MovementsSheet variant={movementsFor} onClose={() => setMovementsFor(null)} />}
+      {movementsFor && (
+        <MovementsSheet variant={movementsFor} onClose={() => setMovementsFor(null)} />
+      )}
 
       {editLocationPhoto && (
         <EditLocationDialog
           open={!!editLocationPhoto}
           onOpenChange={(v) => !v && setEditLocationPhoto(null)}
-          initial={{ location_url: editLocationPhoto.location_url, location_label: editLocationPhoto.location_label }}
+          initial={{
+            location_url: editLocationPhoto.location_url,
+            location_label: editLocationPhoto.location_label,
+          }}
           onSave={(patch) =>
             void (async () => {
               try {
@@ -439,16 +532,28 @@ function VariantRowCard({
           <p className="truncate text-sm font-semibold">{variant.name}</p>
           <p className="text-xs text-muted-foreground">{priceLabel(Number(variant.price))}</p>
         </div>
-        <StatusBadge tone={variant.balance <= 0 ? "danger" : "primary"}>{formatQty(variant, variant.balance)}</StatusBadge>
+        <StatusBadge tone={variant.balance <= 0 ? "danger" : "primary"}>
+          {formatQty(variant, variant.balance)}
+        </StatusBadge>
       </div>
       <div className="flex flex-wrap gap-1.5">
         <Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px]" onClick={onAdd}>
           <Plus className="size-3.5" /> Tambah stok
         </Button>
-        <Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px]" onClick={onCorrect}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 rounded-lg text-[11px]"
+          onClick={onCorrect}
+        >
           <Minus className="size-3.5" /> Koreksi stok
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 rounded-lg text-[11px]" onClick={onHistory}>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 rounded-lg text-[11px]"
+          onClick={onHistory}
+        >
           Riwayat
         </Button>
         <Button size="sm" variant="ghost" className="h-8 rounded-lg text-[11px]" onClick={onEdit}>
@@ -461,7 +566,13 @@ function VariantRowCard({
       {photos.length > 0 && (
         <div className="grid grid-cols-2 gap-2 pt-1">
           {photos.map((ph, i) => (
-            <PhotoCard key={ph.id} photo={ph} index={i} onEditLocation={() => onEditLocation(ph)} onDelete={() => onDeletePhoto(ph)} />
+            <PhotoCard
+              key={ph.id}
+              photo={ph}
+              index={i}
+              onEditLocation={() => onEditLocation(ph)}
+              onDelete={() => onDeletePhoto(ph)}
+            />
           ))}
         </div>
       )}
@@ -488,7 +599,9 @@ function VariantEditorDialog({
 }) {
   const [name, setName] = useState(variant?.name ?? "");
   const [stockType, setStockType] = useState<StockType>(variant?.stock_type ?? "weight");
-  const [displayUnit, setDisplayUnit] = useState(variant?.display_unit ?? (stockType === "weight" ? "g" : "pcs"));
+  const [displayUnit, setDisplayUnit] = useState(
+    variant?.display_unit ?? (stockType === "weight" ? "g" : "pcs"),
+  );
   const [conversionFactor, setConversionFactor] = useState(String(variant?.conversion_factor ?? 1));
   const [price, setPrice] = useState(String(variant?.price ?? 0));
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -533,7 +646,11 @@ function VariantEditorDialog({
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Nama varian</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Contoh: Kemasan 1kg" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Kemasan 1kg"
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Jenis stok</Label>
@@ -571,7 +688,12 @@ function VariantEditorDialog({
           {stockType === "count" && (
             <div className="space-y-1.5">
               <Label>Isi per satuan (mis. 1 karton = 24 pcs)</Label>
-              <Input type="number" min={1} value={conversionFactor} onChange={(e) => setConversionFactor(e.target.value)} />
+              <Input
+                type="number"
+                min={1}
+                value={conversionFactor}
+                onChange={(e) => setConversionFactor(e.target.value)}
+              />
             </div>
           )}
           <div className="space-y-1.5">
@@ -584,7 +706,11 @@ function VariantEditorDialog({
             Simpan
           </Button>
           {variant && (
-            <Button variant="outline" className="w-full rounded-xl text-destructive" onClick={() => setConfirmDelete(true)}>
+            <Button
+              variant="outline"
+              className="w-full rounded-xl text-destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
               Hapus varian
             </Button>
           )}
@@ -641,7 +767,12 @@ function StockDialog({
     try {
       const base = toBase(variant, Math.abs(n), unit);
       const signedBase = mode === "add" ? base : n < 0 ? -base : base;
-      await adjustStock(variant.id, signedBase, mode === "add" ? "restock" : "adjustment", note.trim());
+      await adjustStock(
+        variant.id,
+        signedBase,
+        mode === "add" ? "restock" : "adjustment",
+        note.trim(),
+      );
       toast.success("Stok diperbarui");
       onDone();
     } catch (err) {
@@ -661,7 +792,12 @@ function StockDialog({
           <div className="flex gap-2">
             <div className="flex-1 space-y-1.5">
               <Label>{mode === "add" ? "Jumlah" : "Jumlah (isi negatif untuk kurangi)"}</Label>
-              <Input type="number" value={qty} onChange={(e) => setQty(e.target.value)} placeholder="0" />
+              <Input
+                type="number"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="0"
+              />
             </div>
             <div className="w-28 space-y-1.5">
               <Label>Satuan</Label>
@@ -695,7 +831,10 @@ function StockDialog({
 }
 
 function MovementsSheet({ variant, onClose }: { variant: VariantRow; onClose: () => void }) {
-  const { data, isLoading } = useQuery({ queryKey: ["catalog", "movements", variant.id], queryFn: () => listMovements(variant.id) });
+  const { data, isLoading } = useQuery({
+    queryKey: ["catalog", "movements", variant.id],
+    queryFn: () => listMovements(variant.id),
+  });
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[80vh] overflow-y-auto rounded-2xl">
@@ -709,12 +848,23 @@ function MovementsSheet({ variant, onClose }: { variant: VariantRow; onClose: ()
         ) : (
           <div className="space-y-2">
             {data.map((m) => (
-              <div key={m.id} className="flex items-center justify-between rounded-xl border border-border p-2.5 text-xs">
+              <div
+                key={m.id}
+                className="flex items-center justify-between rounded-xl border border-border p-2.5 text-xs"
+              >
                 <div>
                   <p className="font-medium">{MOVEMENT_LABEL[m.movement_type]}</p>
-                  <p className="text-muted-foreground">{jam(m.created_at)} · {m.note || "Tanpa catatan"}</p>
+                  <p className="text-muted-foreground">
+                    {jam(m.created_at)} · {m.note || "Tanpa catatan"}
+                  </p>
                 </div>
-                <p className={m.qty_base >= 0 ? "font-semibold text-success" : "font-semibold text-destructive"}>
+                <p
+                  className={
+                    m.qty_base >= 0
+                      ? "font-semibold text-success"
+                      : "font-semibold text-destructive"
+                  }
+                >
                   {m.qty_base >= 0 ? "+" : ""}
                   {formatQty(variant, m.qty_base)}
                 </p>

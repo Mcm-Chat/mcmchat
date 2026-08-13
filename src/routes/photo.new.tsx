@@ -10,7 +10,10 @@ export const Route = createFileRoute("/photo/new")({
   head: () => ({
     meta: [
       { title: "Kirim Foto & Lokasi — MCM" },
-      { name: "description", content: "Pilih penerima, ambil foto, sertakan lokasi GPS, lalu kirim dalam satu pesan." },
+      {
+        name: "description",
+        content: "Pilih penerima, ambil foto, sertakan lokasi GPS, lalu kirim dalam satu pesan.",
+      },
       { property: "og:title", content: "Kirim Foto & Lokasi — MCM" },
       { property: "og:description", content: "Foto dan lokasi terkirim menyatu dalam satu pesan." },
     ],
@@ -25,7 +28,11 @@ function PhotoNew() {
   const { data: conversations, isLoading } = useConversations(userId);
 
   return (
-    <AppShell nav={false} header={<MobileHeader title="Kirim foto" subtitle="Pilih penerima, foto, lalu lokasi" back />} className="flex flex-col">
+    <AppShell
+      nav={false}
+      header={<MobileHeader title="Kirim foto" subtitle="Pilih penerima, foto, lalu lokasi" back />}
+      className="flex flex-col"
+    >
       {loading || isLoading || !userId ? (
         <LoadingSkeleton rows={5} />
       ) : (

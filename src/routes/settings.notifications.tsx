@@ -35,10 +35,14 @@ export const Route = createFileRoute("/settings/notifications")({
       { title: "Izin & Notifikasi — MCM" },
       {
         name: "description",
-        content: "Atur izin Android, channel notifikasi MCM, pratinjau pesan, serta perangkat yang menerima push.",
+        content:
+          "Atur izin Android, channel notifikasi MCM, pratinjau pesan, serta perangkat yang menerima push.",
       },
       { property: "og:title", content: "Izin & Notifikasi — MCM" },
-      { property: "og:description", content: "Kontrol penuh atas notifikasi chat, tugas, penjualan, dan hutang." },
+      {
+        property: "og:description",
+        content: "Kontrol penuh atas notifikasi chat, tugas, penjualan, dan hutang.",
+      },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -49,12 +53,32 @@ export const Route = createFileRoute("/settings/notifications")({
 const PERM_KEYS: PermKey[] = ["notifications", "camera", "microphone", "location", "photos"];
 
 const CATEGORY_ROWS: { key: keyof NotificationsPrefs; label: string; desc: string }[] = [
-  { key: "chat", label: "Pesan pribadi", desc: "Channel: Pesan • prioritas tinggi, balas cepat dari notifikasi" },
-  { key: "group", label: "Pesan grup", desc: "Channel: Grup • diringkas jadi satu tumpukan per grup" },
-  { key: "calls", label: "Panggilan", desc: "Channel: Panggilan • dering penuh dan tampil di layar kunci" },
-  { key: "tasks", label: "Tugas penyiapan", desc: "Channel: Tugas • perintah baru dan tugas selesai" },
+  {
+    key: "chat",
+    label: "Pesan pribadi",
+    desc: "Channel: Pesan • prioritas tinggi, balas cepat dari notifikasi",
+  },
+  {
+    key: "group",
+    label: "Pesan grup",
+    desc: "Channel: Grup • diringkas jadi satu tumpukan per grup",
+  },
+  {
+    key: "calls",
+    label: "Panggilan",
+    desc: "Channel: Panggilan • dering penuh dan tampil di layar kunci",
+  },
+  {
+    key: "tasks",
+    label: "Tugas penyiapan",
+    desc: "Channel: Tugas • perintah baru dan tugas selesai",
+  },
   { key: "sales", label: "Penjualan", desc: "Channel: Penjualan • nota dan pesanan baru" },
-  { key: "ledger", label: "Hutang & pembayaran", desc: "Channel: Keuangan • pembayaran dan jatuh tempo" },
+  {
+    key: "ledger",
+    label: "Hutang & pembayaran",
+    desc: "Channel: Keuangan • pembayaran dan jatuh tempo",
+  },
 ];
 
 function stateTone(state: PermState) {
@@ -76,19 +100,27 @@ function NotificationSettingsPage() {
   usePushChannels({ sound: notif.sound, vibrate: notif.vibrate });
 
   const refreshPerms = useCallback(async () => {
-    const entries = await Promise.all(PERM_KEYS.map(async (k) => [k, await checkPermission(k)] as const));
+    const entries = await Promise.all(
+      PERM_KEYS.map(async (k) => [k, await checkPermission(k)] as const),
+    );
     setPerms(Object.fromEntries(entries));
   }, []);
 
   useEffect(() => {
     if (!userId) return;
-    void getSettings(userId).then(setSettings).catch(() => undefined);
-    void listDevices(userId).then(setDevices).catch(() => undefined);
+    void getSettings(userId)
+      .then(setSettings)
+      .catch(() => undefined);
+    void listDevices(userId)
+      .then(setDevices)
+      .catch(() => undefined);
   }, [userId]);
 
   useEffect(() => {
     void refreshPerms();
-    void getPushStatus().then((s) => setConfigured(s.configured)).catch(() => setConfigured(false));
+    void getPushStatus()
+      .then((s) => setConfigured(s.configured))
+      .catch(() => setConfigured(false));
   }, [refreshPerms]);
 
   const patch = async (value: Partial<NotificationsPrefs>) => {
@@ -124,7 +156,12 @@ function NotificationSettingsPage() {
   };
 
   return (
-    <AppShell nav={false} header={<MobileHeader title="Izin & Notifikasi" subtitle="Kontrol push, channel, dan izin" back />}>
+    <AppShell
+      nav={false}
+      header={
+        <MobileHeader title="Izin & Notifikasi" subtitle="Kontrol push, channel, dan izin" back />
+      }
+    >
       <div className="space-y-5 px-4 py-5 pb-12">
         <section className="space-y-3 rounded-2xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
@@ -164,7 +201,11 @@ function NotificationSettingsPage() {
                 </div>
                 <Badge
                   variant="secondary"
-                  className={row.pending ? "bg-muted text-muted-foreground" : stateTone(row.ok ? "granted" : "prompt")}
+                  className={
+                    row.pending
+                      ? "bg-muted text-muted-foreground"
+                      : stateTone(row.ok ? "granted" : "prompt")
+                  }
                 >
                   {row.pending ? "Memeriksa…" : row.ok ? "Aktif" : "Belum"}
                 </Badge>
@@ -188,16 +229,23 @@ function NotificationSettingsPage() {
           <div className="flex items-center justify-between gap-3 pt-1">
             <div>
               <p className="text-sm font-medium">Aktifkan notifikasi push</p>
-              <p className="text-xs text-muted-foreground">Matikan untuk menghentikan seluruh push ke perangkat Anda.</p>
+              <p className="text-xs text-muted-foreground">
+                Matikan untuk menghentikan seluruh push ke perangkat Anda.
+              </p>
             </div>
-            <Switch checked={notif.push} disabled={busy} onCheckedChange={(v) => void patch({ push: v })} />
+            <Switch
+              checked={notif.push}
+              disabled={busy}
+              onCheckedChange={(v) => void patch({ push: v })}
+            />
           </div>
         </section>
 
         <section className="space-y-3 rounded-2xl border border-border bg-card p-4">
           <h2 className="text-sm font-semibold">Izin aplikasi</h2>
           <p className="text-xs text-muted-foreground">
-            MCM meminta izin hanya saat fitur dipakai. Tidak ada lokasi latar belakang dan tidak ada akses ke seluruh berkas.
+            MCM meminta izin hanya saat fitur dipakai. Tidak ada lokasi latar belakang dan tidak ada
+            akses ke seluruh berkas.
           </p>
           <ul className="divide-y divide-border">
             {PERM_KEYS.map((key) => {
@@ -213,7 +261,12 @@ function NotificationSettingsPage() {
                       {STATE_LABEL[state]}
                     </Badge>
                     {state !== "granted" && state !== "unsupported" ? (
-                      <Button size="sm" variant="outline" className="h-7 rounded-lg text-xs" onClick={() => void ask(key)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 rounded-lg text-xs"
+                        onClick={() => void ask(key)}
+                      >
                         Izinkan
                       </Button>
                     ) : null}
@@ -236,7 +289,9 @@ function NotificationSettingsPage() {
                 <Switch
                   checked={Boolean(notif[row.key])}
                   disabled={busy || !notif.push}
-                  onCheckedChange={(v) => void patch({ [row.key]: v } as Partial<NotificationsPrefs>)}
+                  onCheckedChange={(v) =>
+                    void patch({ [row.key]: v } as Partial<NotificationsPrefs>)
+                  }
                 />
               </li>
             ))}
@@ -248,21 +303,39 @@ function NotificationSettingsPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-medium">Pratinjau isi pesan</p>
-              <p className="text-xs text-muted-foreground">Matikan agar layar kunci hanya menampilkan “Pesan baru”.</p>
+              <p className="text-xs text-muted-foreground">
+                Matikan agar layar kunci hanya menampilkan “Pesan baru”.
+              </p>
             </div>
-            <Switch checked={notif.preview} disabled={busy} onCheckedChange={(v) => void patch({ preview: v })} />
+            <Switch
+              checked={notif.preview}
+              disabled={busy}
+              onCheckedChange={(v) => void patch({ preview: v })}
+            />
           </div>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium">Suara</p>
-            <Switch checked={notif.sound} disabled={busy} onCheckedChange={(v) => void patch({ sound: v })} />
+            <Switch
+              checked={notif.sound}
+              disabled={busy}
+              onCheckedChange={(v) => void patch({ sound: v })}
+            />
           </div>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium">Getar</p>
-            <Switch checked={notif.vibrate} disabled={busy} onCheckedChange={(v) => void patch({ vibrate: v })} />
+            <Switch
+              checked={notif.vibrate}
+              disabled={busy}
+              onCheckedChange={(v) => void patch({ vibrate: v })}
+            />
           </div>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium">Lencana jumlah belum dibaca</p>
-            <Switch checked={notif.badge} disabled={busy} onCheckedChange={(v) => void patch({ badge: v })} />
+            <Switch
+              checked={notif.badge}
+              disabled={busy}
+              onCheckedChange={(v) => void patch({ badge: v })}
+            />
           </div>
         </section>
 
@@ -279,11 +352,17 @@ function NotificationSettingsPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{d.name || "Perangkat"}</p>
                       <p className="text-xs text-muted-foreground">
-                        {d.platform ?? "web"} • aktif {new Date(d.last_active_at ?? d.created_at).toLocaleDateString("id-ID")}
+                        {d.platform ?? "web"} • aktif{" "}
+                        {new Date(d.last_active_at ?? d.created_at).toLocaleDateString("id-ID")}
                       </p>
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => void revoke(d.id)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    onClick={() => void revoke(d.id)}
+                  >
                     <Trash2 className="size-4" />
                   </Button>
                 </li>

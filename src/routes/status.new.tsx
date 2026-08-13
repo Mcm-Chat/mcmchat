@@ -10,7 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -33,9 +39,16 @@ export const Route = createFileRoute("/status/new")({
   head: () => ({
     meta: [
       { title: "Buat Status — MCM" },
-      { name: "description", content: "Susun status foto atau teks MCM: filter, coretan, sensor, teks, durasi, dan privasi per status." },
+      {
+        name: "description",
+        content:
+          "Susun status foto atau teks MCM: filter, coretan, sensor, teks, durasi, dan privasi per status.",
+      },
       { property: "og:title", content: "Buat Status — MCM" },
-      { property: "og:description", content: "Editor status MCM dengan filter, coretan, sensor, dan kontrol privasi." },
+      {
+        property: "og:description",
+        content: "Editor status MCM dengan filter, coretan, sensor, dan kontrol privasi.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -155,12 +168,20 @@ function StatusNew() {
   if (loading || !userId) return <LoadingSkeleton />;
 
   return (
-    <AppShell header={<MobileHeader title="Buat status" subtitle={`${slides.length} slide siap diunggah`} back />}>
+    <AppShell
+      header={
+        <MobileHeader title="Buat status" subtitle={`${slides.length} slide siap diunggah`} back />
+      }
+    >
       <div className="space-y-5 p-3 pb-24">
         <Tabs defaultValue="foto">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="foto"><Camera className="size-4" /> Foto</TabsTrigger>
-            <TabsTrigger value="teks"><Type className="size-4" /> Teks</TabsTrigger>
+            <TabsTrigger value="foto">
+              <Camera className="size-4" /> Foto
+            </TabsTrigger>
+            <TabsTrigger value="teks">
+              <Type className="size-4" /> Teks
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="foto" className="space-y-3 pt-3">
@@ -173,12 +194,18 @@ function StatusNew() {
                   className="hidden"
                   onChange={(e) => void pilihFoto(e.target.files?.[0])}
                 />
-                <Button type="button" variant="outline" className="h-24 flex-col gap-2" onClick={() => fileRef.current?.click()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-24 flex-col gap-2"
+                  onClick={() => fileRef.current?.click()}
+                >
                   <ImagePlus className="size-6" />
                   Pilih foto atau ambil dari kamera
                 </Button>
                 <p className="text-xs text-muted-foreground">
-                  Foto otomatis dipangkas ke rasio layar penuh 9:16. Video status belum tersedia di versi ini.
+                  Foto otomatis dipangkas ke rasio layar penuh 9:16. Video status belum tersedia di
+                  versi ini.
                 </p>
               </div>
             ) : (
@@ -186,13 +213,25 @@ function StatusNew() {
                 <StatusEditor image={image} onStateChange={onStateChange} />
                 <div className="space-y-1.5">
                   <Label htmlFor="caption">Keterangan slide</Label>
-                  <Input id="caption" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Opsional" />
+                  <Input
+                    id="caption"
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Opsional"
+                  />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" className="flex-1" disabled={busy} onClick={() => void tambahSlideFoto()}>
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    disabled={busy}
+                    onClick={() => void tambahSlideFoto()}
+                  >
                     {busy && <Loader2 className="size-4 animate-spin" />} Tambahkan slide
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setImage(null)}>Batal</Button>
+                  <Button type="button" variant="ghost" onClick={() => setImage(null)}>
+                    Batal
+                  </Button>
                 </div>
               </>
             )}
@@ -203,18 +242,30 @@ function StatusNew() {
               className="grid min-h-44 place-items-center rounded-2xl px-6 py-8 text-center"
               style={{ background: bg }}
             >
-              <p className="text-xl font-semibold break-words whitespace-pre-wrap text-white" style={{ fontFamily: font }}>
+              <p
+                className="text-xl font-semibold break-words whitespace-pre-wrap text-white"
+                style={{ fontFamily: font }}
+              >
                 {text || "Ketik status teks Anda…"}
               </p>
             </div>
-            <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Tulis status…" maxLength={280} />
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={3}
+              placeholder="Tulis status…"
+              maxLength={280}
+            />
             <div className="flex flex-wrap gap-2">
               {TEXT_BACKGROUNDS.map((b) => (
                 <button
                   key={b}
                   type="button"
                   aria-label="Warna latar"
-                  className={cn("size-9 rounded-xl border-2", bg === b ? "border-primary" : "border-transparent")}
+                  className={cn(
+                    "size-9 rounded-xl border-2",
+                    bg === b ? "border-primary" : "border-transparent",
+                  )}
                   style={{ background: b }}
                   onClick={() => setBg(b)}
                 />
@@ -222,12 +273,23 @@ function StatusNew() {
             </div>
             <div className="flex gap-2">
               {TEXT_FONTS.map((f) => (
-                <Button key={f.id} type="button" size="sm" variant={font === f.css ? "default" : "outline"} onClick={() => setFont(f.css)}>
+                <Button
+                  key={f.id}
+                  type="button"
+                  size="sm"
+                  variant={font === f.css ? "default" : "outline"}
+                  onClick={() => setFont(f.css)}
+                >
                   {f.label}
                 </Button>
               ))}
             </div>
-            <Button type="button" className="w-full" disabled={!text.trim()} onClick={tambahSlideTeks}>
+            <Button
+              type="button"
+              className="w-full"
+              disabled={!text.trim()}
+              onClick={tambahSlideTeks}
+            >
               Tambahkan slide teks
             </Button>
           </TabsContent>
@@ -235,14 +297,22 @@ function StatusNew() {
 
         {slides.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Slide ({slides.length})</h2>
+            <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Slide ({slides.length})
+            </h2>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {slides.map((s, i) => (
-                <div key={i} className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-border">
+                <div
+                  key={i}
+                  className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-border"
+                >
                   {s.preview ? (
                     <img src={s.preview} alt="" className="size-full object-cover" />
                   ) : (
-                    <div className="grid size-full place-items-center px-1 text-center text-[9px] text-white" style={{ background: s.textMeta?.background }}>
+                    <div
+                      className="grid size-full place-items-center px-1 text-center text-[9px] text-white"
+                      style={{ background: s.textMeta?.background }}
+                    >
                       {s.textMeta?.text?.slice(0, 40)}
                     </div>
                   )}
@@ -264,10 +334,14 @@ function StatusNew() {
           <div className="space-y-2">
             <Label>Durasi tiap slide</Label>
             <Select value={String(slideMs)} onValueChange={(v) => setSlideMs(Number(v))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {SLIDE_OPTIONS.map((ms) => (
-                  <SelectItem key={ms} value={String(ms)}>{ms / 1000} detik</SelectItem>
+                  <SelectItem key={ms} value={String(ms)}>
+                    {ms / 1000} detik
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -275,10 +349,14 @@ function StatusNew() {
           <div className="space-y-2">
             <Label>Masa aktif status</Label>
             <Select value={String(effectiveLifetime)} onValueChange={(v) => setLifetime(Number(v))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {LIFETIME_OPTIONS.map((o) => (
-                  <SelectItem key={o.minutes} value={String(o.minutes)}>{o.label}</SelectItem>
+                  <SelectItem key={o.minutes} value={String(o.minutes)}>
+                    {o.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -286,7 +364,9 @@ function StatusNew() {
           <div className="space-y-2">
             <Label>Siapa yang bisa melihat</Label>
             <Select value={privacy} onValueChange={(v) => setPrivacy(v as StatusPrivacy)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="contacts">Semua kontak saya</SelectItem>
                 <SelectItem value="contacts_except">Kontak saya, kecuali…</SelectItem>
@@ -297,24 +377,35 @@ function StatusNew() {
           {privacy !== "contacts" && (
             <div className="max-h-56 space-y-1.5 overflow-y-auto rounded-xl border border-border p-2">
               {(contacts ?? []).map((c) => (
-                <label key={c.contact_id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
+                <label
+                  key={c.contact_id}
+                  className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm"
+                >
                   <Checkbox
                     checked={audience.includes(c.contact_id)}
                     onCheckedChange={(v) =>
-                      setAudience((prev) => (v ? [...prev, c.contact_id] : prev.filter((id) => id !== c.contact_id)))
+                      setAudience((prev) =>
+                        v ? [...prev, c.contact_id] : prev.filter((id) => id !== c.contact_id),
+                      )
                     }
                   />
                   {c.alias || c.profile.display_name}
                 </label>
               ))}
-              {(contacts ?? []).length === 0 && <p className="p-2 text-xs text-muted-foreground">Belum ada kontak.</p>}
+              {(contacts ?? []).length === 0 && (
+                <p className="p-2 text-xs text-muted-foreground">Belum ada kontak.</p>
+              )}
             </div>
           )}
         </section>
       </div>
 
       <div className="sticky bottom-0 border-t border-border bg-card/95 p-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
-        <Button className="h-12 w-full" disabled={slides.length === 0 || busy} onClick={() => void unggah()}>
+        <Button
+          className="h-12 w-full"
+          disabled={slides.length === 0 || busy}
+          onClick={() => void unggah()}
+        >
           {busy && <Loader2 className="size-4 animate-spin" />} Bagikan status ({slides.length})
         </Button>
       </div>

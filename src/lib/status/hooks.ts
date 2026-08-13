@@ -20,7 +20,11 @@ export const useStatusFeed = (uid?: string) =>
   });
 
 export const useStatusPrefs = (uid?: string) =>
-  useQuery({ queryKey: statusKeys.prefs(uid ?? ""), queryFn: () => getStatusPreferences(uid!), enabled: !!uid });
+  useQuery({
+    queryKey: statusKeys.prefs(uid ?? ""),
+    queryFn: () => getStatusPreferences(uid!),
+    enabled: !!uid,
+  });
 
 /** URL bertanda tangan untuk media status (cache singkat di layer storage). */
 export const useStatusMedia = (path: string | null | undefined) =>
@@ -43,7 +47,11 @@ export function useStatusRealtime(uid?: string) {
         .on("postgres_changes", { event: "*", schema: "public", table: "statuses" }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "status_items" }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "status_views" }, refresh)
-        .on("postgres_changes", { event: "*", schema: "public", table: "status_reactions" }, refresh),
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "status_reactions" },
+          refresh,
+        ),
     );
   }, [uid, qc]);
 }

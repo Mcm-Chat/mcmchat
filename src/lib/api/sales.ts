@@ -60,15 +60,22 @@ export function computeTotals(items: SaleItemInput[], discount: number, extraFee
   return { subtotal, total };
 }
 
-export function validateSale(input: Pick<CreateSaleInput, "items" | "discount" | "extraFee" | "paymentMethod" | "paidAmount" | "dueDate">) {
+export function validateSale(
+  input: Pick<
+    CreateSaleInput,
+    "items" | "discount" | "extraFee" | "paymentMethod" | "paidAmount" | "dueDate"
+  >,
+) {
   const errors: string[] = [];
   if (input.items.length === 0) errors.push("Tambahkan minimal satu item.");
   if (input.items.some((i) => i.qty <= 0)) errors.push("Jumlah item harus lebih dari nol.");
-  if (input.items.some((i) => i.price < 0 || i.discount < 0)) errors.push("Harga dan diskon tidak boleh negatif.");
+  if (input.items.some((i) => i.price < 0 || i.discount < 0))
+    errors.push("Harga dan diskon tidak boleh negatif.");
   const { total } = computeTotals(input.items, input.discount, input.extraFee);
   if (total <= 0) errors.push("Total penjualan harus lebih dari nol.");
   if (input.paidAmount < 0 || input.paidAmount > total) errors.push("Jumlah dibayar tidak valid.");
-  if (input.paymentMethod === "dp" && input.paidAmount <= 0) errors.push("DP harus lebih dari nol.");
+  if (input.paymentMethod === "dp" && input.paidAmount <= 0)
+    errors.push("DP harus lebih dari nol.");
   if ((input.paymentMethod === "dp" || input.paymentMethod === "credit") && !input.dueDate)
     errors.push("Tanggal jatuh tempo wajib untuk DP atau kredit.");
   return errors;
@@ -167,14 +174,22 @@ export async function createSale(input: CreateSaleInput): Promise<SalesRecordRow
 
 export async function listSales(businessId: string) {
   return unwrap(
-    await supabase.from("sales_records").select("*").eq("business_id", businessId).order("created_at", { ascending: false }),
+    await supabase
+      .from("sales_records")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false }),
     "Gagal memuat penjualan",
   );
 }
 
 export async function listOrders(businessId: string) {
   return unwrap(
-    await supabase.from("orders").select("*").eq("business_id", businessId).order("created_at", { ascending: false }),
+    await supabase
+      .from("orders")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false }),
     "Gagal memuat pesanan",
   );
 }

@@ -38,7 +38,10 @@ const timers = new Map<string, ReturnType<typeof setTimeout>>();
 function persist() {
   const uid = getActiveUserId();
   if (!uid) return;
-  void saveEntries(uid, queue.filter((e) => e.senderId === uid)).catch(() => undefined);
+  void saveEntries(
+    uid,
+    queue.filter((e) => e.senderId === uid),
+  ).catch(() => undefined);
 }
 
 function emit() {
@@ -57,7 +60,9 @@ export async function hydrateOutbox(): Promise<void> {
   loaded = true;
   const stored = await loadEntries(uid).catch(() => []);
   const known = new Set(queue.map((e) => e.clientId));
-  const restored = stored.filter((e) => !known.has(e.clientId)).map((e) => ({ ...e, status: "failed" as const }));
+  const restored = stored
+    .filter((e) => !known.has(e.clientId))
+    .map((e) => ({ ...e, status: "failed" as const }));
   if (restored.length > 0) {
     queue = [...restored, ...queue];
     emit();
@@ -166,10 +171,16 @@ async function attempt(clientId: string) {
   }
 }
 
-export function enqueueText(input: { conversationId: string; senderId: string; body: string; replyToId?: string | null }): OutboxEntry {
+export function enqueueText(input: {
+  conversationId: string;
+  senderId: string;
+  body: string;
+  replyToId?: string | null;
+}): OutboxEntry {
   load();
   const active = getActiveUserId();
-  if (active && input.senderId !== active) throw new Error("Sesi berubah. Masuk ulang lalu kirim kembali.");
+  if (active && input.senderId !== active)
+    throw new Error("Sesi berubah. Masuk ulang lalu kirim kembali.");
   const entry: OutboxEntry = {
     clientId: crypto.randomUUID(),
     conversationId: input.conversationId,
@@ -205,7 +216,8 @@ export function discardEntry(clientId: string) {
 /** Kirim ulang semua entri tertunda (dipanggil saat koneksi kembali). */
 export function flushOutbox() {
   load();
-  for (const entry of queue) if (entry.status !== "sending" && !entry.permanent) void attempt(entry.clientId);
+  for (const entry of queue)
+    if (entry.status !== "sending" && !entry.permanent) void attempt(entry.clientId);
 }
 
 let flushWired = false;
@@ -223,12 +235,18 @@ export function initOutboxFlush(): () => void {
   });
   // Kembali ke foreground juga memicu pengiriman ulang.
   const onVisible = () => {
-    if (typeof document !== "undefined" && document.visibilityState === "visible" && getConnectionState() !== "offline") flushOutbox();
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "visible" &&
+      getConnectionState() !== "offline"
+    )
+      flushOutbox();
   };
   if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
   return () => {
     off();
-    if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+    if (typeof document !== "undefined")
+      document.removeEventListener("visibilitychange", onVisible);
     flushWired = false;
   };
 }

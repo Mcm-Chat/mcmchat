@@ -6,7 +6,10 @@ export const Route = createFileRoute("/home")({
   head: () => ({
     meta: [
       { title: "Beranda MCM" },
-      { name: "description", content: "Beranda MCM mengarahkan Anda ke daftar chat, panggilan, catatan, dan bisnis." },
+      {
+        name: "description",
+        content: "Beranda MCM mengarahkan Anda ke daftar chat, panggilan, catatan, dan bisnis.",
+      },
       { property: "og:title", content: "Beranda MCM" },
       { property: "og:description", content: "Pusat navigasi aplikasi MCM." },
     ],

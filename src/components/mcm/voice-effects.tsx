@@ -1,11 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Crown, Loader2, Mic, MicOff, RotateCcw, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import {
+  Crown,
+  Loader2,
+  Mic,
+  MicOff,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  TriangleAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
   LIMITS,
@@ -25,7 +40,10 @@ export function VoicePrivacyBadge({ active, className }: { active: boolean; clas
   if (!active) return null;
   return (
     <Badge
-      className={cn("gap-1 border-0 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400", className)}
+      className={cn(
+        "gap-1 border-0 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+        className,
+      )}
       aria-live="polite"
     >
       <ShieldCheck className="size-3.5" />
@@ -34,7 +52,15 @@ export function VoicePrivacyBadge({ active, className }: { active: boolean; clas
   );
 }
 
-const CUSTOM_KEYS: (keyof VoiceParams)[] = ["pitch", "formant", "tone", "gate", "denoise", "gain", "reverb"];
+const CUSTOM_KEYS: (keyof VoiceParams)[] = [
+  "pitch",
+  "formant",
+  "tone",
+  "gate",
+  "denoise",
+  "gain",
+  "reverb",
+];
 
 export function VoiceEffectsPanel({
   prefs,
@@ -88,8 +114,8 @@ export function VoiceEffectsPanel({
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            Ubah warna suara Anda saat panggilan untuk kenyamanan dan privasi. Hanya memproses suara Anda sendiri, tidak
-            pernah suara lawan bicara, dan tidak ada rekaman yang disimpan.
+            Ubah warna suara Anda saat panggilan untuk kenyamanan dan privasi. Hanya memproses suara
+            Anda sendiri, tidak pernah suara lawan bicara, dan tidak ada rekaman yang disimpan.
           </p>
         </div>
         <Switch
@@ -114,7 +140,9 @@ export function VoiceEffectsPanel({
       )}
 
       <div>
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Preset</p>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Preset
+        </p>
         <div className={cn("grid gap-2", compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
           {PRESETS.map((p) => {
             const active = prefs.preset === p.id;
@@ -122,7 +150,9 @@ export function VoiceEffectsPanel({
               <button
                 key={p.id}
                 type="button"
-                onClick={() => set({ preset: p.id as PresetId, enabled: p.id === "off" ? false : true })}
+                onClick={() =>
+                  set({ preset: p.id as PresetId, enabled: p.id === "off" ? false : true })
+                }
                 aria-pressed={active}
                 className={cn(
                   "rounded-2xl border p-3 text-left transition-colors",
@@ -130,7 +160,9 @@ export function VoiceEffectsPanel({
                 )}
               >
                 <p className="text-sm font-semibold">{p.name}</p>
-                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{p.desc}</p>
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                  {p.desc}
+                </p>
               </button>
             );
           })}
@@ -142,7 +174,9 @@ export function VoiceEffectsPanel({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">Intensitas</span>
-            <span className="tabular-nums text-muted-foreground">{Math.round(prefs.intensity * 100)}%</span>
+            <span className="tabular-nums text-muted-foreground">
+              {Math.round(prefs.intensity * 100)}%
+            </span>
           </div>
           <Slider
             value={[prefs.intensity]}
@@ -171,7 +205,9 @@ export function VoiceEffectsPanel({
                   min={lim.min}
                   max={lim.max}
                   step={lim.step}
-                  onValueChange={([v]) => set({ custom: { ...prefs.custom, [key]: v ?? prefs.custom[key] } })}
+                  onValueChange={([v]) =>
+                    set({ custom: { ...prefs.custom, [key]: v ?? prefs.custom[key] } })
+                  }
                   aria-label={meta.label}
                 />
                 <p className="text-[11px] text-muted-foreground">{meta.hint}</p>
@@ -186,7 +222,8 @@ export function VoiceEffectsPanel({
           <div>
             <p className="text-sm font-semibold">Tes suara</p>
             <p className="text-[11px] text-muted-foreground">
-              Gunakan headset agar tidak terjadi feedback. Suara hanya dipantau langsung, tidak direkam.
+              Gunakan headset agar tidak terjadi feedback. Suara hanya dipantau langsung, tidak
+              direkam.
             </p>
           </div>
           <Button
@@ -194,13 +231,21 @@ export function VoiceEffectsPanel({
             variant={preview.running ? "destructive" : "secondary"}
             onClick={() => (preview.running ? preview.stop() : void preview.start())}
           >
-            {preview.running ? <MicOff className="mr-1.5 size-4" /> : <Mic className="mr-1.5 size-4" />}
+            {preview.running ? (
+              <MicOff className="mr-1.5 size-4" />
+            ) : (
+              <Mic className="mr-1.5 size-4" />
+            )}
             {preview.running ? "Berhenti" : "Tes mikrofon"}
           </Button>
         </div>
         {preview.running && (
           <>
-            <div className="h-2 overflow-hidden rounded-full bg-muted" role="meter" aria-label="Level mikrofon">
+            <div
+              className="h-2 overflow-hidden rounded-full bg-muted"
+              role="meter"
+              aria-label="Level mikrofon"
+            >
               <div
                 className="h-full rounded-full bg-emerald-500 transition-[width] duration-100"
                 style={{ width: `${Math.round(preview.level * 100)}%` }}
@@ -209,7 +254,7 @@ export function VoiceEffectsPanel({
             <p className="text-[11px] text-muted-foreground">
               {preview.pipeline.status === "active"
                 ? `Efek berjalan • tambahan latency ±${preview.pipeline.latencyMs} ms`
-                : preview.pipeline.reason ?? "Suara normal"}
+                : (preview.pipeline.reason ?? "Suara normal")}
               {!premium && ` • pratinjau berakhir dalam ${left}s`}
             </p>
           </>
@@ -225,7 +270,9 @@ export function VoiceEffectsPanel({
 
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">
-          {effectOn ? "Efek akan aktif pada panggilan berikutnya." : "Efek nonaktif — suara asli Anda yang dikirim."}
+          {effectOn
+            ? "Efek akan aktif pada panggilan berikutnya."
+            : "Efek nonaktif — suara asli Anda yang dikirim."}
         </p>
         <Button
           size="sm"
@@ -238,8 +285,9 @@ export function VoiceEffectsPanel({
       </div>
 
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        MCM sengaja tidak menyediakan kloning suara, unggahan sampel suara orang lain, peniruan individu, maupun mode
-        untuk melewati verifikasi suara. Gunakan efek ini hanya untuk privasi dan kenyamanan Anda sendiri.
+        MCM sengaja tidak menyediakan kloning suara, unggahan sampel suara orang lain, peniruan
+        individu, maupun mode untuk melewati verifikasi suara. Gunakan efek ini hanya untuk privasi
+        dan kenyamanan Anda sendiri.
       </p>
     </div>
   );
@@ -268,7 +316,9 @@ export function VoiceEffectsSheet({
             Efek Suara Premium
             {saving && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
           </SheetTitle>
-          <SheetDescription>Privasi suara real-time untuk panggilan suara dan video.</SheetDescription>
+          <SheetDescription>
+            Privasi suara real-time untuk panggilan suara dan video.
+          </SheetDescription>
         </SheetHeader>
         <div className="pb-8">
           <VoiceEffectsPanel prefs={prefs} onChange={onChange} entitlement={entitlement} compact />

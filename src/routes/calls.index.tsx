@@ -26,7 +26,11 @@ export const Route = createFileRoute("/calls/")({
   head: () => ({
     meta: [
       { title: "Panggilan — MCM" },
-      { name: "description", content: "Riwayat panggilan suara dan video MCM lengkap dengan durasi dan panggilan tak terjawab." },
+      {
+        name: "description",
+        content:
+          "Riwayat panggilan suara dan video MCM lengkap dengan durasi dan panggilan tak terjawab.",
+      },
       { property: "og:title", content: "Panggilan — MCM" },
       { property: "og:description", content: "Riwayat panggilan suara dan video Anda." },
     ],
@@ -144,7 +148,11 @@ function CallsPage() {
                     <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className={`truncate text-sm font-semibold ${isMissed ? "text-destructive" : ""}`}>{other?.display_name ?? "Pengguna MCM"}</p>
+                    <p
+                      className={`truncate text-sm font-semibold ${isMissed ? "text-destructive" : ""}`}
+                    >
+                      {other?.display_name ?? "Pengguna MCM"}
+                    </p>
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
                       {isMissed ? (
                         <PhoneMissed className="size-3.5 text-destructive" />
@@ -154,12 +162,21 @@ function CallsPage() {
                         <ArrowUpRight className="size-3.5 text-primary" />
                       )}
                       {c.kind === "video" ? "Video" : "Suara"} •{" "}
-                      {isMissed ? "Tak terjawab" : c.status === "ended" ? durasi(c.duration_sec) : STATUS_LABEL[c.status]} •{" "}
-                      {waktuRelatif(c.created_at)}
+                      {isMissed
+                        ? "Tak terjawab"
+                        : c.status === "ended"
+                          ? durasi(c.duration_sec)
+                          : STATUS_LABEL[c.status]}{" "}
+                      • {waktuRelatif(c.created_at)}
                     </p>
                   </div>
                 </button>
-                <Button variant="ghost" size="icon" aria-label={`Panggil ${other?.display_name ?? "pengguna"}`} onClick={() => void redial(c)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Panggil ${other?.display_name ?? "pengguna"}`}
+                  onClick={() => void redial(c)}
+                >
                   {c.kind === "video" ? <Video className="size-5" /> : <Phone className="size-5" />}
                 </Button>
               </li>
@@ -170,8 +187,8 @@ function CallsPage() {
       {configured === false && (
         <div className="px-4 py-6">
           <ProtoNote>
-            Penyedia panggilan (LiveKit) belum terhubung. Panggilan tidak bisa tersambung sampai admin mengisi kredensialnya —
-            riwayat panggilan tetap tercatat.
+            Penyedia panggilan (LiveKit) belum terhubung. Panggilan tidak bisa tersambung sampai
+            admin mengisi kredensialnya — riwayat panggilan tetap tercatat.
           </ProtoNote>
         </div>
       )}
@@ -181,8 +198,8 @@ function CallsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Penyedia panggilan belum terhubung</AlertDialogTitle>
             <AlertDialogDescription>
-              Panggilan suara dan video akan aktif setelah admin mengisi kredensial LiveKit (URL, API key, API secret). Tidak ada
-              panggilan tiruan yang dibuat.
+              Panggilan suara dan video akan aktif setelah admin mengisi kredensial LiveKit (URL,
+              API key, API secret). Tidak ada panggilan tiruan yang dibuat.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

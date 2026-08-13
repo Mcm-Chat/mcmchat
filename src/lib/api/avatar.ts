@@ -73,7 +73,10 @@ export async function removeAvatar(userId: string): Promise<void> {
 /* ------------------------------- privasi -------------------------------- */
 
 export async function setAvatarPrivacy(userId: string, privacy: AvatarPrivacy): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ avatar_privacy: privacy }).eq("id", userId);
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_privacy: privacy })
+    .eq("id", userId);
   if (error) throw new Error(friendly(error.message, "Gagal menyimpan privasi foto profil"));
 }
 
@@ -81,14 +84,26 @@ export type AudienceMode = "except" | "only";
 
 export async function listAvatarAudience(userId: string, mode: AudienceMode): Promise<string[]> {
   const rows = unwrap(
-    await supabase.from("avatar_audience").select("target_id").eq("owner_id", userId).eq("mode", mode),
+    await supabase
+      .from("avatar_audience")
+      .select("target_id")
+      .eq("owner_id", userId)
+      .eq("mode", mode),
     "Gagal memuat daftar audiens",
   );
   return rows.map((r) => r.target_id);
 }
 
-export async function setAvatarAudience(userId: string, mode: AudienceMode, targets: string[]): Promise<void> {
-  const del = await supabase.from("avatar_audience").delete().eq("owner_id", userId).eq("mode", mode);
+export async function setAvatarAudience(
+  userId: string,
+  mode: AudienceMode,
+  targets: string[],
+): Promise<void> {
+  const del = await supabase
+    .from("avatar_audience")
+    .delete()
+    .eq("owner_id", userId)
+    .eq("mode", mode);
   if (del.error) throw new Error(friendly(del.error.message, "Gagal menyimpan audiens"));
   if (targets.length === 0) return;
   const ins = await supabase
@@ -143,7 +158,11 @@ export function invalidateAvatar(userId: string) {
  * Resolver terpusat: satu signed URL per (user, versi) dipakai bersama semua
  * komponen, sehingga tidak ada badai permintaan signed URL.
  */
-export async function resolveAvatarUrl(userId: string, path: string | null, version: number): Promise<string | null> {
+export async function resolveAvatarUrl(
+  userId: string,
+  path: string | null,
+  version: number,
+): Promise<string | null> {
   if (!path) return null;
   const key = cacheKey(userId);
   const hit = avatarCache.get(key);

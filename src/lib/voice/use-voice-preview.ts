@@ -37,7 +37,12 @@ export function useVoicePreview(prefs: VoicePrefs, opts?: { monitor?: boolean })
     }
     void pipeRef.current?.dispose();
     pipeRef.current = null;
-    setState((s) => ({ ...s, running: false, level: 0, pipeline: { status: "idle", latencyMs: 0 } }));
+    setState((s) => ({
+      ...s,
+      running: false,
+      level: 0,
+      pipeline: { status: "idle", latencyMs: 0 },
+    }));
   }, []);
 
   const start = useCallback(async () => {
@@ -66,7 +71,10 @@ export function useVoicePreview(prefs: VoicePrefs, opts?: { monitor?: boolean })
       setState((s) => ({
         ...s,
         running: false,
-        error: e instanceof Error && e.name === "NotAllowedError" ? "Izin mikrofon ditolak" : "Gagal membuka mikrofon",
+        error:
+          e instanceof Error && e.name === "NotAllowedError"
+            ? "Izin mikrofon ditolak"
+            : "Gagal membuka mikrofon",
       }));
       stop();
     }

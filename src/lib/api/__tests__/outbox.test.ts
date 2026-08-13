@@ -22,7 +22,9 @@ describe("outbox", () => {
     sendMessage.mockResolvedValue({ id: "m1" });
     const entry = enqueueText({ conversationId: "c1", senderId: "u1", body: "halo" });
     await flush();
-    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ clientId: entry.clientId, body: "halo" }));
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: entry.clientId, body: "halo" }),
+    );
     expect(outboxFor("c1")).toHaveLength(0);
   });
 

@@ -4,9 +4,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/mcm/user-avatar";
-import { listAvatarAudience, saveAvatarPrivacyAudience, type AvatarPrivacy } from "@/lib/api/avatar";
+import {
+  listAvatarAudience,
+  saveAvatarPrivacyAudience,
+  type AvatarPrivacy,
+} from "@/lib/api/avatar";
 import { listContacts } from "@/lib/api/contacts";
 import {
   audienceModeFor,
@@ -16,7 +27,14 @@ import {
   toggleSelection,
 } from "@/lib/media/avatar-audience";
 
-type Candidate = { id: string; display_name: string; pin: string; avatar_url: string | null; avatar_version: number | undefined; avatar_color: string };
+type Candidate = {
+  id: string;
+  display_name: string;
+  pin: string;
+  avatar_url: string | null;
+  avatar_version: number | undefined;
+  avatar_color: string;
+};
 
 /**
  * Pemilih audiens foto profil untuk mode `contacts_except` dan `only_share`.
@@ -103,7 +121,9 @@ export function AvatarAudienceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col gap-3 rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{privacy === "contacts_except" ? "Kecualikan kontak" : "Bagikan hanya dengan"}</DialogTitle>
+          <DialogTitle>
+            {privacy === "contacts_except" ? "Kecualikan kontak" : "Bagikan hanya dengan"}
+          </DialogTitle>
           <DialogDescription>
             {privacy === "contacts_except"
               ? "Kontak yang dipilih tidak akan melihat foto profil Anda."
@@ -125,7 +145,11 @@ export function AvatarAudienceDialog({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{audienceSummary(privacy, selected.length)}</span>
           <div className="flex gap-2">
-            <button type="button" className="text-primary" onClick={() => setSelected(visible.map((c) => c.id))}>
+            <button
+              type="button"
+              className="text-primary"
+              onClick={() => setSelected(visible.map((c) => c.id))}
+            >
               Pilih semua
             </button>
             <button type="button" className="text-primary" onClick={() => setSelected([])}>
@@ -135,7 +159,9 @@ export function AvatarAudienceDialog({
         </div>
 
         <div className="min-h-32 flex-1 space-y-1 overflow-y-auto">
-          {loading && <p className="py-8 text-center text-sm text-muted-foreground">Memuat kontak…</p>}
+          {loading && (
+            <p className="py-8 text-center text-sm text-muted-foreground">Memuat kontak…</p>
+          )}
           {!loading && visible.length === 0 && (
             <p className="py-8 text-center text-sm text-muted-foreground">
               {candidates.length === 0 ? "Belum ada kontak." : "Tidak ada kontak yang cocok."}
@@ -143,7 +169,10 @@ export function AvatarAudienceDialog({
           )}
           {!loading &&
             visible.map((c) => (
-              <label key={c.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted">
+              <label
+                key={c.id}
+                className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted"
+              >
                 <Checkbox
                   checked={selected.includes(c.id)}
                   onCheckedChange={() => setSelected((p) => toggleSelection(p, c.id))}
@@ -159,7 +188,9 @@ export function AvatarAudienceDialog({
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{c.display_name}</span>
-                  <span className="block truncate font-mono text-[11px] text-muted-foreground">{c.pin}</span>
+                  <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                    {c.pin}
+                  </span>
                 </span>
               </label>
             ))}
@@ -167,13 +198,21 @@ export function AvatarAudienceDialog({
 
         {requiresEmptyConfirm(privacy, selected.length) && (
           <label className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-xs">
-            <Checkbox checked={confirmEmpty} onCheckedChange={(v) => setConfirmEmpty(v === true)} aria-label="Konfirmasi tanpa penerima" />
+            <Checkbox
+              checked={confirmEmpty}
+              onCheckedChange={(v) => setConfirmEmpty(v === true)}
+              aria-label="Konfirmasi tanpa penerima"
+            />
             <span>Tanpa penerima, hasilnya sama dengan “Tidak seorang pun”. Saya mengerti.</span>
           </label>
         )}
 
         <DialogFooter>
-          <Button className="min-h-11 w-full rounded-xl" disabled={saving || loading || blockedByEmpty} onClick={() => void save()}>
+          <Button
+            className="min-h-11 w-full rounded-xl"
+            disabled={saving || loading || blockedByEmpty}
+            onClick={() => void save()}
+          >
             {saving ? "Menyimpan…" : "Simpan audiens"}
           </Button>
         </DialogFooter>

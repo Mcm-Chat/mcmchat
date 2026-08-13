@@ -6,7 +6,11 @@ export const Route = createFileRoute("/business/")({
   head: () => ({
     meta: [
       { title: "Bisnis — MCM" },
-      { name: "description", content: "Modul bisnis MCM kini berada di Katalog untuk produk & stok dan Keuangan untuk penjualan & pesanan." },
+      {
+        name: "description",
+        content:
+          "Modul bisnis MCM kini berada di Katalog untuk produk & stok dan Keuangan untuk penjualan & pesanan.",
+      },
       { property: "og:title", content: "Bisnis — MCM" },
       { property: "og:description", content: "Katalog produk, stok, penjualan, dan pesanan MCM." },
     ],

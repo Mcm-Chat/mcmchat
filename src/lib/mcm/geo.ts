@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import type { MessageLocation } from "./types";
 
-export const mapsUrlFor = (lat: number, lng: number) => `https://www.google.com/maps?q=${lat},${lng}`;
+export const mapsUrlFor = (lat: number, lng: number) =>
+  `https://www.google.com/maps?q=${lat},${lng}`;
 
 export const koordinat = (lat: number, lng: number) => `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
@@ -114,7 +115,10 @@ export async function fileToDataUrl(file: File, max = 720): Promise<string> {
   }
 }
 /** Kecilkan foto sebelum diunggah agar hemat kuota (maks sisi terpanjang 1280px). */
-export async function compressImage(file: File, max = 1280): Promise<{ blob: Blob; previewUrl: string }> {
+export async function compressImage(
+  file: File,
+  max = 1280,
+): Promise<{ blob: Blob; previewUrl: string }> {
   const dataUrl = await fileToDataUrl(file, max);
   const res = await fetch(dataUrl);
   const blob = await res.blob();

@@ -9,13 +9,7 @@
 export type CallKind = "audio" | "video";
 
 export type ProviderStatus =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "disconnected"
-  | "failed"
-  | "unconfigured";
+  "idle" | "connecting" | "connected" | "reconnecting" | "disconnected" | "failed" | "unconfigured";
 
 export type RemoteInfo = {
   identity: string;
@@ -73,7 +67,9 @@ export const unconfiguredProvider: CallProvider = {
   name: "unconfigured",
   isConfigured: () => false,
   connect: async () => {
-    throw new Error("Penyedia panggilan belum terhubung. Hubungi admin untuk mengaktifkan kredensial LiveKit.");
+    throw new Error(
+      "Penyedia panggilan belum terhubung. Hubungi admin untuk mengaktifkan kredensial LiveKit.",
+    );
   },
 };
 
@@ -93,13 +89,16 @@ export const liveKitProvider: CallProvider = {
 
     const canSetSink =
       typeof window !== "undefined" &&
-      typeof (HTMLMediaElement.prototype as unknown as { setSinkId?: unknown }).setSinkId === "function";
+      typeof (HTMLMediaElement.prototype as unknown as { setSinkId?: unknown }).setSinkId ===
+        "function";
     const speakerCapability: SpeakerCapability = canSetSink ? "sinkId" : "system";
 
     const applySink = async (el: HTMLAudioElement) => {
       if (!canSetSink || !speakerSinkId) return;
       try {
-        await (el as unknown as { setSinkId: (id: string) => Promise<void> }).setSinkId(speakerSinkId);
+        await (el as unknown as { setSinkId: (id: string) => Promise<void> }).setSinkId(
+          speakerSinkId,
+        );
       } catch {
         /* perangkat keluaran ditolak; biarkan default sistem */
       }
@@ -132,7 +131,13 @@ export const liveKitProvider: CallProvider = {
           el.autoplay = true;
           audioEls.set(track.sid ?? el.id ?? String(audioEls.size), el);
           void applySink(el);
-          void el.play().catch(() => opts.onState({ status: "connected", remotes: remotes(), reason: "Ketuk layar untuk mengizinkan suara" }));
+          void el.play().catch(() =>
+            opts.onState({
+              status: "connected",
+              remotes: remotes(),
+              reason: "Ketuk layar untuk mengizinkan suara",
+            }),
+          );
         }
         if (track.kind === Track.Kind.Video && remoteVideoEl) track.attach(remoteVideoEl);
         emit("connected");
@@ -180,12 +185,15 @@ export const liveKitProvider: CallProvider = {
       async switchCamera() {
         facingUser = !facingUser;
         await room.localParticipant.setCameraEnabled(false);
-        await room.localParticipant.setCameraEnabled(true, { facingMode: facingUser ? "user" : "environment" });
+        await room.localParticipant.setCameraEnabled(true, {
+          facingMode: facingUser ? "user" : "environment",
+        });
         emit("connected");
       },
       async replaceAudioTrack(track) {
         for (const pub of room.localParticipant.audioTrackPublications.values()) {
-          if (pub.track?.mediaStreamTrack) await room.localParticipant.unpublishTrack(pub.track.mediaStreamTrack);
+          if (pub.track?.mediaStreamTrack)
+            await room.localParticipant.unpublishTrack(pub.track.mediaStreamTrack);
         }
         await room.localParticipant.publishTrack(track, { dtx: true, red: true });
       },
@@ -200,7 +208,9 @@ export const liveKitProvider: CallProvider = {
         const outputs = devices.filter((d) => d.kind === "audiooutput");
         if (outputs.length < 2) return null;
         const target =
-          (on ? outputs.find((d) => /speaker|speakerphone/i.test(d.label)) : outputs.find((d) => /earpiece|receiver|headset/i.test(d.label))) ??
+          (on
+            ? outputs.find((d) => /speaker|speakerphone/i.test(d.label))
+            : outputs.find((d) => /earpiece|receiver|headset/i.test(d.label))) ??
           outputs.find((d) => d.deviceId === "default") ??
           outputs[0];
         if (!target) return null;

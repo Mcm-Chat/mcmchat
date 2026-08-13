@@ -23,7 +23,14 @@ import {
   setStatusMuted,
 } from "@/lib/api/status";
 import { statusKeys, useStatusMedia } from "@/lib/status/hooks";
-import { advance, initialsOf, REACTIONS, waktuStatus, type StatusGroup, type StatusItem } from "@/lib/status/model";
+import {
+  advance,
+  initialsOf,
+  REACTIONS,
+  waktuStatus,
+  type StatusGroup,
+  type StatusItem,
+} from "@/lib/status/model";
 
 const TICK = 50;
 
@@ -46,7 +53,14 @@ function SlideMedia({ item }: { item: StatusItem }) {
     );
   }
   if (isLoading || !url) return <div className="size-full animate-pulse bg-white/5" />;
-  return <img src={url} alt={item.caption || "Status"} className="size-full object-contain" draggable={false} />;
+  return (
+    <img
+      src={url}
+      alt={item.caption || "Status"}
+      className="size-full object-contain"
+      draggable={false}
+    />
+  );
 }
 
 export function StatusViewer({
@@ -136,7 +150,10 @@ export function StatusViewer({
   });
 
   const progress = useMemo(
-    () => (group?.items ?? []).map((it, idx) => (idx < ii ? 1 : idx > ii ? 0 : elapsed / it.duration_ms)),
+    () =>
+      (group?.items ?? []).map((it, idx) =>
+        idx < ii ? 1 : idx > ii ? 0 : elapsed / it.duration_ms,
+      ),
     [group, ii, elapsed],
   );
 
@@ -205,7 +222,10 @@ export function StatusViewer({
         <div className="flex gap-1 px-3 pt-3">
           {progress.map((p, idx) => (
             <div key={idx} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/25">
-              <div className="h-full bg-white transition-[width] duration-75" style={{ width: `${Math.min(1, p) * 100}%` }} />
+              <div
+                className="h-full bg-white transition-[width] duration-75"
+                style={{ width: `${Math.min(1, p) * 100}%` }}
+              />
             </div>
           ))}
         </div>
@@ -224,7 +244,12 @@ export function StatusViewer({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-9 text-white hover:bg-white/15" aria-label="Menu status">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 text-white hover:bg-white/15"
+                aria-label="Menu status"
+              >
                 <MoreVertical className="size-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -241,7 +266,13 @@ export function StatusViewer({
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="ghost" size="icon" className="size-9 text-white hover:bg-white/15" aria-label="Tutup" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9 text-white hover:bg-white/15"
+            aria-label="Tutup"
+            onClick={onClose}
+          >
             <X className="size-5" />
           </Button>
         </div>
@@ -255,7 +286,10 @@ export function StatusViewer({
             key={side}
             type="button"
             aria-label={side === "prev" ? "Slide sebelumnya" : "Slide berikutnya"}
-            className={cn("absolute inset-y-0 z-10", side === "prev" ? "left-0 w-1/3" : "right-0 w-2/3")}
+            className={cn(
+              "absolute inset-y-0 z-10",
+              side === "prev" ? "left-0 w-1/3" : "right-0 w-2/3",
+            )}
             onPointerDown={() => {
               holdTimer.current = setTimeout(() => setPaused(true), 220);
             }}
@@ -316,7 +350,12 @@ export function StatusViewer({
                 placeholder={`Balas ke ${name}`}
                 className="h-11 rounded-full border-white/25 bg-white/10 text-white placeholder:text-white/60"
               />
-              <Button type="submit" size="icon" className="size-11 shrink-0 rounded-full" disabled={!reply.trim()}>
+              <Button
+                type="submit"
+                size="icon"
+                className="size-11 shrink-0 rounded-full"
+                disabled={!reply.trim()}
+              >
                 <Send className="size-4" />
               </Button>
             </form>
@@ -346,7 +385,9 @@ export function StatusViewer({
                   size="sm"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{v.profile?.display_name ?? "Kontak MCM"}</div>
+                  <div className="truncate text-sm font-medium">
+                    {v.profile?.display_name ?? "Kontak MCM"}
+                  </div>
                   <div className="text-xs text-muted-foreground">{waktuStatus(v.viewed_at)}</div>
                 </div>
                 {v.emoji && <span className="text-lg">{v.emoji}</span>}

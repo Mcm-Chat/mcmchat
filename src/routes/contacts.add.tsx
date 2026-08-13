@@ -10,14 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { findByPin, isValidPin, normalizePin, sendContactRequest, type ProfileLite } from "@/lib/api/contacts";
+import {
+  findByPin,
+  isValidPin,
+  normalizePin,
+  sendContactRequest,
+  type ProfileLite,
+} from "@/lib/api/contacts";
 import { useRequireAuth } from "@/lib/api/guard";
 
 export const Route = createFileRoute("/contacts/add")({
   head: () => ({
     meta: [
       { title: "Tambah kontak lewat PIN — MCM" },
-      { name: "description", content: "Cari pengguna MCM dengan PIN 8 karakter atau bagikan QR PIN Anda untuk dipindai." },
+      {
+        name: "description",
+        content: "Cari pengguna MCM dengan PIN 8 karakter atau bagikan QR PIN Anda untuk dipindai.",
+      },
       { property: "og:title", content: "Tambah kontak lewat PIN — MCM" },
       { property: "og:description", content: "Tambah teman tanpa bertukar nomor telepon." },
     ],
@@ -73,9 +82,20 @@ function AddContactPage() {
   };
 
   return (
-    <AppShell nav={false} header={<MobileHeader back title="Tambah kontak" subtitle="Cari lewat PIN, bukan nomor telepon" />}>
+    <AppShell
+      nav={false}
+      header={
+        <MobileHeader back title="Tambah kontak" subtitle="Cari lewat PIN, bukan nomor telepon" />
+      }
+    >
       <div className="space-y-4 px-4 py-4 pb-10">
-        {profile && <PinCard pin={profile.pin} name={profile.display_name} subtitle="Bagikan PIN ini agar orang lain bisa menambahkan Anda" />}
+        {profile && (
+          <PinCard
+            pin={profile.pin}
+            name={profile.display_name}
+            subtitle="Bagikan PIN ini agar orang lain bisa menambahkan Anda"
+          />
+        )}
 
         <div className="card-soft space-y-3 p-4">
           <div className="space-y-1.5">
@@ -89,7 +109,11 @@ function AddContactPage() {
                 maxLength={9}
                 className="h-11 rounded-xl font-mono tracking-widest uppercase"
               />
-              <Button className="h-11 rounded-xl" onClick={() => void search()} disabled={searching || !pin}>
+              <Button
+                className="h-11 rounded-xl"
+                onClick={() => void search()}
+                disabled={searching || !pin}
+              >
                 <Search className="size-4" /> {searching ? "Mencari…" : "Cari"}
               </Button>
             </div>
@@ -122,7 +146,13 @@ function AddContactPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="msg">Pesan permintaan</Label>
-              <Textarea id="msg" maxLength={140} value={message} onChange={(e) => setMessage(e.target.value)} rows={3} />
+              <Textarea
+                id="msg"
+                maxLength={140}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+              />
             </div>
             <Button className="w-full rounded-xl" onClick={() => void send()} disabled={sending}>
               <Send className="size-4" /> {sending ? "Mengirim…" : "Kirim permintaan"}

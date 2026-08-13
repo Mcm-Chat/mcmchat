@@ -27,7 +27,12 @@ import {
   type AspectPreset,
   type EditorState,
 } from "@/lib/media/image-editor";
-import { loadImage, renderFinalBlob, renderToCanvas, type LoadedImage } from "@/lib/media/image-pipeline";
+import {
+  loadImage,
+  renderFinalBlob,
+  renderToCanvas,
+  type LoadedImage,
+} from "@/lib/media/image-pipeline";
 import { validateImageFile } from "@/lib/media/image-validate";
 
 const PRESETS: { id: AspectPreset; label: string }[] = [
@@ -129,10 +134,22 @@ export function AvatarEditor({
         </Button>
         <span className="text-sm font-semibold">Edit foto profil</span>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" aria-label="Undo" disabled={!canUndo(history)} onClick={() => dispatch({ type: "undo" })}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Undo"
+            disabled={!canUndo(history)}
+            onClick={() => dispatch({ type: "undo" })}
+          >
             <Undo2 className="size-5" />
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Redo" disabled={!canRedo(history)} onClick={() => dispatch({ type: "redo" })}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Redo"
+            disabled={!canRedo(history)}
+            onClick={() => dispatch({ type: "redo" })}
+          >
             <Redo2 className="size-5" />
           </Button>
         </div>
@@ -172,7 +189,8 @@ export function AvatarEditor({
                     variant={state.preset === p.id ? "default" : "outline"}
                     onClick={() => {
                       dispatch({ type: "preset", preset: p.id });
-                      if (ASPECT_RATIO[p.id]) dispatch({ type: "crop", crop: centeredCrop(p.id, img.width, img.height) });
+                      if (ASPECT_RATIO[p.id])
+                        dispatch({ type: "crop", crop: centeredCrop(p.id, img.width, img.height) });
                       else dispatch({ type: "crop", crop: { x: 0, y: 0, w: 1, h: 1 } });
                     }}
                   >
@@ -187,25 +205,74 @@ export function AvatarEditor({
                 <Button size="sm" variant="outline" onClick={() => dispatch({ type: "rotate" })}>
                   <RotateCw className="mr-1 size-4" /> 90°
                 </Button>
-                <Button size="sm" variant={state.flipH ? "default" : "outline"} onClick={() => dispatch({ type: "flip", axis: "h" })}>
+                <Button
+                  size="sm"
+                  variant={state.flipH ? "default" : "outline"}
+                  onClick={() => dispatch({ type: "flip", axis: "h" })}
+                >
                   <FlipHorizontal className="mr-1 size-4" /> Horizontal
                 </Button>
-                <Button size="sm" variant={state.flipV ? "default" : "outline"} onClick={() => dispatch({ type: "flip", axis: "v" })}>
+                <Button
+                  size="sm"
+                  variant={state.flipV ? "default" : "outline"}
+                  onClick={() => dispatch({ type: "flip", axis: "v" })}
+                >
                   <FlipVertical className="mr-1 size-4" /> Vertikal
                 </Button>
               </div>
-              <LabeledSlider label="Zoom" value={state.zoom * 100} min={100} max={400} onChange={(v) => dispatch({ type: "zoom", zoom: v / 100 })} />
-              <LabeledSlider label="Posisi horizontal" value={state.crop.x * 100} min={0} max={Math.max(0, (1 - state.crop.w) * 100)} onChange={(v) => dispatch({ type: "crop", crop: { ...state.crop, x: v / 100 } })} />
-              <LabeledSlider label="Posisi vertikal" value={state.crop.y * 100} min={0} max={Math.max(0, (1 - state.crop.h) * 100)} onChange={(v) => dispatch({ type: "crop", crop: { ...state.crop, y: v / 100 } })} />
+              <LabeledSlider
+                label="Zoom"
+                value={state.zoom * 100}
+                min={100}
+                max={400}
+                onChange={(v) => dispatch({ type: "zoom", zoom: v / 100 })}
+              />
+              <LabeledSlider
+                label="Posisi horizontal"
+                value={state.crop.x * 100}
+                min={0}
+                max={Math.max(0, (1 - state.crop.w) * 100)}
+                onChange={(v) => dispatch({ type: "crop", crop: { ...state.crop, x: v / 100 } })}
+              />
+              <LabeledSlider
+                label="Posisi vertikal"
+                value={state.crop.y * 100}
+                min={0}
+                max={Math.max(0, (1 - state.crop.h) * 100)}
+                onChange={(v) => dispatch({ type: "crop", crop: { ...state.crop, y: v / 100 } })}
+              />
             </Section>
 
             <Section title="Warna">
-              <LabeledSlider label="Kecerahan" value={state.brightness} min={40} max={160} onChange={(v) => dispatch({ type: "adjust", key: "brightness", value: v })} />
-              <LabeledSlider label="Kontras" value={state.contrast} min={40} max={160} onChange={(v) => dispatch({ type: "adjust", key: "contrast", value: v })} />
-              <LabeledSlider label="Saturasi" value={state.saturation} min={0} max={200} onChange={(v) => dispatch({ type: "adjust", key: "saturation", value: v })} />
+              <LabeledSlider
+                label="Kecerahan"
+                value={state.brightness}
+                min={40}
+                max={160}
+                onChange={(v) => dispatch({ type: "adjust", key: "brightness", value: v })}
+              />
+              <LabeledSlider
+                label="Kontras"
+                value={state.contrast}
+                min={40}
+                max={160}
+                onChange={(v) => dispatch({ type: "adjust", key: "contrast", value: v })}
+              />
+              <LabeledSlider
+                label="Saturasi"
+                value={state.saturation}
+                min={0}
+                max={200}
+                onChange={(v) => dispatch({ type: "adjust", key: "saturation", value: v })}
+              />
               <div className="mt-2 flex flex-wrap gap-2">
                 {FILTERS.map((f) => (
-                  <Button key={f.id} size="sm" variant={state.filter === f.id ? "default" : "outline"} onClick={() => dispatch({ type: "filter", filter: f.id })}>
+                  <Button
+                    key={f.id}
+                    size="sm"
+                    variant={state.filter === f.id ? "default" : "outline"}
+                    onClick={() => dispatch({ type: "filter", filter: f.id })}
+                  >
                     {f.label}
                   </Button>
                 ))}
@@ -214,17 +281,54 @@ export function AvatarEditor({
 
             <Section title="Sensor area">
               <p className="mb-2 text-xs text-muted-foreground">
-                Tambahkan area blur atau pixelate pada bagian sensitif. Area dihitung dari tengah foto dan bisa dihapus kembali.
+                Tambahkan area blur atau pixelate pada bagian sensitif. Area dihitung dari tengah
+                foto dan bisa dihapus kembali.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => dispatch({ type: "mask.add", mask: { id: crypto.randomUUID(), kind: "blur", x: 0.3, y: 0.3, w: 0.4, h: 0.25 } })}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    dispatch({
+                      type: "mask.add",
+                      mask: {
+                        id: crypto.randomUUID(),
+                        kind: "blur",
+                        x: 0.3,
+                        y: 0.3,
+                        w: 0.4,
+                        h: 0.25,
+                      },
+                    })
+                  }
+                >
                   + Blur
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => dispatch({ type: "mask.add", mask: { id: crypto.randomUUID(), kind: "pixelate", x: 0.3, y: 0.3, w: 0.4, h: 0.25 } })}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    dispatch({
+                      type: "mask.add",
+                      mask: {
+                        id: crypto.randomUUID(),
+                        kind: "pixelate",
+                        x: 0.3,
+                        y: 0.3,
+                        w: 0.4,
+                        h: 0.25,
+                      },
+                    })
+                  }
+                >
                   + Pixelate
                 </Button>
                 {state.masks.length > 0 && (
-                  <Button size="sm" variant="ghost" onClick={() => dispatch({ type: "mask.clear" })}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => dispatch({ type: "mask.clear" })}
+                  >
                     <Trash2 className="mr-1 size-4" /> Hapus {state.masks.length} area
                   </Button>
                 )}
@@ -233,10 +337,18 @@ export function AvatarEditor({
 
             <Section title="Latar (bila rasio tidak penuh)">
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant={state.background === "blur" ? "default" : "outline"} onClick={() => dispatch({ type: "background", mode: "blur" })}>
+                <Button
+                  size="sm"
+                  variant={state.background === "blur" ? "default" : "outline"}
+                  onClick={() => dispatch({ type: "background", mode: "blur" })}
+                >
                   Blur
                 </Button>
-                <Button size="sm" variant={state.background === "color" ? "default" : "outline"} onClick={() => dispatch({ type: "background", mode: "color" })}>
+                <Button
+                  size="sm"
+                  variant={state.background === "color" ? "default" : "outline"}
+                  onClick={() => dispatch({ type: "background", mode: "color" })}
+                >
                   Warna polos
                 </Button>
                 {state.background === "color" && (
@@ -244,14 +356,22 @@ export function AvatarEditor({
                     type="color"
                     aria-label="Warna latar"
                     value={state.backgroundColor}
-                    onChange={(e) => dispatch({ type: "background", mode: "color", color: e.target.value })}
+                    onChange={(e) =>
+                      dispatch({ type: "background", mode: "color", color: e.target.value })
+                    }
                     className="h-9 w-12 rounded-md border border-border bg-transparent"
                   />
                 )}
               </div>
             </Section>
 
-            <Button variant="ghost" size="sm" className="mt-4" onClick={() => dispatch({ type: "reset" })} disabled={!dirty}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-4"
+              onClick={() => dispatch({ type: "reset" })}
+              disabled={!dirty}
+            >
               Reset semua perubahan
             </Button>
           </>
@@ -264,7 +384,11 @@ export function AvatarEditor({
             Batal
           </Button>
           <Button className="flex-1" onClick={apply} disabled={!img || busy || !!error}>
-            {busy ? <Loader2 className="mr-1 size-4 animate-spin" /> : <Check className="mr-1 size-4" />}
+            {busy ? (
+              <Loader2 className="mr-1 size-4 animate-spin" />
+            ) : (
+              <Check className="mr-1 size-4" />
+            )}
             Pasang foto profil
           </Button>
         </div>
@@ -285,7 +409,9 @@ export function AvatarEditor({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-5">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h3>
       {children}
     </section>
   );
@@ -310,12 +436,26 @@ function LabeledSlider({
         <span>{label}</span>
         <span>{Math.round(value)}</span>
       </div>
-      <Slider value={[value]} min={min} max={Math.max(min + 1, max)} step={1} onValueChange={([v]) => onChange(v ?? value)} />
+      <Slider
+        value={[value]}
+        min={min}
+        max={Math.max(min + 1, max)}
+        step={1}
+        onValueChange={([v]) => onChange(v ?? value)}
+      />
     </div>
   );
 }
 
-function PreviewChip({ label, round, img }: { label: string; round?: boolean; img: React.RefObject<HTMLDivElement | null> }) {
+function PreviewChip({
+  label,
+  round,
+  img,
+}: {
+  label: string;
+  round?: boolean;
+  img: React.RefObject<HTMLDivElement | null>;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const source = img.current?.querySelector("canvas");
@@ -332,7 +472,10 @@ function PreviewChip({ label, round, img }: { label: string; round?: boolean; im
         ref={ref}
         width={56}
         height={56}
-        className={cn("size-14 border border-border object-cover", round ? "rounded-full" : "rounded-lg")}
+        className={cn(
+          "size-14 border border-border object-cover",
+          round ? "rounded-full" : "rounded-lg",
+        )}
       />
       <span className="mt-1 block text-[10px] text-muted-foreground">{label}</span>
     </div>

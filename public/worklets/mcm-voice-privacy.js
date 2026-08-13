@@ -83,7 +83,8 @@ class VoicePrivacyProcessor extends AudioWorkletProcessor {
       // --- envelope follower + noise gate + ekspander derau ---
       const absx = Math.abs(x);
       this.env += (absx - this.env) * (absx > this.env ? 0.25 : 0.005);
-      this.noiseFloor += (Math.min(this.noiseFloor * 1.5 + 1e-6, this.env) - this.noiseFloor) * 0.0005;
+      this.noiseFloor +=
+        (Math.min(this.noiseFloor * 1.5 + 1e-6, this.env) - this.noiseFloor) * 0.0005;
       const open = this.env > gateThresh ? 1 : 0;
       this.gateGain += (open - this.gateGain) * (open ? 0.35 : 0.02);
       let g = this.gateGain;
@@ -100,8 +101,8 @@ class VoicePrivacyProcessor extends AudioWorkletProcessor {
       const step = ratio * formant;
       this.readA += step;
       this.readB += step;
-      const distA = ((this.write - this.readA) % n + n) % n;
-      const distB = ((this.write - this.readB) % n + n) % n;
+      const distA = (((this.write - this.readA) % n) + n) % n;
+      const distB = (((this.write - this.readB) % n) + n) % n;
       if (distA > GRAIN * 2 || distA < 2) this.readA = this.write - HALF;
       if (distB > GRAIN * 2 || distB < 2) this.readB = this.write - GRAIN;
 

@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { myPin } from "@/lib/api/pins";
@@ -42,31 +50,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetOutboxForAccount();
   }, []);
 
-  const load = useCallback(async (uid: string | undefined) => {
-    applyAccount(uid ?? null);
-    if (!uid) {
-      setProfile(null);
-      setSettings(null);
-      return;
-    }
-    // Kolom `pin` tidak lagi termasuk grant tabel; PIN sendiri diambil via RPC.
-    // `avatar_privacy` dan `avatar_version` wajib ikut: tanpa keduanya, layar
-    // profil mengembalikan pilihan privasi ke "contacts" setelah refresh dan
-    // cache-buster avatar tidak pernah berubah.
-    const [p, s, pin] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select(
-          "id, display_name, bio, avatar_url, avatar_color, avatar_privacy, avatar_version, is_online, last_seen_at, created_at, updated_at",
-        )
-        .eq("id", uid)
-        .maybeSingle(),
-      supabase.from("user_settings").select("*").eq("user_id", uid).maybeSingle(),
-      myPin().catch(() => ""),
-    ]);
-    setProfile(p.data ? ({ ...p.data, pin } as Profile) : null);
-    setSettings(s.data ?? null);
-  }, [applyAccount]);
+  const load = useCallback(
+    async (uid: string | undefined) => {
+      applyAccount(uid ?? null);
+      if (!uid) {
+        setProfile(null);
+        setSettings(null);
+        return;
+      }
+      // Kolom `pin` tidak lagi termasuk grant tabel; PIN sendiri diambil via RPC.
+      // `avatar_privacy` dan `avatar_version` wajib ikut: tanpa keduanya, layar
+      // profil mengembalikan pilihan privasi ke "contacts" setelah refresh dan
+      // cache-buster avatar tidak pernah berubah.
+      const [p, s, pin] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select(
+            "id, display_name, bio, avatar_url, avatar_color, avatar_privacy, avatar_version, is_online, last_seen_at, created_at, updated_at",
+          )
+          .eq("id", uid)
+          .maybeSingle(),
+        supabase.from("user_settings").select("*").eq("user_id", uid).maybeSingle(),
+        myPin().catch(() => ""),
+      ]);
+      setProfile(p.data ? ({ ...p.data, pin } as Profile) : null);
+      setSettings(s.data ?? null);
+    },
+    [applyAccount],
+  );
 
   useEffect(() => {
     let active = true;

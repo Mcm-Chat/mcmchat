@@ -9,13 +9,25 @@ import { UserAvatar } from "@/components/mcm/user-avatar";
 import { StatusViewer } from "@/components/mcm/status-viewer";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useRequireAuth } from "@/lib/api/guard";
 import { saveStatusPreferences } from "@/lib/api/status";
-import { statusKeys, useStatusFeed, useStatusMedia, useStatusPrefs, useStatusRealtime } from "@/lib/status/hooks";
+import {
+  statusKeys,
+  useStatusFeed,
+  useStatusMedia,
+  useStatusPrefs,
+  useStatusRealtime,
+} from "@/lib/status/hooks";
 import {
   firstUnseenIndex,
   groupFeed,
@@ -30,9 +42,16 @@ export const Route = createFileRoute("/status/")({
   head: () => ({
     meta: [
       { title: "Status — MCM" },
-      { name: "description", content: "Bagikan kabar 24 jam ke kontak MCM Anda: foto, teks, reaksi, dan daftar penonton." },
+      {
+        name: "description",
+        content:
+          "Bagikan kabar 24 jam ke kontak MCM Anda: foto, teks, reaksi, dan daftar penonton.",
+      },
       { property: "og:title", content: "Status — MCM" },
-      { property: "og:description", content: "Status singkat untuk kontak MCM: foto, teks, reaksi, dan privasi penuh." },
+      {
+        property: "og:description",
+        content: "Status singkat untuk kontak MCM: foto, teks, reaksi, dan privasi penuh.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -45,7 +64,11 @@ function Ring({ group, onClick }: { group: StatusGroup; onClick: () => void }) {
   const { data: thumb } = useStatusMedia(first?.thumb_path ?? first?.media_path ?? null);
   const name = group.mine ? "Status Saya" : (group.profile?.display_name ?? "Kontak");
   return (
-    <button type="button" onClick={onClick} className="flex w-16 shrink-0 flex-col items-center gap-1.5">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-16 shrink-0 flex-col items-center gap-1.5"
+    >
       <span
         className={cn(
           "grid size-16 place-items-center rounded-full p-[2.5px]",
@@ -77,7 +100,11 @@ function GroupRow({ group, onClick }: { group: StatusGroup; onClick: () => void 
   const { data: thumb } = useStatusMedia(first?.thumb_path ?? first?.media_path ?? null);
   const name = group.mine ? "Status Saya" : (group.profile?.display_name ?? "Kontak MCM");
   return (
-    <button type="button" onClick={onClick} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+    >
       <span
         className={cn(
           "grid size-13 shrink-0 place-items-center rounded-full p-[2.5px]",
@@ -108,7 +135,11 @@ function GroupRow({ group, onClick }: { group: StatusGroup; onClick: () => void 
           {group.items.length} slide • {waktuStatus(group.lastAt)} • {sisaWaktu(group.expiresAt)}
         </span>
       </span>
-      {group.unseen > 0 && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">{group.unseen}</span>}
+      {group.unseen > 0 && (
+        <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
+          {group.unseen}
+        </span>
+      )}
     </button>
   );
 }
@@ -123,7 +154,8 @@ function StatusIndex() {
   const [viewer, setViewer] = useState<{ group: number; item: number } | null>(null);
 
   const groups = useMemo(
-    () => (feed && userId ? groupFeed(feed.rows, feed.items, feed.profiles, userId, feed.seen) : []),
+    () =>
+      feed && userId ? groupFeed(feed.rows, feed.items, feed.profiles, userId, feed.seen) : [],
     [feed, userId],
   );
   const mine = groups.find((g) => g.mine) ?? null;
@@ -134,7 +166,10 @@ function StatusIndex() {
 
   const open = (group: StatusGroup) => {
     const idx = groups.indexOf(group);
-    setViewer({ group: idx, item: group.mine ? 0 : firstUnseenIndex(group.items, feed?.seen ?? new Set()) });
+    setViewer({
+      group: idx,
+      item: group.mine ? 0 : firstUnseenIndex(group.items, feed?.seen ?? new Set()),
+    });
   };
 
   const simpanPrefs = async (patch: Parameters<typeof saveStatusPreferences>[1]) => {
@@ -157,7 +192,12 @@ function StatusIndex() {
             <>
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-9" aria-label="Pengaturan status">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9"
+                    aria-label="Pengaturan status"
+                  >
                     <Settings2 className="size-5" />
                   </Button>
                 </SheetTrigger>
@@ -170,9 +210,13 @@ function StatusIndex() {
                       <Label>Privasi bawaan</Label>
                       <Select
                         value={prefs?.default_privacy ?? "contacts"}
-                        onValueChange={(v) => void simpanPrefs({ default_privacy: v as "contacts" })}
+                        onValueChange={(v) =>
+                          void simpanPrefs({ default_privacy: v as "contacts" })
+                        }
                       >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="contacts">Semua kontak saya</SelectItem>
                           <SelectItem value="contacts_except">Kontak saya, kecuali…</SelectItem>
@@ -184,12 +228,18 @@ function StatusIndex() {
                       <Label>Masa aktif bawaan</Label>
                       <Select
                         value={String(prefs?.default_lifetime_minutes ?? 1440)}
-                        onValueChange={(v) => void simpanPrefs({ default_lifetime_minutes: Number(v) })}
+                        onValueChange={(v) =>
+                          void simpanPrefs({ default_lifetime_minutes: Number(v) })
+                        }
                       >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           {LIFETIME_OPTIONS.map((o) => (
-                            <SelectItem key={o.minutes} value={String(o.minutes)}>{o.label}</SelectItem>
+                            <SelectItem key={o.minutes} value={String(o.minutes)}>
+                              {o.label}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -198,7 +248,8 @@ function StatusIndex() {
                       <div>
                         <Label htmlFor="share-views">Tanda dilihat</Label>
                         <p className="text-xs text-muted-foreground">
-                          Bila dimatikan, nama Anda tidak muncul di daftar penonton status orang lain.
+                          Bila dimatikan, nama Anda tidak muncul di daftar penonton status orang
+                          lain.
                         </p>
                       </div>
                       <Switch
@@ -210,7 +261,12 @@ function StatusIndex() {
                   </div>
                 </SheetContent>
               </Sheet>
-              <Button size="icon" className="size-9 rounded-full" aria-label="Buat status" onClick={() => navigate({ to: "/status/new" })}>
+              <Button
+                size="icon"
+                className="size-9 rounded-full"
+                aria-label="Buat status"
+                onClick={() => navigate({ to: "/status/new" })}
+              >
                 <Plus className="size-5" />
               </Button>
             </>
@@ -220,14 +276,20 @@ function StatusIndex() {
     >
       <div className="space-y-5 p-3 pb-8">
         <div className="flex gap-3 overflow-x-auto pb-1">
-          <button type="button" onClick={() => navigate({ to: "/status/new" })} className="flex w-16 shrink-0 flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/status/new" })}
+            className="flex w-16 shrink-0 flex-col items-center gap-1.5"
+          >
             <span className="grid size-16 place-items-center rounded-full border-2 border-dashed border-primary/60 text-primary">
               <Plus className="size-6" />
             </span>
             <span className="text-[11px] text-muted-foreground">Buat</span>
           </button>
           {mine && <Ring group={mine} onClick={() => open(mine)} />}
-          {baru.map((g) => <Ring key={g.ownerId} group={g} onClick={() => open(g)} />)}
+          {baru.map((g) => (
+            <Ring key={g.ownerId} group={g} onClick={() => open(g)} />
+          ))}
         </div>
 
         {isLoading && <LoadingSkeleton rows={4} />}
@@ -237,32 +299,48 @@ function StatusIndex() {
             icon={CircleDashed}
             title="Belum ada status"
             description="Bagikan foto atau teks singkat — otomatis hilang setelah masa aktif berakhir."
-            action={<Button onClick={() => navigate({ to: "/status/new" })}>Buat status pertama</Button>}
+            action={
+              <Button onClick={() => navigate({ to: "/status/new" })}>Buat status pertama</Button>
+            }
           />
         )}
 
         {mine && (
           <section className="space-y-1">
-            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Status saya</h2>
+            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Status saya
+            </h2>
             <GroupRow group={mine} onClick={() => open(mine)} />
           </section>
         )}
         {baru.length > 0 && (
           <section className="space-y-1">
-            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Pembaruan terbaru</h2>
-            {baru.map((g) => <GroupRow key={g.ownerId} group={g} onClick={() => open(g)} />)}
+            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Pembaruan terbaru
+            </h2>
+            {baru.map((g) => (
+              <GroupRow key={g.ownerId} group={g} onClick={() => open(g)} />
+            ))}
           </section>
         )}
         {dilihat.length > 0 && (
           <section className="space-y-1">
-            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Sudah dilihat</h2>
-            {dilihat.map((g) => <GroupRow key={g.ownerId} group={g} onClick={() => open(g)} />)}
+            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Sudah dilihat
+            </h2>
+            {dilihat.map((g) => (
+              <GroupRow key={g.ownerId} group={g} onClick={() => open(g)} />
+            ))}
           </section>
         )}
         {dibisukan.length > 0 && (
           <section className="space-y-1">
-            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Dibisukan</h2>
-            {dibisukan.map((g) => <GroupRow key={g.ownerId} group={g} onClick={() => open(g)} />)}
+            <h2 className="px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Dibisukan
+            </h2>
+            {dibisukan.map((g) => (
+              <GroupRow key={g.ownerId} group={g} onClick={() => open(g)} />
+            ))}
           </section>
         )}
       </div>

@@ -1,8 +1,9 @@
 buildscript {
     repositories { google(); mavenCentral() }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.2'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25'
+        // AGP 8.9+ diperlukan untuk compileSdk 36 (Android 16).
+        classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
         classpath 'com.google.gms:google-services:4.4.2'
     }
 }

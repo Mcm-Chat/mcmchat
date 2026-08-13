@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Mail, ShieldCheck, Trash2 } from "lucide-react";
 import { canonical } from "@/lib/site";
 
@@ -11,7 +16,11 @@ export const Route = createFileRoute("/support")({
     meta: [
       ...canonical("/support").meta,
       { title: "Bantuan & Dukungan — MCM" },
-      { name: "description", content: "Pusat bantuan MCM: PIN, chat, katalog, penyiapan pegawai, catatan utang, dan kontak dukungan." },
+      {
+        name: "description",
+        content:
+          "Pusat bantuan MCM: PIN, chat, katalog, penyiapan pegawai, catatan utang, dan kontak dukungan.",
+      },
       { property: "og:title", content: "Bantuan & Dukungan — MCM" },
       { property: "og:description", content: "Jawaban cepat seputar pemakaian MCM." },
       { property: "og:type", content: "article" },
@@ -58,13 +67,22 @@ const FAQ = [
 
 function SupportPage() {
   return (
-    <AppShell nav={false} header={<MobileHeader title="Bantuan & Dukungan" subtitle="Panduan singkat MCM" back />}>
+    <AppShell
+      nav={false}
+      header={<MobileHeader title="Bantuan & Dukungan" subtitle="Panduan singkat MCM" back />}
+    >
       <div className="space-y-5 px-4 py-5 pb-10">
-        <Accordion type="single" collapsible className="rounded-2xl border border-border bg-card px-3">
+        <Accordion
+          type="single"
+          collapsible
+          className="rounded-2xl border border-border bg-card px-3"
+        >
           {FAQ.map((f) => (
             <AccordionItem key={f.q} value={f.q}>
               <AccordionTrigger className="text-left text-sm">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-sm leading-relaxed text-muted-foreground">{f.a}</AccordionContent>
+              <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                {f.a}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

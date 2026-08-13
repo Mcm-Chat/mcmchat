@@ -64,7 +64,9 @@ export function NotificationBell({ userId }: { userId?: string | undefined }) {
               onClick={() =>
                 void markAllRead(userId)
                   .then(reload)
-                  .catch((err) => toast.error(err instanceof Error ? err.message : "Gagal menandai semua"))
+                  .catch((err) =>
+                    toast.error(err instanceof Error ? err.message : "Gagal menandai semua"),
+                  )
               }
             >
               <Check className="size-3.5" /> Tandai semua dibaca
@@ -72,7 +74,13 @@ export function NotificationBell({ userId }: { userId?: string | undefined }) {
           )}
         </SheetHeader>
         <div className="overflow-y-auto pb-6">
-          <NotificationList items={items} loading={loading} error={error} onRetry={reload} onReload={reload} />
+          <NotificationList
+            items={items}
+            loading={loading}
+            error={error}
+            onRetry={reload}
+            onReload={reload}
+          />
         </div>
       </SheetContent>
     </Sheet>
@@ -104,7 +112,13 @@ export function NotificationList({
     );
   }
   if (items.length === 0) {
-    return <EmptyState icon={Bell} title="Belum ada notifikasi" description="Notifikasi baru akan muncul di sini." />;
+    return (
+      <EmptyState
+        icon={Bell}
+        title="Belum ada notifikasi"
+        description="Notifikasi baru akan muncul di sini."
+      />
+    );
   }
   return (
     <ul className="divide-y divide-border/70">
@@ -113,15 +127,22 @@ export function NotificationList({
           <button
             type="button"
             onClick={() => {
-              if (!n.is_read) void markRead(n.id).then(onReload).catch(() => toast.error("Gagal menandai notifikasi"));
+              if (!n.is_read)
+                void markRead(n.id)
+                  .then(onReload)
+                  .catch(() => toast.error("Gagal menandai notifikasi"));
             }}
             className="flex w-full items-start gap-3 px-1 py-3 text-left"
           >
-            <span className={`mt-1 size-2 shrink-0 rounded-full ${n.is_read ? "bg-transparent" : "bg-primary"}`} />
+            <span
+              className={`mt-1 size-2 shrink-0 rounded-full ${n.is_read ? "bg-transparent" : "bg-primary"}`}
+            />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium">{n.title}</span>
               {n.body && <span className="block text-xs text-muted-foreground">{n.body}</span>}
-              <span className="block text-[11px] text-muted-foreground">{waktuRelatif(n.created_at)}</span>
+              <span className="block text-[11px] text-muted-foreground">
+                {waktuRelatif(n.created_at)}
+              </span>
             </span>
           </button>
         </li>

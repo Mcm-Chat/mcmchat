@@ -55,7 +55,11 @@ export const savePrepareItem = createServerFn({ method: "POST" })
         status: "in_progress",
       })
       .eq("id", data.itemId);
-    await supabaseAdmin.from("preparation_jobs").update({ status: "in_progress" }).eq("id", jobId).in("status", ["sent", "opened"]);
+    await supabaseAdmin
+      .from("preparation_jobs")
+      .update({ status: "in_progress" })
+      .eq("id", jobId)
+      .in("status", ["sent", "opened"]);
     return { ok: true as const };
   });
 
@@ -83,10 +87,16 @@ export const addPreparePhoto = createServerFn({ method: "POST" })
     await assertWritable(jobId);
     await itemBelongsToJob(data.itemId, jobId);
 
-    const { data: job } = await supabaseAdmin.from("preparation_jobs").select("business_id").eq("id", jobId).single();
+    const { data: job } = await supabaseAdmin
+      .from("preparation_jobs")
+      .select("business_id")
+      .eq("id", jobId)
+      .single();
     const bytes = Buffer.from(data.dataUrl.split(",")[1] ?? "", "base64");
     const path = `${job!.business_id}/prep/${jobId}/${crypto.randomUUID()}.jpg`;
-    const up = await supabaseAdmin.storage.from("product-photos").upload(path, bytes, { contentType: "image/jpeg" });
+    const up = await supabaseAdmin.storage
+      .from("product-photos")
+      .upload(path, bytes, { contentType: "image/jpeg" });
     if (up.error) throw new Error("Foto gagal diunggah");
 
     const { count } = await supabaseAdmin
@@ -111,7 +121,9 @@ export const addPreparePhoto = createServerFn({ method: "POST" })
   });
 
 export const removePreparePhoto = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ token: z.string().min(20), photoId: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ token: z.string().min(20), photoId: z.string().uuid() }).parse(d),
+  )
   .handler(async ({ data }) => {
     const { jobIdFromToken, assertWritable } = await import("./prepare.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -138,7 +150,9 @@ export const completePrepareTask = createServerFn({ method: "POST" })
     const jobId = await jobIdFromToken(data.token);
     if (!jobId) throw new Error("Tautan tidak berlaku");
 
-    const { data: result, error } = await supabaseAdmin.rpc("complete_preparation_job", { _job: jobId });
+    const { data: result, error } = await supabaseAdmin.rpc("complete_preparation_job", {
+      _job: jobId,
+    });
     if (error) throw new Error(error.message);
     const payload = result as unknown as { already: boolean; photos: number };
 
@@ -151,7 +165,10 @@ export const completePrepareTask = createServerFn({ method: "POST" })
         .single();
       if (job?.conversation_id && task) {
         const ringkas = task.items
-          .map((i) => `${i.product_name} — ${i.variant_name}: ${i.actual_qty_base ?? i.requested_qty_base} ${i.base_unit}`)
+          .map(
+            (i) =>
+              `${i.product_name} — ${i.variant_name}: ${i.actual_qty_base ?? i.requested_qty_base} ${i.base_unit}`,
+          )
           .join(" • ");
         await supabaseAdmin.from("messages").insert({
           conversation_id: job.conversation_id,

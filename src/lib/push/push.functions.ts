@@ -95,7 +95,10 @@ export const notifySale = createServerFn({ method: "POST" })
       category: "sales",
       userId: sale.customer_user_id,
       title: `Nota penjualan ${number}`.trim(),
-      body: outstanding > 0 ? `Total ${money(total)} • sisa ${money(outstanding)}` : `Total ${money(total)} • lunas`,
+      body:
+        outstanding > 0
+          ? `Total ${money(total)} • sisa ${money(outstanding)}`
+          : `Total ${money(total)} • lunas`,
       route: "/finance",
     });
     return { configured: res.configured, sent: res.sent };
@@ -127,7 +130,10 @@ export const notifyLedgerPayment = createServerFn({ method: "POST" })
       category: "ledger",
       userId: target,
       title: outstanding === 0 ? "Catatan hutang lunas" : "Pembayaran dicatat",
-      body: outstanding === 0 ? `${ledger.counterpart_name || "Catatan"} sudah lunas` : `Sisa ${money(outstanding)}`,
+      body:
+        outstanding === 0
+          ? `${ledger.counterpart_name || "Catatan"} sudah lunas`
+          : `Sisa ${money(outstanding)}`,
       route: `/ledger/${ledger.id}`,
       ledgerId: ledger.id,
     });
@@ -150,7 +156,11 @@ export const notifyIncomingCall = createServerFn({ method: "POST" })
     }
     const [{ data: parts }, { data: me }] = await Promise.all([
       context.supabase.from("call_participants").select("user_id").eq("call_id", call.id),
-      context.supabase.from("profiles").select("display_name").eq("id", context.userId).maybeSingle(),
+      context.supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", context.userId)
+        .maybeSingle(),
     ]);
     const { dispatchEventPush } = await import("./dispatch.server");
     let sent = 0;

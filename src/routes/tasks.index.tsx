@@ -8,19 +8,33 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { EmployeeTaskCard, ManagerTaskCard } from "@/components/mcm/task-parts";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/api/guard";
 import { canManage, myBusiness } from "@/lib/api/business";
-import { listAssignedJobs, listBusinessEmployees, listBusinessJobs, type JobWithItems } from "@/lib/api/tasks";
+import {
+  listAssignedJobs,
+  listBusinessEmployees,
+  listBusinessJobs,
+  type JobWithItems,
+} from "@/lib/api/tasks";
 
 export const Route = createFileRoute("/tasks/")({
   head: () => ({
     meta: [
       { title: "Tugas — MCM" },
-      { name: "description", content: "Perintah penyiapan pegawai: kirim, pantau, dan kelola tugas penyiapan barang." },
+      {
+        name: "description",
+        content: "Perintah penyiapan pegawai: kirim, pantau, dan kelola tugas penyiapan barang.",
+      },
       { property: "og:title", content: "Tugas — MCM" },
       { property: "og:description", content: "Perintah penyiapan pegawai MCM." },
     ],
@@ -80,9 +94,13 @@ function TasksIndex() {
       .on("postgres_changes", { event: "*", schema: "public", table: "preparation_jobs" }, () => {
         void qc.invalidateQueries({ queryKey: ["tasks"] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "preparation_job_items" }, () => {
-        void qc.invalidateQueries({ queryKey: ["tasks"] });
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "preparation_job_items" },
+        () => {
+          void qc.invalidateQueries({ queryKey: ["tasks"] });
+        },
+      )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
@@ -107,7 +125,8 @@ function TasksIndex() {
       .filter((j) => j.customer_name.toLowerCase().includes(customerQuery.trim().toLowerCase()));
   }, [jobsQuery.data, tab, employeeFilter, customerQuery]);
 
-  const refreshManager = () => void qc.invalidateQueries({ queryKey: ["tasks", "business", businessId] });
+  const refreshManager = () =>
+    void qc.invalidateQueries({ queryKey: ["tasks", "business", businessId] });
 
   if (loading || bizLoading) {
     return (
@@ -123,14 +142,21 @@ function TasksIndex() {
         <EmptyState
           icon={ClipboardList}
           title={bizError ? "Gagal memuat data" : "Belum bergabung ke bisnis"}
-          description={bizError instanceof Error ? bizError.message : "Buat atau gabung ke sebuah bisnis untuk melihat tugas penyiapan."}
+          description={
+            bizError instanceof Error
+              ? bizError.message
+              : "Buat atau gabung ke sebuah bisnis untuk melihat tugas penyiapan."
+          }
           action={
             bizError ? (
               <Button className="h-11 rounded-xl" onClick={() => void refetchBiz()}>
                 Coba lagi
               </Button>
             ) : (
-              <Button className="h-11 rounded-xl" onClick={() => void navigate({ to: "/business" })}>
+              <Button
+                className="h-11 rounded-xl"
+                onClick={() => void navigate({ to: "/business" })}
+              >
                 Buka pengaturan bisnis
               </Button>
             )
@@ -190,7 +216,9 @@ function TasksIndex() {
           <EmptyState
             icon={ClipboardList}
             title="Gagal memuat tugas"
-            description={jobsQuery.error instanceof Error ? jobsQuery.error.message : "Terjadi kesalahan"}
+            description={
+              jobsQuery.error instanceof Error ? jobsQuery.error.message : "Terjadi kesalahan"
+            }
             action={
               <Button className="rounded-xl" onClick={() => void jobsQuery.refetch()}>
                 Coba lagi
@@ -212,7 +240,11 @@ function TasksIndex() {
           <ul className="space-y-2 p-3">
             {filteredManagerJobs.map((job: JobWithItems) => (
               <li key={job.id}>
-                <ManagerTaskCard job={job} employeeName={employeeById.get(job.assigned_user_id) ?? "Pegawai"} onChanged={refreshManager} />
+                <ManagerTaskCard
+                  job={job}
+                  employeeName={employeeById.get(job.assigned_user_id) ?? "Pegawai"}
+                  onChanged={refreshManager}
+                />
               </li>
             ))}
           </ul>
@@ -248,7 +280,9 @@ function TasksIndex() {
         <EmptyState
           icon={ClipboardList}
           title="Gagal memuat tugas"
-          description={myJobsQuery.error instanceof Error ? myJobsQuery.error.message : "Terjadi kesalahan"}
+          description={
+            myJobsQuery.error instanceof Error ? myJobsQuery.error.message : "Terjadi kesalahan"
+          }
           action={
             <Button className="rounded-xl" onClick={() => void myJobsQuery.refetch()}>
               Coba lagi
@@ -256,7 +290,11 @@ function TasksIndex() {
           }
         />
       ) : (myJobsQuery.data ?? []).length === 0 ? (
-        <EmptyState icon={ClipboardList} title="Belum ada tugas" description="Tugas penyiapan yang ditugaskan kepada Anda akan muncul di sini." />
+        <EmptyState
+          icon={ClipboardList}
+          title="Belum ada tugas"
+          description="Tugas penyiapan yang ditugaskan kepada Anda akan muncul di sini."
+        />
       ) : (
         <ul className="space-y-2 p-3">
           {(myJobsQuery.data ?? []).map((job) => (

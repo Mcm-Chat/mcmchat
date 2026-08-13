@@ -3,10 +3,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { createLedger, type LedgerRow } from "@/lib/api/ledger";
@@ -18,7 +30,14 @@ export type LedgerFormPreset = {
   conversationId?: string | null;
 };
 
-const empty = { type: "receivable", amount: "", dueDate: "", note: "", reminder: true, contact: "" };
+const empty = {
+  type: "receivable",
+  amount: "",
+  dueDate: "",
+  note: "",
+  reminder: true,
+  contact: "",
+};
 
 /**
  * Satu-satunya form pembuatan catatan utang/piutang. Dipakai dari menu
@@ -107,11 +126,16 @@ export function LedgerFormDialog({
           </div>
 
           {preset ? (
-            <p className="text-xs text-muted-foreground">Lawan transaksi: {preset.counterpartName}</p>
+            <p className="text-xs text-muted-foreground">
+              Lawan transaksi: {preset.counterpartName}
+            </p>
           ) : (
             <div className="space-y-1.5">
               <Label>Lawan transaksi</Label>
-              <Select value={form.contact} onValueChange={(v) => setForm((p) => ({ ...p, contact: v }))}>
+              <Select
+                value={form.contact}
+                onValueChange={(v) => setForm((p) => ({ ...p, contact: v }))}
+              >
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Pilih kontak" />
                 </SelectTrigger>
@@ -124,7 +148,9 @@ export function LedgerFormDialog({
                 </SelectContent>
               </Select>
               {(contacts ?? []).length === 0 && (
-                <p className="text-[11px] text-muted-foreground">Belum ada kontak. Tambah kontak dulu lewat menu Chat.</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Belum ada kontak. Tambah kontak dulu lewat menu Chat.
+                </p>
               )}
             </div>
           )}
@@ -136,7 +162,9 @@ export function LedgerFormDialog({
               inputMode="numeric"
               className="h-11"
               value={form.amount}
-              onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))
+              }
             />
           </div>
           <div className="space-y-1.5">
@@ -151,18 +179,32 @@ export function LedgerFormDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ledger-note">Keterangan</Label>
-            <Textarea id="ledger-note" maxLength={200} value={form.note} onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))} />
+            <Textarea
+              id="ledger-note"
+              maxLength={200}
+              value={form.note}
+              onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
+            />
           </div>
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
             <div>
               <p className="text-sm font-medium">Pengingat jatuh tempo</p>
-              <p className="text-xs text-muted-foreground">Kirim notifikasi saat mendekati jatuh tempo</p>
+              <p className="text-xs text-muted-foreground">
+                Kirim notifikasi saat mendekati jatuh tempo
+              </p>
             </div>
-            <Switch checked={form.reminder} onCheckedChange={(v) => setForm((p) => ({ ...p, reminder: v }))} />
+            <Switch
+              checked={form.reminder}
+              onCheckedChange={(v) => setForm((p) => ({ ...p, reminder: v }))}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button className="h-11 w-full rounded-xl" disabled={saving} onClick={() => void submit()}>
+          <Button
+            className="h-11 w-full rounded-xl"
+            disabled={saving}
+            onClick={() => void submit()}
+          >
             <Wallet className="size-4" /> {saving ? "Menyimpan…" : "Simpan catatan"}
           </Button>
         </DialogFooter>

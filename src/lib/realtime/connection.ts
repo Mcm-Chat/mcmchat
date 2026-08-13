@@ -119,7 +119,16 @@ function connect(entry: Managed) {
 export function registerSubscription(key: string, factory: SubscriptionFactory): () => void {
   let entry = managed.get(key);
   if (!entry) {
-    entry = { key, factory, channel: null, status: "connecting", attempt: 0, timer: null, refs: 0, closed: false };
+    entry = {
+      key,
+      factory,
+      channel: null,
+      status: "connecting",
+      attempt: 0,
+      timer: null,
+      refs: 0,
+      closed: false,
+    };
     managed.set(key, entry);
     connect(entry);
   }

@@ -14,10 +14,14 @@ export const Route = createFileRoute("/settings/voice")({
       { title: "Efek Suara Premium — Panggilan MCM" },
       {
         name: "description",
-        content: "Pilih preset Voice Privacy default, atur nada dan peredam derau, lalu tes mikrofon sebelum menelepon.",
+        content:
+          "Pilih preset Voice Privacy default, atur nada dan peredam derau, lalu tes mikrofon sebelum menelepon.",
       },
       { property: "og:title", content: "Efek Suara Premium — Panggilan MCM" },
-      { property: "og:description", content: "Preset default Voice Privacy dan tes mikrofon untuk panggilan MCM." },
+      {
+        property: "og:description",
+        content: "Preset default Voice Privacy dan tes mikrofon untuk panggilan MCM.",
+      },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -59,7 +63,15 @@ function VoiceSettingsPage() {
   }, [prefs, userId, row]);
 
   return (
-    <AppShell header={<MobileHeader title="Efek Suara Premium" subtitle={saving ? "Menyimpan…" : "Panggilan"} back />}>
+    <AppShell
+      header={
+        <MobileHeader
+          title="Efek Suara Premium"
+          subtitle={saving ? "Menyimpan…" : "Panggilan"}
+          back
+        />
+      }
+    >
       <div className="p-4">
         <VoiceEffectsPanel prefs={prefs} onChange={setPrefs} entitlement={ent} />
       </div>

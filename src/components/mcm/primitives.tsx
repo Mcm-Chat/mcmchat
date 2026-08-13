@@ -112,7 +112,13 @@ export function EmptyState({
   );
 }
 
-export function LoadingSkeleton({ rows = 5, avatar = true }: { rows?: number | undefined; avatar?: boolean }) {
+export function LoadingSkeleton({
+  rows = 5,
+  avatar = true,
+}: {
+  rows?: number | undefined;
+  avatar?: boolean;
+}) {
   return (
     <div className="space-y-3 p-4">
       {Array.from({ length: rows }).map((_, i) => (
@@ -158,7 +164,11 @@ export function ConfirmDialog({
           <AlertDialogCancel className="mt-0">{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className={destructive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            className={
+              destructive
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                : ""
+            }
           >
             {confirmLabel}
           </AlertDialogAction>
@@ -206,7 +216,9 @@ export function SettingRow({
 
 export function ProtoNote({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-xl bg-muted/70 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">{children}</p>
+    <p className="rounded-xl bg-muted/70 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+      {children}
+    </p>
   );
 }
 

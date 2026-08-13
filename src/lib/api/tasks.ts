@@ -45,7 +45,11 @@ export async function listAssignedJobs(userId: string): Promise<JobWithItems[]> 
 
 export async function getJobDetail(jobId: string): Promise<JobWithItems> {
   const row = unwrap(
-    await supabase.from("preparation_jobs").select("*, items:preparation_job_items(*)").eq("id", jobId).single(),
+    await supabase
+      .from("preparation_jobs")
+      .select("*, items:preparation_job_items(*)")
+      .eq("id", jobId)
+      .single(),
     "Tugas tidak ditemukan",
   );
   return row as unknown as JobWithItems;
@@ -53,7 +57,11 @@ export async function getJobDetail(jobId: string): Promise<JobWithItems> {
 
 export async function listItemPhotos(jobId: string): Promise<PreparationItemPhoto[]> {
   return unwrap(
-    await supabase.from("preparation_item_photos").select("*").eq("job_id", jobId).order("sort_order"),
+    await supabase
+      .from("preparation_item_photos")
+      .select("*")
+      .eq("job_id", jobId)
+      .order("sort_order"),
     "Gagal memuat foto tugas",
   );
 }
@@ -68,8 +76,14 @@ export async function revokeTaskJob(jobId: string) {
 }
 
 /** Menerbitkan ulang tautan: token lama langsung tidak berlaku. */
-export async function rotateTaskToken(jobId: string, expiresHours = 168): Promise<{ id: string; token: string }> {
-  const { data, error } = await supabase.rpc("rotate_preparation_token", { _job: jobId, _expires_hours: expiresHours });
+export async function rotateTaskToken(
+  jobId: string,
+  expiresHours = 168,
+): Promise<{ id: string; token: string }> {
+  const { data, error } = await supabase.rpc("rotate_preparation_token", {
+    _job: jobId,
+    _expires_hours: expiresHours,
+  });
   if (error) throw new Error(friendly(error.message, "Gagal menerbitkan ulang tautan"));
   return data as unknown as { id: string; token: string };
 }

@@ -16,7 +16,10 @@ export const Route = createFileRoute("/premium")({
           "MCM Premium menghadirkan Voice Privacy: efek suara real-time untuk panggilan suara dan video, dengan kontrol penuh dan tanpa penyimpanan sampel suara.",
       },
       { property: "og:title", content: "MCM Premium — Voice Privacy & Efek Suara" },
-      { property: "og:description", content: "Efek suara real-time untuk panggilan MCM. Privasi dulu, tanpa rekaman." },
+      {
+        property: "og:description",
+        content: "Efek suara real-time untuk panggilan MCM. Privasi dulu, tanpa rekaman.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -25,9 +28,21 @@ export const Route = createFileRoute("/premium")({
 });
 
 const BENEFITS = [
-  { icon: Mic, title: "Efek suara real-time", desc: "Preset Natural+, Deep, Bright, Warm, Robot ringan, Radio, Privacy, dan Custom saat panggilan berlangsung." },
-  { icon: Sparkles, title: "Kontrol detail", desc: "Atur nada, formant, tone, noise gate, peredam derau, volume, dan reverb ringan sesuai kebutuhan." },
-  { icon: ShieldCheck, title: "Privasi dijaga", desc: "Efek hanya memproses mikrofon Anda. Tidak ada sampel suara mentah yang disimpan atau dikirim." },
+  {
+    icon: Mic,
+    title: "Efek suara real-time",
+    desc: "Preset Natural+, Deep, Bright, Warm, Robot ringan, Radio, Privacy, dan Custom saat panggilan berlangsung.",
+  },
+  {
+    icon: Sparkles,
+    title: "Kontrol detail",
+    desc: "Atur nada, formant, tone, noise gate, peredam derau, volume, dan reverb ringan sesuai kebutuhan.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Privasi dijaga",
+    desc: "Efek hanya memproses mikrofon Anda. Tidak ada sampel suara mentah yang disimpan atau dikirim.",
+  },
 ];
 
 function PremiumPage() {
@@ -41,10 +56,13 @@ function PremiumPage() {
           <Badge className="gap-1 border-0 bg-primary/15 text-primary">
             <Crown className="size-3.5" /> Premium
           </Badge>
-          <h1 className="mt-3 text-2xl font-semibold leading-tight">Voice Privacy untuk panggilan MCM</h1>
+          <h1 className="mt-3 text-2xl font-semibold leading-tight">
+            Voice Privacy untuk panggilan MCM
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Ubah karakter suara Anda secara real-time saat voice call dan video call — untuk privasi, kenyamanan, dan
-            aksesibilitas. Anda selalu melihat indikator saat efek sedang aktif.
+            Ubah karakter suara Anda secara real-time saat voice call dan video call — untuk
+            privasi, kenyamanan, dan aksesibilitas. Anda selalu melihat indikator saat efek sedang
+            aktif.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild>
@@ -75,19 +93,21 @@ function PremiumPage() {
           ) : ent.active ? (
             <p className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
               <Check className="size-3.5" /> Premium aktif
-              {ent.expiresAt ? ` sampai ${new Date(ent.expiresAt).toLocaleDateString("id-ID")}` : ""}
+              {ent.expiresAt
+                ? ` sampai ${new Date(ent.expiresAt).toLocaleDateString("id-ID")}`
+                : ""}
             </p>
           ) : (
             <p className="mt-1 text-xs text-muted-foreground">
-              Penagihan belum terhubung. MCM tidak mengaktifkan langganan palsu — begitu penyedia pembayaran
-              disambungkan, entitlement premium akan muncul otomatis di sini.
+              Penagihan belum terhubung. MCM tidak mengaktifkan langganan palsu — begitu penyedia
+              pembayaran disambungkan, entitlement premium akan muncul otomatis di sini.
             </p>
           )}
         </section>
 
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-          Voice Privacy dirancang untuk menyamarkan warna suara Anda sendiri. Fitur ini tidak menyediakan kloning suara,
-          peniruan orang tertentu, maupun cara melewati verifikasi suara.
+          Voice Privacy dirancang untuk menyamarkan warna suara Anda sendiri. Fitur ini tidak
+          menyediakan kloning suara, peniruan orang tertentu, maupun cara melewati verifikasi suara.
         </p>
       </div>
     </AppShell>

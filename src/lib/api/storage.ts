@@ -3,7 +3,12 @@ import { getActiveUserId } from "@/lib/session-scope";
 
 export type UploadResult = { path: string; mime: string; size: number; name: string };
 
-async function upload(bucket: string, path: string, file: Blob, name: string): Promise<UploadResult> {
+async function upload(
+  bucket: string,
+  path: string,
+  file: Blob,
+  name: string,
+): Promise<UploadResult> {
   const { error } = await supabase.storage.from(bucket).upload(path, file, {
     contentType: file.type || "application/octet-stream",
     upsert: false,
@@ -30,7 +35,11 @@ export function clearSignedUrlCache() {
 }
 
 /** URL bertanda tangan dengan cache singkat agar tidak memanggil API berulang. */
-export async function signedUrl(bucket: string, path: string, seconds = 3600): Promise<string | null> {
+export async function signedUrl(
+  bucket: string,
+  path: string,
+  seconds = 3600,
+): Promise<string | null> {
   // Cache dikunci per akun: URL milik akun lain tidak pernah dipakai ulang.
   const key = `${getActiveUserId() ?? "anon"}:${bucket}:${path}`;
   const hit = cache.get(key);

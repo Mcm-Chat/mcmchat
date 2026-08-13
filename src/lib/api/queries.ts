@@ -1,8 +1,21 @@
-import { useInfiniteQuery, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+} from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listContacts, listRequests } from "./contacts";
-import { compareMessages, cursorOf, listConversations, listMessages, MESSAGE_PAGE_SIZE, type MessageCursor, type MessageRow } from "./chat";
+import {
+  compareMessages,
+  cursorOf,
+  listConversations,
+  listMessages,
+  MESSAGE_PAGE_SIZE,
+  type MessageCursor,
+  type MessageRow,
+} from "./chat";
 import { listCalls } from "./calls";
 import { listLedgers } from "./ledger";
 import { listOrders, listSales } from "./sales";
@@ -26,7 +39,11 @@ export const qk = {
 };
 
 export const useConversations = (uid?: string) =>
-  useQuery({ queryKey: qk.conversations(uid ?? ""), queryFn: () => listConversations(uid!), enabled: !!uid });
+  useQuery({
+    queryKey: qk.conversations(uid ?? ""),
+    queryFn: () => listConversations(uid!),
+    enabled: !!uid,
+  });
 
 /**
  * Pesan dimuat per halaman (terbaru dulu) dan digabung menaik dengan urutan
@@ -148,22 +165,26 @@ export function useRealtimeSync(uid?: string) {
             );
           }
         })
-      .on("postgres_changes", { event: "*", schema: "public", table: "message_receipts" }, () => {
-        void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "conversation_members" }, () => {
-        refreshConversations();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "ledgers" }, () => {
-        void qc.invalidateQueries({ queryKey: qk.ledgers(uid) });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "contact_requests" }, () => {
-        void qc.invalidateQueries({ queryKey: qk.requests(uid) });
-        void qc.invalidateQueries({ queryKey: qk.contacts(uid) });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
-        void qc.invalidateQueries({ queryKey: qk.calls(uid) });
-      }),
+        .on("postgres_changes", { event: "*", schema: "public", table: "message_receipts" }, () => {
+          void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
+        })
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "conversation_members" },
+          () => {
+            refreshConversations();
+          },
+        )
+        .on("postgres_changes", { event: "*", schema: "public", table: "ledgers" }, () => {
+          void qc.invalidateQueries({ queryKey: qk.ledgers(uid) });
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "contact_requests" }, () => {
+          void qc.invalidateQueries({ queryKey: qk.requests(uid) });
+          void qc.invalidateQueries({ queryKey: qk.contacts(uid) });
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
+          void qc.invalidateQueries({ queryKey: qk.calls(uid) });
+        }),
     );
     return () => {
       if (convTimer.current) clearTimeout(convTimer.current);

@@ -37,7 +37,10 @@ export type GrantOptions = {
 };
 
 /** JWT HS256 dengan grant LiveKit standar. Tidak pernah dikirim ke pihak lain. */
-export async function mintAccessToken(cfg: LiveKitConfig, opts: GrantOptions): Promise<{ token: string; expiresAt: number }> {
+export async function mintAccessToken(
+  cfg: LiveKitConfig,
+  opts: GrantOptions,
+): Promise<{ token: string; expiresAt: number }> {
   const now = Math.floor(Date.now() / 1000);
   const exp = now + Math.min(3600, Math.max(60, opts.ttlSec ?? 900));
   const header = { alg: "HS256", typ: "JWT" };
@@ -53,7 +56,9 @@ export async function mintAccessToken(cfg: LiveKitConfig, opts: GrantOptions): P
       canPublish: true,
       canSubscribe: true,
       canPublishData: true,
-      canPublishSources: opts.canPublishVideo ? ["microphone", "camera", "screen_share"] : ["microphone"],
+      canPublishSources: opts.canPublishVideo
+        ? ["microphone", "camera", "screen_share"]
+        : ["microphone"],
     },
   };
   const signingInput = `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}`;

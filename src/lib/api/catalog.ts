@@ -30,7 +30,11 @@ export const MOVEMENT_LABEL: Record<MovementType, string> = {
 };
 
 /** Konversi jumlah + satuan ke qty_base, mengikuti aturan yang sama dengan fungsi DB convert_to_base. */
-export function toBase(variant: Pick<VariantRow, "stock_type" | "conversion_factor">, qty: number, unit: string): number {
+export function toBase(
+  variant: Pick<VariantRow, "stock_type" | "conversion_factor">,
+  qty: number,
+  unit: string,
+): number {
   if (variant.stock_type === "weight") {
     const factor = WEIGHT_TO_BASE_G[unit as (typeof WEIGHT_UNITS)[number]];
     if (!factor) throw new Error("Satuan berat tidak dikenal");
@@ -40,11 +44,16 @@ export function toBase(variant: Pick<VariantRow, "stock_type" | "conversion_fact
 }
 
 /** Format qty_base menjadi tampilan ramah pengguna sesuai satuan tampilan varian. */
-export function formatQty(variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal">, qtyBase: number): string {
+export function formatQty(
+  variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal">,
+  qtyBase: number,
+): string {
   const nf = (v: number, maxFrac: number) =>
     new Intl.NumberFormat("id-ID", { maximumFractionDigits: maxFrac }).format(v);
   if (variant.stock_type === "weight") {
-    const unit = (WEIGHT_UNITS as readonly string[]).includes(variant.display_unit) ? variant.display_unit : "g";
+    const unit = (WEIGHT_UNITS as readonly string[]).includes(variant.display_unit)
+      ? variant.display_unit
+      : "g";
     const factor = WEIGHT_TO_BASE_G[unit as (typeof WEIGHT_UNITS)[number]] ?? 1;
     const value = qtyBase / factor;
     return `${nf(value, 2)} ${unit}`;
@@ -61,21 +70,37 @@ export type ProductWithVariants = ProductRow & {
 
 export async function listCatalog(businessId: string): Promise<ProductWithVariants[]> {
   const products = unwrap(
-    await supabase.from("products").select("*").eq("business_id", businessId).order("created_at", { ascending: false }),
+    await supabase
+      .from("products")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false }),
     "Gagal memuat katalog",
   );
   if (products.length === 0) return [];
   const productIds = products.map((p) => p.id);
   const [variants, photos, balances] = await Promise.all([
     unwrap(
-      await supabase.from("product_variants").select("*").in("product_id", productIds).eq("is_active", true).order("sort_order"),
+      await supabase
+        .from("product_variants")
+        .select("*")
+        .in("product_id", productIds)
+        .eq("is_active", true)
+        .order("sort_order"),
       "Gagal memuat varian",
     ),
     unwrap(
-      await supabase.from("product_photos").select("*").in("product_id", productIds).order("sort_order"),
+      await supabase
+        .from("product_photos")
+        .select("*")
+        .in("product_id", productIds)
+        .order("sort_order"),
       "Gagal memuat foto",
     ),
-    unwrap(await supabase.from("inventory_balances").select("*").in("product_id", productIds), "Gagal memuat stok"),
+    unwrap(
+      await supabase.from("inventory_balances").select("*").in("product_id", productIds),
+      "Gagal memuat stok",
+    ),
   ]);
   return products.map((p) => ({
     ...p,
@@ -94,16 +119,33 @@ export async function getProduct(productId: string): Promise<ProductWithVariants
   if (!product) return null;
   const [variants, photos, balances] = await Promise.all([
     unwrap(
-      await supabase.from("product_variants").select("*").eq("product_id", productId).order("sort_order"),
+      await supabase
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", productId)
+        .order("sort_order"),
       "Gagal memuat varian",
     ),
-    unwrap(await supabase.from("product_photos").select("*").eq("product_id", productId).order("sort_order"), "Gagal memuat foto"),
-    unwrap(await supabase.from("inventory_balances").select("*").eq("product_id", productId), "Gagal memuat stok"),
+    unwrap(
+      await supabase
+        .from("product_photos")
+        .select("*")
+        .eq("product_id", productId)
+        .order("sort_order"),
+      "Gagal memuat foto",
+    ),
+    unwrap(
+      await supabase.from("inventory_balances").select("*").eq("product_id", productId),
+      "Gagal memuat stok",
+    ),
   ]);
   return {
     ...product,
     photos,
-    variants: variants.map((v) => ({ ...v, balance: balances.find((b) => b.variant_id === v.id)?.qty_base ?? 0 })),
+    variants: variants.map((v) => ({
+      ...v,
+      balance: balances.find((b) => b.variant_id === v.id)?.qty_base ?? 0,
+    })),
   };
 }
 
@@ -185,7 +227,7 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
     product_id: input.product_id,
     name: input.name,
     stock_type: input.stock_type,
-    base_unit: input.stock_type === "weight" ? "g" : input.base_unit ?? input.display_unit,
+    base_unit: input.stock_type === "weight" ? "g" : (input.base_unit ?? input.display_unit),
     display_unit: input.display_unit,
     precision_scale: input.precision_scale ?? (input.stock_type === "weight" ? 0.01 : 1),
     conversion_factor: input.stock_type === "count" ? (input.conversion_factor ?? 1) : 1,
@@ -196,7 +238,12 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
   };
   if (input.id) {
     return unwrap(
-      await supabase.from("product_variants").update(payload).eq("id", input.id).select("*").single(),
+      await supabase
+        .from("product_variants")
+        .update(payload)
+        .eq("id", input.id)
+        .select("*")
+        .single(),
       "Gagal menyimpan varian",
     );
   }
@@ -205,7 +252,12 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
     "Gagal membuat varian",
   );
   const { error } = await supabase.from("inventory_balances").upsert(
-    { variant_id: created.id, product_id: created.product_id, business_id: created.business_id, qty_base: 0 },
+    {
+      variant_id: created.id,
+      product_id: created.product_id,
+      business_id: created.business_id,
+      qty_base: 0,
+    },
     { onConflict: "variant_id" },
   );
   if (error) throw new Error(friendly(error.message, "Gagal menyiapkan stok varian"));
@@ -218,7 +270,10 @@ export async function deleteVariant(variantId: string) {
     "Gagal memeriksa riwayat varian",
   );
   if (movements.length > 0) {
-    const { error } = await supabase.from("product_variants").update({ is_active: false }).eq("id", variantId);
+    const { error } = await supabase
+      .from("product_variants")
+      .update({ is_active: false })
+      .eq("id", variantId);
     if (error) throw new Error(friendly(error.message, "Gagal menonaktifkan varian"));
     return;
   }
@@ -226,7 +281,12 @@ export async function deleteVariant(variantId: string) {
   if (error) throw new Error(friendly(error.message, "Gagal menghapus varian"));
 }
 
-export async function adjustStock(variantId: string, qtyBase: number, type: MovementType, note: string): Promise<number> {
+export async function adjustStock(
+  variantId: string,
+  qtyBase: number,
+  type: MovementType,
+  note: string,
+): Promise<number> {
   const { data, error } = await supabase.rpc("adjust_inventory", {
     _variant: variantId,
     _qty_base: qtyBase,
@@ -239,7 +299,12 @@ export async function adjustStock(variantId: string, qtyBase: number, type: Move
 
 export async function listMovements(variantId: string): Promise<MovementRow[]> {
   return unwrap(
-    await supabase.from("inventory_movements").select("*").eq("variant_id", variantId).order("created_at", { ascending: false }).limit(50),
+    await supabase
+      .from("inventory_movements")
+      .select("*")
+      .eq("variant_id", variantId)
+      .order("created_at", { ascending: false })
+      .limit(50),
     "Gagal memuat riwayat stok",
   );
 }
@@ -257,9 +322,18 @@ export type PhotoInput = {
   group_label?: string;
 };
 
-export async function addProductPhotos(businessId: string, productId: string, drafts: PhotoInput[]) {
+export async function addProductPhotos(
+  businessId: string,
+  productId: string,
+  drafts: PhotoInput[],
+) {
   const existing = unwrap(
-    await supabase.from("product_photos").select("sort_order").eq("product_id", productId).order("sort_order", { ascending: false }).limit(1),
+    await supabase
+      .from("product_photos")
+      .select("sort_order")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: false })
+      .limit(1),
     "Gagal memuat urutan foto",
   );
   let nextSort = (existing[0]?.sort_order ?? -1) + 1;
@@ -285,7 +359,12 @@ export async function addProductPhotos(businessId: string, productId: string, dr
 
 export async function updatePhotoLocation(
   photoId: string,
-  patch: { location_url?: string; location_lat?: number | null; location_lng?: number | null; location_label?: string },
+  patch: {
+    location_url?: string;
+    location_lat?: number | null;
+    location_lng?: number | null;
+    location_label?: string;
+  },
 ) {
   const { error } = await supabase.from("product_photos").update(patch).eq("id", photoId);
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui lokasi foto"));
@@ -304,7 +383,10 @@ export async function deletePhoto(photoId: string) {
 /** Ubah hanya sort_order berdasarkan urutan array id; metadata lokasi tiap foto tidak pernah tertukar. */
 export async function reorderPhotos(orderedIds: string[]) {
   for (let i = 0; i < orderedIds.length; i++) {
-    const { error } = await supabase.from("product_photos").update({ sort_order: i }).eq("id", orderedIds[i]!);
+    const { error } = await supabase
+      .from("product_photos")
+      .update({ sort_order: i })
+      .eq("id", orderedIds[i]!);
     if (error) throw new Error(friendly(error.message, "Gagal mengurutkan foto"));
   }
 }

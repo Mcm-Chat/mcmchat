@@ -105,14 +105,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return push(state, { layers: [...state.layers, action.layer] });
     case "update":
       return push(state, {
-        layers: state.layers.map((l) => (l.id === action.id ? ({ ...l, ...action.patch } as Layer) : l)),
+        layers: state.layers.map((l) =>
+          l.id === action.id ? ({ ...l, ...action.patch } as Layer) : l,
+        ),
       });
     // Titik goresan ditambah tanpa menyentuh riwayat: satu goresan = satu undo.
     case "appendPoint":
       return {
         ...state,
         layers: state.layers.map((l) =>
-          l.id === action.id && l.type === "stroke" ? { ...l, points: [...l.points, action.point] } : l,
+          l.id === action.id && l.type === "stroke"
+            ? { ...l, points: [...l.points, action.point] }
+            : l,
         ),
       };
     case "remove":
@@ -122,18 +126,28 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case "adjust":
       return push(state, { adjust: { ...state.adjust, ...action.patch } });
     case "rotate":
-      return push(state, { rotation: (((state.rotation + 90) % 360) as EditorState["rotation"]) });
+      return push(state, { rotation: ((state.rotation + 90) % 360) as EditorState["rotation"] });
     case "flip":
       return push(state, { flipH: !state.flipH });
     case "undo": {
       const prev = state.past[state.past.length - 1];
       if (!prev) return state;
-      return { ...state, ...prev, past: state.past.slice(0, -1), future: [snap(state), ...state.future].slice(0, 40) };
+      return {
+        ...state,
+        ...prev,
+        past: state.past.slice(0, -1),
+        future: [snap(state), ...state.future].slice(0, 40),
+      };
     }
     case "redo": {
       const next = state.future[0];
       if (!next) return state;
-      return { ...state, ...next, past: [...state.past, snap(state)], future: state.future.slice(1) };
+      return {
+        ...state,
+        ...next,
+        past: [...state.past, snap(state)],
+        future: state.future.slice(1),
+      };
     }
     case "reset":
       return { ...initialEditor };

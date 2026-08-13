@@ -7,7 +7,11 @@ export const CANVAS_H = 1920;
 
 export type Composed = { blob: Blob; thumb: Blob; width: number; height: number };
 
-function drawStroke(ctx: CanvasRenderingContext2D, layer: Extract<Layer, { type: "stroke" }>, pixelated: HTMLCanvasElement | null) {
+function drawStroke(
+  ctx: CanvasRenderingContext2D,
+  layer: Extract<Layer, { type: "stroke" }>,
+  pixelated: HTMLCanvasElement | null,
+) {
   if (layer.points.length === 0) return;
   ctx.save();
   ctx.lineCap = "round";
@@ -54,7 +58,9 @@ function drawText(ctx: CanvasRenderingContext2D, layer: Extract<Layer, { type: "
     ctx.fill();
   }
   ctx.fillStyle = layer.color;
-  lines.forEach((line, i) => ctx.fillText(line, layer.x, layer.y - ((lines.length - 1) * lh) / 2 + i * lh));
+  lines.forEach((line, i) =>
+    ctx.fillText(line, layer.x, layer.y - ((lines.length - 1) * lh) / 2 + i * lh),
+  );
   ctx.restore();
 }
 
@@ -75,7 +81,11 @@ function pixelatedCopy(img: CanvasImageSource): HTMLCanvasElement {
 
 const toBlob = (canvas: HTMLCanvasElement, quality: number) =>
   new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Gagal memproses gambar"))), "image/jpeg", quality),
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error("Gagal memproses gambar"))),
+      "image/jpeg",
+      quality,
+    ),
   );
 
 /** Gambar seluruh adegan ke konteks 1080x1920 — dipakai pratinjau dan ekspor. */
@@ -121,7 +131,10 @@ export function drawScene(canvas: HTMLCanvasElement, image: HTMLImageElement, st
 }
 
 /** Susun foto + filter + coretan + teks menjadi satu berkas 1080x1920. */
-export async function composeStatus(image: HTMLImageElement, state: EditorState): Promise<Composed> {
+export async function composeStatus(
+  image: HTMLImageElement,
+  state: EditorState,
+): Promise<Composed> {
   const canvas = document.createElement("canvas");
   canvas.width = CANVAS_W;
   canvas.height = CANVAS_H;
@@ -141,6 +154,11 @@ export async function composeStatus(image: HTMLImageElement, state: EditorState)
 }
 
 /** Status teks juga dirender menjadi gambar agar konsisten di semua perangkat. */
-export function textStatusMeta(text: string, background: string, color: string, font: string): TextMeta {
+export function textStatusMeta(
+  text: string,
+  background: string,
+  color: string,
+  font: string,
+): TextMeta {
   return { text, background, color, font, align: "center" };
 }

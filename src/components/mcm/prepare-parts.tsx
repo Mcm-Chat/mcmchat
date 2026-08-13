@@ -5,10 +5,22 @@ import { BadgeCheck, Copy, Link2, Plus, QrCode, RefreshCw, Send, Trash2, X } fro
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -110,36 +122,60 @@ export function CreatePreparationDialog({
   };
 
   const variantById = useMemo(() => new Map((variants ?? []).map((v) => [v.id, v])), [variants]);
-  const productName = (v: ProductVariant) => (products ?? []).find((p) => p.id === v.product_id)?.name ?? "Produk";
+  const productName = (v: ProductVariant) =>
+    (products ?? []).find((p) => p.id === v.product_id)?.name ?? "Produk";
   const current = variantId ? variantById.get(variantId) : undefined;
-  const unitOptions = current?.stock_type === "weight" ? WEIGHT_UNITS.map((u) => u.unit) : [current?.display_unit ?? "pcs"];
+  const unitOptions =
+    current?.stock_type === "weight"
+      ? WEIGHT_UNITS.map((u) => u.unit)
+      : [current?.display_unit ?? "pcs"];
   const activeUnit = unit || unitOptions[0] || "pcs";
 
   const addItem = () => {
     const v = current;
     const n = Number(qty.replace(",", "."));
-    if (!v) { toast.error("Pilih varian produk dulu"); return; }
-    if (!Number.isFinite(n) || n <= 0) { toast.error("Jumlah harus lebih dari nol"); return; }
+    if (!v) {
+      toast.error("Pilih varian produk dulu");
+      return;
+    }
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Jumlah harus lebih dari nol");
+      return;
+    }
     if (v.stock_type === "count" && !v.allow_decimal && !Number.isInteger(n)) {
       toast.error(`${v.name} hanya menerima jumlah bulat`);
       return;
     }
     setItems((p) => [
       ...p,
-      { key: crypto.randomUUID(), variant_id: v.id, qty: n, unit: activeUnit, require_photo: requirePhoto, require_location: requireLocation },
+      {
+        key: crypto.randomUUID(),
+        variant_id: v.id,
+        qty: n,
+        unit: activeUnit,
+        require_photo: requirePhoto,
+        require_location: requireLocation,
+      },
     ]);
     setQty("1");
   };
 
   const submit = async () => {
-    if (items.length === 0) { toast.error("Tambahkan minimal satu item"); return; }
-    if (!assignee) { toast.error("Pilih pegawai penerima tugas"); return; }
+    if (items.length === 0) {
+      toast.error("Tambahkan minimal satu item");
+      return;
+    }
+    if (!assignee) {
+      toast.error("Pilih pegawai penerima tugas");
+      return;
+    }
     if (!selectedStaff?.pin) {
       toast.error("Konfirmasi dulu nomor MCM pegawai ini");
       return;
     }
     const picked = (contacts ?? []).find((c) => c.contact_id === contactId);
-    const resolvedCustomerName = customerName ?? (picked?.profile.display_name || manualCustomer.trim());
+    const resolvedCustomerName =
+      customerName ?? (picked?.profile.display_name || manualCustomer.trim());
     const resolvedCustomerUser = customerUserId ?? picked?.contact_id ?? null;
     if (!resolvedCustomerName) {
       toast.error("Isi nama pelanggan atau pilih dari kontak");
@@ -180,7 +216,8 @@ export function CreatePreparationDialog({
         </DialogHeader>
         {customerName ? (
           <p className="text-xs text-muted-foreground">
-            Tugas ini khusus untuk <strong>{customerName}</strong>. Setiap permintaan pelanggan selalu menjadi tugas, tautan, dan barcode terpisah.
+            Tugas ini khusus untuk <strong>{customerName}</strong>. Setiap permintaan pelanggan
+            selalu menjadi tugas, tautan, dan barcode terpisah.
           </p>
         ) : (
           <div className="space-y-2 rounded-xl border border-border p-3">
@@ -235,7 +272,12 @@ export function CreatePreparationDialog({
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
               <Label htmlFor="qty">Jumlah</Label>
-              <Input id="qty" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
+              <Input
+                id="qty"
+                inputMode="decimal"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Satuan</Label>
@@ -255,7 +297,12 @@ export function CreatePreparationDialog({
           </div>
           {current && (
             <p className="text-[11px] text-muted-foreground">
-              Setara {formatBase(current, previewBase(current, Number(qty.replace(",", ".")) || 0, activeUnit))} pada satuan dasar.
+              Setara{" "}
+              {formatBase(
+                current,
+                previewBase(current, Number(qty.replace(",", ".")) || 0, activeUnit),
+              )}{" "}
+              pada satuan dasar.
             </p>
           )}
           <Button type="button" variant="secondary" className="w-full rounded-xl" onClick={addItem}>
@@ -268,11 +315,19 @@ export function CreatePreparationDialog({
             {items.map((it) => {
               const v = variantById.get(it.variant_id);
               return (
-                <li key={it.key} className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
+                <li
+                  key={it.key}
+                  className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm"
+                >
                   <span className="min-w-0 flex-1 truncate">
                     {v ? `${productName(v)} — ${v.name}` : "Item"} · {it.qty} {it.unit}
                   </span>
-                  <Button variant="ghost" size="icon" aria-label="Hapus item" onClick={() => setItems((p) => p.filter((x) => x.key !== it.key))}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Hapus item"
+                    onClick={() => setItems((p) => p.filter((x) => x.key !== it.key))}
+                  >
                     <Trash2 className="size-4" />
                   </Button>
                 </li>
@@ -297,7 +352,9 @@ export function CreatePreparationDialog({
             </SelectContent>
           </Select>
           {selectedStaff && (
-            <p className={`text-[11px] ${selectedStaff.pin ? "text-muted-foreground" : "text-destructive"}`}>
+            <p
+              className={`text-[11px] ${selectedStaff.pin ? "text-muted-foreground" : "text-destructive"}`}
+            >
               {selectedStaff.pin
                 ? `Perintah dikirim ke nomor MCM ${selectedStaff.pin} (terkonfirmasi).`
                 : "Nomor MCM pegawai ini belum dikonfirmasi, simpan dulu di bawah."}
@@ -315,7 +372,13 @@ export function CreatePreparationDialog({
               placeholder="Contoh: MCM-8F2K"
               onChange={(e) => setStaffPin(e.target.value.toUpperCase())}
             />
-            <Button type="button" variant="secondary" className="rounded-xl" disabled={savingPin || staffPin.length < 4} onClick={() => void savePin()}>
+            <Button
+              type="button"
+              variant="secondary"
+              className="rounded-xl"
+              disabled={savingPin || staffPin.length < 4}
+              onClick={() => void savePin()}
+            >
               <BadgeCheck className="size-4" /> Simpan
             </Button>
           </div>
@@ -342,16 +405,27 @@ export function CreatePreparationDialog({
             Wajib lokasi GPS
             <Switch checked={requireLocation} onCheckedChange={setRequireLocation} />
           </label>
-          <p className="text-[11px] text-muted-foreground">Berlaku untuk item yang ditambahkan setelah opsi ini diubah.</p>
+          <p className="text-[11px] text-muted-foreground">
+            Berlaku untuk item yang ditambahkan setelah opsi ini diubah.
+          </p>
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="prep-notes">Catatan untuk pegawai</Label>
-          <Textarea id="prep-notes" maxLength={300} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Textarea
+            id="prep-notes"
+            maxLength={300}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
         </div>
 
         <DialogFooter>
-          <Button className="h-11 w-full rounded-xl" disabled={sending} onClick={() => void submit()}>
+          <Button
+            className="h-11 w-full rounded-xl"
+            disabled={sending}
+            onClick={() => void submit()}
+          >
             <Send className="size-4" /> Kirim ke PIN MCM pegawai
           </Button>
         </DialogFooter>
@@ -360,7 +434,13 @@ export function CreatePreparationDialog({
   );
 }
 
-export function PreparationJobCard({ job, onChanged }: { job: JobWithItems; onChanged: () => void }) {
+export function PreparationJobCard({
+  job,
+  onChanged,
+}: {
+  job: JobWithItems;
+  onChanged: () => void;
+}) {
   const [qrOpen, setQrOpen] = useState(false);
   const [token, setToken] = useState<string | null>(() => recallToken(job.id));
   const url = token ? prepareUrl(token) : "";
@@ -387,7 +467,9 @@ export function PreparationJobCard({ job, onChanged }: { job: JobWithItems; onCh
     <div className="card-soft space-y-2 p-3 text-sm">
       <div className="flex items-center gap-2">
         <span className="font-semibold">{job.code}</span>
-        <Badge variant={job.status === "completed" ? "default" : "secondary"}>{STATUS_LABEL[job.status] ?? job.status}</Badge>
+        <Badge variant={job.status === "completed" ? "default" : "secondary"}>
+          {STATUS_LABEL[job.status] ?? job.status}
+        </Badge>
         {expired && <Badge variant="destructive">Tautan nonaktif</Badge>}
       </div>
       <p className="text-xs text-muted-foreground">Pelanggan: {job.customer_name || "—"}</p>
@@ -399,10 +481,22 @@ export function PreparationJobCard({ job, onChanged }: { job: JobWithItems; onCh
         ))}
       </ul>
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="secondary" className="rounded-lg" disabled={!token} onClick={() => setQrOpen(true)}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-lg"
+          disabled={!token}
+          onClick={() => setQrOpen(true)}
+        >
           <QrCode className="size-4" /> Barcode
         </Button>
-        <Button size="sm" variant="secondary" className="rounded-lg" disabled={!token} onClick={() => void copy()}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="rounded-lg"
+          disabled={!token}
+          onClick={() => void copy()}
+        >
           <Copy className="size-4" /> Salin link
         </Button>
         {token && (

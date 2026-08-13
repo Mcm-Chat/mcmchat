@@ -26,22 +26,26 @@ describe("react-hooks/rules-of-hooks", () => {
     expect(violations).toEqual([]);
   });
 
-  it("aturan benar-benar aktif dan mendeteksi hook setelah early return", { timeout: 60_000 }, async () => {
-    const eslint = new ESLint({ overrideConfig: { rules: { "prettier/prettier": "off" } } });
-    const results = await eslint.lintText(
-      [
-        'import { useState } from "react";',
-        "export function Probe({ loading }: { loading: boolean }) {",
-        "  const [a] = useState(0);",
-        "  if (loading) return <div>{a}</div>;",
-        "  const [b] = useState(1);",
-        "  return <div>{b}</div>;",
-        "}",
-        "",
-      ].join("\n"),
-      { filePath: "src/__rules_of_hooks_probe__.tsx" },
-    );
-    const ids = results.flatMap((r) => r.messages.map((m) => m.ruleId));
-    expect(ids).toContain("react-hooks/rules-of-hooks");
-  });
+  it(
+    "aturan benar-benar aktif dan mendeteksi hook setelah early return",
+    { timeout: 60_000 },
+    async () => {
+      const eslint = new ESLint({ overrideConfig: { rules: { "prettier/prettier": "off" } } });
+      const results = await eslint.lintText(
+        [
+          'import { useState } from "react";',
+          "export function Probe({ loading }: { loading: boolean }) {",
+          "  const [a] = useState(0);",
+          "  if (loading) return <div>{a}</div>;",
+          "  const [b] = useState(1);",
+          "  return <div>{b}</div>;",
+          "}",
+          "",
+        ].join("\n"),
+        { filePath: "src/__rules_of_hooks_probe__.tsx" },
+      );
+      const ids = results.flatMap((r) => r.messages.map((m) => m.ruleId));
+      expect(ids).toContain("react-hooks/rules-of-hooks");
+    },
+  );
 });

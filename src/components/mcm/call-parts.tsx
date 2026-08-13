@@ -1,4 +1,14 @@
-import { Mic, MicOff, PhoneOff, RefreshCcw, UserPlus, Video, VideoOff, Volume2, VolumeX } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  PhoneOff,
+  RefreshCcw,
+  UserPlus,
+  Video,
+  VideoOff,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -31,10 +41,17 @@ export function CallControls({
     <div className="space-y-5">
       <div className="grid grid-cols-4 gap-3 justify-items-center">
         <div className="flex flex-col items-center gap-1.5">
-          <Button size="icon" className={btn(state.muted)} aria-label="Bisukan mikrofon" onClick={() => onToggle("muted")}>
+          <Button
+            size="icon"
+            className={btn(state.muted)}
+            aria-label="Bisukan mikrofon"
+            onClick={() => onToggle("muted")}
+          >
             {state.muted ? <MicOff className="size-6" /> : <Mic className="size-6" />}
           </Button>
-          <span className="text-[10px] text-white/70">{state.muted ? "Suara mati" : "Mikrofon"}</span>
+          <span className="text-[10px] text-white/70">
+            {state.muted ? "Suara mati" : "Mikrofon"}
+          </span>
         </div>
         <div className="flex flex-col items-center gap-1.5">
           <Button
@@ -49,7 +66,12 @@ export function CallControls({
           <span className="text-[10px] text-white/70">Kamera</span>
         </div>
         <div className="flex flex-col items-center gap-1.5">
-          <Button size="icon" className={btn(state.speakerOn)} aria-label="Pengeras suara" onClick={() => onToggle("speakerOn")}>
+          <Button
+            size="icon"
+            className={btn(state.speakerOn)}
+            aria-label="Pengeras suara"
+            onClick={() => onToggle("speakerOn")}
+          >
             {state.speakerOn ? <Volume2 className="size-6" /> : <VolumeX className="size-6" />}
           </Button>
           <span className="text-[10px] text-white/70">Speaker</span>
@@ -64,12 +86,19 @@ export function CallControls({
           >
             <RefreshCcw className="size-6" />
           </Button>
-          <span className="text-[10px] text-white/70">{state.frontCamera ? "Depan" : "Belakang"}</span>
+          <span className="text-[10px] text-white/70">
+            {state.frontCamera ? "Depan" : "Belakang"}
+          </span>
         </div>
       </div>
       <div className="flex items-center justify-center gap-6">
         <div className="flex flex-col items-center gap-1.5">
-          <Button size="icon" className={btn(false)} aria-label="Tambah peserta" onClick={onAddParticipant}>
+          <Button
+            size="icon"
+            className={btn(false)}
+            aria-label="Tambah peserta"
+            onClick={onAddParticipant}
+          >
             <UserPlus className="size-6" />
           </Button>
           <span className="text-[10px] text-white/70">Tambah</span>

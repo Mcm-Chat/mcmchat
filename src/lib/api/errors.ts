@@ -60,7 +60,8 @@ export function classifyFailure(error: PostgrestLikeError | Error | null | undef
   if (error instanceof ApiError) return error.kind;
   const code = "code" in error ? ((error as PostgrestLikeError).code ?? "") : "";
   const status = "status" in error ? ((error as PostgrestLikeError).status ?? 0) : 0;
-  const text = `${error.message ?? ""} ${("details" in error && error.details) || ""}`.toLowerCase();
+  const text =
+    `${error.message ?? ""} ${("details" in error && error.details) || ""}`.toLowerCase();
 
   if (code === "23505") return "duplicate";
   if (code && PERMANENT_SQLSTATE.has(code)) return "permanent";
@@ -71,12 +72,25 @@ export function classifyFailure(error: PostgrestLikeError | Error | null | undef
   if (status >= 400 && status < 500) return "permanent";
   if (status >= 500) return "transient";
 
-  if (text.includes("row-level security") || text.includes("permission denied") || text.includes("tidak memiliki akses"))
+  if (
+    text.includes("row-level security") ||
+    text.includes("permission denied") ||
+    text.includes("tidak memiliki akses")
+  )
     return "permanent";
-  if (text.includes("payload too large") || text.includes("file too large") || text.includes("terlalu besar"))
+  if (
+    text.includes("payload too large") ||
+    text.includes("file too large") ||
+    text.includes("terlalu besar")
+  )
     return "permanent";
   if (text.includes("duplicate key")) return "duplicate";
-  if (text.includes("failed to fetch") || text.includes("networkerror") || text.includes("timeout") || text.includes("koneksi"))
+  if (
+    text.includes("failed to fetch") ||
+    text.includes("networkerror") ||
+    text.includes("timeout") ||
+    text.includes("koneksi")
+  )
     return "transient";
 
   // Tidak dikenali: perlakukan sebagai sementara, tetapi outbox tetap membatasi

@@ -4,7 +4,12 @@ import { Briefcase, Plus, Receipt, ShoppingBag, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
-import { FinanceSummaryCard, LedgerListItem, OrderListItem, SalesListItem } from "@/components/mcm/finance-parts";
+import {
+  FinanceSummaryCard,
+  LedgerListItem,
+  OrderListItem,
+  SalesListItem,
+} from "@/components/mcm/finance-parts";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -22,9 +27,16 @@ export const Route = createFileRoute("/finance/")({
   head: () => ({
     meta: [
       { title: "Keuangan — MCM" },
-      { name: "description", content: "Ringkasan piutang, utang, penjualan, dan pesanan bisnis Anda dalam satu tampilan." },
+      {
+        name: "description",
+        content:
+          "Ringkasan piutang, utang, penjualan, dan pesanan bisnis Anda dalam satu tampilan.",
+      },
       { property: "og:title", content: "Keuangan — MCM" },
-      { property: "og:description", content: "Pantau piutang, utang, penjualan, dan pesanan bisnis." },
+      {
+        property: "og:description",
+        content: "Pantau piutang, utang, penjualan, dan pesanan bisnis.",
+      },
     ],
   }),
   component: FinancePage,
@@ -33,11 +45,26 @@ export const Route = createFileRoute("/finance/")({
 function FinancePage() {
   const { userId, loading } = useRequireAuth();
   const qc = useQueryClient();
-  const { data: ledgers, isLoading: ledgersLoading, isError: ledgersError, refetch: refetchLedgers } = useLedgers(userId);
+  const {
+    data: ledgers,
+    isLoading: ledgersLoading,
+    isError: ledgersError,
+    refetch: refetchLedgers,
+  } = useLedgers(userId);
   const { data: biz, isLoading: bizLoading } = useMyBusiness(userId);
   const businessId = biz?.business.id;
-  const { data: sales, isLoading: salesLoading, isError: salesError, refetch: refetchSales } = useSales(businessId);
-  const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders(businessId);
+  const {
+    data: sales,
+    isLoading: salesLoading,
+    isError: salesError,
+    refetch: refetchSales,
+  } = useSales(businessId);
+  const {
+    data: orders,
+    isLoading: ordersLoading,
+    isError: ordersError,
+    refetch: refetchOrders,
+  } = useOrders(businessId);
 
   // Catatan utang/piutang milik saya maupun yang dikirim pihak lain harus
   // memperbarui daftar dan kartu ringkasan tanpa refresh manual.
@@ -70,7 +97,12 @@ function FinancePage() {
       case "utang":
         return all.filter((l) => l.type === "payable" && OPEN_STATUSES.includes(l.status));
       case "jatuh_tempo":
-        return all.filter((l) => OPEN_STATUSES.includes(l.status) && l.due_date && new Date(l.due_date).getTime() <= today);
+        return all.filter(
+          (l) =>
+            OPEN_STATUSES.includes(l.status) &&
+            l.due_date &&
+            new Date(l.due_date).getTime() <= today,
+        );
       case "lunas":
         return all.filter((l) => l.status === "paid");
       default:
@@ -103,12 +135,26 @@ function FinancePage() {
           }
         >
           <div className="grid grid-cols-2 gap-2 px-3 pb-3">
-            <FinanceSummaryCard label="Piutang" value={rupiah(summary.receivable)} hint="Belum dibayar ke Anda" tone="success" />
-            <FinanceSummaryCard label="Utang" value={rupiah(summary.payable)} hint="Belum Anda bayar" tone="danger" />
+            <FinanceSummaryCard
+              label="Piutang"
+              value={rupiah(summary.receivable)}
+              hint="Belum dibayar ke Anda"
+              tone="success"
+            />
+            <FinanceSummaryCard
+              label="Utang"
+              value={rupiah(summary.payable)}
+              hint="Belum Anda bayar"
+              tone="danger"
+            />
             <FinanceSummaryCard
               label="Jatuh tempo"
               value={`${summary.dueCount} catatan`}
-              hint={summary.overdueCount > 0 ? `${summary.overdueCount} sudah lewat` : "Belum ada yang lewat"}
+              hint={
+                summary.overdueCount > 0
+                  ? `${summary.overdueCount} sudah lewat`
+                  : "Belum ada yang lewat"
+              }
               tone="warning"
             />
             <FinanceSummaryCard
@@ -133,18 +179,40 @@ function FinancePage() {
         <div className="space-y-3 px-4 py-4 pb-24">
           <Tabs value={ledgerFilter} onValueChange={setLedgerFilter}>
             <TabsList className="w-full rounded-xl">
-              <TabsTrigger value="semua" className="flex-1 rounded-lg text-xs">Semua</TabsTrigger>
-              <TabsTrigger value="piutang" className="flex-1 rounded-lg text-xs">Piutang</TabsTrigger>
-              <TabsTrigger value="utang" className="flex-1 rounded-lg text-xs">Utang</TabsTrigger>
-              <TabsTrigger value="jatuh_tempo" className="flex-1 rounded-lg text-xs">Jatuh tempo</TabsTrigger>
-              <TabsTrigger value="lunas" className="flex-1 rounded-lg text-xs">Lunas</TabsTrigger>
+              <TabsTrigger value="semua" className="flex-1 rounded-lg text-xs">
+                Semua
+              </TabsTrigger>
+              <TabsTrigger value="piutang" className="flex-1 rounded-lg text-xs">
+                Piutang
+              </TabsTrigger>
+              <TabsTrigger value="utang" className="flex-1 rounded-lg text-xs">
+                Utang
+              </TabsTrigger>
+              <TabsTrigger value="jatuh_tempo" className="flex-1 rounded-lg text-xs">
+                Jatuh tempo
+              </TabsTrigger>
+              <TabsTrigger value="lunas" className="flex-1 rounded-lg text-xs">
+                Lunas
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
           {loading || ledgersLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : ledgersError ? (
-            <EmptyState icon={Wallet} title="Gagal memuat catatan" description="Terjadi kesalahan saat memuat data." action={<button className="text-sm text-primary underline" onClick={() => void refetchLedgers()}>Coba lagi</button>} />
+            <EmptyState
+              icon={Wallet}
+              title="Gagal memuat catatan"
+              description="Terjadi kesalahan saat memuat data."
+              action={
+                <button
+                  className="text-sm text-primary underline"
+                  onClick={() => void refetchLedgers()}
+                >
+                  Coba lagi
+                </button>
+              }
+            />
           ) : filteredLedgers.length === 0 ? (
             <EmptyState
               icon={Wallet}
@@ -173,13 +241,33 @@ function FinancePage() {
           {loading || bizLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : !hasBusiness ? (
-            <EmptyState icon={Briefcase} title="Belum ada bisnis" description="Buat bisnis terlebih dahulu di menu Bisnis untuk mulai mencatat penjualan." />
+            <EmptyState
+              icon={Briefcase}
+              title="Belum ada bisnis"
+              description="Buat bisnis terlebih dahulu di menu Bisnis untuk mulai mencatat penjualan."
+            />
           ) : salesLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : salesError ? (
-            <EmptyState icon={Receipt} title="Gagal memuat penjualan" description="Terjadi kesalahan saat memuat data." action={<button className="text-sm text-primary underline" onClick={() => void refetchSales()}>Coba lagi</button>} />
+            <EmptyState
+              icon={Receipt}
+              title="Gagal memuat penjualan"
+              description="Terjadi kesalahan saat memuat data."
+              action={
+                <button
+                  className="text-sm text-primary underline"
+                  onClick={() => void refetchSales()}
+                >
+                  Coba lagi
+                </button>
+              }
+            />
           ) : (sales ?? []).length === 0 ? (
-            <EmptyState icon={Receipt} title="Belum ada penjualan" description="Penjualan yang Anda catat akan muncul di sini." />
+            <EmptyState
+              icon={Receipt}
+              title="Belum ada penjualan"
+              description="Penjualan yang Anda catat akan muncul di sini."
+            />
           ) : (
             <ul className="space-y-3">
               {(sales ?? []).map((s) => (
@@ -197,18 +285,41 @@ function FinancePage() {
           {loading || bizLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : !hasBusiness ? (
-            <EmptyState icon={Briefcase} title="Belum ada bisnis" description="Buat bisnis terlebih dahulu di menu Bisnis untuk mulai menerima pesanan." />
+            <EmptyState
+              icon={Briefcase}
+              title="Belum ada bisnis"
+              description="Buat bisnis terlebih dahulu di menu Bisnis untuk mulai menerima pesanan."
+            />
           ) : ordersLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : ordersError ? (
-            <EmptyState icon={ShoppingBag} title="Gagal memuat pesanan" description="Terjadi kesalahan saat memuat data." action={<button className="text-sm text-primary underline" onClick={() => void refetchOrders()}>Coba lagi</button>} />
+            <EmptyState
+              icon={ShoppingBag}
+              title="Gagal memuat pesanan"
+              description="Terjadi kesalahan saat memuat data."
+              action={
+                <button
+                  className="text-sm text-primary underline"
+                  onClick={() => void refetchOrders()}
+                >
+                  Coba lagi
+                </button>
+              }
+            />
           ) : (orders ?? []).length === 0 ? (
-            <EmptyState icon={ShoppingBag} title="Belum ada pesanan" description="Pesanan pelanggan akan muncul di sini." />
+            <EmptyState
+              icon={ShoppingBag}
+              title="Belum ada pesanan"
+              description="Pesanan pelanggan akan muncul di sini."
+            />
           ) : (
             <ul className="space-y-3">
               {(orders ?? []).map((o) => (
                 <li key={o.id}>
-                  <OrderListItem order={o} onChangeStatus={(status) => void changeOrderStatus(o, status)} />
+                  <OrderListItem
+                    order={o}
+                    onChangeStatus={(status) => void changeOrderStatus(o, status)}
+                  />
                 </li>
               ))}
             </ul>
@@ -253,19 +364,36 @@ function FinancePage() {
                     <li key={idx} className="flex items-center justify-between gap-2 p-3 text-sm">
                       <div className="min-w-0">
                         <p className="truncate font-medium">{it.name}</p>
-                        <p className="text-xs text-muted-foreground">{it.qty} x {rupiah(it.price)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {it.qty} x {rupiah(it.price)}
+                        </p>
                       </div>
-                      <p className="shrink-0 font-semibold">{rupiah(it.qty * (it.price - it.discount))}</p>
+                      <p className="shrink-0 font-semibold">
+                        {rupiah(it.qty * (it.price - it.discount))}
+                      </p>
                     </li>
                   ))}
                   {salesPayload(selectedSale).items.length === 0 && (
-                    <li className="p-3 text-center text-xs text-muted-foreground">Tidak ada rincian item.</li>
+                    <li className="p-3 text-center text-xs text-muted-foreground">
+                      Tidak ada rincian item.
+                    </li>
                   )}
                 </ul>
                 <div className="card-soft space-y-1 p-3 text-sm">
-                  <div className="flex justify-between"><span>Total</span><span className="font-semibold">{rupiah(Number(selectedSale.total))}</span></div>
-                  <div className="flex justify-between"><span>Dibayar</span><span>{rupiah(Number(selectedSale.paid_amount))}</span></div>
-                  <div className="flex justify-between"><span>Sisa</span><span>{rupiah(Number(selectedSale.total) - Number(selectedSale.paid_amount))}</span></div>
+                  <div className="flex justify-between">
+                    <span>Total</span>
+                    <span className="font-semibold">{rupiah(Number(selectedSale.total))}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Dibayar</span>
+                    <span>{rupiah(Number(selectedSale.paid_amount))}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Sisa</span>
+                    <span>
+                      {rupiah(Number(selectedSale.total) - Number(selectedSale.paid_amount))}
+                    </span>
+                  </div>
                 </div>
               </div>
             </>

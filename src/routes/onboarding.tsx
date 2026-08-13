@@ -9,9 +9,16 @@ export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
       { title: "Kenalan dengan MCM — Onboarding" },
-      { name: "description", content: "Tiga langkah singkat memahami PIN privat, chat aman, dan catatan utang bersama di MCM." },
+      {
+        name: "description",
+        content:
+          "Tiga langkah singkat memahami PIN privat, chat aman, dan catatan utang bersama di MCM.",
+      },
       { property: "og:title", content: "Kenalan dengan MCM" },
-      { property: "og:description", content: "PIN privat, chat & panggilan, serta catatan utang-piutang bersama." },
+      {
+        property: "og:description",
+        content: "PIN privat, chat & panggilan, serta catatan utang-piutang bersama.",
+      },
     ],
   }),
   component: Onboarding,
@@ -50,8 +57,19 @@ function Onboarding() {
     <div className="app-gradient min-h-screen text-navy-foreground">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 py-10">
         <div className="flex items-center justify-between">
-          <img src={logo} alt="Logo MCM" width={512} height={512} className="size-10" loading="lazy" />
-          <Button variant="ghost" className="text-navy-foreground hover:bg-white/10" onClick={finish}>
+          <img
+            src={logo}
+            alt="Logo MCM"
+            width={512}
+            height={512}
+            className="size-10"
+            loading="lazy"
+          />
+          <Button
+            variant="ghost"
+            className="text-navy-foreground hover:bg-white/10"
+            onClick={finish}
+          >
             Lewati
           </Button>
         </div>
@@ -67,7 +85,10 @@ function Onboarding() {
             {SLIDES.map((_, i) => (
               <span
                 key={i}
-                className={cn("h-1.5 rounded-full transition-all", i === index ? "w-6 bg-primary" : "w-1.5 bg-white/30")}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === index ? "w-6 bg-primary" : "w-1.5 bg-white/30",
+                )}
               />
             ))}
           </div>

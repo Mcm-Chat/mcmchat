@@ -1,5 +1,12 @@
 /** Logika fan-out push (server-only). Tidak pernah diimpor klien. */
-import { CHANNELS, notificationTitle, previewBody, type NotifCategory, type PushData, type PushKind } from "./payload";
+import {
+  CHANNELS,
+  notificationTitle,
+  previewBody,
+  type NotifCategory,
+  type PushData,
+  type PushKind,
+} from "./payload";
 import { sendPush, pushConfigured, type FcmResult, type PushTarget } from "./fcm.server";
 
 type Row = Record<string, unknown>;
@@ -13,13 +20,22 @@ async function admin() {
 async function pruneTokens(tokens: string[]) {
   if (tokens.length === 0) return;
   const db = await admin();
-  await db.from("devices").update({ push_token: null, revoked_at: new Date().toISOString() }).in("push_token", tokens);
+  await db
+    .from("devices")
+    .update({ push_token: null, revoked_at: new Date().toISOString() })
+    .in("push_token", tokens);
 }
 
 /** Push pesan chat baru ke seluruh anggota lain (mute + preferensi dihormati). */
 export async function dispatchMessagePush(messageId: string): Promise<FcmResult> {
   if (!pushConfigured()) {
-    return { configured: false, sent: 0, failed: 0, invalidTokens: [], reason: "FCM belum terhubung" };
+    return {
+      configured: false,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "FCM belum terhubung",
+    };
   }
   const db = await admin();
 
@@ -28,7 +44,14 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
     .select("id, conversation_id, sender_id, kind, body")
     .eq("id", messageId)
     .maybeSingle();
-  if (!msg) return { configured: true, sent: 0, failed: 0, invalidTokens: [], reason: "pesan tidak ditemukan" };
+  if (!msg)
+    return {
+      configured: true,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "pesan tidak ditemukan",
+    };
 
   const [{ data: conv }, { data: sender }] = await Promise.all([
     db.from("conversations").select("id, type, title").eq("id", msg.conversation_id).maybeSingle(),
@@ -51,7 +74,9 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
     const group = rows.filter((r) => Boolean(r["allow_preview"]) === allowPreview);
     if (group.length === 0) continue;
     const chatTitle =
-      (conv?.type === "group" ? conv?.title : sender?.display_name) ?? sender?.display_name ?? "MCM";
+      (conv?.type === "group" ? conv?.title : sender?.display_name) ??
+      sender?.display_name ??
+      "MCM";
     const data: PushData = {
       kind: "message",
       channel: CHANNELS.messages.id,
@@ -97,10 +122,19 @@ export type EventPush = {
 /** Push non-chat: tugas penyiapan, penjualan/pesanan, hutang/pembayaran. */
 export async function dispatchEventPush(event: EventPush): Promise<FcmResult> {
   if (!pushConfigured()) {
-    return { configured: false, sent: 0, failed: 0, invalidTokens: [], reason: "FCM belum terhubung" };
+    return {
+      configured: false,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "FCM belum terhubung",
+    };
   }
   const db = await admin();
-  const { data } = await db.rpc("push_targets_for_user", { _user: event.userId, _category: event.category });
+  const { data } = await db.rpc("push_targets_for_user", {
+    _user: event.userId,
+    _category: event.category,
+  });
   const rows = (data ?? []) as unknown as Row[];
   if (rows.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
 
@@ -108,12 +142,12 @@ export async function dispatchEventPush(event: EventPush): Promise<FcmResult> {
     event.category === "calls"
       ? CHANNELS.calls.id
       : event.category === "tasks"
-      ? CHANNELS.tasks.id
-      : event.category === "sales"
-        ? CHANNELS.sales.id
-        : event.category === "ledger"
-          ? CHANNELS.ledger.id
-          : CHANNELS.general.id;
+        ? CHANNELS.tasks.id
+        : event.category === "sales"
+          ? CHANNELS.sales.id
+          : event.category === "ledger"
+            ? CHANNELS.ledger.id
+            : CHANNELS.general.id;
 
   const invalid: string[] = [];
   let sent = 0;

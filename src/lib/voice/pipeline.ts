@@ -107,7 +107,11 @@ export class VoicePipeline {
    */
   async attach(input: MediaStream): Promise<MediaStream> {
     if (!audioSupported()) {
-      this.emit({ status: "unsupported", reason: "Perangkat tidak mendukung pemrosesan audio", latencyMs: 0 });
+      this.emit({
+        status: "unsupported",
+        reason: "Perangkat tidak mendukung pemrosesan audio",
+        latencyMs: 0,
+      });
       return input;
     }
     try {
@@ -174,17 +178,38 @@ export class VoicePipeline {
       out.connect(dest);
 
       this.ctx = ctx;
-      this.nodes = { source, worklet, lowShelf, highShelf, bandpass, dry, wetDelay, wetFeedback, wet, out, dest, analyser };
-      const latencyMs = Math.round(((ctx.baseLatency ?? 0) + (worklet ? 1024 / ctx.sampleRate : 0)) * 1000);
+      this.nodes = {
+        source,
+        worklet,
+        lowShelf,
+        highShelf,
+        bandpass,
+        dry,
+        wetDelay,
+        wetFeedback,
+        wet,
+        out,
+        dest,
+        analyser,
+      };
+      const latencyMs = Math.round(
+        ((ctx.baseLatency ?? 0) + (worklet ? 1024 / ctx.sampleRate : 0)) * 1000,
+      );
       this.emit({
         status: worklet ? "active" : "bypass",
         latencyMs,
-        ...(worklet ? {} : { reason: "Perangkat tidak mendukung AudioWorklet — suara normal dipakai" }),
+        ...(worklet
+          ? {}
+          : { reason: "Perangkat tidak mendukung AudioWorklet — suara normal dipakai" }),
       });
       this.setParams(this.params);
       return dest.stream;
     } catch {
-      this.emit({ status: "failed", reason: "Efek suara gagal dimuat — kembali ke suara normal", latencyMs: 0 });
+      this.emit({
+        status: "failed",
+        reason: "Efek suara gagal dimuat — kembali ke suara normal",
+        latencyMs: 0,
+      });
       return input;
     }
   }

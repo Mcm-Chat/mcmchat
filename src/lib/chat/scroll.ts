@@ -1,7 +1,11 @@
 /** Jarak (px) dari dasar daftar yang masih dianggap "sedang membaca pesan terbaru". */
 export const BOTTOM_THRESHOLD_PX = 120;
 
-export function isNearBottom(el: { scrollHeight: number; scrollTop: number; clientHeight: number }): boolean {
+export function isNearBottom(el: {
+  scrollHeight: number;
+  scrollTop: number;
+  clientHeight: number;
+}): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight < BOTTOM_THRESHOLD_PX;
 }
 

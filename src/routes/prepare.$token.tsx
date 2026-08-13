@@ -2,7 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { Camera, CheckCircle2, Images, Loader2, MapPin, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  Camera,
+  CheckCircle2,
+  Images,
+  Loader2,
+  MapPin,
+  RefreshCw,
+  ShieldAlert,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,10 +33,17 @@ export const Route = createFileRoute("/prepare/$token")({
   head: () => ({
     meta: [
       { title: "Tugas Penyiapan — MCM" },
-      { name: "description", content: "Halaman tugas penyiapan pegawai: foto barang, lokasi GPS, dan jumlah aktual per item." },
+      {
+        name: "description",
+        content:
+          "Halaman tugas penyiapan pegawai: foto barang, lokasi GPS, dan jumlah aktual per item.",
+      },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Tugas Penyiapan — MCM" },
-      { property: "og:description", content: "Selesaikan tugas penyiapan barang dengan foto dan lokasi." },
+      {
+        property: "og:description",
+        content: "Selesaikan tugas penyiapan barang dengan foto dan lokasi.",
+      },
     ],
   }),
   component: PreparePage,
@@ -53,7 +69,9 @@ function PreparePage() {
   const completing = useMutation({
     mutationFn: () => complete({ data: { token } }),
     onSuccess: (res) => {
-      toast.success(res.already ? "Tugas ini sudah selesai sebelumnya" : "Tugas selesai. Hasil masuk katalog.");
+      toast.success(
+        res.already ? "Tugas ini sudah selesai sebelumnya" : "Tugas selesai. Hasil masuk katalog.",
+      );
       void qc.invalidateQueries({ queryKey: ["prep-task", token] });
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : "Gagal menyelesaikan tugas"),
@@ -72,7 +90,10 @@ function PreparePage() {
       <Center>
         <ShieldAlert className="size-10 text-destructive" />
         <h1 className="text-lg font-semibold">Tautan tidak berlaku</h1>
-        <p className="text-sm text-muted-foreground">Tautan tugas ini sudah dicabut, kedaluwarsa, atau tidak sah. Minta admin menerbitkan ulang barcode.</p>
+        <p className="text-sm text-muted-foreground">
+          Tautan tugas ini sudah dicabut, kedaluwarsa, atau tidak sah. Minta admin menerbitkan ulang
+          barcode.
+        </p>
       </Center>
     );
   }
@@ -87,11 +108,15 @@ function PreparePage() {
         <header className="card-soft space-y-1 p-4">
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold">{task.code}</h1>
-            <Badge variant={done ? "default" : "secondary"}>{done ? "Selesai" : "Perlu disiapkan"}</Badge>
+            <Badge variant={done ? "default" : "secondary"}>
+              {done ? "Selesai" : "Perlu disiapkan"}
+            </Badge>
           </div>
           <p className="text-sm text-muted-foreground">Pelanggan: {task.customer_name || "—"}</p>
           <p className="text-xs text-muted-foreground">{task.business_name}</p>
-          {task.notes && <p className="rounded-lg bg-muted p-2 text-xs">Catatan admin: {task.notes}</p>}
+          {task.notes && (
+            <p className="rounded-lg bg-muted p-2 text-xs">Catatan admin: {task.notes}</p>
+          )}
           <p className="text-[11px] text-muted-foreground">
             {task.items.filter(itemComplete).length}/{task.items.length} item siap
           </p>
@@ -106,12 +131,17 @@ function PreparePage() {
           disabled={done || !ready || completing.isPending}
           onClick={() => completing.mutate()}
         >
-          {completing.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+          {completing.isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="size-4" />
+          )}
           {done ? "Tugas sudah selesai" : "Selesai & kirim ke katalog"}
         </Button>
         {!done && !ready && (
           <p className="pb-6 text-center text-xs text-muted-foreground">
-            Lengkapi foto, lokasi, dan jumlah aktual pada setiap item wajib untuk mengaktifkan tombol selesai.
+            Lengkapi foto, lokasi, dan jumlah aktual pada setiap item wajib untuk mengaktifkan
+            tombol selesai.
           </p>
         )}
       </div>
@@ -127,11 +157,21 @@ function itemComplete(i: PrepItem) {
 
 function Center({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-2 px-6 text-center">{children}</div>
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-2 px-6 text-center">
+      {children}
+    </div>
   );
 }
 
-function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; readOnly: boolean }) {
+function ItemBlock({
+  token,
+  item,
+  readOnly,
+}: {
+  token: string;
+  item: PrepItem;
+  readOnly: boolean;
+}) {
   const qc = useQueryClient();
   const save = useServerFn(savePrepareItem);
   const addPhoto = useServerFn(addPreparePhoto);
@@ -158,7 +198,11 @@ function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; r
       setGeoBusy(true);
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const next = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy) };
+          const next = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: Math.round(pos.coords.accuracy),
+          };
           setCoords(next);
           setGeoError("");
           setGeoBusy(false);
@@ -216,7 +260,9 @@ function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; r
       return;
     }
     try {
-      await save({ data: { token, itemId: item.id, actualQtyBase: Math.round(n * 100) / 100, notes } });
+      await save({
+        data: { token, itemId: item.id, actualQtyBase: Math.round(n * 100) / 100, notes },
+      });
       await refresh();
       toast.success("Jumlah aktual disimpan");
     } catch (err) {
@@ -232,7 +278,8 @@ function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; r
             {item.product_name} — {item.variant_name}
           </h2>
           <p className="text-xs text-muted-foreground">
-            Diminta {item.requested_qty} {item.requested_unit} ({item.requested_qty_base} {item.base_unit})
+            Diminta {item.requested_qty} {item.requested_unit} ({item.requested_qty_base}{" "}
+            {item.base_unit})
           </p>
         </div>
         {itemComplete(item) && <CheckCircle2 className="size-5 shrink-0 text-success" />}
@@ -265,14 +312,29 @@ function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; r
       {!readOnly && (
         <>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" className="rounded-xl" disabled={busy} onClick={() => cameraRef.current?.click()}>
+            <Button
+              variant="secondary"
+              className="rounded-xl"
+              disabled={busy}
+              onClick={() => cameraRef.current?.click()}
+            >
               <Camera className="size-4" /> Kamera
             </Button>
-            <Button variant="secondary" className="rounded-xl" disabled={busy} onClick={() => galleryRef.current?.click()}>
+            <Button
+              variant="secondary"
+              className="rounded-xl"
+              disabled={busy}
+              onClick={() => galleryRef.current?.click()}
+            >
               <Images className="size-4" /> Galeri
             </Button>
           </div>
-          <Button variant="ghost" className="w-full rounded-xl" disabled={geoBusy} onClick={() => void askLocation()}>
+          <Button
+            variant="ghost"
+            className="w-full rounded-xl"
+            disabled={geoBusy}
+            onClick={() => void askLocation()}
+          >
             {geoBusy ? <Loader2 className="size-4 animate-spin" /> : <MapPin className="size-4" />}
             {coords ? `Lokasi siap · ±${coords.accuracy} m` : "Ambil lokasi GPS"}
           </Button>
@@ -312,13 +374,27 @@ function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; r
         <ul className="grid grid-cols-2 gap-2">
           {item.photos.map((p) => (
             <li key={p.id} className="overflow-hidden rounded-xl border border-border">
-              {p.url && <img src={p.url} alt={`Foto ${item.product_name}`} className="h-24 w-full object-cover" loading="lazy" />}
+              {p.url && (
+                <img
+                  src={p.url}
+                  alt={`Foto ${item.product_name}`}
+                  className="h-24 w-full object-cover"
+                  loading="lazy"
+                />
+              )}
               <div className="space-y-1 p-2">
                 <p className="truncate text-[10px] text-muted-foreground">
-                  {p.lat !== null && p.lng !== null ? `${p.location_label} · ±${p.accuracy ?? 0} m` : "Tanpa lokasi"}
+                  {p.lat !== null && p.lng !== null
+                    ? `${p.location_label} · ±${p.accuracy ?? 0} m`
+                    : "Tanpa lokasi"}
                 </p>
                 {p.maps_url && (
-                  <a href={p.maps_url} target="_blank" rel="noreferrer" className="block text-[10px] font-semibold text-primary">
+                  <a
+                    href={p.maps_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-[10px] font-semibold text-primary"
+                  >
                     Buka lokasi
                   </a>
                 )}
@@ -327,7 +403,9 @@ function ItemBlock({ token, item, readOnly }: { token: string; item: PrepItem; r
                     size="sm"
                     variant="ghost"
                     className="h-7 w-full text-[10px] text-destructive"
-                    onClick={() => void removePhoto({ data: { token, photoId: p.id } }).then(refresh)}
+                    onClick={() =>
+                      void removePhoto({ data: { token, photoId: p.id } }).then(refresh)
+                    }
                   >
                     <Trash2 className="size-3" /> Hapus
                   </Button>

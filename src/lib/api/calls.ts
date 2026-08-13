@@ -22,7 +22,11 @@ export const RING_TIMEOUT_MS = 45_000;
  * sudah menjadi peserta ketika event realtime INSERT terlihat. Peserta diambil
  * server dari anggota percakapan — klien tidak bisa menyisipkan orang lain.
  */
-export async function startCall(conversationId: string, kind: CallRow["kind"], maxParticipants = 8) {
+export async function startCall(
+  conversationId: string,
+  kind: CallRow["kind"],
+  maxParticipants = 8,
+) {
   const { data, error } = await supabase.rpc("create_call_tx", {
     _conversation: conversationId,
     _kind: kind,
@@ -35,7 +39,12 @@ export async function startCall(conversationId: string, kind: CallRow["kind"], m
   return call;
 }
 
-export async function endCall(callId: string, status: CallRow["status"], durationSec: number, reason?: string) {
+export async function endCall(
+  callId: string,
+  status: CallRow["status"],
+  durationSec: number,
+  reason?: string,
+) {
   const { error } = await supabase.rpc("end_call", {
     _call: callId,
     _status: status,
@@ -61,7 +70,11 @@ export async function declineCall(callId: string) {
 }
 
 export async function leaveCall(callId: string, userId: string) {
-  await supabase.from("call_participants").update({ left_at: new Date().toISOString() }).eq("call_id", callId).eq("user_id", userId);
+  await supabase
+    .from("call_participants")
+    .update({ left_at: new Date().toISOString() })
+    .eq("call_id", callId)
+    .eq("user_id", userId);
 }
 
 /** Tandai panggilan berdering yang kedaluwarsa sebagai tak terjawab. */
@@ -135,11 +148,19 @@ export type CallParticipantProfile = {
 export type CallHistoryItem = CallRow & { participants: CallParticipantProfile[] };
 
 export async function listCalls(userId: string): Promise<CallHistoryItem[]> {
-  const mine = unwrap(await supabase.from("call_participants").select("call_id").eq("user_id", userId), "Gagal memuat panggilan");
+  const mine = unwrap(
+    await supabase.from("call_participants").select("call_id").eq("user_id", userId),
+    "Gagal memuat panggilan",
+  );
   if (mine.length === 0) return [];
   const ids = mine.map((m) => m.call_id);
   const [calls, parts] = await Promise.all([
-    supabase.from("calls").select("*").in("id", ids).order("created_at", { ascending: false }).limit(100),
+    supabase
+      .from("calls")
+      .select("*")
+      .in("id", ids)
+      .order("created_at", { ascending: false })
+      .limit(100),
     supabase.from("call_participants").select("call_id, user_id").in("call_id", ids),
   ]);
   const profileIds = [...new Set((parts.data ?? []).map((p) => p.user_id))];

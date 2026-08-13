@@ -4,8 +4,10 @@ ext {
     mcmVersionName = "1.0.0"
 
     minSdkVersion = 23
-    compileSdkVersion = 35
-    targetSdkVersion = 35
+    // Google Play mewajibkan target Android 16 (API 36) untuk pengajuan
+    // setelah 31 Agustus 2026.
+    compileSdkVersion = 36
+    targetSdkVersion = 36
     androidxActivityVersion = '1.9.2'
     androidxAppCompatVersion = '1.7.0'
     androidxCoordinatorLayoutVersion = '1.2.0'

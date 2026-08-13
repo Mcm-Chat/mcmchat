@@ -27,7 +27,11 @@ export function FinanceSummaryCard({
   };
   return (
     <div className="card-soft p-3">
-      <span className={cn("inline-flex rounded-lg px-2 py-0.5 text-[10px] font-semibold", map[tone])}>{label}</span>
+      <span
+        className={cn("inline-flex rounded-lg px-2 py-0.5 text-[10px] font-semibold", map[tone])}
+      >
+        {label}
+      </span>
       <p className="mt-2 text-base leading-tight font-bold">{value}</p>
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
     </div>
@@ -61,12 +65,15 @@ export function LedgerListItem({ ledger }: { ledger: LedgerRow }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <p className="truncate text-sm font-semibold">{ledger.counterpart_name}</p>
-            <StatusBadge tone={LEDGER_TONE[ledger.status]}>{LEDGER_STATUS_LABEL[ledger.status]}</StatusBadge>
+            <StatusBadge tone={LEDGER_TONE[ledger.status]}>
+              {LEDGER_STATUS_LABEL[ledger.status]}
+            </StatusBadge>
           </div>
           {ledger.note && <p className="truncate text-xs text-muted-foreground">{ledger.note}</p>}
           <p className="mt-1.5 text-base font-bold">{rupiah(sisa)}</p>
           <p className="text-[11px] text-muted-foreground">
-            {receivable ? "Piutang saya" : "Saya berutang"} • dari {rupiah(Number(ledger.amount))} • dibayar {rupiah(Number(ledger.paid_amount))}
+            {receivable ? "Piutang saya" : "Saya berutang"} • dari {rupiah(Number(ledger.amount))} •
+            dibayar {rupiah(Number(ledger.paid_amount))}
           </p>
           {ledger.due_date && (
             <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -76,7 +83,9 @@ export function LedgerListItem({ ledger }: { ledger: LedgerRow }) {
           )}
           <div className="mt-2 flex gap-2">
             <Button asChild size="sm" variant="outline" className="h-8 flex-1 rounded-xl text-xs">
-              <Link to="/ledger/$id" params={{ id: ledger.id }}>Lihat detail</Link>
+              <Link to="/ledger/$id" params={{ id: ledger.id }}>
+                Lihat detail
+              </Link>
             </Button>
             {ledger.conversation_id && (
               <Button asChild size="sm" variant="ghost" className="h-8 flex-1 rounded-xl text-xs">
@@ -96,17 +105,24 @@ export function SalesListItem({ sale, onOpen }: { sale: SalesRecordRow; onOpen: 
   const payload = salesPayload(sale);
   const outstanding = Number(sale.total) - Number(sale.paid_amount);
   return (
-    <button type="button" onClick={onOpen} className="card-soft block w-full p-4 text-left transition-colors hover:bg-muted/40">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="card-soft block w-full p-4 text-left transition-colors hover:bg-muted/40"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{payload.number}</p>
           <p className="truncate text-xs text-muted-foreground">{payload.customerName}</p>
         </div>
-        <StatusBadge tone={outstanding > 0 ? "warning" : "success"}>{outstanding > 0 ? "Belum lunas" : "Lunas"}</StatusBadge>
+        <StatusBadge tone={outstanding > 0 ? "warning" : "success"}>
+          {outstanding > 0 ? "Belum lunas" : "Lunas"}
+        </StatusBadge>
       </div>
       <p className="mt-1.5 text-base font-bold">{rupiah(Number(sale.total))}</p>
       <p className="text-[11px] text-muted-foreground">
-        {PAYMENT_LABEL[sale.payment_method]} • dibayar {rupiah(Number(sale.paid_amount))} • {tanggal(sale.created_at)}
+        {PAYMENT_LABEL[sale.payment_method]} • dibayar {rupiah(Number(sale.paid_amount))} •{" "}
+        {tanggal(sale.created_at)}
       </p>
     </button>
   );
@@ -148,17 +164,28 @@ export function OrderListItem({
           <p className="truncate text-sm font-semibold">{order.number}</p>
           <p className="truncate text-xs text-muted-foreground">{tanggal(order.created_at)}</p>
         </div>
-        <StatusBadge tone={ORDER_STATUS_TONE[order.status]}>{ORDER_STATUS_LABEL[order.status]}</StatusBadge>
+        <StatusBadge tone={ORDER_STATUS_TONE[order.status]}>
+          {ORDER_STATUS_LABEL[order.status]}
+        </StatusBadge>
       </div>
       <p className="mt-1.5 text-base font-bold">{rupiah(Number(order.total))}</p>
       <div className="mt-2 flex gap-2">
         {next && (
-          <Button size="sm" className="h-8 flex-1 rounded-xl text-xs" onClick={() => onChangeStatus(next)}>
+          <Button
+            size="sm"
+            className="h-8 flex-1 rounded-xl text-xs"
+            onClick={() => onChangeStatus(next)}
+          >
             Tandai {ORDER_STATUS_LABEL[next]}
           </Button>
         )}
         {order.status !== "cancelled" && order.status !== "completed" && (
-          <Button size="sm" variant="outline" className="h-8 flex-1 rounded-xl text-xs text-destructive" onClick={() => onChangeStatus("cancelled")}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 flex-1 rounded-xl text-xs text-destructive"
+            onClick={() => onChangeStatus("cancelled")}
+          >
             Batalkan
           </Button>
         )}

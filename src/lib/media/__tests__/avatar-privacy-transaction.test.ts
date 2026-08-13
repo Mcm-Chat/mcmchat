@@ -22,7 +22,9 @@ const sql = readdirSync(path.resolve(process.cwd(), "supabase/migrations"))
   .replace(/\s+/g, " ")
   .toLowerCase();
 
-const fn = sql.slice(sql.lastIndexOf("create or replace function public.set_avatar_privacy_audience"));
+const fn = sql.slice(
+  sql.lastIndexOf("create or replace function public.set_avatar_privacy_audience"),
+);
 
 describe("RPC set_avatar_privacy_audience (invarian SQL)", () => {
   it("ada, atomik (satu fungsi), dan security definer dengan search_path terkunci", () => {
@@ -43,7 +45,9 @@ describe("RPC set_avatar_privacy_audience (invarian SQL)", () => {
   });
 
   it("memvalidasi target sebagai kontak yang tidak diblokir (rollback bila tidak)", () => {
-    expect(fn).toMatch(/from public\.contacts c where c\.owner_id = _uid and c\.contact_id = t and c\.is_blocked = false/);
+    expect(fn).toMatch(
+      /from public\.contacts c where c\.owner_id = _uid and c\.contact_id = t and c\.is_blocked = false/,
+    );
     expect(fn).toMatch(/sebagian kontak tidak valid atau diblokir/);
   });
 
@@ -55,7 +59,9 @@ describe("RPC set_avatar_privacy_audience (invarian SQL)", () => {
   });
 
   it("mengganti audiens dan privacy bersama-sama, tanpa membocorkan daftar audiens", () => {
-    expect(fn).toMatch(/delete from public\.avatar_audience where owner_id = _uid and mode = _mode/);
+    expect(fn).toMatch(
+      /delete from public\.avatar_audience where owner_id = _uid and mode = _mode/,
+    );
     expect(fn).toMatch(/insert into public\.avatar_audience/);
     expect(fn).toMatch(/return jsonb_build_object\('privacy', _privacy, 'count', _count\)/);
     expect(fn).not.toMatch(/return query select .*target_id/);
@@ -68,7 +74,9 @@ describe("RPC set_avatar_privacy_audience (invarian SQL)", () => {
     expect(sql).toMatch(
       /grant execute on function public\.set_avatar_privacy_audience\(text, uuid\[\], boolean\) to authenticated/,
     );
-    expect(sql).not.toMatch(/grant execute on function public\.set_avatar_privacy_audience[^;]*to anon/);
+    expect(sql).not.toMatch(
+      /grant execute on function public\.set_avatar_privacy_audience[^;]*to anon/,
+    );
   });
 });
 
@@ -87,7 +95,10 @@ describe("saveAvatarPrivacyAudience (klien)", () => {
   });
 
   it("only_share kosong tanpa konfirmasi ditolak server dan melempar", async () => {
-    rpc.mockResolvedValue({ data: null, error: { message: "Konfirmasi diperlukan untuk berbagi tanpa penerima" } });
+    rpc.mockResolvedValue({
+      data: null,
+      error: { message: "Konfirmasi diperlukan untuk berbagi tanpa penerima" },
+    });
     await expect(saveAvatarPrivacyAudience("only_share", [], false)).rejects.toThrow(/konfirmasi/i);
   });
 
@@ -98,8 +109,13 @@ describe("saveAvatarPrivacyAudience (klien)", () => {
   });
 
   it("target tidak valid gagal tanpa perubahan lokal (error dilempar)", async () => {
-    rpc.mockResolvedValue({ data: null, error: { message: "Sebagian kontak tidak valid atau diblokir" } });
-    await expect(saveAvatarPrivacyAudience("only_share", ["x"], false)).rejects.toThrow(/tidak valid/i);
+    rpc.mockResolvedValue({
+      data: null,
+      error: { message: "Sebagian kontak tidak valid atau diblokir" },
+    });
+    await expect(saveAvatarPrivacyAudience("only_share", ["x"], false)).rejects.toThrow(
+      /tidak valid/i,
+    );
   });
 
   it("contacts_except kosong valid", async () => {
@@ -116,7 +132,10 @@ describe("UI profil: mode berbasis daftar tidak menyentuh DB sebelum simpan", ()
   );
 
   it("changeAvatarPrivacy menunda mode berbasis daftar sebagai pending", () => {
-    const body = src.slice(src.indexOf("const changeAvatarPrivacy"), src.indexOf("const onAudienceSaved"));
+    const body = src.slice(
+      src.indexOf("const changeAvatarPrivacy"),
+      src.indexOf("const onAudienceSaved"),
+    );
     const guard = body.indexOf("needsAudience(value)");
     expect(guard).toBeGreaterThan(-1);
     // setAvatarPrivacy hanya dipanggil setelah guard (mode biasa saja).

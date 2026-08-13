@@ -3,13 +3,13 @@
 Paket final: **`com.mcm.privateconnect`** · Nama aplikasi: **MCM** · Domain produksi: **https://mcmchat.id**
 
 > Catatan jujur: Android SDK/Gradle **tidak tersedia** di lingkungan editor, jadi APK/AAB belum pernah dibangun di sini.
-> Seluruh sumber, konfigurasi Gradle, manifest, resource, dan workflow signed AAB sudah lengkap dan siap dibuild di
+> Belum ada AAB rilis yang benar-benar dibangun/ditandatangani. Seluruh sumber, konfigurasi Gradle, manifest, resource, dan workflow signed AAB sudah lengkap dan siap dibuild di
 > mesin lokal atau GitHub Actions.
 
 ## 1. Ekspor & prasyarat
 1. GitHub → Export to GitHub, lalu `git clone`.
 2. `bun install` && `bun run build` (harus lolos).
-3. JDK 17 + Android Studio (SDK 35).
+3. JDK 17 + Android Studio (SDK 36 / Android 16, AGP 8.9.1).
 
 ## 2. Capacitor
 ```bash
@@ -22,7 +22,7 @@ File di `android/` pada repo ini menimpa hasil scaffold Capacitor — jangan hap
 
 | Berkas | Isi |
 | --- | --- |
-| `android/variables.gradle` | `mcmVersionCode` / `mcmVersionName` terpusat + versi SDK |
+| `android/variables.gradle` | `mcmVersionCode` / `mcmVersionName` terpusat + compileSdk/targetSdk **36** |
 | `android/app/build.gradle` | release AAB, R8/minify, signing dari environment |
 | `android/app/proguard-rules.pro` | keep rules Capacitor, FCM, LiveKit/WebRTC |
 | `android/app/src/main/AndroidManifest.xml` | izin minimum, App Links, FileProvider, kanal notifikasi |
@@ -47,11 +47,20 @@ Isi secret `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` di Project Set
 Tanpa secret, layar panggilan tampil "Belum terhubung" (bukan mock).
 
 ## 6. App Links (mcmchat.id)
-1. `public/.well-known/assetlinks.json` sudah ada; ganti `REPLACE_WITH_PLAY_APP_SIGNING_SHA256`
-   dengan fingerprint SHA-256 dari Play Console → Setup → App signing.
+1. `public/.well-known/assetlinks.json` masih berisi placeholder. Isi dengan fingerprint SHA-256
+   **Play App Signing key** (Play Console → Setup → App signing → "App signing key certificate"),
+   bukan upload key — upload key hanya dipakai untuk menandatangani AAB yang diunggah.
+   Cara aman: `MCM_ASSETLINKS_SHA256=AB:CD:... bun run verify:assetlinks` (menulis + memvalidasi format).
+   Workflow rilis memanggil gate yang sama dan **membatalkan build** bila fingerprint masih placeholder.
 2. Publish web ke domain `mcmchat.id`, pastikan `https://mcmchat.id/.well-known/assetlinks.json` dapat diakses publik.
 3. Verifikasi: `adb shell pm verify-app-links --re-verify com.mcm.privateconnect`.
 Path yang ditangani: `/chat`, `/status`, `/tasks`, `/prepare`, `/ledger`, `/delete-account`.
+
+## 6b. Verifikasi rilis
+- `bun run verify:assetlinks` — gagal bila fingerprint palsu/format salah.
+- `bun run verify:aab` — memeriksa package, targetSdk 36, deep link, dan POST_NOTIFICATIONS pada AAB
+  (SKIP jujur bila `bundletool`/AAB belum ada).
+- Workflow `android-release.yml` juga dapat membuat APK debug internal (`bun run android:debug-apk`).
 
 ## 7. Build & signing
 Lokal:
