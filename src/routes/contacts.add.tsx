@@ -106,7 +106,14 @@ function AddContactPage() {
         {found && (
           <div className="card-soft space-y-3 p-4">
             <div className="flex items-center gap-3">
-              <MCMAvatar initials={found.display_name.slice(0, 2).toUpperCase()} color={found.avatar_color} size="lg" />
+              <UserAvatar
+                userId={found.id}
+                path={found.avatar_url}
+                version={found.avatar_version}
+                name={found.display_name}
+                color={found.avatar_color}
+                size="lg"
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-base font-semibold">{found.display_name}</p>
                 <p className="font-mono text-xs text-muted-foreground">{found.pin}</p>
