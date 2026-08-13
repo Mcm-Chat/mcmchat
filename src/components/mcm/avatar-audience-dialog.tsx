@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserAvatar } from "@/components/mcm/user-avatar";
-import { listAvatarAudience, setAvatarAudience, type AvatarPrivacy } from "@/lib/api/avatar";
+import { listAvatarAudience, saveAvatarPrivacyAudience, type AvatarPrivacy } from "@/lib/api/avatar";
 import { listContacts } from "@/lib/api/contacts";
 import {
   audienceModeFor,
@@ -20,7 +20,8 @@ type Candidate = { id: string; display_name: string; pin: string; avatar_url: st
 
 /**
  * Pemilih audiens foto profil untuk mode `contacts_except` dan `only_share`.
- * Simpan bersifat atomik: daftar lama diganti seluruhnya oleh pilihan baru.
+ * Simpan bersifat atomik: mode privasi dan daftar audiens berubah bersama
+ * melalui satu RPC. Batal/tutup dialog tidak mengubah apa pun di server.
  */
 export function AvatarAudienceDialog({
   open,
@@ -33,7 +34,7 @@ export function AvatarAudienceDialog({
   userId: string;
   privacy: AvatarPrivacy;
   onOpenChange: (open: boolean) => void;
-  onSaved: (count: number) => void;
+  onSaved: (privacy: AvatarPrivacy, count: number) => void | Promise<void>;
 }) {
   const mode = audienceModeFor(privacy);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -82,10 +83,11 @@ export function AvatarAudienceDialog({
 
   const save = async () => {
     if (!mode || saving) return;
+    if (privacy !== "contacts_except" && privacy !== "only_share") return;
     setSaving(true);
     try {
-      await setAvatarAudience(userId, mode, selected);
-      onSaved(selected.length);
+      const count = await saveAvatarPrivacyAudience(privacy, selected, confirmEmpty);
+      await onSaved(privacy, count);
       toast.success("Audiens foto profil disimpan");
       onOpenChange(false);
     } catch (err) {

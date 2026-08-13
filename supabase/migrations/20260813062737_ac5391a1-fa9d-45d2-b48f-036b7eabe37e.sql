@@ -1,0 +1,1 @@
+GRANT SELECT (avatar_privacy, avatar_version) ON public.profiles TO authenticated;

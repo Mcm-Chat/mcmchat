@@ -80,6 +80,8 @@ function ProfilePage() {
   const [removeAvatarOpen, setRemoveAvatarOpen] = useState(false);
   const [audienceOpen, setAudienceOpen] = useState(false);
   const [audienceCount, setAudienceCount] = useState(0);
+  // Mode berbasis daftar hanya aktif setelah audiens disimpan (transaksional).
+  const [pendingAvatarPrivacy, setPendingAvatarPrivacy] = useState<AvatarPrivacy | null>(null);
 
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -234,17 +236,29 @@ function ProfilePage() {
 
   const changeAvatarPrivacy = async (value: AvatarPrivacy) => {
     if (!userId) return;
+    // contacts_except / only_share: jangan sentuh DB sebelum audiens disimpan.
+    if (needsAudience(value)) {
+      setPendingAvatarPrivacy(value);
+      setAudienceOpen(true);
+      return;
+    }
     const prev = avatarPrivacy;
     setAvatarPrivacyState(value);
     try {
       await setAvatarPrivacy(userId, value);
       await refresh();
-      // Mode berbasis daftar tidak berguna tanpa pemilih, jadi buka langsung.
-      if (needsAudience(value)) setAudienceOpen(true);
     } catch (err) {
       setAvatarPrivacyState(prev);
       toast.error(err instanceof Error ? err.message : "Gagal menyimpan privasi foto profil");
     }
+  };
+
+  // Dipanggil hanya setelah RPC atomik sukses.
+  const onAudienceSaved = async (privacy: AvatarPrivacy, count: number) => {
+    setAvatarPrivacyState(privacy);
+    setAudienceCount(count);
+    setPendingAvatarPrivacy(null);
+    await refresh();
   };
 
   const patchSettings = async (patch: Parameters<typeof updateSettings>[1]) => {
@@ -375,7 +389,10 @@ function ProfilePage() {
           {needsAudience(avatarPrivacy) && (
             <button
               type="button"
-              onClick={() => setAudienceOpen(true)}
+              onClick={() => {
+                setPendingAvatarPrivacy(avatarPrivacy);
+                setAudienceOpen(true);
+              }}
               className="flex min-h-11 w-full items-center justify-between rounded-xl bg-muted px-3 py-2 text-sm"
             >
               <span className="text-muted-foreground">{audienceSummary(avatarPrivacy, audienceCount)}</span>
@@ -685,9 +702,13 @@ function ProfilePage() {
         <AvatarAudienceDialog
           open={audienceOpen}
           userId={userId}
-          privacy={avatarPrivacy}
-          onOpenChange={setAudienceOpen}
-          onSaved={setAudienceCount}
+          privacy={pendingAvatarPrivacy ?? avatarPrivacy}
+          onOpenChange={(o) => {
+            setAudienceOpen(o);
+            // Batal/back: mode aktif lama dipertahankan, DB tidak tersentuh.
+            if (!o) setPendingAvatarPrivacy(null);
+          }}
+          onSaved={onAudienceSaved}
         />
       )}
     </AppShell>
