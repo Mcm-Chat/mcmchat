@@ -194,7 +194,9 @@ export function QrScannerDialog({
     if (!track) return;
     const next = !torchOn;
     try {
-      await track.applyConstraints({ advanced: [{ torch: next }] } as MediaTrackConstraints);
+      await track.applyConstraints({
+        advanced: [{ torch: next } as unknown as MediaTrackConstraintSet],
+      });
       setTorchOn(next);
     } catch {
       setTorchAvailable(false);
