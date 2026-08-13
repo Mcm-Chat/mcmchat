@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import {
   Eraser,
   FlipHorizontal,
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import { CANVAS_H, CANVAS_W, drawScene } from "@/lib/status/compose";
+import { CANVAS_H, CANVAS_W, createSceneCache, drawScene } from "@/lib/status/compose";
 import {
   canRedo,
   canUndo,
@@ -52,11 +52,38 @@ export function StatusEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingId = useRef<string | null>(null);
   const dragId = useRef<string | null>(null);
+  const lastPoint = useRef<{ x: number; y: number } | null>(null);
+  const cacheRef = useRef(createSceneCache());
+  const frameRef = useRef<number | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // Satu penggambaran ulang per frame (requestAnimationFrame). Tanpa ini setiap
+  // gerakan jari memicu render 1080x1920 berkali-kali dan pratinjau tersendat.
+  const scheduleDraw = useCallback(() => {
+    if (frameRef.current !== null) return;
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      if (canvasRef.current)
+        drawScene(canvasRef.current, image, stateRef.current, cacheRef.current);
+    });
+  }, [image]);
 
   useEffect(() => {
-    if (canvasRef.current) drawScene(canvasRef.current, image, state);
+    cacheRef.current = createSceneCache();
+  }, [image]);
+
+  useEffect(() => {
+    scheduleDraw();
     onStateChange(state);
-  }, [state, image, onStateChange]);
+  }, [state, scheduleDraw, onStateChange]);
+
+  useEffect(
+    () => () => {
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    },
+    [],
+  );
 
   const toCanvas = (e: React.PointerEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -80,6 +107,7 @@ export function StatusEditor({
     if (tool === "pen" || tool === "highlight" || tool === "pixelate") {
       const id = crypto.randomUUID();
       drawingId.current = id;
+      lastPoint.current = p;
       dispatch({
         type: "add",
         layer: {
@@ -113,19 +141,33 @@ export function StatusEditor({
       return;
     }
     const hit = hitLayer(p.x, p.y);
-    if (hit) dragId.current = hit.id;
+    if (hit) {
+      dragId.current = hit.id;
+      // Satu snapshot riwayat di awal geseran.
+      dispatch({ type: "update", id: hit.id, patch: {} as Partial<Layer> });
+    }
   };
 
   const onMove = (e: React.PointerEvent) => {
     const p = toCanvas(e);
-    if (drawingId.current) dispatch({ type: "appendPoint", id: drawingId.current, point: p });
-    else if (dragId.current)
-      dispatch({ type: "update", id: dragId.current, patch: { x: p.x, y: p.y } as Partial<Layer> });
+    if (drawingId.current) {
+      // Titik terlalu rapat tidak menambah kualitas garis, hanya beban render.
+      const prev = lastPoint.current;
+      if (prev && Math.hypot(p.x - prev.x, p.y - prev.y) < 8) return;
+      lastPoint.current = p;
+      dispatch({ type: "appendPoint", id: drawingId.current, point: p });
+    } else if (dragId.current)
+      dispatch({
+        type: "updateLive",
+        id: dragId.current,
+        patch: { x: p.x, y: p.y } as Partial<Layer>,
+      });
   };
 
   const onUp = () => {
     drawingId.current = null;
     dragId.current = null;
+    lastPoint.current = null;
   };
 
   return (

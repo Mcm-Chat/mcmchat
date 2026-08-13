@@ -5,6 +5,32 @@ import type { TextMeta } from "./model";
 export const CANVAS_W = 1080;
 export const CANVAS_H = 1920;
 
+/**
+ * Cache lapisan dasar (foto + filter + rotasi) supaya menggambar ulang saat
+ * mencoret/menggeser tidak perlu memfilter ulang gambar 1080x1920 tiap frame —
+ * inilah sumber utama pratinjau tersendat.
+ */
+export type SceneCache = {
+  key: string;
+  base: HTMLCanvasElement | null;
+  pixel: HTMLCanvasElement | null;
+};
+
+export const createSceneCache = (): SceneCache => ({ key: "", base: null, pixel: null });
+
+const baseKey = (image: HTMLImageElement, state: EditorState) =>
+  [
+    image.src.length,
+    image.naturalWidth,
+    image.naturalHeight,
+    state.rotation,
+    state.flipH ? 1 : 0,
+    state.filter,
+    state.adjust.brightness,
+    state.adjust.contrast,
+    state.adjust.saturation,
+  ].join("|");
+
 export type Composed = { blob: Blob; thumb: Blob; width: number; height: number };
 
 function drawStroke(
@@ -88,10 +114,11 @@ const toBlob = (canvas: HTMLCanvasElement, quality: number) =>
     ),
   );
 
-/** Gambar seluruh adegan ke konteks 1080x1920 — dipakai pratinjau dan ekspor. */
-export function drawScene(canvas: HTMLCanvasElement, image: HTMLImageElement, state: EditorState) {
-  const ctx = canvas.getContext("2d")!;
-  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+function renderBase(image: HTMLImageElement, state: EditorState): HTMLCanvasElement {
+  const base = document.createElement("canvas");
+  base.width = CANVAS_W;
+  base.height = CANVAS_H;
+  const ctx = base.getContext("2d")!;
   ctx.fillStyle = "#0b1220";
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
@@ -111,9 +138,39 @@ export function drawScene(canvas: HTMLCanvasElement, image: HTMLImageElement, st
   const drawH = rotated ? dw : dh;
   ctx.drawImage(image, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
+  return base;
+}
+
+/** Gambar seluruh adegan ke konteks 1080x1920 — dipakai pratinjau dan ekspor. */
+export function drawScene(
+  canvas: HTMLCanvasElement,
+  image: HTMLImageElement,
+  state: EditorState,
+  cache?: SceneCache,
+) {
+  const ctx = canvas.getContext("2d")!;
+  const key = baseKey(image, state);
+  let base: HTMLCanvasElement;
+  if (cache && cache.base && cache.key === key) {
+    base = cache.base;
+  } else {
+    base = renderBase(image, state);
+    if (cache) {
+      cache.key = key;
+      cache.base = base;
+      cache.pixel = null;
+    }
+  }
+
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.drawImage(base, 0, 0);
 
   const hasPixelate = state.layers.some((l) => l.type === "stroke" && l.tool === "pixelate");
-  const pixel = hasPixelate ? pixelatedCopy(canvas) : null;
+  let pixel: HTMLCanvasElement | null = null;
+  if (hasPixelate) {
+    pixel = cache?.pixel ?? pixelatedCopy(base);
+    if (cache) cache.pixel = pixel;
+  }
   for (const layer of state.layers) {
     if (layer.type === "stroke") drawStroke(ctx, layer, pixel);
     else if (layer.type === "text") drawText(ctx, layer);

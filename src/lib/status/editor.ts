@@ -62,6 +62,7 @@ type Snapshot = Pick<EditorState, "layers" | "filter" | "adjust" | "rotation" | 
 export type EditorAction =
   | { type: "add"; layer: Layer }
   | { type: "update"; id: string; patch: Partial<Layer> }
+  | { type: "updateLive"; id: string; patch: Partial<Layer> }
   | { type: "appendPoint"; id: string; point: Point }
   | { type: "remove"; id: string }
   | { type: "filter"; filter: FilterId }
@@ -109,6 +110,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
           l.id === action.id ? ({ ...l, ...action.patch } as Layer) : l,
         ),
       });
+    // Geser stiker/teks: posisi berubah tiap frame tanpa membanjiri riwayat —
+    // satu tarikan jari tetap satu langkah undo (dicatat saat mulai menggeser).
+    case "updateLive":
+      return {
+        ...state,
+        layers: state.layers.map((l) =>
+          l.id === action.id ? ({ ...l, ...action.patch } as Layer) : l,
+        ),
+      };
     // Titik goresan ditambah tanpa menyentuh riwayat: satu goresan = satu undo.
     case "appendPoint":
       return {
