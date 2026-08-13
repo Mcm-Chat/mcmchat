@@ -30,9 +30,9 @@ export function AiDescriptionButton({
   onApply,
 }: {
   name: string;
-  category?: string;
-  price?: number;
-  currentDescription?: string;
+  category?: string | undefined;
+  price?: number | undefined;
+  currentDescription?: string | undefined;
   onApply: (text: string) => void;
 }) {
   const [open, setOpen] = useState(false);
