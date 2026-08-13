@@ -6,6 +6,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { MCMAvatar } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { PinCard } from "@/components/mcm/pin-card";
+import { ScanQrButton } from "@/components/mcm/qr-scanner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,8 +45,8 @@ function AddContactPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  const search = async () => {
-    if (!isValidPin(pin)) {
+  const search = async (value: string = pin) => {
+    if (!isValidPin(value)) {
       toast.error("Format PIN tidak valid. Contoh: A2B3-C4D5");
       return;
     }
@@ -54,7 +55,7 @@ function AddContactPage() {
     setFound(null);
     setSearched(false);
     try {
-      const result = await findByPin(pin);
+      const result = await findByPin(value);
       setFound(result);
       setSearched(true);
       if (!result) toast.info("PIN tidak ditemukan. Periksa kembali kode PIN.");
@@ -119,6 +120,16 @@ function AddContactPage() {
             </div>
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
+          <ScanQrButton
+            onResult={(scanned) => {
+              setPin(scanned);
+              toast.success(`PIN terbaca: ${scanned}`);
+              void search(scanned);
+            }}
+          />
+          <p className="text-center text-[11px] text-muted-foreground">
+            Kamera hanya dipakai untuk membaca QR; tidak ada foto yang disimpan.
+          </p>
         </div>
 
         {searched && !found && !error && (
