@@ -5,7 +5,7 @@
  * adalah apex tanpa `www`: https://mcmchat.id (host `www` di-redirect 301 ke apex
  * oleh `src/server.ts`).
  */
-export const SITE_URL: string = (import.meta.env["VITE_SITE_URL"] ?? "https://mcmchat.id").replace(
+export const SITE_URL: string = (import.meta.env["VITE_SITE_URL"] ?? "https://mcmchat.ai").replace(
   /\/+$/,
   "",
 );
