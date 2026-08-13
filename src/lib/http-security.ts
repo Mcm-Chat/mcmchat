@@ -1,7 +1,7 @@
 /**
  * Header keamanan HTTP + redirect kanonis untuk MCM produksi.
  *
- * Kanonis: apex `https://mcmchat.id`. Host `www.` di-redirect 301 ke apex
+ * Kanonis: apex `https://mcmchat.ai`. Host `www.` di-redirect 301 ke apex
  * (tanpa loop: redirect hanya terjadi bila host diawali `www.`).
  *
  * CSP sengaja mengizinkan `https:` dan `wss:` pada `connect-src` supaya
@@ -11,7 +11,10 @@
 
 /** Host preview/dev tidak boleh kena redirect kanonis. */
 function isCanonicalWww(hostname: string): boolean {
-  return hostname.startsWith("www.") && hostname.endsWith("mcmchat.id");
+  return (
+    hostname.startsWith("www.") &&
+    (hostname.endsWith("mcmchat.ai") || hostname.endsWith("mcmchat.id"))
+  );
 }
 
 export function canonicalRedirect(request: Request): Response | null {
