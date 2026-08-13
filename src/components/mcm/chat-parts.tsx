@@ -451,6 +451,30 @@ function DocumentBubble({ message }: { message: MessageRow }) {
   );
 }
 
+function StickerBubble({ message }: { message: MessageRow }) {
+  const url = useSignedUrl("chat-media", message.attachment_path);
+  return url ? (
+    <img
+      src={url}
+      alt={message.body || "Stiker"}
+      loading="lazy"
+      className="size-32 object-contain"
+    />
+  ) : (
+    <div className="size-32 rounded-2xl bg-black/10" />
+  );
+}
+
+function LegacyDocumentBubble({ message }: { message: MessageRow }) {
+  const url = useSignedUrl("chat-media", message.attachment_path);
+  return (
+    <a href={url ?? undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2">
+      <FileText className="size-5 shrink-0" />
+      <span className="break-all">{message.attachment_name ?? message.body}</span>
+    </a>
+  );
+}
+
 function VoiceBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
   return (
