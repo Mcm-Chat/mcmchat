@@ -312,25 +312,6 @@ function ChatRoom() {
     }
   };
 
-  const sendDocumentLegacy = async (file: File | undefined) => {
-    if (!file || !userId) return;
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Ukuran dokumen maksimal 15 MB");
-      return;
-    }
-    try {
-      await sendMessage({
-        conversationId: id,
-        senderId: userId,
-        kind: "document",
-        file: { blob: file, name: file.name },
-      });
-      refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Dokumen gagal dikirim");
-    }
-  };
-
   const onAction = async (action: MessageAction, message: MessageRow, payload?: string) => {
     if (!userId) return;
     try {
