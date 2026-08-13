@@ -127,7 +127,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "MCM",
-          url: "https://mcmchat.id",
+          url: "https://mcmchat.ai",
         }),
       },
     ],
