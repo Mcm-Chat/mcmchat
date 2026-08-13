@@ -85,6 +85,9 @@ export function CreatePreparationDialog({
   const [sending, setSending] = useState(false);
   const [staffPin, setStaffPin] = useState("");
   const [contactId, setContactId] = useState("");
+  const [deadlineHours, setDeadlineHours] = useState("168");
+  const [requirePhoto, setRequirePhoto] = useState(true);
+  const [requireLocation, setRequireLocation] = useState(true);
   const [manualCustomer, setManualCustomer] = useState("");
   const [savingPin, setSavingPin] = useState(false);
 
@@ -120,7 +123,10 @@ export function CreatePreparationDialog({
       toast.error(`${v.name} hanya menerima jumlah bulat`);
       return;
     }
-    setItems((p) => [...p, { key: crypto.randomUUID(), variant_id: v.id, qty: n, unit: activeUnit }]);
+    setItems((p) => [
+      ...p,
+      { key: crypto.randomUUID(), variant_id: v.id, qty: n, unit: activeUnit, require_photo: requirePhoto, require_location: requireLocation },
+    ]);
     setQty("1");
   };
 
@@ -148,6 +154,7 @@ export function CreatePreparationDialog({
         customerName: resolvedCustomerName,
         customerUserId: resolvedCustomerUser,
         notes,
+        expiresHours: Math.max(1, Number(deadlineHours) || 168),
         items: items.map(({ key: _key, ...rest }) => rest),
       });
       rememberToken(job.id, job.token);
