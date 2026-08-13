@@ -31,7 +31,7 @@ harus dikerjakan pemilik domain (lihat §7).
 |---|---|---|---|---|
 | `mcmchat.id` A | `185.158.133.1` | **tidak ada** (NXRRSET, hanya SOA) | – | **FAIL** |
 | `mcmchat.id` AAAA | tidak perlu | tidak ada | – | PASS (benar kosong) |
-| `mcmchat.id` NS | Cloudflare | `nsid1-4.rumahweb.*` | 21600 | **FAIL** |
+| `mcmchat.id` NS | `norah.ns.cloudflare.com`, `remy.ns.cloudflare.com` | `nsid1-4.rumahweb.*` | 21600 | **FAIL** |
 | `_lovable` TXT | `lovable_verify=…` | **tidak ada** | – | **FAIL** |
 | `www` A/CNAME | apex/redirect | **tidak ada** | – | **FAIL** |
 | `mcmchat.id` MX | – | `10 mx1.titan.email`, `20 mx2.titan.email` | 14400 | PASS (Titan aktif) |
