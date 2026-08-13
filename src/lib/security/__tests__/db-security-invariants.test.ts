@@ -172,13 +172,19 @@ describe("pengecekan keanggotaan percakapan", () => {
     expect(has(/revoke select on public\.business_members from authenticated/)).toBe(true);
     expect(has(/revoke all on public\.business_members from anon/)).toBe(true);
 
+    // Bentuk akhir yang menentukan: setiap grant SELECT seluruh tabel harus
+    // sudah dibatalkan oleh REVOKE, dan grant kolom datang setelahnya.
+    const revokeAt = sql.search(/revoke select on public\.business_members from authenticated/);
+    const columnGrantAt = sql.search(/grant select\s*\([^)]*\)\s*on public\.business_members to authenticated/);
+    expect(columnGrantAt).toBeGreaterThan(revokeAt);
+
     const grants = sql.match(/grant select[^;]*on public\.business_members to \w+/g) ?? [];
-    expect(grants.length).toBeGreaterThan(0);
     for (const g of grants) {
       expect(g).not.toMatch(/to anon/);
-      // harus berupa grant kolom (ada daftar dalam kurung), bukan seluruh tabel
-      expect(g).toMatch(/grant select\s*\(/);
-      expect(g).not.toMatch(/\bstaff_pin\b(?!_confirmed_at)/);
+      const at = sql.indexOf(g);
+      // grant seluruh tabel hanya boleh ada sebelum REVOKE
+      if (!/grant select\s*\(/.test(g)) expect(at).toBeLessThan(revokeAt);
+      else expect(g).not.toMatch(/\bstaff_pin\b(?!_confirmed_at)/);
     }
   });
 });
