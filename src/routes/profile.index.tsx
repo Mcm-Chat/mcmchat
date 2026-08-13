@@ -291,23 +291,61 @@ function ProfilePage() {
       <div className="space-y-4 px-4 py-4 pb-24">
         <div className="card-soft flex items-center gap-3 p-4">
           <div className="relative">
-            <MCMAvatar
-              initials={profile.display_name.slice(0, 2).toUpperCase()}
+            <UserAvatar
+              userId={profile.id}
+              path={profile.avatar_url}
+              version={(profile as { avatar_version?: number }).avatar_version ?? 0}
+              name={profile.display_name}
               color={profile.avatar_color}
               size="lg"
             />
-            {avatarUrl && (
-              <img src={avatarUrl} alt={profile.display_name} className="absolute inset-0 size-16 rounded-full object-cover" />
-            )}
             <label className="absolute -right-1 -bottom-1 flex size-6 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Camera className="size-3.5" />
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => void onAvatarChange(e)} disabled={uploading} />
+              <span className="sr-only">Ubah foto profil</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
             </label>
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{profile.display_name}</p>
             <p className="truncate text-xs text-muted-foreground">{profile.bio || "Belum ada bio"}</p>
+            <div className="mt-1 flex gap-3 text-[11px]">
+              <label className="cursor-pointer text-primary">
+                Kamera
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onAvatarPick} disabled={uploading} />
+              </label>
+              <label className="cursor-pointer text-primary">
+                Galeri
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
+              </label>
+              {profile.avatar_url && (
+                <button type="button" className="text-destructive" onClick={() => setRemoveAvatarOpen(true)}>
+                  Hapus
+                </button>
+              )}
+            </div>
           </div>
+        </div>
+
+        <div className="card-soft space-y-2 p-4">
+          <p className="text-sm font-semibold">Siapa yang dapat melihat foto profil</p>
+          <div className="grid gap-2">
+            {(Object.keys(AVATAR_PRIVACY_LABEL) as AvatarPrivacy[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => void changeAvatarPrivacy(key)}
+                className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                  avatarPrivacy === key ? "border-primary bg-primary/10" : "border-border"
+                }`}
+              >
+                <span>{AVATAR_PRIVACY_LABEL[key]}</span>
+                {avatarPrivacy === key && <span className="text-xs text-primary">Aktif</span>}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Pengguna yang Anda blokir tidak pernah melihat foto profil, apa pun pilihannya.
+          </p>
         </div>
 
         <PinCard pin={profile.pin} name={profile.display_name} subtitle={profile.bio} />
