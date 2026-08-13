@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Search, Send } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { MCMAvatar } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { PinCard } from "@/components/mcm/pin-card";
 import { QrScannerDialog } from "@/components/mcm/qr-scanner";
