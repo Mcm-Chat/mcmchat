@@ -126,7 +126,7 @@ function DomainSettingsPage() {
               <Globe className="size-5" />
             </span>
             <div className="min-w-0">
-              <h1 className="text-base font-semibold">Status DNS domain kustom</h1>
+              <h2 className="text-base font-semibold">Status DNS domain kustom</h2>
               <p className="text-xs text-muted-foreground">
                 {status
                   ? `${done}/${total} pemeriksaan lolos • dicek ${new Date(status.checkedAt).toLocaleTimeString("id-ID")}`
