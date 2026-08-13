@@ -24,6 +24,7 @@ import { getCallConfig } from "@/lib/calls/calls.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
+import { scopedKey } from "@/lib/session-scope";
 import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";
 import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
 import { SaleDialog } from "@/components/mcm/sale-dialog";
@@ -150,7 +151,7 @@ function ChatRoom() {
   }, [hasOlder, isFetchingOlder, fetchOlder]);
 
   // Draf per percakapan bertahan saat pindah layar atau reload.
-  const draftKey = `mcm.draft.${id}`;
+  const draftKey = scopedKey(`draft:${id}`, userId ?? null);
   useEffect(() => {
     const saved = typeof localStorage !== "undefined" ? localStorage.getItem(draftKey) : null;
     if (saved) setText(saved);

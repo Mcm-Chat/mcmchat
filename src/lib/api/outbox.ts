@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { sendMessage, type MessageRow } from "./chat";
 import { classifyFailure } from "./errors";
-import { loadEntries, saveEntries } from "./outbox-store";
+import { clearEntries, loadEntries, saveEntries } from "./outbox-store";
+import { getActiveUserId } from "@/lib/session-scope";
 import { backoffDelay, getConnectionState, onConnectionChange } from "@/lib/realtime/connection";
 
 /**
@@ -35,7 +36,9 @@ const listeners = new Set<() => void>();
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function persist() {
-  void saveEntries(queue).catch(() => undefined);
+  const uid = getActiveUserId();
+  if (!uid) return;
+  void saveEntries(uid, queue.filter((e) => e.senderId === uid)).catch(() => undefined);
 }
 
 function emit() {
@@ -49,8 +52,10 @@ function emit() {
  */
 export async function hydrateOutbox(): Promise<void> {
   if (loaded) return;
+  const uid = getActiveUserId();
+  if (!uid) return;
   loaded = true;
-  const stored = await loadEntries().catch(() => []);
+  const stored = await loadEntries(uid).catch(() => []);
   const known = new Set(queue.map((e) => e.clientId));
   const restored = stored.filter((e) => !known.has(e.clientId)).map((e) => ({ ...e, status: "failed" as const }));
   if (restored.length > 0) {
@@ -61,6 +66,24 @@ export async function hydrateOutbox(): Promise<void> {
 
 function load() {
   if (!loaded) void hydrateOutbox();
+}
+
+/**
+ * Ganti akun: antrean di memori dibuang dan dimuat ulang dari ruang akun baru.
+ * Pesan yang dibuat akun A tidak pernah terkirim saat akun B masuk.
+ */
+export function resetOutboxForAccount() {
+  for (const t of timers.values()) clearTimeout(t);
+  timers.clear();
+  queue = [];
+  loaded = false;
+  for (const l of listeners) l();
+  void hydrateOutbox();
+}
+
+/** Hapus antrean tersimpan milik satu akun (logout permanen/hapus akun). */
+export async function purgeOutbox(userId: string) {
+  await clearEntries(userId).catch(() => undefined);
 }
 
 export function outboxFor(conversationId: string): OutboxEntry[] {
@@ -145,6 +168,8 @@ async function attempt(clientId: string) {
 
 export function enqueueText(input: { conversationId: string; senderId: string; body: string; replyToId?: string | null }): OutboxEntry {
   load();
+  const active = getActiveUserId();
+  if (active && input.senderId !== active) throw new Error("Sesi berubah. Masuk ulang lalu kirim kembali.");
   const entry: OutboxEntry = {
     clientId: crypto.randomUUID(),
     conversationId: input.conversationId,

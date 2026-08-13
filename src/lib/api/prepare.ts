@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { scopedKey } from "@/lib/session-scope";
 import { friendly, unwrap } from "./db";
 import { notifyTaskAssigned } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
@@ -218,12 +219,12 @@ export const prepareUrl = (token: string) =>
  * Token plaintext tidak bisa dibaca ulang dari database (hanya hash yang disimpan),
  * jadi perangkat admin menyimpan salinannya untuk menampilkan QR/tautan kembali.
  */
-const TOKEN_KEY = "mcm-prep-tokens";
+const tokenKey = () => scopedKey("prep-tokens");
 
 function tokenMap(): Record<string, string> {
   if (typeof localStorage === "undefined") return {};
   try {
-    return JSON.parse(localStorage.getItem(TOKEN_KEY) ?? "{}") as Record<string, string>;
+    return JSON.parse(localStorage.getItem(tokenKey()) ?? "{}") as Record<string, string>;
   } catch {
     return {};
   }
@@ -233,7 +234,7 @@ export function rememberToken(jobId: string, token: string) {
   if (typeof localStorage === "undefined") return;
   const map = tokenMap();
   map[jobId] = token;
-  localStorage.setItem(TOKEN_KEY, JSON.stringify(map));
+  localStorage.setItem(tokenKey(), JSON.stringify(map));
 }
 
 export function recallToken(jobId: string): string | null {

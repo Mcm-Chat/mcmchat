@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { removeObject, signedUrl } from "./storage";
 import { avatarObjectPath } from "@/lib/media/image-validate";
+import { getActiveUserId } from "@/lib/session-scope";
 
 export type AvatarPrivacy = "contacts" | "contacts_except" | "only_share" | "nobody";
 
@@ -129,8 +130,12 @@ export function onAvatarChanged(fn: (userId: string) => void): () => void {
   return () => listeners.delete(fn);
 }
 
+function cacheKey(ownerId: string) {
+  return `${getActiveUserId() ?? "anon"}:${ownerId}`;
+}
+
 export function invalidateAvatar(userId: string) {
-  avatarCache.delete(userId);
+  avatarCache.delete(cacheKey(userId));
   for (const fn of listeners) fn(userId);
 }
 
@@ -140,10 +145,11 @@ export function invalidateAvatar(userId: string) {
  */
 export async function resolveAvatarUrl(userId: string, path: string | null, version: number): Promise<string | null> {
   if (!path) return null;
-  const hit = avatarCache.get(userId);
+  const key = cacheKey(userId);
+  const hit = avatarCache.get(key);
   if (hit && hit.version === version && hit.exp > Date.now()) return hit.url;
   const url = await signedUrl("avatars", path, 900);
-  avatarCache.set(userId, { url, version, exp: Date.now() + 12 * 60 * 1000 });
+  avatarCache.set(key, { url, version, exp: Date.now() + 12 * 60 * 1000 });
   return url;
 }
 

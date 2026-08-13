@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { onAccountSwitch } from "@/lib/session-scope";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -139,6 +140,13 @@ function PushSession() {
   return null;
 }
 
+/** Cache query dibuang total saat akun berganti (termasuk logout). */
+function AccountCacheGuard() {
+  const client = useQueryClient();
+  useEffect(() => onAccountSwitch(() => client.clear()), [client]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -155,6 +163,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <AccountCacheGuard />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <PushSession />

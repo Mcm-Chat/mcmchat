@@ -109,16 +109,11 @@ export async function setBlocked(userId: string, contactId: string, blocked: boo
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui blokir"));
 }
 
-export async function isBlockedBetween(userId: string, otherId: string) {
-  const rows = unwrap(
-    await supabase
-      .from("contacts")
-      .select("owner_id, contact_id, is_blocked")
-      .or(`and(owner_id.eq.${userId},contact_id.eq.${otherId}),and(owner_id.eq.${otherId},contact_id.eq.${userId})`),
-    "Gagal memeriksa blokir",
-  );
-  return {
-    iBlocked: rows.some((r) => r.owner_id === userId && r.is_blocked),
-    blockedMe: rows.some((r) => r.owner_id === otherId && r.is_blocked),
-  };
+export async function isBlockedBetween(_userId: string, otherId: string) {
+  // Buku kontak lawan bicara tidak boleh dibaca langsung; status blokir dua
+  // arah diambil lewat fungsi database yang tervalidasi.
+  const { data, error } = await supabase.rpc("blocked_between", { _other: otherId });
+  if (error) throw new Error(friendly(error.message, "Gagal memeriksa blokir"));
+  const row = data?.[0];
+  return { iBlocked: !!row?.i_blocked, blockedMe: !!row?.blocked_me };
 }
