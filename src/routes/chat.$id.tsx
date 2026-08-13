@@ -729,6 +729,15 @@ function ChatRoom() {
         }}
       />
 
+      {userId && (
+        <StickerPickerSheet
+          open={stickerOpen}
+          onOpenChange={setStickerOpen}
+          userId={userId}
+          onPick={(s) => void sendSticker(s)}
+        />
+      )}
+
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="h-[92dvh] rounded-t-3xl p-0">
           <SheetHeader className="px-4 pt-4 pb-2">
