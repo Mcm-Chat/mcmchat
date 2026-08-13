@@ -465,16 +465,6 @@ function StickerBubble({ message }: { message: MessageRow }) {
   );
 }
 
-function LegacyDocumentBubble({ message }: { message: MessageRow }) {
-  const url = useSignedUrl("chat-media", message.attachment_path);
-  return (
-    <a href={url ?? undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2">
-      <FileText className="size-5 shrink-0" />
-      <span className="break-all">{message.attachment_name ?? message.body}</span>
-    </a>
-  );
-}
-
 function VoiceBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
   return (
