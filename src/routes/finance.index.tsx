@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Briefcase, Plus, Receipt, ShoppingBag, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -16,6 +16,7 @@ import { OPEN_STATUSES, type LedgerRow } from "@/lib/api/ledger";
 import { financeSummary, salesPayload } from "@/lib/api/finance";
 import { updateOrderStatus, type OrderRow, type SalesRecordRow } from "@/lib/api/sales";
 import { rupiah, tanggal } from "@/lib/mcm/format";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/finance/")({
   head: () => ({
@@ -37,6 +38,21 @@ function FinancePage() {
   const businessId = biz?.business.id;
   const { data: sales, isLoading: salesLoading, isError: salesError, refetch: refetchSales } = useSales(businessId);
   const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders(businessId);
+
+  // Catatan utang/piutang milik saya maupun yang dikirim pihak lain harus
+  // memperbarui daftar dan kartu ringkasan tanpa refresh manual.
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel(`finance-rt-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ledgers" }, () => {
+        void qc.invalidateQueries({ queryKey: qk.ledgers(userId) });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId, qc]);
 
   const [mainTab, setMainTab] = useState("catatan");
   const [ledgerFilter, setLedgerFilter] = useState("semua");
