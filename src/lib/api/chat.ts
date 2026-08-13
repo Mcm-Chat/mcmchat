@@ -71,6 +71,8 @@ export function previewOf(m: LastMessagePreview | MessageRow | null): string {
       return `📎 ${m.attachment_name ?? "Dokumen"}`;
     case "voice":
       return "🎙️ Pesan suara";
+    case "sticker":
+      return `${m.body || "🙂"} Stiker`;
     case "sales_card":
       return "🧾 Rincian penjualan";
     case "product_card":

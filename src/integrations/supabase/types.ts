@@ -2163,6 +2163,30 @@ export type Database = {
         }
         Relationships: []
       }
+      stickers: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          owner_id: string
+          path: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          owner_id: string
+          path: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          owner_id?: string
+          path?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -2628,6 +2652,7 @@ export type Database = {
         | "sales_card"
         | "location"
         | "product_card"
+        | "sticker"
       order_status: "new" | "processing" | "shipped" | "completed" | "cancelled"
       payment_method: "cash" | "transfer" | "dp" | "credit"
       preparation_item_status: "pending" | "in_progress" | "done"
@@ -2817,6 +2842,7 @@ export const Constants = {
         "sales_card",
         "location",
         "product_card",
+        "sticker",
       ],
       order_status: ["new", "processing", "shipped", "completed", "cancelled"],
       payment_method: ["cash", "transfer", "dp", "credit"],

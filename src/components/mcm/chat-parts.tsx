@@ -21,6 +21,7 @@ import {
   Send,
   ShoppingCart,
   Smile,
+  Sticker,
   Square,
   Trash2,
   Wallet,
@@ -451,6 +452,20 @@ function DocumentBubble({ message }: { message: MessageRow }) {
   );
 }
 
+function StickerBubble({ message }: { message: MessageRow }) {
+  const url = useSignedUrl("chat-media", message.attachment_path);
+  return url ? (
+    <img
+      src={url}
+      alt={message.body || "Stiker"}
+      loading="lazy"
+      className="size-32 object-contain"
+    />
+  ) : (
+    <div className="size-32 rounded-2xl bg-black/10" />
+  );
+}
+
 function VoiceBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
   return (
@@ -506,6 +521,7 @@ export function MessageBubble({
       </div>
     );
   }
+  const isSticker = message.kind === "sticker";
   return (
     <div
       className={cn(
@@ -525,13 +541,17 @@ export function MessageBubble({
       <div className={cn("flex max-w-[80%] flex-col", mine ? "items-end" : "items-start")}>
         <div
           className={cn(
-            "bubble-elevate relative rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45]",
-            mine
+            "relative rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45]",
+            isSticker
+              ? "bg-transparent px-0 py-0 shadow-none"
+              : mine
               ? cn(
+                  "bubble-elevate",
                   "bg-bubble-out text-bubble-out-foreground",
                   grouped ? "rounded-br-lg" : "rounded-br-sm",
                 )
               : cn(
+                  "bubble-elevate",
                   "border border-border/70 bg-bubble-in text-bubble-in-foreground",
                   grouped ? "rounded-bl-lg" : "rounded-bl-sm",
                 ),
@@ -553,6 +573,8 @@ export function MessageBubble({
           )}
           {message.kind === "document" ? (
             <DocumentBubble message={message} />
+          ) : isSticker ? (
+            <StickerBubble message={message} />
           ) : message.kind === "image" ? (
             <div className="space-y-1">
               <ImageBubble message={message} />
@@ -587,7 +609,7 @@ export function MessageBubble({
           <div
             className={cn(
               "mt-1 flex items-center justify-end gap-1 text-[10px] tabular-nums",
-              mine ? "opacity-85" : "text-muted-foreground",
+              isSticker ? "text-muted-foreground" : mine ? "opacity-85" : "text-muted-foreground",
             )}
           >
             {message.edited_at && <span>diedit</span>}
@@ -717,6 +739,7 @@ export function ChatComposer({
   onSendProduct,
   onNewPreparation,
   onLocation,
+  onSticker,
   editing,
   onCancelEdit,
   replyPreview,
@@ -735,6 +758,7 @@ export function ChatComposer({
   onSendProduct?: (() => void) | undefined;
   onNewPreparation?: (() => void) | undefined;
   onLocation?: (() => void) | undefined;
+  onSticker?: (() => void) | undefined;
   editing?: boolean | undefined;
   onCancelEdit?: (() => void) | undefined;
   replyPreview?: MessageRow | undefined;
@@ -817,6 +841,7 @@ export function ChatComposer({
               {[
                 { icon: Camera, label: "Foto/Kamera", fn: () => onAttach("camera") },
                 { icon: ImageIcon, label: "Foto & lokasi", fn: () => onAttach("image") },
+                ...(onSticker ? [{ icon: Sticker, label: "Stiker", fn: onSticker }] : []),
                 ...(onLocation ? [{ icon: MapPin, label: "Lokasi", fn: onLocation }] : []),
                 ...(onSendProduct
                   ? [{ icon: Package, label: "Kirim Produk", fn: onSendProduct }]

@@ -58,6 +58,8 @@ import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@
 import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
 import { LedgerFormDialog } from "@/components/mcm/ledger-form";
 import { SaleDialog } from "@/components/mcm/sale-dialog";
+import { StickerPickerSheet } from "@/components/mcm/sticker-parts";
+import { downloadSticker, type StickerRow } from "@/lib/api/stickers";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "@/lib/api/outbox";
@@ -111,6 +113,7 @@ function ChatRoom() {
   const [selection, setSelection] = useState<string[]>([]);
   const [confirmAll, setConfirmAll] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [stickerOpen, setStickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
@@ -287,6 +290,26 @@ function ChatRoom() {
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Dokumen gagal dikirim");
+    }
+  };
+
+  const sendSticker = async (sticker: StickerRow) => {
+    if (!userId) return;
+    try {
+      const blob = await downloadSticker(sticker.path);
+      await sendMessage({
+        conversationId: id,
+        senderId: userId,
+        kind: "sticker",
+        body: sticker.emoji,
+        file: { blob, name: "stiker.png" },
+        replyToId: reply?.id ?? null,
+      });
+      setReply(null);
+      setAtBottom(true);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Stiker gagal dikirim");
     }
   };
 
@@ -684,6 +707,7 @@ function ChatRoom() {
           onNewSale={business ? () => setSaleOpen(true) : undefined}
           onNewPreparation={business ? () => setPrepOpen(true) : undefined}
           onLocation={() => setPhotoOpen(true)}
+          onSticker={() => setStickerOpen(true)}
           editing={!!editingId}
           onCancelEdit={() => {
             setEditingId(null);
@@ -704,6 +728,15 @@ function ChatRoom() {
           e.target.value = "";
         }}
       />
+
+      {userId && (
+        <StickerPickerSheet
+          open={stickerOpen}
+          onOpenChange={setStickerOpen}
+          userId={userId}
+          onPick={(s) => void sendSticker(s)}
+        />
+      )}
 
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="h-[92dvh] rounded-t-3xl p-0">

@@ -57,6 +57,8 @@ export function previewBody(kind: string, body: string, allowPreview: boolean): 
       return "📎 Dokumen";
     case "voice":
       return "🎤 Pesan suara";
+    case "sticker":
+      return "🙂 Stiker";
     case "location":
       return "📍 Lokasi";
     case "sales_card":
