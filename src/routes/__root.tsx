@@ -93,6 +93,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "MCM: aplikasi komunikasi privat berbasis PIN untuk chat, panggilan, catatan utang-piutang bersama, dan alat bisnis.",
       },
       { name: "theme-color", content: "#0f1b2a" },
+      {
+        name: "google-site-verification",
+        content: "StEYz84rl1qtnbBteGIp64am18nvMhg5C8bd43_SPu4",
+      },
       { property: "og:title", content: "MCM — Chat Privat, Panggilan & Catatan Utang" },
       {
         property: "og:description",
