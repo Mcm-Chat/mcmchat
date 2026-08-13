@@ -16,7 +16,7 @@ import {
   toggleSelection,
 } from "@/lib/media/avatar-audience";
 
-type Candidate = { id: string; display_name: string; pin: string; avatar_url: string | null; avatar_version?: number; avatar_color: string };
+type Candidate = { id: string; display_name: string; pin: string; avatar_url: string | null; avatar_version: number | undefined; avatar_color: string };
 
 /**
  * Pemilih audiens foto profil untuk mode `contacts_except` dan `only_share`.
