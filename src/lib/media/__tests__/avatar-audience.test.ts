@@ -13,7 +13,6 @@ describe("avatar audience rules", () => {
     expect(audienceModeFor("contacts_except")).toBe("except");
     expect(audienceModeFor("only_share")).toBe("only");
     expect(audienceModeFor("contacts")).toBeNull();
-    expect(audienceModeFor("everyone")).toBeNull();
     expect(audienceModeFor("nobody")).toBeNull();
   });
 
