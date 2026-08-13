@@ -31,13 +31,16 @@ import { canManage, MEMBER_SAFE_COLUMNS, ROLE_LABEL, type BusinessMemberRow } fr
 import { useMyBusiness } from "@/lib/api/queries";
 import { AvatarEditor } from "@/components/mcm/avatar-editor";
 import { UserAvatar } from "@/components/mcm/user-avatar";
+import { AvatarAudienceDialog } from "@/components/mcm/avatar-audience-dialog";
 import {
   AVATAR_PRIVACY_LABEL,
   commitAvatar,
+  listAvatarAudience,
   removeAvatar,
   setAvatarPrivacy,
   type AvatarPrivacy,
 } from "@/lib/api/avatar";
+import { audienceModeFor, audienceSummary, needsAudience } from "@/lib/media/avatar-audience";
 import { readScreenSecurity, type ScreenSecurityStatus } from "@/lib/security/screen-privacy";
 import {
   getSettings,
@@ -75,6 +78,8 @@ function ProfilePage() {
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");
   const [removeAvatarOpen, setRemoveAvatarOpen] = useState(false);
+  const [audienceOpen, setAudienceOpen] = useState(false);
+  const [audienceCount, setAudienceCount] = useState(0);
 
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -93,6 +98,13 @@ function ProfilePage() {
   });
   const [savingBiz, setSavingBiz] = useState(false);
   const [members, setMembers] = useState<MemberWithProfile[]>([]);
+  // Status read-only: berasal dari kapabilitas wadah native, bukan toggle demo.
+  // Wajib berada di atas setiap conditional return agar urutan hook stabil.
+  const [screenSecurity, setScreenSecurity] = useState<ScreenSecurityStatus>(() => readScreenSecurity());
+
+  useEffect(() => {
+    setScreenSecurity(readScreenSecurity(window as never));
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -101,6 +113,24 @@ function ProfilePage() {
       setAvatarPrivacyState(((profile as { avatar_privacy?: string }).avatar_privacy as AvatarPrivacy) ?? "contacts");
     }
   }, [profile]);
+
+  // Jumlah audiens aktif ditampilkan di ringkasan opsi privasi.
+  useEffect(() => {
+    const mode = audienceModeFor(avatarPrivacy);
+    if (!userId || !mode) {
+      setAudienceCount(0);
+      return;
+    }
+    let active = true;
+    void listAvatarAudience(userId, mode)
+      .then((rows) => {
+        if (active) setAudienceCount(rows.length);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [userId, avatarPrivacy]);
 
   useEffect(() => {
     if (myBiz) {
@@ -209,6 +239,8 @@ function ProfilePage() {
     try {
       await setAvatarPrivacy(userId, value);
       await refresh();
+      // Mode berbasis daftar tidak berguna tanpa pemilih, jadi buka langsung.
+      if (needsAudience(value)) setAudienceOpen(true);
     } catch (err) {
       setAvatarPrivacyState(prev);
       toast.error(err instanceof Error ? err.message : "Gagal menyimpan privasi foto profil");
@@ -273,11 +305,6 @@ function ProfilePage() {
   const notif = notificationsOf(settings);
   const priv = privacyOf(settings);
   const sec = securityOf(settings);
-  // Status read-only: berasal dari kapabilitas wadah native, bukan toggle demo.
-  const [screenSecurity, setScreenSecurity] = useState<ScreenSecurityStatus>(() => readScreenSecurity());
-  useEffect(() => {
-    setScreenSecurity(readScreenSecurity(window as never));
-  }, []);
   const role = myBiz?.role;
 
   return (
@@ -301,8 +328,8 @@ function ProfilePage() {
               color={profile.avatar_color}
               size="lg"
             />
-            <label className="absolute -right-1 -bottom-1 flex size-6 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Camera className="size-3.5" />
+            <label className="absolute -right-1 -bottom-1 flex size-11 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
+              <Camera className="size-5" />
               <span className="sr-only">Ubah foto profil</span>
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
             </label>
@@ -311,16 +338,16 @@ function ProfilePage() {
             <p className="truncate text-base font-semibold">{profile.display_name}</p>
             <p className="truncate text-xs text-muted-foreground">{profile.bio || "Belum ada bio"}</p>
             <div className="mt-1 flex gap-3 text-[11px]">
-              <label className="cursor-pointer text-primary">
+              <label className="inline-flex min-h-11 cursor-pointer items-center text-primary">
                 Kamera
                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={onAvatarPick} disabled={uploading} />
               </label>
-              <label className="cursor-pointer text-primary">
+              <label className="inline-flex min-h-11 cursor-pointer items-center text-primary">
                 Galeri
                 <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatarPick} disabled={uploading} />
               </label>
               {profile.avatar_url && (
-                <button type="button" className="text-destructive" onClick={() => setRemoveAvatarOpen(true)}>
+                <button type="button" className="inline-flex min-h-11 items-center text-destructive" onClick={() => setRemoveAvatarOpen(true)}>
                   Hapus
                 </button>
               )}
@@ -336,7 +363,7 @@ function ProfilePage() {
                 key={key}
                 type="button"
                 onClick={() => void changeAvatarPrivacy(key)}
-                className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                className={`flex min-h-11 items-center justify-between rounded-xl border px-3 py-2 text-sm ${
                   avatarPrivacy === key ? "border-primary bg-primary/10" : "border-border"
                 }`}
               >
@@ -345,6 +372,16 @@ function ProfilePage() {
               </button>
             ))}
           </div>
+          {needsAudience(avatarPrivacy) && (
+            <button
+              type="button"
+              onClick={() => setAudienceOpen(true)}
+              className="flex min-h-11 w-full items-center justify-between rounded-xl bg-muted px-3 py-2 text-sm"
+            >
+              <span className="text-muted-foreground">{audienceSummary(avatarPrivacy, audienceCount)}</span>
+              <span className="text-primary">Pilih kontak</span>
+            </button>
+          )}
           <p className="text-[11px] text-muted-foreground">
             Pengguna yang Anda blokir tidak pernah melihat foto profil, apa pun pilihannya.
           </p>
@@ -642,6 +679,16 @@ function ProfilePage() {
 
       {draftFile && (
         <AvatarEditor file={draftFile} onCancel={() => setDraftFile(null)} onApply={applyAvatar} />
+      )}
+
+      {userId && (
+        <AvatarAudienceDialog
+          open={audienceOpen}
+          userId={userId}
+          privacy={avatarPrivacy}
+          onOpenChange={setAudienceOpen}
+          onSaved={setAudienceCount}
+        />
       )}
     </AppShell>
   );
