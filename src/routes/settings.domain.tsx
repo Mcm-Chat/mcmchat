@@ -100,7 +100,8 @@ function DomainSettingsPage() {
         <MobileHeader
           title="Verifikasi domain"
           subtitle={DOMAIN_HOST}
-          right={
+          back
+          actions={
             <Button
               size="sm"
               variant="ghost"
