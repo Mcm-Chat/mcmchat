@@ -35,7 +35,6 @@ import { Route as LedgerIdRouteImport } from './routes/ledger.$id'
 import { Route as PhotoNewRouteImport } from './routes/photo.new'
 import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
-import { Route as SettingsDomainRouteImport } from './routes/settings.domain'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
 import { Route as SettingsVoiceRouteImport } from './routes/settings.voice'
 import { Route as StatusIndexRouteImport } from './routes/status.index'
@@ -174,11 +173,6 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/profile/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsDomainRoute = SettingsDomainRouteImport.update({
-  id: '/settings/domain',
-  path: '/settings/domain',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   id: '/settings/notifications',
   path: '/settings/notifications',
@@ -234,7 +228,6 @@ export interface FileRoutesByFullPath {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
-  '/settings/domain': typeof SettingsDomainRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/voice': typeof SettingsVoiceRoute
   '/status/new': typeof StatusNewRoute
@@ -270,7 +263,6 @@ export interface FileRoutesByTo {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
-  '/settings/domain': typeof SettingsDomainRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/voice': typeof SettingsVoiceRoute
   '/status/new': typeof StatusNewRoute
@@ -307,7 +299,6 @@ export interface FileRoutesById {
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
   '/prepare/$token': typeof PrepareTokenRoute
-  '/settings/domain': typeof SettingsDomainRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
   '/settings/voice': typeof SettingsVoiceRoute
   '/status/new': typeof StatusNewRoute
@@ -345,7 +336,6 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
-    | '/settings/domain'
     | '/settings/notifications'
     | '/settings/voice'
     | '/status/new'
@@ -381,7 +371,6 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
-    | '/settings/domain'
     | '/settings/notifications'
     | '/settings/voice'
     | '/status/new'
@@ -417,7 +406,6 @@ export interface FileRouteTypes {
     | '/ledger/$id'
     | '/photo/new'
     | '/prepare/$token'
-    | '/settings/domain'
     | '/settings/notifications'
     | '/settings/voice'
     | '/status/new'
@@ -454,7 +442,6 @@ export interface RootRouteChildren {
   LedgerIdRoute: typeof LedgerIdRoute
   PhotoNewRoute: typeof PhotoNewRoute
   PrepareTokenRoute: typeof PrepareTokenRoute
-  SettingsDomainRoute: typeof SettingsDomainRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
   SettingsVoiceRoute: typeof SettingsVoiceRoute
   StatusNewRoute: typeof StatusNewRoute
@@ -656,13 +643,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/domain': {
-      id: '/settings/domain'
-      path: '/settings/domain'
-      fullPath: '/settings/domain'
-      preLoaderRoute: typeof SettingsDomainRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings/notifications': {
       id: '/settings/notifications'
       path: '/settings/notifications'
@@ -734,7 +714,6 @@ const rootRouteChildren: RootRouteChildren = {
   LedgerIdRoute: LedgerIdRoute,
   PhotoNewRoute: PhotoNewRoute,
   PrepareTokenRoute: PrepareTokenRoute,
-  SettingsDomainRoute: SettingsDomainRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
   SettingsVoiceRoute: SettingsVoiceRoute,
   StatusNewRoute: StatusNewRoute,

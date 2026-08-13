@@ -5,7 +5,6 @@ import {
   Bell,
   Camera,
   Eye,
-  Globe,
   KeyRound,
   LogOut,
   Monitor,
