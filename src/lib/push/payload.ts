@@ -61,6 +61,8 @@ export function previewBody(kind: string, body: string, allowPreview: boolean): 
       return "📍 Lokasi";
     case "sales_card":
       return "🧾 Nota penjualan";
+    case "product_card":
+      return "🛍️ Kartu produk";
     case "ledger":
       return "💳 Catatan hutang";
     case "order":

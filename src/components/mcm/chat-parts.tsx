@@ -317,6 +317,46 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
   );
 }
 
+type ProductCardData = {
+  productName?: string;
+  variantName?: string;
+  price?: number;
+  unit?: string;
+  stockLabel?: string;
+  description?: string;
+  note?: string;
+  photos?: SalesCardPhoto[];
+};
+
+/** Kartu produk terstruktur: nama, varian, harga, stok, dan foto + lokasi per foto. */
+function ProductCard({ message }: { message: MessageRow }) {
+  const p = (message.payload ?? {}) as ProductCardData;
+  const photos = p.photos ?? [];
+  return (
+    <div className="w-64 max-w-[78vw] space-y-2">
+      <p className="text-[10px] font-bold tracking-wide uppercase opacity-70">Produk</p>
+      <div>
+        <p className="text-sm font-bold break-words">{p.productName ?? message.body}</p>
+        {p.variantName && <p className="text-[11px] opacity-80">Varian: {p.variantName}</p>}
+      </div>
+      <div className="flex items-baseline justify-between gap-2 text-[12px]">
+        <span className="font-semibold">{rupiah(Number(p.price ?? 0))}</span>
+        {p.unit && <span className="opacity-75">per {p.unit}</span>}
+      </div>
+      {p.stockLabel && <p className="text-[11px] opacity-80">Stok tersedia: {p.stockLabel}</p>}
+      {p.description && <p className="line-clamp-3 text-[11px] opacity-80">{p.description}</p>}
+      {photos.length > 0 && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {photos.map((ph) => (
+            <SalesCardPhotoThumb key={ph.id} photo={ph} />
+          ))}
+        </div>
+      )}
+      {p.note && <p className="text-[11px] break-words opacity-90">{p.note}</p>}
+    </div>
+  );
+}
+
 function SalesCard({ message }: { message: MessageRow }) {
   const p = (message.payload ?? {}) as {
     number?: string;
@@ -527,6 +567,8 @@ export function MessageBubble({
             <VoiceBubble message={message} />
           ) : message.kind === "sales_card" ? (
             <SalesCard message={message} />
+          ) : message.kind === "product_card" ? (
+            <ProductCard message={message} />
           ) : message.kind === "ledger" ? (
             <div className="flex w-52 items-center gap-2">
               <Wallet className="size-5 shrink-0" />

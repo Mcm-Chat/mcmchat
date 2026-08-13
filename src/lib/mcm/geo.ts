@@ -6,6 +6,38 @@ export const mapsUrlFor = (lat: number, lng: number) =>
 
 export const koordinat = (lat: number, lng: number) => `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
+/**
+ * Sanitasi link lokasi yang diketik/ditempel pengguna.
+ * Hanya HTTPS yang diterima; `javascript:`/`data:`/skema lain ditolak.
+ * Link asli tidak diubah bentuknya, hanya divalidasi.
+ */
+export function sanitizeMapsUrl(raw: string): string | null {
+  const s = raw.trim();
+  if (s === "") return "";
+  let u: URL;
+  try {
+    u = new URL(s);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "https:") return null;
+  return u.toString();
+}
+
+/** Ambil koordinat dari URL Maps bila terbaca, tanpa mengubah URL aslinya. */
+export function extractCoords(raw: string): { lat: number; lng: number } | null {
+  const m =
+    raw.match(/[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/) ??
+    raw.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/) ??
+    raw.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lng = Number(m[2]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { lat, lng };
+}
+
 export const DEMO_LOCATION: MessageLocation = {
   latitude: -6.2146,
   longitude: 106.8451,

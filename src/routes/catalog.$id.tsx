@@ -3,6 +3,12 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  formatDecimalId,
+  fromGrams,
+  isWeightUnit,
+  validateVariantDraft,
+} from "@/lib/mcm/decimal";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import {
   ConfirmDialog,
@@ -278,7 +284,9 @@ function CatalogDetail() {
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
                   onHistory={() => setMovementsFor(v)}
-                  onSend={() => void navigate({ href: `/chat?send=${product.id}&variant=${v.id}` })}
+                  onSend={() =>
+                    void navigate({ to: "/chat", search: { send: product.id, variant: v.id } })
+                  }
                   onEditLocation={(ph) => setEditLocationPhoto(ph)}
                   onDeletePhoto={(ph) =>
                     void (async () => {
@@ -602,38 +610,60 @@ function VariantEditorDialog({
   const [displayUnit, setDisplayUnit] = useState(
     variant?.display_unit ?? (stockType === "weight" ? "g" : "pcs"),
   );
-  const [conversionFactor, setConversionFactor] = useState(String(variant?.conversion_factor ?? 1));
+  const [unitsPerDisplay, setUnitsPerDisplay] = useState(
+    String(variant?.units_per_display ?? variant?.conversion_factor ?? 1),
+  );
+  const [weightQty, setWeightQty] = useState(() => {
+    const grams = Number(variant?.base_quantity_grams ?? 0);
+    const unit = variant?.display_unit ?? "g";
+    if (!grams || !isWeightUnit(unit)) return "1";
+    return String(fromGrams(grams, unit));
+  });
   const [price, setPrice] = useState(String(variant?.price ?? 0));
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
   const units = stockType === "weight" ? WEIGHT_UNITS : COUNT_UNITS;
 
+  const draft = {
+    name,
+    stock_kind: stockType,
+    display_unit: displayUnit,
+    display_quantity: weightQty,
+    units_per_display: unitsPerDisplay,
+    price,
+  } as const;
+  const check = validateVariantDraft(draft);
+  const gramPreview =
+    stockType === "weight" && check.ok ? formatDecimalId(check.value.base_quantity_grams ?? 0) : null;
+
   const save = async () => {
-    if (name.trim().length < 1) {
-      toast.error("Nama varian wajib diisi");
+    if (saving) return;
+    if (!check.ok) {
+      toast.error(check.message);
       return;
     }
-    const priceNum = Number(price);
-    if (!Number.isFinite(priceNum) || priceNum < 0) {
-      toast.error("Harga varian tidak valid");
-      return;
-    }
+    setSaving(true);
     try {
       await upsertVariant({
         id: variant?.id,
         business_id: businessId,
         product_id: productId,
-        name: name.trim(),
+        name: check.value.name,
         stock_type: stockType,
-        display_unit: displayUnit,
-        conversion_factor: stockType === "count" ? Number(conversionFactor) || 1 : 1,
+        display_unit: check.value.display_unit,
+        base_unit: check.value.base_unit,
+        display_quantity: weightQty,
+        units_per_display: stockType === "count" ? unitsPerDisplay : null,
         allow_decimal: stockType === "weight",
-        price: priceNum,
+        price: check.value.price,
         sort_order: variant?.sort_order ?? sortOrder,
       });
       toast.success("Varian disimpan");
       onSaved();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal menyimpan varian");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -685,25 +715,56 @@ function VariantEditorDialog({
               </SelectContent>
             </Select>
           </div>
+          {stockType === "weight" && (
+            <div className="space-y-1.5">
+              <Label>Jumlah berat</Label>
+              <Input
+                inputMode="decimal"
+                value={weightQty}
+                onChange={(e) => setWeightQty(e.target.value)}
+                placeholder="Contoh: 0,01"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {gramPreview
+                  ? `Setara ${gramPreview} gram`
+                  : !check.ok && check.field === "display_quantity"
+                    ? check.message
+                    : "Berat minimum 0,01 gram."}
+              </p>
+            </div>
+          )}
           {stockType === "count" && (
             <div className="space-y-1.5">
               <Label>Isi per satuan (mis. 1 karton = 24 pcs)</Label>
               <Input
                 type="number"
                 min={1}
-                value={conversionFactor}
-                onChange={(e) => setConversionFactor(e.target.value)}
+                step={1}
+                inputMode="numeric"
+                value={unitsPerDisplay}
+                onChange={(e) => setUnitsPerDisplay(e.target.value)}
               />
+              {!check.ok && check.field === "units_per_display" && (
+                <p className="text-[11px] text-destructive">{check.message}</p>
+              )}
             </div>
           )}
           <div className="space-y-1.5">
             <Label>Harga varian (Rp)</Label>
-            <Input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
+            <Input
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Contoh: 100.000"
+            />
+            {!check.ok && check.field === "price" && (
+              <p className="text-[11px] text-destructive">{check.message}</p>
+            )}
           </div>
         </div>
         <DialogFooter className="flex-col gap-2 sm:flex-col">
-          <Button className="w-full rounded-xl" onClick={save}>
-            Simpan
+          <Button className="w-full rounded-xl" onClick={save} disabled={!check.ok || saving}>
+            {saving ? "Menyimpan…" : "Simpan"}
           </Button>
           {variant && (
             <Button

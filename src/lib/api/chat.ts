@@ -73,6 +73,8 @@ export function previewOf(m: LastMessagePreview | MessageRow | null): string {
       return "🎙️ Pesan suara";
     case "sales_card":
       return "🧾 Rincian penjualan";
+    case "product_card":
+      return `🛍️ ${m.body || "Kartu produk"}`;
     case "ledger":
       return "💰 Catatan utang/piutang";
     default:

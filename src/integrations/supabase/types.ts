@@ -1477,6 +1477,7 @@ export type Database = {
           business_id: string
           caption: string
           created_at: string
+          created_by: string | null
           group_label: string
           id: string
           image_path: string
@@ -1485,12 +1486,16 @@ export type Database = {
           location_label: string
           location_lat: number | null
           location_lng: number | null
+          location_mode: string
           location_url: string
+          media_version: number
           preparation_job_id: string | null
           preparation_job_item_id: string | null
           product_id: string
           sort_order: number
           source_photo_id: string | null
+          source_type: string
+          thumbnail_path: string | null
           updated_at: string
           variant_id: string | null
         }
@@ -1498,6 +1503,7 @@ export type Database = {
           business_id: string
           caption?: string
           created_at?: string
+          created_by?: string | null
           group_label?: string
           id?: string
           image_path: string
@@ -1506,12 +1512,16 @@ export type Database = {
           location_label?: string
           location_lat?: number | null
           location_lng?: number | null
+          location_mode?: string
           location_url?: string
+          media_version?: number
           preparation_job_id?: string | null
           preparation_job_item_id?: string | null
           product_id: string
           sort_order?: number
           source_photo_id?: string | null
+          source_type?: string
+          thumbnail_path?: string | null
           updated_at?: string
           variant_id?: string | null
         }
@@ -1519,6 +1529,7 @@ export type Database = {
           business_id?: string
           caption?: string
           created_at?: string
+          created_by?: string | null
           group_label?: string
           id?: string
           image_path?: string
@@ -1527,12 +1538,16 @@ export type Database = {
           location_label?: string
           location_lat?: number | null
           location_lng?: number | null
+          location_mode?: string
           location_url?: string
+          media_version?: number
           preparation_job_id?: string | null
           preparation_job_item_id?: string | null
           product_id?: string
           sort_order?: number
           source_photo_id?: string | null
+          source_type?: string
+          thumbnail_path?: string | null
           updated_at?: string
           variant_id?: string | null
         }
@@ -1577,6 +1592,7 @@ export type Database = {
       product_variants: {
         Row: {
           allow_decimal: boolean
+          base_quantity_grams: number | null
           base_unit: string
           business_id: string
           conversion_factor: number
@@ -1585,16 +1601,19 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          needs_review: boolean
           precision_scale: number
           price: number
           product_id: string
           sku: string
           sort_order: number
           stock_type: Database["public"]["Enums"]["stock_type"]
+          units_per_display: number | null
           updated_at: string
         }
         Insert: {
           allow_decimal?: boolean
+          base_quantity_grams?: number | null
           base_unit?: string
           business_id: string
           conversion_factor?: number
@@ -1603,16 +1622,19 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          needs_review?: boolean
           precision_scale?: number
           price?: number
           product_id: string
           sku?: string
           sort_order?: number
           stock_type?: Database["public"]["Enums"]["stock_type"]
+          units_per_display?: number | null
           updated_at?: string
         }
         Update: {
           allow_decimal?: boolean
+          base_quantity_grams?: number | null
           base_unit?: string
           business_id?: string
           conversion_factor?: number
@@ -1621,12 +1643,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          needs_review?: boolean
           precision_scale?: number
           price?: number
           product_id?: string
           sku?: string
           sort_order?: number
           stock_type?: Database["public"]["Enums"]["stock_type"]
+          units_per_display?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2589,6 +2613,7 @@ export type Database = {
         | "order"
         | "sales_card"
         | "location"
+        | "product_card"
       order_status: "new" | "processing" | "shipped" | "completed" | "cancelled"
       payment_method: "cash" | "transfer" | "dp" | "credit"
       preparation_item_status: "pending" | "in_progress" | "done"
@@ -2777,6 +2802,7 @@ export const Constants = {
         "order",
         "sales_card",
         "location",
+        "product_card",
       ],
       order_status: ["new", "processing", "shipped", "completed", "cancelled"],
       payment_method: ["cash", "transfer", "dp", "credit"],

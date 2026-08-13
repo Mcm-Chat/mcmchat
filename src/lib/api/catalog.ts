@@ -1,7 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { removeObject, uploadProductPhoto } from "./storage";
-import type { Tables } from "@/integrations/supabase/types";
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+import {
+  COUNT_UNIT_LIST,
+  VARIANT_MESSAGES,
+  WEIGHT_UNIT_LIST,
+  WEIGHT_UNIT_TO_GRAM,
+  decimalMultiply,
+  toNumericString,
+  validateVariantDraft,
+  type VariantDraft,
+} from "@/lib/mcm/decimal";
 
 export type ProductRow = Tables<"products">;
 export type VariantRow = Tables<"product_variants">;
@@ -11,15 +21,9 @@ export type PhotoRow = Tables<"product_photos">;
 export type StockType = VariantRow["stock_type"];
 export type MovementType = MovementRow["movement_type"];
 
-export const WEIGHT_UNITS = ["mg", "g", "ons", "kg"] as const;
-export const COUNT_UNITS = ["pcs", "botol", "karton", "koli", "sak"] as const;
-
-export const WEIGHT_TO_BASE_G: Record<(typeof WEIGHT_UNITS)[number], number> = {
-  mg: 0.001,
-  g: 1,
-  ons: 100,
-  kg: 1000,
-};
+export const WEIGHT_UNITS = WEIGHT_UNIT_LIST;
+export const COUNT_UNITS = COUNT_UNIT_LIST;
+export const WEIGHT_TO_BASE_G = WEIGHT_UNIT_TO_GRAM;
 
 export const MOVEMENT_LABEL: Record<MovementType, string> = {
   preparation: "Penyiapan",
@@ -36,16 +40,19 @@ export function toBase(
   unit: string,
 ): number {
   if (variant.stock_type === "weight") {
-    const factor = WEIGHT_TO_BASE_G[unit as (typeof WEIGHT_UNITS)[number]];
-    if (!factor) throw new Error("Satuan berat tidak dikenal");
-    return Math.round(qty * factor * 100) / 100;
+    const factor = WEIGHT_TO_BASE_G[unit as keyof typeof WEIGHT_TO_BASE_G];
+    if (!factor) throw new Error(VARIANT_MESSAGES.unit);
+    // Presisi gram 6 desimal: 0,01 g dan 1 mg tidak boleh dibulatkan hilang.
+    return decimalMultiply(qty, factor);
   }
+  // Hitungan selalu bilangan bulat base unit; tidak pernah dikonversi ke gram.
   return Math.round(qty * (variant.conversion_factor || 1));
 }
 
 /** Format qty_base menjadi tampilan ramah pengguna sesuai satuan tampilan varian. */
 export function formatQty(
-  variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal">,
+  variant: Pick<VariantRow, "stock_type" | "display_unit" | "conversion_factor" | "allow_decimal"> &
+    Partial<Pick<VariantRow, "units_per_display">>,
   qtyBase: number,
 ): string {
   const nf = (v: number, maxFrac: number) =>
@@ -54,11 +61,11 @@ export function formatQty(
     const unit = (WEIGHT_UNITS as readonly string[]).includes(variant.display_unit)
       ? variant.display_unit
       : "g";
-    const factor = WEIGHT_TO_BASE_G[unit as (typeof WEIGHT_UNITS)[number]] ?? 1;
+    const factor = WEIGHT_TO_BASE_G[unit as keyof typeof WEIGHT_TO_BASE_G] ?? 1;
     const value = qtyBase / factor;
-    return `${nf(value, 2)} ${unit}`;
+    return `${nf(value, 6)} ${unit}`;
   }
-  const factor = variant.conversion_factor || 1;
+  const factor = Number(variant.units_per_display ?? variant.conversion_factor) || 1;
   const value = qtyBase / factor;
   return `${nf(value, variant.allow_decimal ? 2 : 0)} ${variant.display_unit || "pcs"}`;
 }
@@ -219,20 +226,43 @@ export type VariantInput = {
   price: number;
   sku?: string;
   sort_order?: number;
+  /** weight: jumlah berat pada satuan tampilan (boleh desimal, mis. 0,01 g). */
+  display_quantity?: string | number | null;
+  /** count: isi per satuan tampilan (bilangan bulat > 0). */
+  units_per_display?: string | number | null;
 };
 
 export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
+  const draft: VariantDraft = {
+    name: input.name,
+    stock_kind: input.stock_type,
+    display_unit: input.display_unit,
+    ...(input.base_unit !== undefined ? { base_unit: input.base_unit } : {}),
+    display_quantity: input.display_quantity ?? 1,
+    units_per_display: input.units_per_display ?? input.conversion_factor ?? 1,
+    price: input.price,
+    quantity_precision: input.precision_scale ?? null,
+  };
+  const check = validateVariantDraft(draft);
+  if (!check.ok) throw new Error(check.message);
+  const v = check.value;
+
+  // Desimal dikirim sebagai string ternormalisasi agar presisi NUMERIC utuh.
   const payload = {
     business_id: input.business_id,
     product_id: input.product_id,
-    name: input.name,
+    name: v.name,
     stock_type: input.stock_type,
-    base_unit: input.stock_type === "weight" ? "g" : (input.base_unit ?? input.display_unit),
-    display_unit: input.display_unit,
-    precision_scale: input.precision_scale ?? (input.stock_type === "weight" ? 0.01 : 1),
-    conversion_factor: input.stock_type === "count" ? (input.conversion_factor ?? 1) : 1,
+    base_unit: v.base_unit,
+    display_unit: v.display_unit,
+    precision_scale: toNumericString(v.quantity_precision),
+    base_quantity_grams:
+      v.base_quantity_grams === null ? null : toNumericString(v.base_quantity_grams),
+    units_per_display: v.units_per_display,
+    conversion_factor: toNumericString(v.units_per_display ?? 1),
+    needs_review: false,
     allow_decimal: input.allow_decimal ?? input.stock_type === "weight",
-    price: input.price,
+    price: toNumericString(v.price, 2),
     sku: input.sku ?? "",
     sort_order: input.sort_order ?? 0,
   };
@@ -240,7 +270,7 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
     return unwrap(
       await supabase
         .from("product_variants")
-        .update(payload)
+        .update(payload as unknown as TablesUpdate<"product_variants">)
         .eq("id", input.id)
         .select("*")
         .single(),
@@ -248,7 +278,11 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
     );
   }
   const created = unwrap(
-    await supabase.from("product_variants").insert(payload).select("*").single(),
+    await supabase
+      .from("product_variants")
+      .insert(payload as unknown as TablesInsert<"product_variants">)
+      .select("*")
+      .single(),
     "Gagal membuat varian",
   );
   const { error } = await supabase.from("inventory_balances").upsert(
@@ -320,6 +354,8 @@ export type PhotoInput = {
   location_label?: string;
   location_accuracy?: number | null;
   group_label?: string;
+  source_type?: "camera" | "gallery" | "preparation";
+  location_mode?: "auto" | "manual" | "none";
 };
 
 export async function addProductPhotos(
@@ -337,6 +373,7 @@ export async function addProductPhotos(
     "Gagal memuat urutan foto",
   );
   let nextSort = (existing[0]?.sort_order ?? -1) + 1;
+  const { data: auth } = await supabase.auth.getUser();
   for (const d of drafts) {
     const up = await uploadProductPhoto(businessId, d.file, d.fileName);
     const { error } = await supabase.from("product_photos").insert({
@@ -351,9 +388,22 @@ export async function addProductPhotos(
       location_label: d.location_label ?? "",
       location_accuracy: d.location_accuracy ?? null,
       group_label: d.group_label ?? "",
+      source_type: d.source_type ?? "gallery",
+      location_mode:
+        d.location_mode ??
+        (d.location_lat != null && d.location_lng != null
+          ? "auto"
+          : (d.location_url ?? "") !== ""
+            ? "manual"
+            : "none"),
+      created_by: auth.user?.id ?? null,
       sort_order: nextSort++,
     });
-    if (error) throw new Error(friendly(error.message, "Gagal menyimpan foto"));
+    if (error) {
+      // Jangan tinggalkan file yatim di Storage saat insert baris gagal.
+      await removeObject("product-photos", up.path).catch(() => undefined);
+      throw new Error(friendly(error.message, "Gagal menyimpan foto"));
+    }
   }
 }
 
@@ -364,8 +414,11 @@ export async function updatePhotoLocation(
     location_lat?: number | null;
     location_lng?: number | null;
     location_label?: string;
+    location_mode?: "auto" | "manual" | "none";
+    caption?: string;
   },
 ) {
+  // Update hanya menyentuh baris foto ini; lokasi foto lain tidak ikut berubah.
   const { error } = await supabase.from("product_photos").update(patch).eq("id", photoId);
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui lokasi foto"));
 }
