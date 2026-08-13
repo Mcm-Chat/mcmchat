@@ -3,10 +3,13 @@ import { useEffect } from "react";
 import { ShieldCheck } from "lucide-react";
 import logo from "@/assets/mcm-logo.png";
 import { useAuth } from "@/lib/auth";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
   head: () => ({
+    links: canonical("/").links,
     meta: [
+      ...canonical("/").meta,
       { title: "MCM — Chat Privat, Panggilan & Catatan Utang" },
       {
         name: "description",

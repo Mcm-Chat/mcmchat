@@ -11,10 +11,13 @@ import { PinCard } from "@/components/mcm/pin-card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import logo from "@/assets/mcm-logo.png";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
+    links: canonical("/register").links,
     meta: [
+      ...canonical("/register").meta,
       { title: "Daftar akun MCM" },
       { name: "description", content: "Buat akun MCM dan dapatkan PIN unik 8 karakter sebagai identitas publik Anda." },
       { property: "og:title", content: "Daftar akun MCM" },

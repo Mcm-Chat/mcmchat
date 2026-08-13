@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Smartphone, ShieldCheck, Bell, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/download")({
   head: () => ({
+    links: canonical("/download").links,
     meta: [
+      ...canonical("/download").meta,
       { title: "Unduh MCM untuk Android" },
       {
         name: "description",

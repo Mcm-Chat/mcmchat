@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/mcm/legal-page";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
+    links: canonical("/terms").links,
     meta: [
+      ...canonical("/terms").meta,
       { title: "Syarat Layanan — MCM" },
       { name: "description", content: "Ketentuan penggunaan aplikasi chat bisnis MCM: akun, konten, pembayaran, dan penghentian layanan." },
       { property: "og:title", content: "Syarat Layanan — MCM" },
