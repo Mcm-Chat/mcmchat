@@ -111,6 +111,24 @@ function ProfilePage() {
     }
   }, [profile]);
 
+  // Jumlah audiens aktif ditampilkan di ringkasan opsi privasi.
+  useEffect(() => {
+    const mode = audienceModeFor(avatarPrivacy);
+    if (!userId || !mode) {
+      setAudienceCount(0);
+      return;
+    }
+    let active = true;
+    void listAvatarAudience(userId, mode)
+      .then((rows) => {
+        if (active) setAudienceCount(rows.length);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [userId, avatarPrivacy]);
+
   useEffect(() => {
     if (myBiz) {
       const b = myBiz.business;
