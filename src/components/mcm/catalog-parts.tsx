@@ -15,6 +15,7 @@ import { StatusBadge } from "@/components/mcm/primitives";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import { formatQty, type PhotoRow, type VariantRow } from "@/lib/api/catalog";
 import { rupiah } from "@/lib/mcm/format";
+import { extractCoords, mapsUrlFor, sanitizeMapsUrl } from "@/lib/mcm/geo";
 
 export function StockChip({
   variant,
