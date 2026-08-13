@@ -210,7 +210,14 @@ export function StatusViewer({
           ))}
         </div>
         <div className="pointer-events-auto mt-3 flex items-center gap-3 px-3">
-          <MCMAvatar initials={initialsOf(name)} color={group.profile?.avatar_color ?? "#0ea5e9"} size="sm" />
+          <UserAvatar
+            userId={group.ownerId}
+            path={group.profile?.avatar_url}
+            version={group.profile?.avatar_version}
+            name={name}
+            color={group.profile?.avatar_color ?? "#0ea5e9"}
+            size="sm"
+          />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{mine ? "Status Saya" : name}</div>
             <div className="text-[11px] text-white/70">{waktuStatus(item.created_at)}</div>
@@ -330,7 +337,14 @@ export function StatusViewer({
             )}
             {(viewers ?? []).map((v) => (
               <div key={`${v.item_id}-${v.viewer_id}`} className="flex items-center gap-3">
-                <MCMAvatar initials={initialsOf(v.profile?.display_name ?? "Kontak")} color={v.profile?.avatar_color ?? "#0ea5e9"} size="sm" />
+                <UserAvatar
+                  userId={v.viewer_id}
+                  path={v.profile?.avatar_url}
+                  version={v.profile?.avatar_version}
+                  name={v.profile?.display_name ?? "Kontak"}
+                  color={v.profile?.avatar_color ?? "#0ea5e9"}
+                  size="sm"
+                />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{v.profile?.display_name ?? "Kontak MCM"}</div>
                   <div className="text-xs text-muted-foreground">{waktuStatus(v.viewed_at)}</div>
