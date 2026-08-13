@@ -93,6 +93,13 @@ function ProfilePage() {
   });
   const [savingBiz, setSavingBiz] = useState(false);
   const [members, setMembers] = useState<MemberWithProfile[]>([]);
+  // Status read-only: berasal dari kapabilitas wadah native, bukan toggle demo.
+  // Wajib berada di atas setiap conditional return agar urutan hook stabil.
+  const [screenSecurity, setScreenSecurity] = useState<ScreenSecurityStatus>(() => readScreenSecurity());
+
+  useEffect(() => {
+    setScreenSecurity(readScreenSecurity(window as never));
+  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -273,11 +280,6 @@ function ProfilePage() {
   const notif = notificationsOf(settings);
   const priv = privacyOf(settings);
   const sec = securityOf(settings);
-  // Status read-only: berasal dari kapabilitas wadah native, bukan toggle demo.
-  const [screenSecurity, setScreenSecurity] = useState<ScreenSecurityStatus>(() => readScreenSecurity());
-  useEffect(() => {
-    setScreenSecurity(readScreenSecurity(window as never));
-  }, []);
   const role = myBiz?.role;
 
   return (
