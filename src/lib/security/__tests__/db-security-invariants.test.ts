@@ -108,7 +108,7 @@ describe("izin bucket avatars", () => {
   it("can_view_avatar menghormati privasi avatar dan blokir", () => {
     const fn = sql.slice(lastIndexOfPattern(/create or replace function public\.can_view_avatar\(/));
     expect(fn).toMatch(/avatar_privacy/);
-    expect(fn).toMatch(/public\.blocks/);
+    expect(fn).toMatch(/is_blocked = true/);
     expect(fn).toMatch(/public\.contacts/);
     expect(has(/grant execute on function public\.can_view_avatar\(uuid, uuid\) to anon/)).toBe(false);
   });
