@@ -3,10 +3,13 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Mail, ShieldCheck, Trash2 } from "lucide-react";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
+    links: canonical("/support").links,
     meta: [
+      ...canonical("/support").meta,
       { title: "Bantuan & Dukungan — MCM" },
       { name: "description", content: "Pusat bantuan MCM: PIN, chat, katalog, penyiapan pegawai, catatan utang, dan kontak dukungan." },
       { property: "og:title", content: "Bantuan & Dukungan — MCM" },

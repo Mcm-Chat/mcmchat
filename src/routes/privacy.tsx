@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/mcm/legal-page";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
+    links: canonical("/privacy").links,
     meta: [
+      ...canonical("/privacy").meta,
       { title: "Kebijakan Privasi — MCM" },
       { name: "description", content: "Bagaimana MCM mengumpulkan, memakai, menyimpan, dan menghapus data Anda." },
       { property: "og:title", content: "Kebijakan Privasi — MCM" },

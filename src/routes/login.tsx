@@ -9,10 +9,13 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import logo from "@/assets/mcm-logo.png";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
+    links: canonical("/login").links,
     meta: [
+      ...canonical("/login").meta,
       { title: "Masuk ke MCM" },
       { name: "description", content: "Masuk ke akun MCM dengan email dan kata sandi atau akun Google Anda." },
       { property: "og:title", content: "Masuk ke MCM" },

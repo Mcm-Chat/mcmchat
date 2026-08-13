@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { deleteMyAccount } from "@/lib/account.functions";
+import { canonical } from "@/lib/site";
 
 export const Route = createFileRoute("/delete-account")({
   head: () => ({
+    links: canonical("/delete-account").links,
     meta: [
+      ...canonical("/delete-account").meta,
       { title: "Hapus Akun — MCM" },
       { name: "description", content: "Hapus akun MCM Anda beserta seluruh pesan, katalog, dan catatan keuangan secara permanen." },
       { property: "og:title", content: "Hapus Akun — MCM" },
