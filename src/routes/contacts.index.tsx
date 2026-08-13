@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Ban, Check, MessageSquare, Search, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, EmptyState, LoadingSkeleton, MCMAvatar, StatusBadge } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,7 +177,7 @@ function ContactsPage() {
           <ul className="divide-y divide-border/70 pb-24">
             {filteredActive.map((c) => (
               <li key={c.id} className="flex items-center gap-3 px-4 py-3">
-                <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} />
+                <UserAvatar userId={c.profile.id} path={c.profile.avatar_url} version={c.profile.avatar_version ?? 0} name={c.profile.display_name} color={c.profile.avatar_color} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{c.alias || c.profile.display_name}</p>
                   <p className="font-mono text-[11px] text-muted-foreground">{c.profile.pin}</p>
@@ -248,7 +249,7 @@ function ContactsPage() {
         <ul className="divide-y divide-border/70 pb-24">
           {filteredBlocked.map((c) => (
             <li key={c.id} className="flex items-center gap-3 px-4 py-3">
-              <MCMAvatar initials={initialsOf(c.profile.display_name)} color={c.profile.avatar_color} />
+              <UserAvatar userId={c.profile.id} path={c.profile.avatar_url} version={c.profile.avatar_version ?? 0} name={c.profile.display_name} color={c.profile.avatar_color} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{c.profile.display_name}</p>
                 <p className="font-mono text-[11px] text-muted-foreground">{c.profile.pin}</p>
