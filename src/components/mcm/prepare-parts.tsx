@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
-import { ClipboardList, Copy, Link2, Plus, QrCode, RefreshCw, Trash2, X } from "lucide-react";
+import { BadgeCheck, Copy, Link2, Plus, QrCode, RefreshCw, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  confirmStaffPin,
   createPreparationJob,
+  deliverPreparationJob,
   formatBase,
   listAgents,
   listVariants,
@@ -68,6 +70,7 @@ export function CreatePreparationDialog({
     queryFn: () => listAgents(businessId),
     enabled: !!businessId && open,
   });
+  const qc = useQueryClient();
 
   const [items, setItems] = useState<DraftItem[]>([]);
   const [variantId, setVariantId] = useState("");
@@ -76,6 +79,25 @@ export function CreatePreparationDialog({
   const [assignee, setAssignee] = useState("");
   const [notes, setNotes] = useState("");
   const [sending, setSending] = useState(false);
+  const [staffPin, setStaffPin] = useState("");
+  const [savingPin, setSavingPin] = useState(false);
+
+  const selectedStaff = (agents ?? []).find((a) => a.id === assignee);
+
+  const savePin = async () => {
+    setSavingPin(true);
+    try {
+      const staff = await confirmStaffPin({ businessId, pin: staffPin });
+      await qc.invalidateQueries({ queryKey: ["agents", businessId] });
+      setAssignee(staff.id);
+      setStaffPin("");
+      toast.success(`Nomor MCM ${staff.pin} tersimpan untuk ${staff.name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan nomor MCM pegawai");
+    } finally {
+      setSavingPin(false);
+    }
+  };
 
   const variantById = useMemo(() => new Map((variants ?? []).map((v) => [v.id, v])), [variants]);
   const productName = (v: ProductVariant) => (products ?? []).find((p) => p.id === v.product_id)?.name ?? "Produk";
@@ -99,6 +121,10 @@ export function CreatePreparationDialog({
   const submit = async () => {
     if (items.length === 0) { toast.error("Tambahkan minimal satu item"); return; }
     if (!assignee) { toast.error("Pilih pegawai penerima tugas"); return; }
+    if (!selectedStaff?.pin) {
+      toast.error("Konfirmasi dulu nomor MCM pegawai ini");
+      return;
+    }
     setSending(true);
     try {
       const job = await createPreparationJob({
@@ -111,6 +137,8 @@ export function CreatePreparationDialog({
         items: items.map(({ key: _key, ...rest }) => rest),
       });
       rememberToken(job.id, job.token);
+      const { pin } = await deliverPreparationJob(job.id, prepareUrl(job.token));
+      toast.success(`Tautan perintah terkirim ke PIN MCM ${pin}`);
       onCreated(job);
       setItems([]);
       setNotes("");
@@ -213,10 +241,37 @@ export function CreatePreparationDialog({
               {(agents ?? []).map((a) => (
                 <SelectItem key={a.id} value={a.id}>
                   {a.name} · {a.role}
+                  {a.pin ? ` · MCM ${a.pin}` : " · PIN belum dikonfirmasi"}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {selectedStaff && (
+            <p className={`text-[11px] ${selectedStaff.pin ? "text-muted-foreground" : "text-destructive"}`}>
+              {selectedStaff.pin
+                ? `Perintah dikirim ke nomor MCM ${selectedStaff.pin} (terkonfirmasi).`
+                : "Nomor MCM pegawai ini belum dikonfirmasi, simpan dulu di bawah."}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5 rounded-xl border border-dashed border-border p-3">
+          <Label htmlFor="staff-pin">Simpan & konfirmasi nomor MCM pegawai</Label>
+          <div className="flex gap-2">
+            <Input
+              id="staff-pin"
+              value={staffPin}
+              maxLength={16}
+              placeholder="Contoh: MCM-8F2K"
+              onChange={(e) => setStaffPin(e.target.value.toUpperCase())}
+            />
+            <Button type="button" variant="secondary" className="rounded-xl" disabled={savingPin || staffPin.length < 4} onClick={() => void savePin()}>
+              <BadgeCheck className="size-4" /> Simpan
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Nomor tersimpan di kolom khusus pegawai dan hanya bisa dilihat pemilik/admin bisnis.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="prep-notes">Catatan untuk pegawai</Label>
@@ -225,7 +280,7 @@ export function CreatePreparationDialog({
 
         <DialogFooter>
           <Button className="w-full rounded-xl" disabled={sending} onClick={() => void submit()}>
-            <ClipboardList className="size-4" /> Kirim tugas & buat barcode
+            <Send className="size-4" /> Kirim ke PIN MCM pegawai
           </Button>
         </DialogFooter>
       </DialogContent>

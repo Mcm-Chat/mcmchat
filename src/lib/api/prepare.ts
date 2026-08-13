@@ -53,27 +53,78 @@ export async function listBalances(businessId: string) {
 }
 
 export async function listAgents(businessId: string) {
-  const rows = unwrap(
-    await supabase
-      .from("business_members")
-      .select("user_id, role, profiles:user_id(display_name, avatar_color)")
-      .eq("business_id", businessId),
-    "Gagal memuat pegawai",
-  ) as unknown as Array<{
+  return listStaff(businessId);
+}
+
+export type StaffMember = {
+  id: string;
+  role: string;
+  name: string;
+  /** PIN MCM pegawai yang sudah dikonfirmasi pemilik/admin (kosong bila belum). */
+  pin: string;
+  confirmedAt: string | null;
+  color: string;
+};
+
+/**
+ * Direktori pegawai beserta PIN MCM terkonfirmasi. PIN disimpan pada kolom
+ * khusus `business_members.staff_pin` yang dicabut dari grant tabel, jadi
+ * hanya fungsi ini (dan hanya untuk pemilik/admin) yang bisa membacanya.
+ */
+export async function listStaff(businessId: string): Promise<StaffMember[]> {
+  const { data, error } = await supabase.rpc("business_staff_directory", { _business: businessId });
+  if (error) throw new Error(friendly(error.message, "Gagal memuat pegawai"));
+  return ((data ?? []) as Array<{
     user_id: string;
     role: string;
-    profiles: { display_name: string; avatar_color: string } | null;
-  }>;
-  // PIN pegawai hanya tampil bila memang tersimpan sebagai kontak saya.
-  const { pinsFor } = await import("./pins");
-  const pins = await pinsFor(rows.map((r) => r.user_id));
-  return rows.map((r) => ({
+    display_name: string;
+    avatar_color: string;
+    staff_pin: string | null;
+    pin_confirmed_at: string | null;
+  }>).map((r) => ({
     id: r.user_id,
     role: r.role,
-    name: r.profiles?.display_name ?? "Pegawai",
-    pin: pins.get(r.user_id) ?? "",
-    color: r.profiles?.avatar_color ?? "#0ea5e9",
+    name: r.display_name || "Pegawai",
+    pin: r.staff_pin ?? "",
+    confirmedAt: r.pin_confirmed_at,
+    color: r.avatar_color || "emerald",
   }));
+}
+
+export const normalizePin = (pin: string) => pin.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+
+/**
+ * Menyimpan + mengonfirmasi nomor MCM pegawai pada kolom khusus. Nomor harus
+ * benar-benar terdaftar; bila belum jadi anggota, pegawai langsung ditambahkan.
+ */
+export async function confirmStaffPin(input: {
+  businessId: string;
+  pin: string;
+  role?: string;
+  label?: string;
+}): Promise<StaffMember> {
+  const pin = normalizePin(input.pin);
+  if (pin.length < 4) throw new Error("Nomor MCM pegawai tidak valid");
+  const { data, error } = await supabase.rpc("confirm_staff_pin", {
+    _business: input.businessId,
+    _pin: pin,
+    _role: (input.role ?? "agent") as never,
+    _label: input.label ?? "",
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal menyimpan PIN pegawai"));
+  const row = data as unknown as { user_id: string; role: string; pin: string; name: string; confirmed_at: string };
+  return { id: row.user_id, role: row.role, name: row.name, pin: row.pin, confirmedAt: row.confirmed_at, color: "emerald" };
+}
+
+/**
+ * Mengirim perintah penyiapan ke PIN MCM pegawai: pesan berisi rincian dan
+ * tautan pengisian masuk ke chat pribadi pegawai (dibuat bila belum ada).
+ */
+export async function deliverPreparationJob(jobId: string, link: string): Promise<{ conversationId: string; pin: string }> {
+  const { data, error } = await supabase.rpc("deliver_preparation_job", { _job: jobId, _link: link });
+  if (error) throw new Error(friendly(error.message, "Gagal mengirim tugas ke pegawai"));
+  const row = data as unknown as { conversation_id: string; pin: string };
+  return { conversationId: row.conversation_id, pin: row.pin };
 }
 
 export type NewJobItem = {
