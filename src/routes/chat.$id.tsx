@@ -58,6 +58,8 @@ import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@
 import { CreatePreparationDialog, PreparationJobCard } from "@/components/mcm/prepare-parts";
 import { LedgerFormDialog } from "@/components/mcm/ledger-form";
 import { SaleDialog } from "@/components/mcm/sale-dialog";
+import { StickerPickerSheet } from "@/components/mcm/sticker-parts";
+import { downloadSticker, type StickerRow } from "@/lib/api/stickers";
 import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "@/lib/api/outbox";
@@ -272,6 +274,45 @@ function ChatRoom() {
   };
 
   const sendDocument = async (file: File | undefined) => {
+    if (!file || !userId) return;
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Ukuran dokumen maksimal 15 MB");
+      return;
+    }
+    try {
+      await sendMessage({
+        conversationId: id,
+        senderId: userId,
+        kind: "document",
+        file: { blob: file, name: file.name },
+      });
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Dokumen gagal dikirim");
+    }
+  };
+
+  const sendSticker = async (sticker: StickerRow) => {
+    if (!userId) return;
+    try {
+      const blob = await downloadSticker(sticker.path);
+      await sendMessage({
+        conversationId: id,
+        senderId: userId,
+        kind: "sticker",
+        body: sticker.emoji,
+        file: { blob, name: "stiker.png" },
+        replyToId: reply?.id ?? null,
+      });
+      setReply(null);
+      setAtBottom(true);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Stiker gagal dikirim");
+    }
+  };
+
+  const sendDocumentLegacy = async (file: File | undefined) => {
     if (!file || !userId) return;
     if (file.size > 15 * 1024 * 1024) {
       toast.error("Ukuran dokumen maksimal 15 MB");
