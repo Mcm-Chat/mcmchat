@@ -140,8 +140,14 @@ function FinancePage() {
           title="Keuangan"
           subtitle="Piutang, utang, dan penjualan bisnis"
           actions={
-            <Button size="sm" className="h-11 rounded-xl" onClick={() => setLedgerFormOpen(true)}>
-              <Plus className="size-4" /> Catat
+            <Button
+              size="icon"
+              variant="secondary"
+              aria-label="Catat utang atau piutang"
+              className="size-11 shrink-0 rounded-xl"
+              onClick={() => setLedgerFormOpen(true)}
+            >
+              <Plus className="size-5" />
             </Button>
           }
         >
