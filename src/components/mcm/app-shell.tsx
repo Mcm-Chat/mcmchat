@@ -121,7 +121,7 @@ export function MobileHeader({
           </Button>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-base leading-tight font-semibold">{title}</div>
+          <h1 className="truncate text-base leading-tight font-semibold">{title}</h1>
           {subtitle && <div className="truncate text-xs text-muted-foreground">{subtitle}</div>}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}

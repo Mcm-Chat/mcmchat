@@ -406,6 +406,7 @@ function ProfilePage() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
+                aria-label="Unggah foto profil"
                 onChange={onAvatarPick}
                 disabled={uploading}
               />
@@ -424,6 +425,7 @@ function ProfilePage() {
                   accept="image/*"
                   capture="environment"
                   className="hidden"
+                  aria-label="Ambil foto profil dengan kamera"
                   onChange={onAvatarPick}
                   disabled={uploading}
                 />
@@ -434,6 +436,7 @@ function ProfilePage() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
                   className="hidden"
+                  aria-label="Pilih foto profil dari galeri"
                   onChange={onAvatarPick}
                   disabled={uploading}
                 />
@@ -646,6 +649,7 @@ function ProfilePage() {
                       <div className="flex shrink-0 items-center gap-1">
                         <select
                           className="rounded-lg border border-input bg-background px-2 py-1 text-xs"
+                          aria-label={`Ubah peran ${m.profile?.display_name ?? "anggota"}`}
                           value={m.role}
                           onChange={(e) =>
                             void changeRole(m.id, e.target.value as BusinessMemberRow["role"])

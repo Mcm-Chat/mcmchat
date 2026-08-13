@@ -160,6 +160,7 @@ function ContactsPage() {
                 value={q}
                 maxLength={40}
                 onChange={(e) => setQ(e.target.value)}
+                aria-label="Cari nama atau PIN"
                 placeholder="Cari nama atau PIN"
                 className="h-10 rounded-xl pl-9"
               />

@@ -56,9 +56,9 @@ function PremiumPage() {
           <Badge className="gap-1 border-0 bg-primary/15 text-primary">
             <Crown className="size-3.5" /> Premium
           </Badge>
-          <h1 className="mt-3 text-2xl font-semibold leading-tight">
+          <h2 className="mt-3 text-2xl font-semibold leading-tight">
             Voice Privacy untuk panggilan MCM
-          </h1>
+          </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Ubah karakter suara Anda secara real-time saat voice call dan video call — untuk
             privasi, kenyamanan, dan aksesibilitas. Anda selalu melihat indikator saat efek sedang

@@ -318,6 +318,7 @@ function ChatIndex() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 maxLength={60}
+                aria-label="Cari percakapan"
                 placeholder="Cari percakapan"
                 className="h-11 rounded-xl pl-9"
               />
