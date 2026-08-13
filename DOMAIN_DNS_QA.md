@@ -140,9 +140,16 @@ norah.ns.cloudflare.com
 remy.ns.cloudflare.com
 ```
 
-Probe ulang 13 Agustus 2026 ± 10:00 UTC: NS publik **masih**
-`nsid1-4.rumahweb.*` (TTL 21600), A dan `_lovable` TXT masih kosong. Jadi
-peralihan ke Cloudflare **belum** terjadi di registrar.
+Probe ulang 13 Agustus 2026 ± 10:30 UTC (Google DNS, jawaban dari
+`nsid3.rumahweb.biz`): NS publik **masih** `nsid1-4.rumahweb.*` (TTL 21600),
+`A mcmchat.id` kosong (hanya SOA `2026081300`), `_lovable` TXT NXDOMAIN.
+Peralihan ke Cloudflare **belum** terjadi di registrar.
+
+Perubahan nameserver hanya bisa dilakukan dari akun registrar
+(PANDI via Rumahweb) oleh pemilik domain — tidak ada tooling agent maupun
+perubahan kode aplikasi yang dapat melakukannya. Semua pekerjaan sisi
+aplikasi (canonical, redirect `www`, header keamanan, sitemap/robots,
+manifest) sudah selesai dan menunggu domain resolve.
 
 Pilih **satu** jalur.
 
