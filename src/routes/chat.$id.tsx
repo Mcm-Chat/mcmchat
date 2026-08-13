@@ -150,7 +150,7 @@ function ChatRoom() {
   }, [hasOlder, isFetchingOlder, fetchOlder]);
 
   // Draf per percakapan bertahan saat pindah layar atau reload.
-  const draftKey = `mcm.draft.${id}`;
+  const draftKey = scopedKey(`draft:${id}`, userId ?? null);
   useEffect(() => {
     const saved = typeof localStorage !== "undefined" ? localStorage.getItem(draftKey) : null;
     if (saved) setText(saved);

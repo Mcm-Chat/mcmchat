@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveUserId } from "@/lib/session-scope";
 
 export type UploadResult = { path: string; mime: string; size: number; name: string };
 
@@ -23,9 +24,15 @@ export function uploadProductPhoto(businessId: string, file: Blob, name: string)
 
 const cache = new Map<string, { url: string; exp: number }>();
 
+/** Cache signed URL dibuang total saat akun berganti. */
+export function clearSignedUrlCache() {
+  cache.clear();
+}
+
 /** URL bertanda tangan dengan cache singkat agar tidak memanggil API berulang. */
 export async function signedUrl(bucket: string, path: string, seconds = 3600): Promise<string | null> {
-  const key = `${bucket}:${path}`;
+  // Cache dikunci per akun: URL milik akun lain tidak pernah dipakai ulang.
+  const key = `${getActiveUserId() ?? "anon"}:${bucket}:${path}`;
   const hit = cache.get(key);
   if (hit && hit.exp > Date.now()) return hit.url;
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, seconds);
