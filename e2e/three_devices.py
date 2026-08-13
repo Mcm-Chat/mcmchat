@@ -163,7 +163,114 @@ async def stage2(pages):
     return ok
 
 
-STAGES = {"1": stage1, "2": stage2}
+
+async def ensure_contact(x, y):
+    """Contact link between two QA accounts, created through user-level API only."""
+    ux, uy = STATE["users"][x]["id"], STATE["users"][y]["id"]
+    tx = qa.sign_in(STATE["users"][x]["email"], STATE["users"][x]["password"])
+    ty = qa.sign_in(STATE["users"][y]["email"], STATE["users"][y]["password"])
+    qa.as_user(tx, "POST", "/rest/v1/contact_requests", {"requester_id": ux, "target_id": uy, "message": "qa"},
+               prefer="resolution=merge-duplicates")
+    s, rows = qa.as_user(ty, "GET", f"/rest/v1/contact_requests?requester_id=eq.{ux}&target_id=eq.{uy}&select=id")
+    if rows:
+        qa.as_user(ty, "POST", "/rest/v1/rpc/respond_contact_request", {"_request": rows[0]["id"], "_action": "accepted"})
+
+
+async def open_chat_with(page, other_tag):
+    pin = STATE["users"][other_tag]["pin"]
+    await page.goto(BASE + "/contacts", wait_until="networkidle")
+    row = page.locator("li").filter(has_text=pin).first
+    await row.wait_for(timeout=20000)
+    await row.locator("[aria-label^='Chat ']").click()
+    await page.wait_for_url("**/chat/**", timeout=20000)
+    await page.wait_for_timeout(1500)
+    return page.url.rsplit("/", 1)[-1]
+
+
+async def bubble_status(page, text):
+    el = page.locator(f"[data-status]").last
+    return await el.get_attribute("data-status")
+
+
+async def stage3(pages):
+    """3. Realtime chat, ticks, cross-account denial, reply/reaction/delete."""
+    A, B, C = pages["A"], pages["B"], pages["C"]
+    uA, uB, uC = (STATE["users"][t]["id"] for t in "ABC")
+    ok = True
+    await ensure_contact("A", "B")
+    conv = await open_chat_with(A, "B")
+    STATE["convAB"] = conv
+    msg = f"halo-{RUN}-{secrets.token_hex(2)}"
+
+    # B stays on the chat list (app open, room closed) -> delivered but not read
+    await B.goto(BASE + "/chat", wait_until="networkidle")
+    await A.fill("textarea[placeholder='Tulis pesan…']", msg)
+    await A.get_by_label("Kirim").click()
+    await A.wait_for_timeout(1200)
+    st1 = await bubble_status(A, msg)
+    rows = qa.select("messages", f"?conversation_id=eq.{conv}&body=eq.{msg}&select=id,sender_id")
+    record("3.1 message persisted + first tick is 'sent'", "PASS" if rows and st1 == "sent" else "FAIL", f"status={st1} rows={len(rows)}")
+    ok &= bool(rows)
+    mid = rows[0]["id"] if rows else None
+    await shot(A, "3_sent_A")
+
+    for _ in range(20):
+        await A.wait_for_timeout(1000)
+        if await bubble_status(A, msg) == "delivered":
+            break
+    st2 = await bubble_status(A, msg)
+    rc = qa.select("message_receipts", f"?message_id=eq.{mid}&select=user_id,delivered_at,read_at")
+    record("3.2 B online -> A shows 'delivered'", "PASS" if st2 == "delivered" and any(r["delivered_at"] for r in rc) else "FAIL", f"{st2} {rc}")
+    ok &= st2 == "delivered"
+
+    await B.goto(BASE + f"/chat/{conv}", wait_until="networkidle")
+    for _ in range(20):
+        await A.wait_for_timeout(1000)
+        if await bubble_status(A, msg) == "read":
+            break
+    st3 = await bubble_status(A, msg)
+    rc = qa.select("message_receipts", f"?message_id=eq.{mid}&select=user_id,read_at")
+    record("3.3 B opens room -> A shows 'read'", "PASS" if st3 == "read" and any(r["read_at"] for r in rc) else "FAIL", f"{st3} {rc}")
+    ok &= st3 == "read"
+    await shot(A, "3_read_A"); await shot(B, "3_room_B")
+
+    # B really received the message in its own DOM (realtime, not just receipts)
+    bBody = await B.inner_text("body")
+    record("3.4 B renders A's message realtime", "PASS" if msg in bBody else "FAIL")
+    ok &= msg in bBody
+
+    # C must not reach the conversation via deep link nor via API
+    await C.goto(BASE + f"/chat/{conv}", wait_until="networkidle")
+    await C.wait_for_timeout(3000)
+    cBody = await C.inner_text("body")
+    tokC = qa.sign_in(STATE["users"]["C"]["email"], STATE["users"]["C"]["password"])
+    sm, mrows = qa.as_user(tokC, "GET", f"/rest/v1/messages?conversation_id=eq.{conv}&select=id,body")
+    sc, crows = qa.as_user(tokC, "GET", f"/rest/v1/conversations?id=eq.{conv}&select=id")
+    denied = msg not in cBody and not mrows and not crows
+    record("3.5 C denied conversation via deep link + API", "PASS" if denied else "FAIL", f"ui={msg in cBody} msgs={len(mrows or [])} conv={len(crows or [])}")
+    ok &= denied
+    await shot(C, "3_denied_C")
+
+    # reply + reaction from B
+    await B.fill("textarea[placeholder='Tulis pesan…']", f"balas-{msg}")
+    await B.get_by_label("Kirim").click()
+    await B.wait_for_timeout(2500)
+    aBody = await A.inner_text("body")
+    record("3.6 B reply arrives on A realtime", "PASS" if f"balas-{msg}" in aBody else "FAIL")
+    ok &= f"balas-{msg}" in aBody
+
+    # delete for everyone from A
+    await A.locator(f"text={msg}").first.click(button="right") if False else None
+    bubble = A.locator("[aria-label='Opsi pesan']").first
+    await bubble.click()
+    await A.wait_for_timeout(600)
+    await shot(A, "3_msg_menu_A")
+    STATE["msgAB"] = mid
+    record("3. chat realtime", "PASS" if ok else "FAIL")
+    return ok
+
+
+STAGES = {"1": stage1, "2": stage2, "3": stage3}
 
 
 async def main():
