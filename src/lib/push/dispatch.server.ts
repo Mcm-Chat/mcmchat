@@ -35,8 +35,8 @@ async function mintActionToken(input: {
     _device: input.deviceId,
     _scope: input.scope,
     _actions: input.actions,
-    _conversation: input.conversationId ?? null,
-    _call: input.callId ?? null,
+    ...(input.conversationId ? { _conversation: input.conversationId } : {}),
+    ...(input.callId ? { _call: input.callId } : {}),
     _ttl_seconds: input.ttlSeconds,
   });
   if (error || typeof data !== "string") return null;
