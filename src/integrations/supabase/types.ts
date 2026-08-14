@@ -2763,6 +2763,8 @@ export type Database = {
           delivered_at: string | null
           id: string
           note: string
+          order_id: string | null
+          order_item_id: string | null
           preparation_job_id: string | null
           preparation_job_item_id: string | null
           product_id: string
@@ -2792,6 +2794,8 @@ export type Database = {
           delivered_at?: string | null
           id?: string
           note?: string
+          order_id?: string | null
+          order_item_id?: string | null
           preparation_job_id?: string | null
           preparation_job_item_id?: string | null
           product_id: string
@@ -2821,6 +2825,8 @@ export type Database = {
           delivered_at?: string | null
           id?: string
           note?: string
+          order_id?: string | null
+          order_item_id?: string | null
           preparation_job_id?: string | null
           preparation_job_item_id?: string | null
           product_id?: string
@@ -2858,6 +2864,20 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
             referencedColumns: ["id"]
           },
           {
@@ -2930,6 +2950,8 @@ export type Database = {
           delivered_at: string | null
           id: string
           note: string
+          order_id: string | null
+          order_item_id: string | null
           preparation_job_id: string | null
           preparation_job_item_id: string | null
           product_id: string
@@ -2998,6 +3020,7 @@ export type Database = {
           _delta: number
           _kind: string
           _note: string
+          _ref_key: string
           _unit: Database["public"]["Tables"]["variant_stock_units"]["Row"]
         }
         Returns: undefined
@@ -3333,6 +3356,8 @@ export type Database = {
           delivered_at: string | null
           id: string
           note: string
+          order_id: string | null
+          order_item_id: string | null
           preparation_job_id: string | null
           preparation_job_item_id: string | null
           product_id: string
@@ -3920,6 +3945,8 @@ export type Database = {
           delivered_at: string | null
           id: string
           note: string
+          order_id: string | null
+          order_item_id: string | null
           preparation_job_id: string | null
           preparation_job_item_id: string | null
           product_id: string
