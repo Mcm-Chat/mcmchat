@@ -17,16 +17,59 @@ import {
 } from "./provider";
 import {
   answerCall,
+  countParticipants,
   declineCall,
   endCall,
   getCall,
+  joinCall,
   leaveCall,
   subscribeCall,
-  RING_TIMEOUT_MS,
+  ringRemainingMs,
   type CallRow,
 } from "@/lib/api/calls";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
+
+/**
+ * Log teknis hanya saat pengembangan. Tidak pernah memuat token, secret, atau
+ * SDP — hanya kode kesalahan pendek dan konteks non-sensitif.
+ */
+function devLog(code: string, detail?: unknown) {
+  if (import.meta.env.DEV) console.warn(`[call:${code}]`, detail ?? "");
+}
+
+/** Wake lock selama panggilan aktif; aman bila browser tidak mendukung. */
+function useWakeLock(active: boolean) {
+  useEffect(() => {
+    if (!active || typeof navigator === "undefined") return;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+    };
+    if (!nav.wakeLock) return;
+    let sentinel: { release: () => Promise<void> } | null = null;
+    let disposed = false;
+    const acquire = () => {
+      void nav
+        .wakeLock!.request("screen")
+        .then((s) => {
+          if (disposed) void s.release().catch(() => undefined);
+          else sentinel = s;
+        })
+        .catch(() => devLog("wakelock_denied"));
+    };
+    acquire();
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !sentinel) acquire();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      disposed = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void sentinel?.release().catch(() => undefined);
+      sentinel = null;
+    };
+  }, [active]);
+}
 
 export type CallPhase =
   | "loading"
@@ -54,6 +97,9 @@ export type UseCallResult = {
   voiceFallback: boolean;
   /** Tombol speaker hanya ditampilkan bila rute keluaran benar-benar bisa diatur. */
   speakerSupported: boolean;
+  /** Autoplay audio diblokir; UI wajib menampilkan tombol "Aktifkan suara". */
+  audioBlocked: boolean;
+  enableAudio: () => void;
   answer: () => void;
   decline: () => void;
   hangup: (status?: CallRow["status"], reason?: string) => void;
