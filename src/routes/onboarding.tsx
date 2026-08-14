@@ -54,8 +54,8 @@ function Onboarding() {
   };
 
   return (
-    <div className="app-gradient min-h-screen text-navy-foreground">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 py-10">
+    <div className="app-gradient min-h-dvh text-navy-foreground">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 py-10">
         <div className="flex items-center justify-between">
           <img
             src={logo}
