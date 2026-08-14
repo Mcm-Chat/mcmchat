@@ -165,25 +165,6 @@ function CatalogDetail() {
     }
   };
 
-  const addFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      const drafts = [];
-      for (const f of Array.from(files)) {
-        const { blob } = await compressImage(f);
-        drafts.push({ file: blob, fileName: f.name });
-      }
-      await addProductPhotos(product.business_id, product.id, drafts);
-      invalidate();
-      toast.success(`${drafts.length} foto ditambahkan`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menambah foto");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const movePhoto = async (photoId: string, dir: -1 | 1, list: PhotoRow[]) => {
     const idx = list.findIndex((p) => p.id === photoId);
     const target = idx + dir;
@@ -201,9 +182,9 @@ function CatalogDetail() {
   };
 
   const allPhotos = product.photos;
-  // Foto unit fisik dirender di dalam kartu variannya masing-masing, bukan di galeri global,
-  // supaya foto satu barang tidak pernah tertukar dengan barang lain.
-  const genericPhotos = allPhotos.filter((p) => !p.variant_id && !p.stock_unit_id);
+  // Semua media hidup di bawah variannya. Tidak ada jalur UI untuk foto produk
+  // tanpa variant_id: foto satu barang tidak boleh tertukar dengan barang lain.
+  const orphanPhotos = allPhotos.filter((p) => !p.variant_id && !p.stock_unit_id);
 
   return (
     <AppShell
