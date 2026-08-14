@@ -145,7 +145,7 @@ function ChatIndex() {
   const openDirect = async (contactId: string) => {
     if (sendProductId) {
       try {
-        const id = await getOrCreateDirect(userId!, contactId);
+        const id = await getOrCreateDirect(contactId);
         setNewOpen(false);
         await sendCardTo(id);
       } catch (err) {
@@ -154,7 +154,7 @@ function ChatIndex() {
       return;
     }
     try {
-      const id = await getOrCreateDirect(userId!, contactId);
+      const id = await getOrCreateDirect(contactId);
       setNewOpen(false);
       void refresh();
       void navigate({ to: "/chat/$id", params: { id } });
@@ -173,7 +173,7 @@ function ChatIndex() {
       return;
     }
     try {
-      const id = await createGroup(userId!, groupName.trim(), groupMembers);
+      const id = await createGroup(groupName.trim(), groupMembers);
       setGroupOpen(false);
       setGroupName("");
       setGroupMembers([]);

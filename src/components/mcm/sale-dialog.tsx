@@ -281,7 +281,7 @@ export function SaleDialog({
       let convId = conversationId ?? null;
       if (!convId && contactId) {
         const { getOrCreateDirect } = await import("@/lib/api/chat");
-        convId = await getOrCreateDirect(sellerId, contactId);
+        convId = await getOrCreateDirect(contactId);
       }
       const record = await createSale({
         businessId,
