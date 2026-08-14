@@ -16,6 +16,33 @@ async function admin() {
   return supabaseAdmin;
 }
 
+/**
+ * Cetak token aksi sekali-pakai untuk SATU notifikasi di SATU perangkat.
+ * Token perangkat permanen tidak pernah dikirim di payload push.
+ */
+async function mintActionToken(input: {
+  userId: string;
+  deviceId: string;
+  scope: "message" | "call";
+  actions: string[];
+  conversationId?: string;
+  callId?: string;
+  ttlSeconds: number;
+}): Promise<string | null> {
+  const db = await admin();
+  const { data, error } = await db.rpc("mint_push_action_token", {
+    _user: input.userId,
+    _device: input.deviceId,
+    _scope: input.scope,
+    _actions: input.actions,
+    _conversation: input.conversationId ?? null,
+    _call: input.callId ?? null,
+    _ttl_seconds: input.ttlSeconds,
+  });
+  if (error || typeof data !== "string") return null;
+  return data;
+}
+
 /** Bersihkan token yang ditolak FCM agar tidak dipakai lagi. */
 async function pruneTokens(tokens: string[]) {
   if (tokens.length === 0) return;
@@ -101,7 +128,27 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
         sound: Boolean(r["sound"]),
         vibrate: Boolean(r["vibrate"]),
       }));
-      const res = await sendPush(list, data);
+      const withTokens: PushTarget[] = [];
+      for (let i = 0; i < group.length; i += 1) {
+        const row = group[i] as Row;
+        const base = list[i] as PushTarget;
+        const actionToken = await mintActionToken({
+          userId: String(row["user_id"]),
+          deviceId: String(row["device_id"]),
+          scope: "message",
+          actions: canReply ? ["reply", "read", "delivered"] : ["read", "delivered"],
+          conversationId: String(msg.conversation_id),
+          ttlSeconds: 86400,
+        });
+        withTokens.push({
+          ...base,
+          extra: {
+            actionId: `${String(msg.id)}:${String(row["device_id"])}`,
+            ...(actionToken ? { actionToken } : {}),
+          },
+        });
+      }
+      const res = await sendPush(withTokens, data);
       sent += res.sent;
       failed += res.failed;
       invalid.push(...res.invalidTokens);
@@ -110,6 +157,65 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
 
   await pruneTokens(invalid);
   return { configured: true, sent, failed, invalidTokens: invalid };
+}
+
+/**
+ * Push panggilan masuk: TTL sangat pendek (sesuai batas dering 45 detik) dan
+ * token aksi hanya boleh dipakai untuk `answer`/`decline` panggilan ini.
+ */
+export async function dispatchCallPush(input: {
+  callId: string;
+  callerName: string;
+  kind: "audio" | "video";
+}): Promise<FcmResult> {
+  if (!pushConfigured()) {
+    return {
+      configured: false,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "FCM belum terhubung",
+    };
+  }
+  const db = await admin();
+  const { data } = await db.rpc("push_targets_for_call", { _call: input.callId });
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
+
+  const payload: PushData = {
+    kind: "call",
+    channel: CHANNELS.calls.id,
+    group: input.callId,
+    route: `/call/${input.callId}`,
+    callId: input.callId,
+    title: input.callerName,
+    body: input.kind === "video" ? "Panggilan video masuk" : "Panggilan suara masuk",
+  };
+
+  const targets: PushTarget[] = [];
+  for (const row of rows) {
+    const actionToken = await mintActionToken({
+      userId: String(row["user_id"]),
+      deviceId: String(row["device_id"]),
+      scope: "call",
+      actions: ["answer", "decline"],
+      callId: input.callId,
+      ttlSeconds: 60,
+    });
+    targets.push({
+      token: String(row["push_token"]),
+      sound: Boolean(row["sound"]),
+      vibrate: Boolean(row["vibrate"]),
+      extra: {
+        actionId: `${input.callId}:${String(row["device_id"])}`,
+        ...(actionToken ? { actionToken } : {}),
+      },
+    });
+  }
+
+  const res = await sendPush(targets, payload, { ttlSeconds: 45 });
+  await pruneTokens(res.invalidTokens);
+  return res;
 }
 
 export type EventPush = {
