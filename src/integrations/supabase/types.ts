@@ -4082,6 +4082,7 @@ export type Database = {
         Args: { _installation_id: string }
         Returns: number
       }
+      revoke_notification_actions: { Args: { _ids: string[] }; Returns: number }
       revoke_push_device: { Args: { _device: string }; Returns: boolean }
       rotate_preparation_token: {
         Args: { _expires_hours?: number; _job: string }
