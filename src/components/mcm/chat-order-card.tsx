@@ -67,27 +67,45 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   const { data: order, isLoading } = useQuery({
     queryKey: orderKey(orderId),
     queryFn: () => getChatOrder(orderId),
-    refetchInterval: 15000,
   });
 
-  const { data: me } = useQuery({
-    queryKey: ["me", "id"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
-    staleTime: 300000,
+  // Tombol tidak ditebak di klien: server memutuskan aksi apa yang sah untuk
+  // peran pemanggil pada status saat ini.
+  const { data: cap } = useQuery({
+    queryKey: ["chat-order", "capability", orderId],
+    queryFn: () => getChatOrderCapability(orderId),
   });
 
-  const { data: canSell = false } = useQuery({
-    queryKey: ["chat-order", "can-sell", order?.business_id],
-    queryFn: async () => {
-      const { data } = await supabase.rpc("current_user_can_sell_business", {
-        _business: order!.business_id,
-      });
-      return !!data;
-    },
-    enabled: !!order?.business_id,
-  });
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: orderKey(orderId) });
+    void qc.invalidateQueries({ queryKey: ["chat-order", "capability", orderId] });
+  };
 
-  const refresh = () => void qc.invalidateQueries({ queryKey: orderKey(orderId) });
+  // Realtime, bukan polling: status berubah begitu penjual/pegawai bergerak.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`chat-order:${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_orders", filter: `id=eq.${orderId}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_order_unit_slots",
+          filter: `chat_order_id=eq.${orderId}`,
+        },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
 
   if (isLoading || !order) {
     return (
@@ -97,7 +115,19 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
     );
   }
 
-  const isBuyer = !!me && order.buyer_user_id === me;
+  const can = cap ?? {
+    read: true,
+    is_buyer: false,
+    is_manager: false,
+    confirm: false,
+    approve: false,
+    request_changes: false,
+    dispatch: false,
+    cancel: false,
+    finalize: false,
+    status: order.status,
+    reason: "",
+  };
   const { total } = orderTotals(order);
   const stepIndex = ORDER_STEPS.indexOf(order.status);
   const live = order.status !== "cancelled" && order.status !== "delivered";
@@ -162,7 +192,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       ) : null}
 
       <div className="flex flex-wrap gap-1.5">
-        {canSell && order.status === "buyer_requested" && (
+        {can.confirm && order.status === "buyer_requested" && (
           <Button
             size="sm"
             className="h-8 rounded-lg text-[11px]"
@@ -171,7 +201,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             Konfirmasi & harga
           </Button>
         )}
-        {canSell && order.status === "changes_requested" && (
+        {can.confirm && order.status === "changes_requested" && (
           <Button
             size="sm"
             className="h-8 rounded-lg text-[11px]"
@@ -180,7 +210,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             Kirim ulang penawaran
           </Button>
         )}
-        {isBuyer && order.status === "seller_confirmed" && (
+        {can.approve && (
           <>
             <Button
               size="sm"
@@ -190,17 +220,19 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             >
               Setujui
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 rounded-lg text-[11px]"
-              onClick={() => setChangeOpen(true)}
-            >
-              Minta ubah
-            </Button>
+            {can.request_changes && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 rounded-lg text-[11px]"
+                onClick={() => setChangeOpen(true)}
+              >
+                Minta ubah
+              </Button>
+            )}
           </>
         )}
-        {canSell && order.status === "buyer_approved" && (
+        {can.dispatch && (
           <Button
             size="sm"
             className="h-8 rounded-lg text-[11px]"
@@ -209,12 +241,12 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             Lanjut ke pegawai
           </Button>
         )}
-        {canSell && order.status === "ready_for_payment" && (
+        {can.finalize && (
           <Button size="sm" className="h-8 rounded-lg text-[11px]" onClick={() => setPayOpen(true)}>
             Bayar & kirim
           </Button>
         )}
-        {live && (canSell || isBuyer) && (
+        {live && can.cancel && (
           <Button
             size="sm"
             variant="ghost"
