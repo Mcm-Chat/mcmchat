@@ -20,15 +20,15 @@ import java.net.URL
  * BroadcastReceiver TIDAK boleh menahan proses 30–45 detik untuk jaringan, jadi
  * receiver hanya menjadwalkan worker ini. WorkManager yang menangani retry.
  * Token aksi bersifat sekali-pakai per notifikasi; server tetap menjadi sumber
- * kebenaran untuk replay (idempotencyKey/actionId).
+ * kebenaran untuk replay: `actionId` adalah batas idempotensi, jadi receiver
+ * tidak perlu membuat kunci idempotensi sendiri.
  */
 class PushActionWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
 
     companion object {
         const val KEY_ACTION = "action"
         const val KEY_TOKEN = "token"
-        const val KEY_CONVERSATION = "conversationId"
-        const val KEY_CALL = "callId"
+        const val KEY_RESOURCE = "resourceId"
         const val KEY_BODY = "body"
         const val KEY_ACTION_ID = "actionId"
         const val KEY_NOTIFICATION_ID = "notificationId"
@@ -48,17 +48,17 @@ class PushActionWorker(context: Context, params: WorkerParameters) : Worker(cont
         val action = inputData.getString(KEY_ACTION) ?: return Result.failure()
         val token = inputData.getString(KEY_TOKEN) ?: return Result.failure()
         val actionId = inputData.getString(KEY_ACTION_ID) ?: return Result.failure()
+        val resource = inputData.getString(KEY_RESOURCE) ?: return Result.failure()
         val notificationId = inputData.getInt(KEY_NOTIFICATION_ID, 0)
 
-        val payload = JSONObject().put("action", action).put("token", token)
+        val payload = JSONObject()
+            .put("action", action)
             .put("actionId", actionId)
+            .put("token", token)
+            .put("resourceId", resource)
         when (action) {
-            "reply" -> {
-                payload.put("conversationId", inputData.getString(KEY_CONVERSATION) ?: return Result.failure())
-                payload.put("body", inputData.getString(KEY_BODY) ?: return Result.failure())
-            }
-            "read" -> payload.put("conversationId", inputData.getString(KEY_CONVERSATION) ?: return Result.failure())
-            "decline" -> payload.put("callId", inputData.getString(KEY_CALL) ?: return Result.failure())
+            "reply" -> payload.put("body", inputData.getString(KEY_BODY) ?: return Result.failure())
+            "read", "call_answer", "call_decline" -> Unit
             else -> return Result.failure()
         }
 

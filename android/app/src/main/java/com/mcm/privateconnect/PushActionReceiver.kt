@@ -6,7 +6,6 @@ import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.work.Data
-import java.util.UUID
 
 /**
  * Receiver aksi notifikasi TANPA UI (Balas, Tandai dibaca, Tolak).
@@ -26,8 +25,8 @@ class PushActionReceiver : BroadcastReceiver() {
         const val ACTION_READ = "com.mcm.privateconnect.READ"
         const val ACTION_CALL_DECLINE = "com.mcm.privateconnect.CALL_DECLINE"
 
-        const val EXTRA_CONVERSATION = "conversationId"
-        const val EXTRA_CALL = "callId"
+        /** Sumber daya yang diikat ke token: conversationId ATAU callId. */
+        const val EXTRA_RESOURCE = "resourceId"
         const val EXTRA_ACTION_TOKEN = "actionToken"
         const val EXTRA_ACTION_ID = "actionId"
         const val EXTRA_NOTIFICATION_ID = "notificationId"
@@ -39,40 +38,32 @@ class PushActionReceiver : BroadcastReceiver() {
         val app = context.applicationContext
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
         val token = intent.getStringExtra(EXTRA_ACTION_TOKEN)
-        if (token.isNullOrBlank()) return
+        val actionId = intent.getStringExtra(EXTRA_ACTION_ID)
+        val resource = intent.getStringExtra(EXTRA_RESOURCE)
+        if (token.isNullOrBlank() || actionId.isNullOrBlank() || resource.isNullOrBlank()) return
 
         when (intent.action) {
             ACTION_REPLY -> {
-                val conv = intent.getStringExtra(EXTRA_CONVERSATION) ?: return
                 val body = RemoteInput.getResultsFromIntent(intent)
                     ?.getCharSequence(PushDeliveryService.KEY_REPLY_TEXT)?.toString()?.trim()
                     .orEmpty()
                 if (body.isEmpty() || body.length > MAX_BODY) return
                 enqueue(
-                    app, notificationId, "reply", actionId(intent, "reply"),
-                    Data.Builder()
-                        .putString(PushActionWorker.KEY_CONVERSATION, conv)
-                        .putString(PushActionWorker.KEY_BODY, body),
+                    app, notificationId, "reply", actionId, resource,
+                    Data.Builder().putString(PushActionWorker.KEY_BODY, body),
                     token,
                 )
             }
             ACTION_READ -> {
-                val conv = intent.getStringExtra(EXTRA_CONVERSATION) ?: return
                 NotificationManagerCompat.from(app).cancel(notificationId)
-                enqueue(
-                    app, notificationId, "read", actionId(intent, "read"),
-                    Data.Builder().putString(PushActionWorker.KEY_CONVERSATION, conv),
-                    token,
-                )
+                enqueue(app, notificationId, "read", actionId, resource, Data.Builder(), token)
             }
             ACTION_CALL_DECLINE -> {
-                val callId = intent.getStringExtra(EXTRA_CALL) ?: return
                 NotificationManagerCompat.from(app).cancel(notificationId)
                 CallForegroundService.stop(app)
                 enqueue(
-                    app, notificationId, "decline", actionId(intent, "decline"),
-                    Data.Builder().putString(PushActionWorker.KEY_CALL, callId),
-                    token,
+                    app, notificationId, "call_decline", actionId, resource,
+                    Data.Builder(), token,
                 )
             }
         }
@@ -83,11 +74,13 @@ class PushActionReceiver : BroadcastReceiver() {
         notificationId: Int,
         action: String,
         actionId: String,
+        resource: String,
         data: Data.Builder,
         token: String,
     ) {
         val input = data
             .putString(PushActionWorker.KEY_ACTION, action)
+            .putString(PushActionWorker.KEY_RESOURCE, resource)
             .putString(PushActionWorker.KEY_TOKEN, token)
             .putString(PushActionWorker.KEY_ACTION_ID, actionId)
             .putInt(PushActionWorker.KEY_NOTIFICATION_ID, notificationId)
@@ -95,13 +88,4 @@ class PushActionReceiver : BroadcastReceiver() {
         PushActionWorker.enqueue(context, input, "mcm_action:$actionId")
     }
 
-    /** Id aksi unik & stabil per notifikasi + jenis aksi (idempotensi server). */
-    private fun actionId(intent: Intent, suffix: String): String {
-        val base = intent.getStringExtra(EXTRA_ACTION_ID)
-            ?: UUID.nameUUIDFromBytes(
-                (intent.getStringExtra(EXTRA_CONVERSATION)
-                    ?: intent.getStringExtra(EXTRA_CALL) ?: "mcm").toByteArray()
-            ).toString()
-        return "$base:$suffix"
-    }
 }
