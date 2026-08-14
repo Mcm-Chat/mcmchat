@@ -65,7 +65,10 @@ function stopListening() {
 
 function armMarker() {
   if (markerActive || typeof window === "undefined") return;
-  window.history.pushState({ [BACK_GUARD_KEY]: true }, "");
+  // Pertahankan state router yang sudah ada (metadata TanStack Router).
+  const prev = window.history.state;
+  const base = prev && typeof prev === "object" ? (prev as Record<string, unknown>) : {};
+  window.history.pushState({ ...base, [BACK_GUARD_KEY]: true }, "");
   markerActive = true;
 }
 
