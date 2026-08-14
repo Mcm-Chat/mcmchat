@@ -18,6 +18,7 @@ import {
   type ContactRelation,
   type ProfileLite,
 } from "@/lib/api/contacts";
+import { getOrCreateDirect } from "@/lib/api/chat";
 
 export type ScanUsage = { profile: ProfileLite };
 
@@ -195,13 +196,13 @@ export function ScanResultSheet({
                   disabled={busy || !relation}
                   onClick={() =>
                     void run(async () => {
-                      await saveContact(userId, profile.id, "qr_scan", alias.trim() || null);
+                      await saveContact(userId, profile.id, "qr", alias.trim() || null);
                       if (!relation?.outgoingPending && !relation?.incomingRequest) {
                         await sendContactRequest(
                           userId,
                           profile.id,
                           "Halo, saya ingin terhubung di MCM.",
-                        ).catch(() => undefined);
+                        );
                       }
                       setSaved(true);
                     }, "Kontak berhasil disimpan")
@@ -230,10 +231,19 @@ export function ScanResultSheet({
                   <Button
                     variant="secondary"
                     className="h-12 rounded-xl"
-                    onClick={() => {
-                      onOpenChange(false);
-                      void navigate({ to: "/chat" });
-                    }}
+                    disabled={busy || !relation?.connected}
+                    title={
+                      relation?.connected
+                        ? undefined
+                        : "Chat aktif setelah permintaan kontak diterima"
+                    }
+                    onClick={() =>
+                      void run(async () => {
+                        const conv = await getOrCreateDirect(userId, profile.id);
+                        onOpenChange(false);
+                        await navigate({ to: "/chat/$id", params: { id: conv } });
+                      })
+                    }
                   >
                     <MessageCircle className="size-4" /> Buka Chat
                   </Button>
@@ -242,12 +252,18 @@ export function ScanResultSheet({
                     className="h-12 rounded-xl"
                     onClick={() => {
                       onOpenChange(false);
-                      void navigate({ to: "/contacts" });
+                      void navigate({ to: "/contacts/$id", params: { id: profile.id } });
                     }}
                   >
                     <UserRound className="size-4" /> Lihat Profil
                   </Button>
                 </div>
+              )}
+
+              {(relation?.saved || saved) && !relation?.connected && !relation?.blockedByMe && (
+                <p className="text-xs text-muted-foreground">
+                  Disimpan satu arah. Chat dan panggilan aktif setelah permintaan diterima.
+                </p>
               )}
 
               {relation?.saved && (

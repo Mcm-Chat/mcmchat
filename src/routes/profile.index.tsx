@@ -191,15 +191,13 @@ function ProfilePage() {
           const rows = data ?? [];
           const ids = rows.map((r) => r.user_id);
           const { pinsFor } = await import("@/lib/api/pins");
-          const [{ data: profiles }, pins] = await Promise.all([
-            supabase
-              .from("profiles")
-              .select("id, display_name")
-              .in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]),
-            pinsFor(ids),
-          ]);
+          const { fetchProfileCards } = await import("@/lib/api/profiles");
+          const [cards, pins] = await Promise.all([fetchProfileCards(ids), pinsFor(ids)]);
           const pmap = new Map(
-            (profiles ?? []).map((p) => [p.id, { ...p, pin: pins.get(p.id) ?? "" }]),
+            [...cards.values()].map((p) => [
+              p.id,
+              { id: p.id, display_name: p.display_name, pin: pins.get(p.id) ?? "" },
+            ]),
           );
           setMembers(rows.map((r) => ({ ...r, profile: pmap.get(r.user_id) ?? null })));
         });
@@ -239,11 +237,8 @@ function ProfilePage() {
     }
     setSavingProfile(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ display_name: name.trim(), bio: bio.trim() })
-        .eq("id", userId);
-      if (error) throw new Error(error.message);
+      const { updateMyProfile } = await import("@/lib/api/profiles");
+      await updateMyProfile(name.trim(), bio.trim());
       await refresh();
       toast.success("Profil diperbarui");
     } catch (err) {

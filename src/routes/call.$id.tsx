@@ -21,6 +21,7 @@ import { UserAvatar } from "@/components/mcm/user-avatar";
 import { cn } from "@/lib/utils";
 import { durasi, tanggalPanjang, jam } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
+import { fetchProfileCards } from "@/lib/api/profiles";
 import { supabase } from "@/integrations/supabase/client";
 import { CALL_PROVIDER_NOTICE, type CallHistoryItem } from "@/lib/api/calls";
 import { useCall } from "@/lib/calls/use-call";
@@ -62,11 +63,7 @@ async function fetchCall(id: string, userId: string): Promise<CallHistoryItem | 
     .select("call_id, user_id")
     .eq("call_id", id);
   const ids = [...new Set((parts ?? []).map((p) => p.user_id))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_color, avatar_url, avatar_version")
-    .in("id", ids.length ? ids : [userId]);
-  const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const pmap = await fetchProfileCards(ids.length ? ids : [userId]);
   return {
     ...call,
     participants: (parts ?? []).map((p) => ({

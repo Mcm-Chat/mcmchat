@@ -24,12 +24,9 @@ export type AvatarRef = { path: string | null; version: number };
 
 /** Simpan avatar baru secara atomik. Mengembalikan referensi avatar aktif. */
 export async function commitAvatar(userId: string, blob: Blob): Promise<AvatarRef> {
-  const current = unwrap(
-    await supabase.from("profiles").select("avatar_url, avatar_version").eq("id", userId).single(),
-    "Gagal membaca profil",
-  );
-  const nextVersion = (current.avatar_version ?? 0) + 1;
-  const path = avatarObjectPath(userId, nextVersion);
+  // Versi ditentukan server; slot berkas dibuat unik agar tidak bentrok bila
+  // dua perangkat mengunggah bersamaan.
+  const path = avatarObjectPath(userId, Date.now());
 
   const up = await supabase.storage.from("avatars").upload(path, blob, {
     contentType: "image/jpeg",
@@ -37,46 +34,35 @@ export async function commitAvatar(userId: string, blob: Blob): Promise<AvatarRe
   });
   if (up.error) throw new Error("Gagal mengunggah foto. Periksa koneksi lalu coba lagi.");
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ avatar_url: path, avatar_version: nextVersion })
-    .eq("id", userId);
+  const { data, error } = await supabase.rpc("commit_my_avatar", { _path: path });
   if (error) {
     // rollback: buang berkas baru, avatar lama tetap aktif
     await removeObject("avatars", path).catch(() => undefined);
     throw new Error(friendly(error.message, "Gagal memasang foto profil"));
   }
+  const res = (data ?? {}) as { version?: number; previous_path?: string | null };
 
   // baru setelah profil sukses, avatar lama dihapus
-  if (current.avatar_url && current.avatar_url !== path) {
-    await removeObject("avatars", current.avatar_url).catch(() => undefined);
+  if (res.previous_path && res.previous_path !== path) {
+    await removeObject("avatars", res.previous_path).catch(() => undefined);
   }
   invalidateAvatar(userId);
-  return { path, version: nextVersion };
+  return { path, version: res.version ?? 0 };
 }
 
 /** Hapus foto profil aktif (kembali ke inisial). */
 export async function removeAvatar(userId: string): Promise<void> {
-  const current = unwrap(
-    await supabase.from("profiles").select("avatar_url, avatar_version").eq("id", userId).single(),
-    "Gagal membaca profil",
-  );
-  const { error } = await supabase
-    .from("profiles")
-    .update({ avatar_url: null, avatar_version: (current.avatar_version ?? 0) + 1 })
-    .eq("id", userId);
+  const { data, error } = await supabase.rpc("remove_my_avatar");
   if (error) throw new Error(friendly(error.message, "Gagal menghapus foto profil"));
-  if (current.avatar_url) await removeObject("avatars", current.avatar_url).catch(() => undefined);
+  const prev = (data as { previous_path?: string | null } | null)?.previous_path;
+  if (prev) await removeObject("avatars", prev).catch(() => undefined);
   invalidateAvatar(userId);
 }
 
 /* ------------------------------- privasi -------------------------------- */
 
-export async function setAvatarPrivacy(userId: string, privacy: AvatarPrivacy): Promise<void> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({ avatar_privacy: privacy })
-    .eq("id", userId);
+export async function setAvatarPrivacy(_userId: string, privacy: AvatarPrivacy): Promise<void> {
+  const { error } = await supabase.rpc("set_my_avatar_privacy", { _privacy: privacy });
   if (error) throw new Error(friendly(error.message, "Gagal menyimpan privasi foto profil"));
 }
 

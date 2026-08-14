@@ -54,12 +54,15 @@ describe("akses PIN", () => {
     for (const g of grant) expect(g).not.toMatch(/\bpin\b/);
   });
 
-  it("tidak ada grant select penuh pada profiles ke anon/authenticated setelah pencabutan", () => {
-    const revoke = lastIndexOfPattern(/revoke select on public\.profiles from authenticated/);
-    const fullGrant = lastIndexOfPattern(
-      /grant select on public\.profiles to (anon|authenticated)/,
+  it("anon tidak punya grant apa pun pada profiles dan tidak ada policy select global", () => {
+    const revoke = lastIndexOfPattern(/revoke all on public\.profiles/);
+    const anonGrant = lastIndexOfPattern(/grant [^;]*on public\.profiles[^;]*to [^;]*anon/);
+    expect(anonGrant).toBeLessThan(revoke);
+    const globalPolicy = lastIndexOfPattern(
+      /create policy "[^"]*" on public\.profiles\s+for select[^;]*using \(true\)/,
     );
-    expect(fullGrant).toBeLessThan(revoke);
+    const dropGlobal = lastIndexOfPattern(/drop policy[^;]*on public\.profiles/);
+    expect(globalPolicy).toBeLessThan(dropGlobal);
   });
 
   it("PIN hanya dibaca lewat RPC security definer yang dibatasi", () => {

@@ -28,6 +28,7 @@ import { Route as CatalogIdRouteImport } from './routes/catalog.$id'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
+import { Route as ContactsIdRouteImport } from './routes/contacts.$id'
 import { Route as ContactsAddRouteImport } from './routes/contacts.add'
 import { Route as FinanceIndexRouteImport } from './routes/finance.index'
 import { Route as LedgerIndexRouteImport } from './routes/ledger.index'
@@ -139,6 +140,11 @@ const ContactsIndexRoute = ContactsIndexRouteImport.update({
   path: '/contacts/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactsIdRoute = ContactsIdRouteImport.update({
+  id: '/contacts/$id',
+  path: '/contacts/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactsAddRoute = ContactsAddRouteImport.update({
   id: '/contacts/add',
   path: '/contacts/add',
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/call/$id': typeof CallIdRoute
   '/catalog/$id': typeof CatalogIdRoute
   '/chat/$id': typeof ChatIdRoute
+  '/contacts/$id': typeof ContactsIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/call/$id': typeof CallIdRoute
   '/catalog/$id': typeof CatalogIdRoute
   '/chat/$id': typeof ChatIdRoute
+  '/contacts/$id': typeof ContactsIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/call/$id': typeof CallIdRoute
   '/catalog/$id': typeof CatalogIdRoute
   '/chat/$id': typeof ChatIdRoute
+  '/contacts/$id': typeof ContactsIdRoute
   '/contacts/add': typeof ContactsAddRoute
   '/ledger/$id': typeof LedgerIdRoute
   '/photo/new': typeof PhotoNewRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/call/$id'
     | '/catalog/$id'
     | '/chat/$id'
+    | '/contacts/$id'
     | '/contacts/add'
     | '/ledger/$id'
     | '/photo/new'
@@ -377,6 +387,7 @@ export interface FileRouteTypes {
     | '/call/$id'
     | '/catalog/$id'
     | '/chat/$id'
+    | '/contacts/$id'
     | '/contacts/add'
     | '/ledger/$id'
     | '/photo/new'
@@ -413,6 +424,7 @@ export interface FileRouteTypes {
     | '/call/$id'
     | '/catalog/$id'
     | '/chat/$id'
+    | '/contacts/$id'
     | '/contacts/add'
     | '/ledger/$id'
     | '/photo/new'
@@ -450,6 +462,7 @@ export interface RootRouteChildren {
   CallIdRoute: typeof CallIdRoute
   CatalogIdRoute: typeof CatalogIdRoute
   ChatIdRoute: typeof ChatIdRoute
+  ContactsIdRoute: typeof ContactsIdRoute
   ContactsAddRoute: typeof ContactsAddRoute
   LedgerIdRoute: typeof LedgerIdRoute
   PhotoNewRoute: typeof PhotoNewRoute
@@ -607,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contacts/$id': {
+      id: '/contacts/$id'
+      path: '/contacts/$id'
+      fullPath: '/contacts/$id'
+      preLoaderRoute: typeof ContactsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contacts/add': {
       id: '/contacts/add'
       path: '/contacts/add'
@@ -730,6 +750,7 @@ const rootRouteChildren: RootRouteChildren = {
   CallIdRoute: CallIdRoute,
   CatalogIdRoute: CatalogIdRoute,
   ChatIdRoute: ChatIdRoute,
+  ContactsIdRoute: ContactsIdRoute,
   ContactsAddRoute: ContactsAddRoute,
   LedgerIdRoute: LedgerIdRoute,
   PhotoNewRoute: PhotoNewRoute,

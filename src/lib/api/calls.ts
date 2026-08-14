@@ -1,3 +1,4 @@
+import { fetchProfileCards } from "./profiles";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
@@ -226,11 +227,7 @@ export async function listCalls(userId: string): Promise<CallHistoryItem[]> {
     supabase.from("call_participants").select("call_id, user_id").in("call_id", ids),
   ]);
   const profileIds = [...new Set((parts.data ?? []).map((p) => p.user_id))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_color, avatar_url, avatar_version")
-    .in("id", profileIds);
-  const pmap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const pmap = await fetchProfileCards(profileIds);
   return (calls.data ?? []).map((c) => ({
     ...c,
     participants: (parts.data ?? [])

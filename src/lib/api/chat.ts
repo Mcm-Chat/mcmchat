@@ -1,3 +1,4 @@
+import { fetchProfileCards } from "./profiles";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { ApiError, classifyFailure } from "./errors";
@@ -102,11 +103,10 @@ export async function listConversations(userId: string): Promise<ConversationVie
     supabase.rpc("conversation_overview"),
   ]);
   const profileIds = [...new Set((allMembers.data ?? []).map((m) => m.user_id))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_color, avatar_url, avatar_version")
-    .in("id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"]);
-  const pmap = new Map((profiles ?? []).map((p) => [p.id, { ...p, pin: "" } as MemberProfile]));
+  const cards = await fetchProfileCards(profileIds);
+  const pmap = new Map(
+    [...cards.values()].map((p) => [p.id, { ...p, pin: "" } as MemberProfile]),
+  );
   const omap = new Map(((overview.data ?? []) as OverviewRow[]).map((o) => [o.conversation_id, o]));
 
   return (convs.data ?? [])

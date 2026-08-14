@@ -2325,10 +2325,13 @@ export type Database = {
         Args: { _owner: string; _viewer: string }
         Returns: boolean
       }
+      can_view_full_profile: { Args: { _owner: string }; Returns: boolean }
       can_view_status: {
         Args: { _status: string; _uid: string }
         Returns: boolean
       }
+      cancel_contact_request: { Args: { _target: string }; Returns: Json }
+      commit_my_avatar: { Args: { _path: string }; Returns: Json }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
       confirm_staff_pin: {
         Args: {
@@ -2339,6 +2342,7 @@ export type Database = {
         }
         Returns: Json
       }
+      contact_relation: { Args: { _other: string }; Returns: Json }
       conversation_overview: {
         Args: never
         Returns: {
@@ -2473,17 +2477,6 @@ export type Database = {
         }
       }
       expire_stale_calls: { Args: never; Returns: number }
-      find_profile_by_pin: {
-        Args: { _pin: string }
-        Returns: {
-          avatar_color: string
-          avatar_url: string
-          bio: string
-          display_name: string
-          id: string
-          pin: string
-        }[]
-      }
       gen_mcm_pin: { Args: never; Returns: string }
       has_entitlement: {
         Args: { _feature: string; _user_id: string }
@@ -2556,7 +2549,36 @@ export type Database = {
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
+      my_connected_contacts: {
+        Args: never
+        Returns: {
+          contact_id: string
+        }[]
+      }
       my_pin: { Args: never; Returns: string }
+      my_profile: {
+        Args: never
+        Returns: {
+          avatar_color: string
+          avatar_privacy: string
+          avatar_url: string | null
+          avatar_version: number
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          is_online: boolean
+          last_seen_at: string
+          pin: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       pins_for_me: {
         Args: { _ids: string[] }
         Returns: {
@@ -2565,6 +2587,31 @@ export type Database = {
         }[]
       }
       prep_job_id_by_token: { Args: { _token: string }; Returns: string }
+      profile_cards: {
+        Args: { _ids: string[] }
+        Returns: {
+          avatar_color: string
+          avatar_url: string
+          avatar_version: number
+          display_name: string
+          id: string
+        }[]
+      }
+      profile_full: {
+        Args: { _id: string }
+        Returns: {
+          avatar_color: string
+          avatar_privacy: string
+          avatar_url: string
+          avatar_version: number
+          bio: string
+          display_name: string
+          id: string
+          is_online: boolean
+          last_seen_at: string
+          pin: string
+        }[]
+      }
       push_targets_for_conversation: {
         Args: { _conv: string; _sender: string }
         Returns: {
@@ -2629,6 +2676,7 @@ export type Database = {
         }
         Returns: Json
       }
+      remove_my_avatar: { Args: never; Returns: Json }
       respond_contact_request: {
         Args: {
           _action: Database["public"]["Enums"]["contact_request_status"]
@@ -2660,6 +2708,15 @@ export type Database = {
         Returns: Json
       }
       safe_uuid: { Args: { _t: string }; Returns: string }
+      save_contact_card: {
+        Args: { _alias: string; _source: string; _target: string }
+        Returns: Json
+      }
+      search_profile_by_pin: { Args: { _pin: string }; Returns: Json }
+      send_contact_request: {
+        Args: { _message: string; _target: string }
+        Returns: Json
+      }
       set_avatar_privacy_audience: {
         Args: {
           _confirm_empty_only_share?: boolean
@@ -2668,6 +2725,12 @@ export type Database = {
         }
         Returns: Json
       }
+      set_contact_blocked: {
+        Args: { _blocked: boolean; _target: string }
+        Returns: Json
+      }
+      set_my_avatar_privacy: { Args: { _privacy: string }; Returns: undefined }
+      set_my_presence: { Args: { _online: boolean }; Returns: undefined }
       status_feed: {
         Args: never
         Returns: {
@@ -2684,6 +2747,39 @@ export type Database = {
         }[]
       }
       status_owner_of: { Args: { _status: string }; Returns: string }
+      update_my_contact: {
+        Args: {
+          _alias: string
+          _is_favorite: boolean
+          _note: string
+          _starred: boolean
+          _target: string
+        }
+        Returns: Json
+      }
+      update_my_profile: {
+        Args: { _bio: string; _display_name: string }
+        Returns: {
+          avatar_color: string
+          avatar_privacy: string
+          avatar_url: string | null
+          avatar_version: number
+          bio: string
+          created_at: string
+          display_name: string
+          id: string
+          is_online: boolean
+          last_seen_at: string
+          pin: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       business_role: "owner" | "admin" | "agent" | "cashier" | "viewer"

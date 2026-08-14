@@ -36,14 +36,13 @@ describe("kontak hasil pindai", () => {
     for (const p of policies) expect(p).toContain("owner_id = auth.uid()");
   });
 
-  it("pencarian profil memakai RPC find_profile_by_pin, bukan sapuan tabel profiles", () => {
-    expect(contactsApi).toContain('supabase.rpc("find_profile_by_pin"');
+  it("pencarian profil memakai RPC atomik, bukan sapuan tabel profiles", () => {
+    expect(contactsApi).toContain('supabase.rpc("search_profile_by_pin"');
     expect(contactsApi).not.toMatch(/from\("profiles"\)[\s\S]{0,80}select\("\*"\)/);
   });
 
   it("simpan kontak idempoten dan menolak PIN sendiri", () => {
-    expect(contactsApi).toContain("ignoreDuplicates: true");
-    expect(contactsApi).toContain('onConflict: "owner_id,contact_id"');
+    expect(contactsApi).toContain('supabase.rpc("save_contact_card"');
     expect(contactsApi).toContain("PIN ini milik Anda sendiri.");
   });
 
