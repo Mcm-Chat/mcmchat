@@ -236,10 +236,10 @@ export async function consumePendingCallAnswer(): Promise<{ callId: string } | n
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        action: "answer",
-        token: pending.token,
-        callId: pending.callId,
+        action: "call_answer",
         actionId: pending.actionId,
+        token: pending.token,
+        resourceId: pending.callId,
       }),
     });
     if (!res.ok) return null;
