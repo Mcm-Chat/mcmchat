@@ -640,6 +640,38 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_conversations: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          updated_at: string
+          user_high: string
+          user_low: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          updated_at?: string
+          user_high: string
+          user_low: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          updated_at?: string
+          user_high?: string
+          user_low?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_conversations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entitlements: {
         Row: {
           created_at: string
@@ -2299,6 +2331,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_group_members: {
+        Args: { _conversation: string; _member_ids: string[] }
+        Returns: number
+      }
       adjust_inventory: {
         Args: {
           _note?: string
@@ -2335,6 +2371,10 @@ export type Database = {
         }
       }
       are_connected: { Args: { _a: string; _b: string }; Returns: boolean }
+      assert_group_manager: {
+        Args: { _conversation: string; _owner_only: boolean; _uid: string }
+        Returns: string
+      }
       bg_mark_delivered: {
         Args: { _conv: string; _message?: string; _token: string }
         Returns: Json
@@ -2396,6 +2436,10 @@ export type Database = {
         Args: { _biz: string; _uid: string }
         Returns: boolean
       }
+      can_use_conversation: {
+        Args: { _conversation: string; _user: string }
+        Returns: boolean
+      }
       can_view_avatar: {
         Args: { _owner: string; _viewer: string }
         Returns: boolean
@@ -2418,6 +2462,10 @@ export type Database = {
         Returns: Json
       }
       contact_relation: { Args: { _other: string }; Returns: Json }
+      conv_role_of: {
+        Args: { _conversation: string; _user: string }
+        Returns: string
+      }
       conversation_overview: {
         Args: never
         Returns: {
@@ -2430,6 +2478,7 @@ export type Database = {
           last_message_kind: Database["public"]["Enums"]["message_kind"]
           last_message_sender: string
           unread_count: number
+          usable: boolean
         }[]
       }
       convert_to_base: {
@@ -2465,6 +2514,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      create_group: {
+        Args: { _member_ids: string[]; _title: string }
+        Returns: string
       }
       create_preparation_job: {
         Args: {
@@ -2554,6 +2607,11 @@ export type Database = {
       }
       expire_stale_calls: { Args: never; Returns: number }
       gen_mcm_pin: { Args: never; Returns: string }
+      get_or_create_business_conversation: {
+        Args: { _business: string; _customer: string }
+        Returns: string
+      }
+      get_or_create_direct: { Args: { _other: string }; Returns: string }
       has_entitlement: {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
@@ -2624,9 +2682,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      leave_conversation: { Args: { _conversation: string }; Returns: boolean }
       lock_contact_pair: {
         Args: { _a: string; _b: string }
         Returns: undefined
+      }
+      lock_conversation_pair: {
+        Args: { _a: string; _b: string }
+        Returns: undefined
+      }
+      mark_conversation_read: {
+        Args: { _conversation: string; _through_message_id?: string }
+        Returns: string
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
@@ -2634,6 +2701,14 @@ export type Database = {
         Args: never
         Returns: {
           contact_id: string
+        }[]
+      }
+      my_conversation_capability: {
+        Args: { _conversation: string }
+        Returns: {
+          reason: string
+          role: string
+          usable: boolean
         }[]
       }
       my_pin: { Args: never; Returns: string }
@@ -2660,6 +2735,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      pair_blocked: { Args: { _a: string; _b: string }; Returns: boolean }
       pins_for_me: {
         Args: { _ids: string[] }
         Returns: {
@@ -2757,6 +2833,10 @@ export type Database = {
         }
         Returns: Json
       }
+      remove_group_member: {
+        Args: { _conversation: string; _target: string }
+        Returns: boolean
+      }
       remove_my_avatar: { Args: never; Returns: Json }
       remove_saved_contact: { Args: { _target: string }; Returns: Json }
       respond_contact_request: {
@@ -2811,6 +2891,21 @@ export type Database = {
         Args: { _blocked: boolean; _target: string }
         Returns: Json
       }
+      set_conversation_assignee: {
+        Args: { _assignee: string; _conversation: string }
+        Returns: boolean
+      }
+      set_conversation_inbox_status: {
+        Args: {
+          _conversation: string
+          _status: Database["public"]["Enums"]["inbox_status"]
+        }
+        Returns: boolean
+      }
+      set_group_member_role: {
+        Args: { _conversation: string; _role: string; _target: string }
+        Returns: boolean
+      }
       set_my_avatar_privacy: { Args: { _privacy: string }; Returns: undefined }
       set_my_presence: { Args: { _online: boolean }; Returns: undefined }
       status_feed: {
@@ -2829,6 +2924,19 @@ export type Database = {
         }[]
       }
       status_owner_of: { Args: { _status: string }; Returns: string }
+      transfer_group_ownership: {
+        Args: { _conversation: string; _target: string }
+        Returns: boolean
+      }
+      update_group_settings: {
+        Args: {
+          _avatar_color?: string
+          _conversation: string
+          _disappearing_hours?: number
+          _title?: string
+        }
+        Returns: boolean
+      }
       update_my_contact: {
         Args: {
           _alias?: string
@@ -2838,6 +2946,15 @@ export type Database = {
           _target: string
         }
         Returns: Json
+      }
+      update_my_conversation_preferences: {
+        Args: {
+          _archived?: boolean
+          _conversation: string
+          _muted?: boolean
+          _pinned?: boolean
+        }
+        Returns: boolean
       }
       update_my_profile: {
         Args: { _bio: string; _display_name: string }

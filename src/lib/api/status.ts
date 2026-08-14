@@ -222,7 +222,7 @@ export async function reactToStatus(item: StatusItem, userId: string, emoji: str
 
 /** Balasan status masuk ke chat langsung dengan kutipan slide-nya. */
 export async function replyToStatus(item: StatusItem, userId: string, body: string) {
-  const conversationId = await getOrCreateDirect(userId, item.owner_id);
+  const conversationId = await getOrCreateDirect(item.owner_id);
   await sendMessage({
     conversationId,
     senderId: userId,

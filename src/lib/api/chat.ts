@@ -1,5 +1,6 @@
 import { fetchProfileCards } from "./profiles";
 import { supabase } from "@/integrations/supabase/client";
+import { markConversationRead } from "./conversations";
 import { friendly, unwrap } from "./db";
 import { ApiError, classifyFailure } from "./errors";
 import { notifyNewMessage } from "@/lib/push/push.functions";
@@ -28,6 +29,7 @@ type OverviewRow = {
   last_attachment_name: string | null;
   last_location_lat: number | null;
   unread_count: number;
+  usable: boolean;
 };
 
 /**
@@ -47,6 +49,8 @@ export type ConversationView = ConversationRow & {
   lastMessage: LastMessagePreview | null;
   unread: number;
   title_resolved: string;
+  /** Kapabilitas server: direct yang diputus/diblokir hanya bisa dibaca. */
+  usable: boolean;
 };
 
 export type MessageLocationInput = {
@@ -137,6 +141,7 @@ export async function listConversations(userId: string): Promise<ConversationVie
         other,
         lastMessage,
         unread: o?.unread_count ?? 0,
+        usable: o?.usable ?? false,
         title_resolved: c.title || other?.display_name || "Percakapan",
       };
     })
@@ -149,75 +154,12 @@ export async function listConversations(userId: string): Promise<ConversationVie
     });
 }
 
-/** Cari percakapan langsung dengan kontak, buat kalau belum ada. */
-export async function getOrCreateDirect(userId: string, otherId: string): Promise<string> {
-  const mine = unwrap(
-    await supabase.from("conversation_members").select("conversation_id").eq("user_id", userId),
-    "Gagal memuat percakapan",
-  );
-  if (mine.length > 0) {
-    const theirs = unwrap(
-      await supabase
-        .from("conversation_members")
-        .select("conversation_id")
-        .eq("user_id", otherId)
-        .in(
-          "conversation_id",
-          mine.map((m) => m.conversation_id),
-        ),
-      "Gagal memuat percakapan",
-    );
-    if (theirs.length > 0) {
-      const { data: direct } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("type", "direct")
-        .in(
-          "id",
-          theirs.map((t) => t.conversation_id),
-        )
-        .limit(1);
-      if (direct?.[0]) return direct[0].id;
-    }
-  }
-  const conv = unwrap(
-    await supabase
-      .from("conversations")
-      .insert({ type: "direct", created_by: userId })
-      .select("id")
-      .single(),
-    "Gagal membuat percakapan",
-  );
-  const { error } = await supabase.from("conversation_members").insert([
-    { conversation_id: conv.id, user_id: userId },
-    { conversation_id: conv.id, user_id: otherId },
-  ]);
-  if (error) throw new Error(friendly(error.message, "Gagal menambahkan anggota percakapan"));
-  return conv.id;
-}
-
-export async function createGroup(
-  userId: string,
-  title: string,
-  memberIds: string[],
-): Promise<string> {
-  const conv = unwrap(
-    await supabase
-      .from("conversations")
-      .insert({ type: "group", title, created_by: userId })
-      .select("id")
-      .single(),
-    "Gagal membuat grup",
-  );
-  await supabase.from("conversation_members").insert(
-    [userId, ...memberIds].map((id) => ({
-      conversation_id: conv.id,
-      user_id: id,
-      role: id === userId ? "admin" : "member",
-    })),
-  );
-  return conv.id;
-}
+// Pembuatan percakapan langsung/grup kini atomik di server.
+export {
+  getOrCreateDirect,
+  createGroup,
+  updateMyConversationPreferences,
+} from "./conversations";
 
 export const MESSAGE_PAGE_SIZE = 40;
 
@@ -338,12 +280,9 @@ export async function findByClientId(
   return data ?? null;
 }
 
-export async function markRead(conversationId: string, userId: string) {
-  await supabase
-    .from("conversation_members")
-    .update({ last_read_at: new Date().toISOString() })
-    .eq("conversation_id", conversationId)
-    .eq("user_id", userId);
+/** Kursor baca milik sendiri; server yang menentukan timestamp. */
+export async function markRead(conversationId: string) {
+  await markConversationRead(conversationId);
 }
 
 /** Sembunyikan pesan hanya untuk saya. */

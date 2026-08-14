@@ -101,7 +101,7 @@ function ContactsPage() {
   const openChat = async (contactId: string) => {
     if (!userId) return;
     try {
-      const id = await getOrCreateDirect(userId, contactId);
+      const id = await getOrCreateDirect(contactId);
       void navigate({ to: "/chat/$id", params: { id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal membuka chat");

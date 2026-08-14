@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { createGroup, getOrCreateDirect } from "@/lib/api/chat";
+import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import { sendProductCard } from "@/lib/api/product-card";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useContacts, useConversations } from "@/lib/api/queries";
@@ -114,11 +115,16 @@ function ChatIndex() {
     conversationId: string,
     patch: { is_pinned?: boolean; is_muted?: boolean; is_archived?: boolean },
   ) => {
-    await supabase
-      .from("conversation_members")
-      .update(patch)
-      .eq("conversation_id", conversationId)
-      .eq("user_id", userId!);
+    try {
+      await updateMyConversationPreferences(conversationId, {
+        ...(patch.is_muted === undefined ? {} : { muted: patch.is_muted }),
+        ...(patch.is_pinned === undefined ? {} : { pinned: patch.is_pinned }),
+        ...(patch.is_archived === undefined ? {} : { archived: patch.is_archived }),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan preferensi");
+      return;
+    }
     void refresh();
   };
 
@@ -145,7 +151,7 @@ function ChatIndex() {
   const openDirect = async (contactId: string) => {
     if (sendProductId) {
       try {
-        const id = await getOrCreateDirect(userId!, contactId);
+        const id = await getOrCreateDirect(contactId);
         setNewOpen(false);
         await sendCardTo(id);
       } catch (err) {
@@ -154,7 +160,7 @@ function ChatIndex() {
       return;
     }
     try {
-      const id = await getOrCreateDirect(userId!, contactId);
+      const id = await getOrCreateDirect(contactId);
       setNewOpen(false);
       void refresh();
       void navigate({ to: "/chat/$id", params: { id } });
@@ -173,7 +179,7 @@ function ChatIndex() {
       return;
     }
     try {
-      const id = await createGroup(userId!, groupName.trim(), groupMembers);
+      const id = await createGroup(groupName.trim(), groupMembers);
       setGroupOpen(false);
       setGroupName("");
       setGroupMembers([]);

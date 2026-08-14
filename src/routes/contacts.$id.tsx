@@ -135,7 +135,7 @@ function ContactDetailPage() {
                 disabled={busy}
                 onClick={() =>
                   void run(async () => {
-                    const conv = await getOrCreateDirect(userId!, id);
+                    const conv = await getOrCreateDirect(id);
                     await navigate({ to: "/chat/$id", params: { id: conv } });
                   }, "Membuka chat")
                 }

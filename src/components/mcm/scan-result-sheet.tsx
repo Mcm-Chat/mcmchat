@@ -249,7 +249,7 @@ export function ScanResultSheet({
                     }
                     onClick={() =>
                       void run(async () => {
-                        const conv = await getOrCreateDirect(userId, profile.id);
+                        const conv = await getOrCreateDirect(profile.id);
                         onOpenChange(false);
                         await navigate({ to: "/chat/$id", params: { id: conv } });
                       })
