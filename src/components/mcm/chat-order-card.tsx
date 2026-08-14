@@ -501,14 +501,15 @@ function DispatchDialog({
   const [plan, setPlan] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
+  // Direktori khusus pegawai penyiapan: PIN staf tidak pernah ikut terkirim.
   const { data: staff = [] } = useQuery({
-    queryKey: ["business", "staff", order.business_id],
+    queryKey: ["business", "prep-staff", order.business_id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("business_staff_directory", {
+      const { data, error } = await supabase.rpc("business_preparation_staff", {
         _business: order.business_id,
       });
       if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as StaffRow[];
+      return data ?? [];
     },
   });
 
@@ -520,12 +521,15 @@ function DispatchDialog({
   const { data: unitsByVariant = {} } = useQuery({
     queryKey: ["chat-order", "avail", order.id, variantIds],
     queryFn: async () => {
-      const out: Record<string, { id: string; unit_label: string; unit_seq: number }[]> = {};
+      const out: Record<string, AvailUnit[]> = {};
       for (const vid of variantIds) {
         out[vid] = (await listAvailableUnits(vid)).map((u) => ({
           id: u.id,
-          unit_label: u.unit_label,
-          unit_seq: u.unit_seq,
+          label: u.unit_label || `Unit #${u.unit_seq}`,
+          qty: Number(u.qty_display ?? 0),
+          unit: u.display_unit ?? "",
+          photoCount: u.photos.length,
+          hasLocation: u.photos.some((p) => p.location_lat !== null && p.location_lng !== null),
         }));
       }
       return out;
@@ -616,6 +620,9 @@ function DispatchDialog({
                   {s.item.product_name} · {s.item.variant_name} — unit {s.slotNo}/
                   {s.item.unit_count}
                 </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {Number(s.item.per_unit_qty)} {s.item.per_unit_unit} per unit
+                </p>
                 <Select
                   value={plan[s.key] ?? "new"}
                   onValueChange={(v) => setPlan((p) => ({ ...p, [s.key]: v }))}
@@ -627,7 +634,8 @@ function DispatchDialog({
                     <SelectItem value="new">Siapkan unit baru</SelectItem>
                     {avail.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.unit_label || `Unit #${u.unit_seq}`} (siap)
+                        {u.label} · {u.qty} {u.unit} · {u.photoCount} foto
+                        {u.hasLocation ? " + lokasi" : " (tanpa lokasi)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
