@@ -545,16 +545,16 @@ export function MessageBubble({
             isSticker
               ? "bg-transparent px-0 py-0 shadow-none"
               : mine
-              ? cn(
-                  "bubble-elevate",
-                  "bg-bubble-out text-bubble-out-foreground",
-                  grouped ? "rounded-br-lg" : "rounded-br-sm",
-                )
-              : cn(
-                  "bubble-elevate",
-                  "border border-border/70 bg-bubble-in text-bubble-in-foreground",
-                  grouped ? "rounded-bl-lg" : "rounded-bl-sm",
-                ),
+                ? cn(
+                    "bubble-elevate",
+                    "bg-bubble-out text-bubble-out-foreground",
+                    grouped ? "rounded-br-lg" : "rounded-br-sm",
+                  )
+                : cn(
+                    "bubble-elevate",
+                    "border border-border/70 bg-bubble-in text-bubble-in-foreground",
+                    grouped ? "rounded-bl-lg" : "rounded-bl-sm",
+                  ),
           )}
         >
           {showSender && !mine && !grouped && (
@@ -780,7 +780,7 @@ export function ChatComposer({
     : [];
 
   return (
-    <div className="composer-raise sticky bottom-0 z-20 border-t border-border/70 bg-card/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+    <div className="composer-raise sticky bottom-0 z-20 shrink-0 border-t border-border/70 bg-card/92 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur-xl">
       {matches.length > 0 && (
         <div className="max-h-40 overflow-y-auto border-b border-border/70">
           {matches.map((q) => (

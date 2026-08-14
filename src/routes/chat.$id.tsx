@@ -65,6 +65,7 @@ import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "@/lib/api/outbox";
 import { useConnectionState } from "@/lib/realtime/connection";
+import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { useTyping } from "@/lib/api/presence";
 import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
 
@@ -123,6 +124,17 @@ function ChatRoom() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+
+  // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
+  // mode pilih), bukan langsung meninggalkan percakapan.
+  useBackDismiss(photoOpen, () => setPhotoOpen(false));
+  useBackDismiss(stickerOpen, () => setStickerOpen(false));
+  useBackDismiss(detailOpen, () => setDetailOpen(false));
+  useBackDismiss(ledgerOpen, () => setLedgerOpen(false));
+  useBackDismiss(prepOpen, () => setPrepOpen(false));
+  useBackDismiss(saleOpen, () => setSaleOpen(false));
+  useBackDismiss(confirmAll, () => setConfirmAll(false));
+  useBackDismiss(selection.length > 0, () => setSelection([]));
 
   const { data: business } = useMyBusiness(userId);
   const { data: prepJobs } = useQuery({
