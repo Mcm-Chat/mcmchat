@@ -27,30 +27,89 @@ export function isValidPin(input: string) {
   return PIN_PATTERN.test(normalizePin(input));
 }
 
-export async function findByPin(pin: string): Promise<ProfileLite | null> {
-  const normalized = normalizePin(pin);
-  if (!isValidPin(normalized)) throw new Error("Format PIN tidak valid. Contoh: A2B3-C4D5");
-  await supabase
-    .from("pin_search_log")
-    .insert({ user_id: (await supabase.auth.getUser()).data.user?.id ?? "", pin: normalized });
-  const { data, error } = await supabase.rpc("find_profile_by_pin", { _pin: normalized });
-  if (error) throw new Error(friendly(error.message, "Pencarian gagal"));
-  return (data?.[0] as ProfileLite | undefined) ?? null;
+export type PinSearchResult = { found: boolean; code: string; profile: ProfileLite | null };
+
+const SEARCH_ERROR: Record<string, string> = {
+  invalid_pin_format: "Format PIN tidak valid. Contoh: A2B3-C4D5",
+  rate_limited_cooldown: "Pencarian dijeda sementara. Coba lagi beberapa menit lagi.",
+  rate_limited: "Terlalu banyak pencarian. Tunggu sebentar lalu coba lagi.",
+  not_authenticated: "Sesi berakhir. Masuk kembali.",
+};
+
+export function mapRpcError(
+  message: string,
+  fallback: string,
+  table: Record<string, string>,
+): string {
+  for (const [code, text] of Object.entries(table)) if (message.includes(code)) return text;
+  return friendly(message, fallback);
 }
 
+/**
+ * Pencarian PIN atomik: normalisasi, validasi format, tolak PIN sendiri,
+ * blokir dua arah, rate limit sliding-window, dan pencatatan attempt semuanya
+ * dilakukan server dalam satu transaksi. Klien tidak menulis `pin_search_log`.
+ */
+export async function searchByPin(pin: string): Promise<PinSearchResult> {
+  const { data, error } = await supabase.rpc("search_profile_by_pin", { _pin: normalizePin(pin) });
+  if (error) throw new Error(mapRpcError(error.message, "Pencarian gagal", SEARCH_ERROR));
+  const res = (data ?? {}) as {
+    found?: boolean;
+    code?: string;
+    profile?: Partial<ProfileLite> & { id: string };
+  };
+  if (res.code === "self_pin") throw new Error("PIN ini milik Anda sendiri.");
+  return {
+    found: !!res.found,
+    code: res.code ?? "not_found",
+    profile: res.profile
+      ? ({
+          bio: "",
+          pin: "",
+          avatar_url: null,
+          avatar_color: "slate",
+          display_name: "",
+          ...res.profile,
+        } as ProfileLite)
+      : null,
+  };
+}
+
+/** Kompatibilitas: kembalikan kartu minimal atau null. */
+export async function findByPin(pin: string): Promise<ProfileLite | null> {
+  return (await searchByPin(pin)).profile;
+}
+
+/**
+ * Resolver kartu profil batch (aman). Tidak pernah membocorkan bio/PIN/email;
+ * PIN hanya menyusul untuk diri sendiri dan kontak mutual.
+ */
 async function profilesByIds(ids: string[]): Promise<Map<string, ProfileLite>> {
-  if (ids.length === 0) return new Map();
-  // PIN diambil terpisah: hanya kontak tersimpan (dan diri sendiri) yang boleh terlihat.
-  const [{ data }, pins] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, display_name, bio, avatar_url, avatar_color, avatar_version")
-      .in("id", ids),
-    pinsFor(ids),
+  const unique = [...new Set(ids)].filter(Boolean);
+  if (unique.length === 0) return new Map();
+  const [{ data, error }, pins] = await Promise.all([
+    supabase.rpc("profile_cards", { _ids: unique }),
+    pinsFor(unique),
   ]);
+  if (error) throw new Error(friendly(error.message, "Gagal memuat profil"));
   return new Map(
-    (data ?? []).map((p) => [p.id, { ...p, pin: pins.get(p.id) ?? "" } as ProfileLite]),
+    (data ?? []).map((p) => [
+      p.id,
+      {
+        id: p.id,
+        display_name: p.display_name,
+        avatar_color: p.avatar_color,
+        avatar_url: p.avatar_url,
+        avatar_version: p.avatar_version ?? 0,
+        bio: "",
+        pin: pins.get(p.id) ?? "",
+      } as ProfileLite,
+    ]),
   );
+}
+
+export async function profileCards(ids: string[]) {
+  return profilesByIds(ids);
 }
 
 export async function listContacts(userId: string): Promise<ContactWithProfile[]> {
