@@ -494,6 +494,7 @@ function ChatRoom() {
                   variant="ghost"
                   size="icon"
                   aria-label="Panggilan suara"
+                  disabled={inactive || blocked || blockedByOther}
                   onClick={() => void call("audio")}
                 >
                   <Phone className="size-5" />
@@ -502,6 +503,7 @@ function ChatRoom() {
                   variant="ghost"
                   size="icon"
                   aria-label="Panggilan video"
+                  disabled={inactive || blocked || blockedByOther}
                   onClick={() => void call("video")}
                 >
                   <Video className="size-5" />
