@@ -185,6 +185,7 @@ function ItemBlock({
   const [geoError, setGeoError] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingEdit, setPendingEdit] = useState<string | null>(null);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["prep-task", token] });
 
@@ -221,8 +222,16 @@ function ItemBlock({
       );
     });
 
-  const upload = async (file: File | undefined) => {
+  const pickFile = async (file: File | undefined) => {
     if (!file) return;
+    try {
+      setPendingEdit(await fileToDataUrl(file, 1600));
+    } catch {
+      toast.error("Foto gagal dibaca");
+    }
+  };
+
+  const upload = async (dataUrl: string) => {
     setBusy(true);
     try {
       const geo = coords ?? (await askLocation());
@@ -230,7 +239,6 @@ function ItemBlock({
         toast.error("Lokasi wajib untuk item ini. Aktifkan GPS lalu coba lagi.");
         return;
       }
-      const dataUrl = await fileToDataUrl(file, 1280);
       await addPhoto({
         data: {
           token,
