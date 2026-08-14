@@ -88,3 +88,48 @@ describe("back-guard LIFO", () => {
     expect(() => pressBack()).not.toThrow();
   });
 });
+
+/** Meniru chat.$id.tsx: selection + confirmAll di-set pada render yang sama. */
+function ChatSelectionConfirm() {
+  const [selection, setSelection] = useState<string[]>([]);
+  const [confirmAll, setConfirmAll] = useState(false);
+  useBackDismiss(confirmAll, () => setConfirmAll(false));
+  useBackDismiss(selection.length > 0 && !confirmAll, () => setSelection([]));
+  return (
+    <>
+      <button
+        data-testid="open"
+        onClick={() => {
+          setSelection(["m1"]);
+          setConfirmAll(true);
+        }}
+      />
+      <span data-testid="chat">{`${selection.length}${confirmAll ? "C" : "-"}`}</span>
+    </>
+  );
+}
+
+describe("chat selection + confirm back priority", () => {
+  beforeEach(() => {
+    __resetBackGuard();
+    window.history.replaceState(null, "", "/chat/1");
+  });
+  afterEach(() => {
+    cleanup();
+    __resetBackGuard();
+  });
+
+  it("Back 1 menutup confirm, Back 2 menutup mode pilih", () => {
+    const { getByTestId } = render(<ChatSelectionConfirm />);
+    act(() => {
+      getByTestId("open").click();
+    });
+    expect(getByTestId("chat").textContent).toBe("1C");
+    pressBack();
+    expect(getByTestId("chat").textContent).toBe("1-");
+    pressBack();
+    expect(getByTestId("chat").textContent).toBe("0-");
+    expect(backGuardDepth()).toBe(0);
+    expect(backGuardMarkerActive()).toBe(false);
+  });
+});
