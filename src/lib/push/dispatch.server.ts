@@ -16,32 +16,44 @@ async function admin() {
   return supabaseAdmin;
 }
 
+export type NotificationActionKind = "reply" | "read" | "call_answer" | "call_decline";
+
 /**
- * Cetak token aksi sekali-pakai untuk SATU notifikasi di SATU perangkat.
- * Token perangkat permanen tidak pernah dikirim di payload push.
+ * Cetak SATU aksi (id + token sekali-pakai) untuk SATU tombol, di SATU
+ * perangkat, pada SATU notifikasi. Tidak ada token perangkat persisten, dan
+ * token mentah tidak pernah disimpan di database maupun log.
  */
-async function mintActionToken(input: {
+export async function mintNotificationAction(input: {
   userId: string;
   deviceId: string;
-  scope: "message" | "call";
-  actions: string[];
+  action: NotificationActionKind;
   conversationId?: string;
+  messageId?: string;
   callId?: string;
   ttlSeconds: number;
-}): Promise<string | null> {
+}): Promise<{ actionId: string; token: string } | null> {
   const db = await admin();
-  const { data, error } = await db.rpc("mint_push_action_token", {
+  const { data, error } = await db.rpc("mint_notification_action", {
     _user: input.userId,
     _device: input.deviceId,
-    _scope: input.scope,
-    _actions: input.actions,
+    _action: input.action,
     ...(input.conversationId ? { _conversation: input.conversationId } : {}),
+    ...(input.messageId ? { _message: input.messageId } : {}),
     ...(input.callId ? { _call: input.callId } : {}),
     _ttl_seconds: input.ttlSeconds,
   });
-  if (error || typeof data !== "string") return null;
-  return data;
+  if (error) return null;
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { action_id?: string; token?: string }
+    | null
+    | undefined;
+  if (!row?.action_id || !row.token) return null;
+  return { actionId: row.action_id, token: row.token };
 }
+
+/** TTL aksi pesan (10 menit) dan aksi panggilan (batas dering 45 detik). */
+export const MESSAGE_ACTION_TTL_SEC = 600;
+export const CALL_ACTION_TTL_SEC = 45;
 
 /** Bersihkan token yang ditolak FCM agar tidak dipakai lagi. */
 async function pruneTokens(tokens: string[]) {
@@ -132,19 +144,30 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
       for (let i = 0; i < group.length; i += 1) {
         const row = group[i] as Row;
         const base = list[i] as PushTarget;
-        const actionToken = await mintActionToken({
-          userId: String(row["user_id"]),
-          deviceId: String(row["device_id"]),
-          scope: "message",
-          actions: canReply ? ["reply", "read", "delivered"] : ["read", "delivered"],
+        const userId = String(row["user_id"]);
+        const deviceId = String(row["device_id"]);
+        const read = await mintNotificationAction({
+          userId,
+          deviceId,
+          action: "read",
           conversationId: String(msg.conversation_id),
-          ttlSeconds: 86400,
+          messageId: String(msg.id),
+          ttlSeconds: MESSAGE_ACTION_TTL_SEC,
         });
+        const reply = canReply
+          ? await mintNotificationAction({
+              userId,
+              deviceId,
+              action: "reply",
+              conversationId: String(msg.conversation_id),
+              ttlSeconds: MESSAGE_ACTION_TTL_SEC,
+            })
+          : null;
         withTokens.push({
           ...base,
           extra: {
-            actionId: `${String(msg.id)}:${String(row["device_id"])}`,
-            ...(actionToken ? { actionToken } : {}),
+            ...(read ? { readActionId: read.actionId, readToken: read.token } : {}),
+            ...(reply ? { replyActionId: reply.actionId, replyToken: reply.token } : {}),
           },
         });
       }
@@ -194,29 +217,82 @@ export async function dispatchCallPush(input: {
 
   const targets: PushTarget[] = [];
   for (const row of rows) {
-    const actionToken = await mintActionToken({
-      userId: String(row["user_id"]),
-      deviceId: String(row["device_id"]),
-      scope: "call",
-      actions: ["answer", "decline"],
+    const userId = String(row["user_id"]);
+    const deviceId = String(row["device_id"]);
+    // Aksi jawab dan tolak memakai token BERBEDA, keduanya kedaluwarsa
+    // bersamaan dengan batas dering 45 detik.
+    const answer = await mintNotificationAction({
+      userId,
+      deviceId,
+      action: "call_answer",
       callId: input.callId,
-      ttlSeconds: 60,
+      ttlSeconds: CALL_ACTION_TTL_SEC,
+    });
+    const decline = await mintNotificationAction({
+      userId,
+      deviceId,
+      action: "call_decline",
+      callId: input.callId,
+      ttlSeconds: CALL_ACTION_TTL_SEC,
     });
     targets.push({
       token: String(row["push_token"]),
       sound: Boolean(row["sound"]),
       vibrate: Boolean(row["vibrate"]),
       extra: {
-        actionId: `${input.callId}:${String(row["device_id"])}`,
         // Perangkat yang mematikan pratinjau tidak pernah menerima nama penelepon
         // pada layar kunci (notifikasi memakai versi publik generik).
         preview: row["allow_preview"] ? "1" : "0",
-        ...(actionToken ? { actionToken } : {}),
+        ...(answer ? { answerActionId: answer.actionId, answerToken: answer.token } : {}),
+        ...(decline ? { declineActionId: decline.actionId, declineToken: decline.token } : {}),
       },
     });
   }
 
   const res = await sendPush(targets, payload, { ttlSeconds: 45 });
+  await pruneTokens(res.invalidTokens);
+  return res;
+}
+
+/**
+ * Push "panggilan berakhir" (best-effort) ke SEMUA perangkat peserta agar
+ * notifikasi panggilan yang basi langsung dibatalkan di perangkat lain.
+ * TTL push panggilan masuk tetap menjadi jaring pengaman terakhir.
+ */
+export async function dispatchCallTerminalPush(input: {
+  callId: string;
+  status: string;
+}): Promise<FcmResult> {
+  if (!pushConfigured()) {
+    return {
+      configured: false,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "FCM belum terhubung",
+    };
+  }
+  const db = await admin();
+  const { data } = await db.rpc("push_targets_for_call_terminal", { _call: input.callId });
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
+
+  const payload: PushData = {
+    kind: "call_terminal",
+    channel: CHANNELS.calls.id,
+    group: input.callId,
+    route: `/call/${input.callId}`,
+    callId: input.callId,
+    callStatus: input.status,
+    title: "MCM",
+    body: "Panggilan berakhir",
+  };
+
+  const res = await sendPush(
+    rows.map((r) => ({ token: String(r["push_token"]), sound: false, vibrate: false })),
+    payload,
+    { ttlSeconds: 60 },
+  );
   await pruneTokens(res.invalidTokens);
   return res;
 }

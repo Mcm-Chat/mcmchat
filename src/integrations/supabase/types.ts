@@ -1515,6 +1515,83 @@ export type Database = {
           },
         ]
       }
+      notification_actions: {
+        Row: {
+          action: Database["public"]["Enums"]["notification_action_kind"]
+          call_id: string | null
+          conversation_id: string | null
+          created_at: string
+          device_id: string
+          expires_at: string
+          id: string
+          message_id: string | null
+          result: Json | null
+          token_hash: string
+          token_prefix: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["notification_action_kind"]
+          call_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          device_id: string
+          expires_at: string
+          id?: string
+          message_id?: string | null
+          result?: Json | null
+          token_hash: string
+          token_prefix: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["notification_action_kind"]
+          call_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          device_id?: string
+          expires_at?: string
+          id?: string
+          message_id?: string | null
+          result?: Json | null
+          token_hash?: string
+          token_prefix?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_actions_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_actions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_actions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_actions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -3006,6 +3083,58 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _answer_call_as: {
+        Args: { _actor: string; _call: string }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _decline_call_as: {
+        Args: { _actor: string; _call: string }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       activate_stock_unit: {
         Args: { _unit: string }
         Returns: {
@@ -3141,15 +3270,6 @@ export type Database = {
         Args: { _conversation: string; _owner_only: boolean; _uid: string }
         Returns: string
       }
-      bg_call_action: {
-        Args: {
-          _action: string
-          _action_id?: string
-          _call: string
-          _token: string
-        }
-        Returns: Json
-      }
       bg_mark_delivered: {
         Args: { _conv: string; _message?: string; _token: string }
         Returns: Json
@@ -3205,58 +3325,6 @@ export type Database = {
           staff_pin: string
           user_id: string
         }[]
-      }
-      call_answer_tx: {
-        Args: { _call: string; _uid: string }
-        Returns: {
-          answered_at: string | null
-          conversation_id: string | null
-          created_at: string
-          duration_sec: number
-          end_reason: string | null
-          ended_at: string | null
-          id: string
-          initiator_id: string
-          kind: Database["public"]["Enums"]["call_kind"]
-          max_participants: number
-          provider: string
-          room_name: string | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["call_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "calls"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      call_decline_tx: {
-        Args: { _call: string; _uid: string }
-        Returns: {
-          answered_at: string | null
-          conversation_id: string | null
-          created_at: string
-          duration_sec: number
-          end_reason: string | null
-          ended_at: string | null
-          id: string
-          initiator_id: string
-          kind: Database["public"]["Enums"]["call_kind"]
-          max_participants: number
-          provider: string
-          room_name: string | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["call_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "calls"
-          isOneToOne: true
-          isSetofReturn: false
-        }
       }
       can_manage_business: {
         Args: { _biz: string; _uid: string }
@@ -3343,6 +3411,7 @@ export type Database = {
         Args: { _conversation: string }
         Returns: Json
       }
+      cleanup_notification_actions: { Args: never; Returns: number }
       commit_my_avatar: { Args: { _path: string }; Returns: Json }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
       confirm_chat_order: {
@@ -3398,6 +3467,15 @@ export type Database = {
           _label?: string
           _pin: string
           _role?: Database["public"]["Enums"]["business_role"]
+        }
+        Returns: Json
+      }
+      consume_notification_action: {
+        Args: {
+          _action_id: string
+          _body?: string
+          _resource: string
+          _token: string
         }
         Returns: Json
       }
@@ -3762,6 +3840,21 @@ export type Database = {
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
+      mint_notification_action: {
+        Args: {
+          _action: Database["public"]["Enums"]["notification_action_kind"]
+          _call?: string
+          _conversation?: string
+          _device: string
+          _message?: string
+          _ttl_seconds?: number
+          _user: string
+        }
+        Returns: {
+          action_id: string
+          token: string
+        }[]
+      }
       mint_push_action_token: {
         Args: {
           _actions: string[]
@@ -3878,6 +3971,14 @@ export type Database = {
           sound: boolean
           user_id: string
           vibrate: boolean
+        }[]
+      }
+      push_targets_for_call_terminal: {
+        Args: { _call: string }
+        Returns: {
+          device_id: string
+          push_token: string
+          user_id: string
         }[]
       }
       push_targets_for_conversation: {
@@ -4248,6 +4349,11 @@ export type Database = {
         | "location"
         | "product_card"
         | "sticker"
+      notification_action_kind:
+        | "reply"
+        | "read"
+        | "call_answer"
+        | "call_decline"
       order_status: "new" | "processing" | "shipped" | "completed" | "cancelled"
       payment_method: "cash" | "transfer" | "dp" | "credit"
       preparation_item_status: "pending" | "in_progress" | "done"
@@ -4466,6 +4572,12 @@ export const Constants = {
         "location",
         "product_card",
         "sticker",
+      ],
+      notification_action_kind: [
+        "reply",
+        "read",
+        "call_answer",
+        "call_decline",
       ],
       order_status: ["new", "processing", "shipped", "completed", "cancelled"],
       payment_method: ["cash", "transfer", "dp", "credit"],

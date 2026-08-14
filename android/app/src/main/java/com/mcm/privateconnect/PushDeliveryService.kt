@@ -66,9 +66,12 @@ class PushDeliveryService : FirebaseMessagingService() {
         val title = data["title"] ?: "MCM"
         val body = data["body"] ?: ""
         val canReply = data["canReply"] == "1"
-        // Token aksi sekali-pakai untuk notifikasi ini saja (bukan token perangkat).
-        val actionToken = data["actionToken"]
-        val actionId = data["actionId"] ?: data["messageId"] ?: group
+        // SATU aksi berbeda per tombol: id + token sekali-pakai dari server.
+        // `actionId` adalah batas idempotensi; perangkat tidak membuat kunci sendiri.
+        val replyToken = data["replyToken"]
+        val replyActionId = data["replyActionId"]
+        val readToken = data["readToken"]
+        val readActionId = data["readActionId"]
         val id = notificationId(group)
 
         val person = Person.Builder().setName(title).build()
@@ -86,13 +89,13 @@ class PushDeliveryService : FirebaseMessagingService() {
             .setGroup(group)
             .setContentIntent(openAppIntent(data["route"] ?: "/chat/$conversationId", id))
 
-        if (canReply && !actionToken.isNullOrBlank()) {
+        if (canReply && !replyToken.isNullOrBlank() && !replyActionId.isNullOrBlank()) {
             val remoteInput = RemoteInput.Builder(KEY_REPLY_TEXT).setLabel("Balas").build()
             val replyIntent = mutableBroadcast(id) {
                 it.action = PushActionReceiver.ACTION_REPLY
-                it.putExtra(PushActionReceiver.EXTRA_CONVERSATION, conversationId)
-                it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
-                it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
+                it.putExtra(PushActionReceiver.EXTRA_RESOURCE, conversationId)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, replyToken)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, replyActionId)
                 it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
             }
             builder.addAction(
@@ -104,12 +107,12 @@ class PushDeliveryService : FirebaseMessagingService() {
             )
         }
 
-        if (!actionToken.isNullOrBlank()) {
+        if (!readToken.isNullOrBlank() && !readActionId.isNullOrBlank()) {
             val readIntent = immutableBroadcast(id + 1) {
                 it.action = PushActionReceiver.ACTION_READ
-                it.putExtra(PushActionReceiver.EXTRA_CONVERSATION, conversationId)
-                it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
-                it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
+                it.putExtra(PushActionReceiver.EXTRA_RESOURCE, conversationId)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, readToken)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, readActionId)
                 it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
             }
             builder.addAction(
@@ -154,17 +157,20 @@ class PushDeliveryService : FirebaseMessagingService() {
         val callId = data["callId"] ?: return
         val allowPreview = data["preview"] != "0"
         val caller = if (allowPreview) (data["title"] ?: "Panggilan masuk") else "Panggilan masuk"
-        val actionToken = data["actionToken"]
-        val actionId = data["actionId"] ?: callId
+        // Jawab dan tolak memakai token BERBEDA; keduanya kedaluwarsa bersama dering.
+        val answerToken = data["answerToken"]
+        val answerActionId = data["answerActionId"]
+        val declineToken = data["declineToken"]
+        val declineActionId = data["declineActionId"]
         val id = notificationId("call:$callId")
 
         // Jawab = PendingIntent Activity langsung (tanpa trampoline receiver).
-        val answer = answerActivityIntent(id + 2, callId, actionToken, actionId)
+        val answer = answerActivityIntent(id + 2, callId, answerToken, answerActionId)
         val decline = immutableBroadcast(id + 3) {
             it.action = PushActionReceiver.ACTION_CALL_DECLINE
-            it.putExtra(PushActionReceiver.EXTRA_CALL, callId)
-            it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
-            it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
+            it.putExtra(PushActionReceiver.EXTRA_RESOURCE, callId)
+            it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, declineToken)
+            it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, declineActionId)
             it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
         }
 
@@ -249,7 +255,7 @@ class PushDeliveryService : FirebaseMessagingService() {
         requestCode: Int,
         callId: String,
         actionToken: String?,
-        actionId: String,
+        actionId: String?,
     ): PendingIntent {
         val route = "/call/$callId"
         val intent = Intent(this, MainActivity::class.java).apply {
@@ -257,7 +263,7 @@ class PushDeliveryService : FirebaseMessagingService() {
             data = Uri.parse("https://mcmchat.id$route")
             putExtra(EXTRA_ROUTE, route)
             putExtra(EXTRA_ANSWER_CALL, callId)
-            putExtra(EXTRA_ANSWER_ACTION_ID, "$actionId:answer")
+            if (!actionId.isNullOrBlank()) putExtra(EXTRA_ANSWER_ACTION_ID, actionId)
             if (!actionToken.isNullOrBlank()) putExtra(EXTRA_ANSWER_TOKEN, actionToken)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }

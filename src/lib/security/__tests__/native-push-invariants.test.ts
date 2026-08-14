@@ -69,7 +69,26 @@ describe("token aksi per notifikasi", () => {
   it("tidak ada bearer persisten di perangkat", () => {
     expect(plugin).not.toMatch(/ActionCredentials|EncryptedSharedPreferences/);
     expect(receiver).toMatch(/EXTRA_ACTION_TOKEN/);
-    expect(delivery).toMatch(/data\["actionToken"\]/);
+  });
+
+  it("setiap tombol memakai pasangan id+token sendiri dari payload", () => {
+    for (const key of ["replyToken", "replyActionId", "readToken", "readActionId", "answerToken", "answerActionId", "declineToken", "declineActionId"]) {
+      expect(delivery).toContain(`data["${key}"]`);
+    }
+    // Token generik lama tidak boleh dipakai lagi.
+    expect(delivery).not.toMatch(/data\["actionToken"\]/);
+  });
+
+  it("receiver tidak mengarang actionId sendiri", () => {
+    expect(receiver).not.toMatch(/UUID\.randomUUID|actionId\(intent/);
+    expect(receiver).toMatch(/EXTRA_ACTION_ID/);
+    expect(receiver).toMatch(/EXTRA_RESOURCE/);
+  });
+
+  it("worker mengirim skema {action, actionId, token, resourceId}", () => {
+    expect(worker).toMatch(/put\("action", action\)/);
+    expect(worker).toMatch(/put\("actionId", actionId\)/);
+    expect(worker).toMatch(/put\("resourceId", resource\)/);
   });
 });
 

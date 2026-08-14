@@ -2,7 +2,7 @@ import { fetchProfileCards } from "./profiles";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
-import { notifyIncomingCall } from "@/lib/push/push.functions";
+import { notifyIncomingCall, notifyCallTerminal } from "@/lib/push/push.functions";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import type { EndReason } from "@/lib/calls/policy";
 
@@ -69,6 +69,8 @@ export async function endCall(
     ...(reason ? { _reason: reason } : {}),
   });
   if (error) throw new Error(friendly(error.message, "Gagal mengakhiri panggilan"));
+  // Best-effort: batalkan notifikasi panggilan basi di perangkat peserta lain.
+  void notifyCallTerminal({ data: { callId } }).catch(() => undefined);
 }
 
 /**
@@ -79,6 +81,7 @@ export async function endCall(
 export async function answerCall(callId: string) {
   const { data, error } = await supabase.rpc("answer_call", { _call: callId });
   if (error) throw new Error(friendly(error.message, "Gagal menjawab panggilan"));
+  void notifyCallTerminal({ data: { callId } }).catch(() => undefined);
   return data as unknown as CallRow;
 }
 
@@ -87,6 +90,7 @@ export async function declineCall(callId: string) {
   // baru berstatus `declined` saat penerima terakhir menolak.
   const { error } = await supabase.rpc("decline_call", { _call: callId });
   if (error) throw new Error(friendly(error.message, "Gagal menolak panggilan"));
+  void notifyCallTerminal({ data: { callId } }).catch(() => undefined);
 }
 
 /**
@@ -109,6 +113,7 @@ export async function leaveCall(callId: string, durationSec = 0) {
     _duration: Math.max(0, Math.round(durationSec)),
   });
   if (error) throw new Error(friendly(error.message, "Gagal keluar dari panggilan"));
+  void notifyCallTerminal({ data: { callId } }).catch(() => undefined);
   return data as unknown as CallRow;
 }
 
