@@ -486,7 +486,6 @@ function ConfirmOrderDialog({
   );
 }
 
-type StaffRow = { user_id: string; display_name: string; role: string };
 
 function DispatchDialog({
   order,
