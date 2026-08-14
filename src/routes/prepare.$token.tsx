@@ -27,6 +27,7 @@ import {
   savePrepareItem,
 } from "@/lib/prepare.functions";
 import { fileToDataUrl, koordinat, mapsUrlFor } from "@/lib/mcm/geo";
+import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
 import type { PrepItem, PrepTask } from "@/lib/prepare.server.types";
 
 export const Route = createFileRoute("/prepare/$token")({
@@ -185,6 +186,7 @@ function ItemBlock({
   const [geoError, setGeoError] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingEdit, setPendingEdit] = useState<string | null>(null);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["prep-task", token] });
 
@@ -221,8 +223,16 @@ function ItemBlock({
       );
     });
 
-  const upload = async (file: File | undefined) => {
+  const pickFile = async (file: File | undefined) => {
     if (!file) return;
+    try {
+      setPendingEdit(await fileToDataUrl(file, 1600));
+    } catch {
+      toast.error("Foto gagal dibaca");
+    }
+  };
+
+  const upload = async (dataUrl: string) => {
     setBusy(true);
     try {
       const geo = coords ?? (await askLocation());
@@ -230,7 +240,6 @@ function ItemBlock({
         toast.error("Lokasi wajib untuk item ini. Aktifkan GPS lalu coba lagi.");
         return;
       }
-      const dataUrl = await fileToDataUrl(file, 1280);
       await addPhoto({
         data: {
           token,
@@ -272,6 +281,17 @@ function ItemBlock({
 
   return (
     <section className="card-soft space-y-3 p-4">
+      {pendingEdit && (
+        <PhotoEditorDialog
+          src={pendingEdit}
+          title={`Edit foto — ${item.product_name}`}
+          onCancel={() => setPendingEdit(null)}
+          onDone={(dataUrl) => {
+            setPendingEdit(null);
+            void upload(dataUrl);
+          }}
+        />
+      )}
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold">
@@ -361,7 +381,7 @@ function ItemBlock({
             capture="environment"
             hidden
             onChange={(e) => {
-              void upload(e.target.files?.[0]);
+              void pickFile(e.target.files?.[0]);
               e.target.value = "";
             }}
           />
@@ -371,7 +391,7 @@ function ItemBlock({
             accept="image/*"
             hidden
             onChange={(e) => {
-              void upload(e.target.files?.[0]);
+              void pickFile(e.target.files?.[0]);
               e.target.value = "";
             }}
           />

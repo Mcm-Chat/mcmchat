@@ -376,8 +376,20 @@ export async function addProductPhotos(
   );
   let nextSort = (existing[0]?.sort_order ?? -1) + 1;
   const { data: auth } = await supabase.auth.getUser();
+  // Semua objek yang sudah terunggah dicatat agar bisa dibersihkan bila ada satu langkah gagal.
+  const uploaded: string[] = [];
+  const rollback = async () => {
+    for (const p of uploaded) await removeObject("product-photos", p).catch(() => undefined);
+  };
   for (const d of drafts) {
-    const up = await uploadProductPhoto(businessId, d.file, d.fileName);
+    let up: { path: string };
+    try {
+      up = await uploadProductPhoto(businessId, d.file, d.fileName);
+    } catch (err) {
+      await rollback();
+      throw err;
+    }
+    uploaded.push(up.path);
     const { error } = await supabase.from("product_photos").insert({
       business_id: businessId,
       product_id: productId,
@@ -404,9 +416,11 @@ export async function addProductPhotos(
     });
     if (error) {
       // Jangan tinggalkan file yatim di Storage saat insert baris gagal.
-      await removeObject("product-photos", up.path).catch(() => undefined);
+      await rollback();
       throw new Error(friendly(error.message, "Gagal menyimpan foto"));
     }
+    // Baris tersimpan: objek ini tidak perlu di-rollback lagi.
+    uploaded.pop();
   }
 }
 

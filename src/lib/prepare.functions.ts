@@ -116,7 +116,14 @@ export const addPreparePhoto = createServerFn({ method: "POST" })
       caption: data.caption,
       sort_order: count ?? 0,
     });
-    if (error) throw new Error("Foto gagal disimpan");
+    if (error) {
+      // Rollback rapi: jangan tinggalkan berkas yatim saat baris gagal tersimpan.
+      await supabaseAdmin.storage
+        .from("product-photos")
+        .remove([path])
+        .catch(() => undefined);
+      throw new Error("Foto gagal disimpan");
+    }
     return { ok: true as const };
   });
 
