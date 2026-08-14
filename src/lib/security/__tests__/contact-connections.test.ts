@@ -42,7 +42,7 @@ const has = (p: RegExp) => lastIndexOfPattern(p) !== -1;
 /** Definisi terakhir sebuah fungsi (bentuk yang benar-benar berlaku). */
 function lastFunctionBody(name: string): string {
   const re = new RegExp(
-    `create or replace function public\\.${name}\\s*\\([^;]*?\\$\\$(.*?)\\$\\$`,
+    `create or replace function public\\.${name}\\s*\\([^;]*?\\$(?:function)?\\$(.*?)\\$(?:function)?\\$`,
     "gs",
   );
   let body = "";
