@@ -4,7 +4,8 @@
  * Semua pembacaan profil orang lain melewati RPC `profile_cards` (kartu
  * minimal: id, nama, warna, avatar bila lolos privasi) atau `profile_full`
  * (hanya self / kontak mutual / percakapan bersama / rekan bisnis).
- * Tidak ada lagi `.from("profiles").select(...)` bebas di klien.
+ * Tabel profil sudah tertutup penuh untuk role authenticated — klien tidak bisa
+ * membacanya langsung sama sekali, hanya lewat RPC di modul ini.
  */
 import { supabase } from "@/integrations/supabase/client";
 import { friendly } from "./db";

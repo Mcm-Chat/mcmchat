@@ -156,11 +156,8 @@ export const notifyIncomingCall = createServerFn({ method: "POST" })
     }
     const [{ data: parts }, { data: me }] = await Promise.all([
       context.supabase.from("call_participants").select("user_id").eq("call_id", call.id),
-      context.supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", context.userId)
-        .maybeSingle(),
+      // Baca profil sendiri lewat RPC; tabel profiles tertutup untuk klien.
+      context.supabase.rpc("my_profile"),
     ]);
     const { dispatchEventPush } = await import("./dispatch.server");
     let sent = 0;
