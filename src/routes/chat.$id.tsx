@@ -39,7 +39,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
+import { cancelContactRequest, isBlockedBetween, setBlocked } from "@/lib/api/contacts";
 import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import {
   deleteForEveryone,
@@ -150,6 +150,27 @@ function ChatRoom() {
     queryKey: ["block", userId, conv?.other?.id],
     queryFn: () => isBlockedBetween(userId!, conv!.other!.id),
     enabled: !!userId && !!conv?.other?.id,
+  });
+
+  /**
+   * Keadaan hubungan LANGSUNG dari server (bukan tebakan klien): arah
+   * permintaan kontak menentukan banner. Pemohon melihat "menunggu
+   * diterima", penerima melihat "Terima"/"Tolak".
+   */
+  const { data: relation, refetch: refetchRelation } = useQuery({
+    queryKey: ["relation-state", id, userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_direct_relation_state", { _conversation: id });
+      if (error) throw new Error(error.message);
+      return (data ?? {}) as {
+        kind?: string;
+        request_id?: string | null;
+        request_status?: string | null;
+        request_direction?: "incoming" | "outgoing" | null;
+        has_incoming_messages?: boolean;
+      };
+    },
+    enabled: !!userId,
   });
 
   const { data: reactions } = useQuery({
@@ -406,12 +427,53 @@ function ChatRoom() {
    */
   const claimLegacy = async () => {
     try {
-      const { error } = await supabase.rpc("claim_legacy_direct_conversation", { _conversation: id });
+      const { data, error } = await supabase.rpc("claim_legacy_direct_conversation", {
+        _conversation: id,
+      });
       if (error) throw new Error(error.message);
-      toast.success("Permintaan kontak dibuat. Terima di halaman Kontak untuk mulai membalas.");
+      const res = (data ?? {}) as { direction?: string; status?: string };
+      // Server tidak pernah membalik arah: bila permintaan saya sendiri masih
+      // menunggu, tampilkan status menunggu, bukan ajakan menerima.
+      if (res.status === "pending" && res.direction === "outgoing") {
+        toast.info("Permintaan kontak Anda masih menunggu diterima.");
+      } else if (res.status === "pending") {
+        toast.success("Permintaan kontak dibuat. Terima untuk mulai membalas.");
+      }
+      void refetchRelation();
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengaktifkan percakapan");
+    }
+  };
+
+  const respondRequest = async (action: "accepted" | "rejected") => {
+    const requestId = relation?.request_id;
+    if (!requestId) return;
+    try {
+      const { error } = await supabase.rpc("respond_contact_request", {
+        _request: requestId,
+        _action: action,
+      });
+      if (error) throw new Error(error.message);
+      toast.success(action === "accepted" ? "Permintaan diterima" : "Permintaan ditolak");
+      void refetchRelation();
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui permintaan");
+    }
+  };
+
+  const cancelOutgoing = async () => {
+    const other = conv?.other?.id;
+    if (!other) return;
+    try {
+      await cancelContactRequest(userId!, other);
+      toast.success("Permintaan dibatalkan");
+      void refetchRelation();
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permintaan gagal dibatalkan");
     }
   };
 
@@ -733,13 +795,44 @@ function ChatRoom() {
       )}
 
       {inactive && !blocked && !blockedByOther ? (
-        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
-          </p>
-          <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => void claimLegacy()}>
-            Aktifkan kontak untuk membalas
-          </Button>
+        <div className="sticky bottom-0 space-y-3 border-t border-border bg-card px-4 py-4 text-center">
+          {relation?.request_status === "pending" && relation.request_direction === "outgoing" ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {`Permintaan kontak sudah dikirim ke ${conv.other?.display_name ?? "kontak ini"}. Menunggu diterima.`}
+              </p>
+              <Button variant="secondary" className="rounded-xl" onClick={() => void cancelOutgoing()}>
+                Batalkan permintaan
+              </Button>
+            </>
+          ) : relation?.request_status === "pending" && relation.request_direction === "incoming" ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {`${conv.other?.display_name ?? "Kontak ini"} ingin terhubung dengan Anda.`}
+              </p>
+              <div className="flex justify-center gap-2">
+                <Button className="rounded-xl" onClick={() => void respondRequest("accepted")}>
+                  Terima
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="rounded-xl"
+                  onClick={() => void respondRequest("rejected")}
+                >
+                  Tolak
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
+              </p>
+              <Button variant="secondary" className="rounded-xl" onClick={() => void claimLegacy()}>
+                Aktifkan kontak untuk membalas
+              </Button>
+            </>
+          )}
         </div>
       ) : blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">
