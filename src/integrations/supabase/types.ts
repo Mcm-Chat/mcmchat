@@ -3187,6 +3187,14 @@ export type Database = {
         }
       }
       cancel_contact_request: { Args: { _target: string }; Returns: Json }
+      chat_order_actor_can_manage: {
+        Args: { _order: string; _uid: string }
+        Returns: boolean
+      }
+      chat_order_actor_can_read: {
+        Args: { _order: string; _uid: string }
+        Returns: boolean
+      }
       commit_my_avatar: { Args: { _path: string }; Returns: Json }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
       confirm_chat_order: {
@@ -3392,6 +3400,10 @@ export type Database = {
       }
       current_user_can_manage_business: {
         Args: { _business: string }
+        Returns: boolean
+      }
+      current_user_can_manage_chat_order: {
+        Args: { _order: string }
         Returns: boolean
       }
       current_user_can_manage_conversation: {

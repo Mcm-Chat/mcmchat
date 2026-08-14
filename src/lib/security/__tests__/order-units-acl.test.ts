@@ -98,7 +98,7 @@ describe("helper function ACL", () => {
     const def = sql.slice(
       lastIndex(/create or replace function public\.current_user_can_read_chat_order/),
     );
-    expect(def.slice(0, 1200)).toMatch(/set search_path = public/);
+    expect(def.slice(0, 1200)).toMatch(/set search_path (?:=|to) '?public'?/);
     expect(def.slice(0, 1200)).toMatch(/auth\.uid\(\)/);
     expect(
       lastIndex(/grant execute on function public\.current_user_can_read_chat_order\(uuid\) to authenticated, service_role/),
