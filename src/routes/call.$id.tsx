@@ -135,7 +135,7 @@ function CallScreen() {
 
   if (loading || detailStatus === "loading") {
     return (
-      <div className="app-gradient flex min-h-screen items-center justify-center text-navy-foreground">
+      <div className="app-gradient flex min-h-dvh items-center justify-center px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
         <p className="text-sm">Memuat panggilan…</p>
       </div>
     );
@@ -143,7 +143,7 @@ function CallScreen() {
 
   if (detailStatus === "error" || !detail) {
     return (
-      <div className="app-gradient flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center text-navy-foreground">
+      <div className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-navy-foreground">
         <ShieldAlert className="size-10" />
         <p className="text-sm">Data panggilan tidak ditemukan atau gagal dimuat.</p>
         <div className="flex gap-2">
@@ -188,7 +188,7 @@ function CallScreen() {
 
   if (live) {
     return (
-      <div className="app-gradient relative flex min-h-screen flex-col px-6 py-8 text-navy-foreground">
+      <div className="app-gradient relative flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
         {isVideo && (
           <>
             <video
@@ -202,7 +202,7 @@ function CallScreen() {
               autoPlay
               playsInline
               muted
-              className="absolute top-20 right-4 z-10 h-40 w-28 rounded-2xl border border-white/25 object-cover"
+              className="absolute top-[calc(env(safe-area-inset-top)+5rem)] right-4 z-10 h-36 w-24 sm:h-40 sm:w-28 rounded-2xl border border-white/25 object-cover"
             />
           </>
         )}
@@ -375,7 +375,7 @@ function CallScreen() {
   }
 
   return (
-    <div className="app-gradient flex min-h-screen flex-col px-6 py-8 text-navy-foreground">
+    <div className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
