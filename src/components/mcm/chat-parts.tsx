@@ -40,6 +40,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
+import { ChatOrderCard } from "@/components/mcm/chat-order-card";
 import { cn } from "@/lib/utils";
 import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
@@ -592,6 +593,8 @@ export function MessageBubble({
             <SalesCard message={message} />
           ) : message.kind === "product_card" ? (
             <ProductCard message={message} />
+          ) : message.kind === "order" && chatOrderIdOf(message) ? (
+            <ChatOrderCard orderId={chatOrderIdOf(message)!} />
           ) : message.kind === "ledger" ? (
             <div className="flex w-52 items-center gap-2">
               <Wallet className="size-5 shrink-0" />
@@ -1000,4 +1003,10 @@ export function ChatComposer({
       </div>
     </div>
   );
+}
+
+/** Kartu pesanan chat menyimpan id pesanan pada payload pesan. */
+function chatOrderIdOf(message: { payload: unknown }): string | null {
+  const p = message.payload as { chatOrderId?: unknown } | null;
+  return typeof p?.chatOrderId === "string" ? p.chatOrderId : null;
 }
