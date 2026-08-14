@@ -166,7 +166,7 @@ function UnitCard({
           fileName: f.name,
           variant_id: variant.id,
           stock_unit_id: unit.id,
-          group_label: unit.label || `Unit #${unit.unit_seq}`,
+          group_label: unit.unit_label || `Unit #${unit.unit_seq}`,
         });
       }
       await addProductPhotos(businessId, productId, drafts);
@@ -198,7 +198,7 @@ function UnitCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-xs font-semibold">
-            {unit.label || `Unit #${unit.unit_seq}`}
+            {unit.unit_label || `Unit #${unit.unit_seq}`}
           </p>
           <p className="text-[11px] text-muted-foreground">
             {formatQty(variant, Number(unit.qty_base))}
@@ -313,7 +313,7 @@ function AddUnitDialog({
     try {
       await createUnit({
         variantId: variant.id,
-        qtyBase: toBase(variant, n),
+        qtyBase: toBase(variant, n, variant.display_unit),
         label: label.trim(),
         note: note.trim(),
       });

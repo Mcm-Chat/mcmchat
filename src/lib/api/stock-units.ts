@@ -25,13 +25,13 @@ export const UNIT_STATUS_LABEL: Record<StockUnitStatus, string> = {
   void: "Dibatalkan",
 };
 
-export const UNIT_STATUS_TONE: Record<StockUnitStatus, "primary" | "warning" | "danger" | "muted"> = {
+export const UNIT_STATUS_TONE: Record<StockUnitStatus, "primary" | "warning" | "danger" | "neutral"> = {
   draft: "warning",
   available: "primary",
   reserved: "warning",
   preparing: "warning",
   ready: "primary",
-  delivered: "muted",
+  delivered: "neutral",
   void: "danger",
 };
 
