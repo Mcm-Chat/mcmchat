@@ -280,6 +280,17 @@ function ItemBlock({
 
   return (
     <section className="card-soft space-y-3 p-4">
+      {pendingEdit && (
+        <PhotoEditorDialog
+          src={pendingEdit}
+          title={`Edit foto — ${item.product_name}`}
+          onCancel={() => setPendingEdit(null)}
+          onDone={(dataUrl) => {
+            setPendingEdit(null);
+            void upload(dataUrl);
+          }}
+        />
+      )}
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold">
