@@ -112,9 +112,9 @@ function ContactDetailPage() {
                 ) : rel?.outgoingPending ? (
                   <StatusBadge tone="warning">Menunggu persetujuan</StatusBadge>
                 ) : rel?.saved ? (
-                  <StatusBadge tone="muted">Disimpan (satu arah)</StatusBadge>
+                  <StatusBadge tone="neutral">Disimpan (satu arah)</StatusBadge>
                 ) : (
-                  <StatusBadge tone="muted">Belum terhubung</StatusBadge>
+                  <StatusBadge tone="neutral">Belum terhubung</StatusBadge>
                 )}
               </div>
             </div>
