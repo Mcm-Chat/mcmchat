@@ -22,9 +22,11 @@ const sql = readdirSync(path.resolve(process.cwd(), "supabase/migrations"))
   .replace(/\s+/g, " ")
   .toLowerCase();
 
-const fn = sql.slice(
-  sql.lastIndexOf("create or replace function public.set_avatar_privacy_audience"),
-);
+// Ambil HANYA definisi fungsi terakhir (sampai penutup `$$;`), bukan sisa file:
+// slice sampai akhir file akan ikut menangkap migrasi lain sesudahnya.
+const fnStart = sql.lastIndexOf("create or replace function public.set_avatar_privacy_audience");
+const fnEnd = sql.indexOf("$$;", sql.indexOf("$$", fnStart) + 2);
+const fn = sql.slice(fnStart, fnEnd === -1 ? undefined : fnEnd + 3);
 
 describe("RPC set_avatar_privacy_audience (invarian SQL)", () => {
   it("ada, atomik (satu fungsi), dan security definer dengan search_path terkunci", () => {
