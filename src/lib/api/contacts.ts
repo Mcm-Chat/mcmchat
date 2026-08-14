@@ -222,7 +222,7 @@ export async function saveContact(
   const { error } = await supabase.rpc("save_contact_card", {
     _target: contactId,
     _source: source,
-    _alias: (alias ?? null) as unknown as string,
+    ...(alias == null ? {} : { _alias: alias }),
   });
   if (error)
     throw new Error(
@@ -239,21 +239,33 @@ export async function updateMyContact(
 ) {
   const { error } = await supabase.rpc("update_my_contact", {
     _target: contactId,
-    _alias: patch.alias ?? null,
-    _note: patch.note ?? null,
-    _starred: patch.starred ?? null,
-    _is_favorite: patch.isFavorite ?? null,
-  } as unknown as { _target: string; _alias: string; _note: string; _starred: boolean; _is_favorite: boolean });
+    ...(patch.alias == null ? {} : { _alias: patch.alias }),
+    ...(patch.note == null ? {} : { _note: patch.note }),
+    ...(patch.starred == null ? {} : { _starred: patch.starred }),
+    ...(patch.isFavorite == null ? {} : { _is_favorite: patch.isFavorite }),
+  });
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui kontak."));
 }
 
-export async function removeContact(userId: string, contactId: string) {
-  const { error } = await supabase
-    .from("contacts")
-    .delete()
-    .eq("owner_id", userId)
-    .eq("contact_id", contactId);
-  if (error) throw new Error(friendly(error.message, "Kontak gagal dihapus."));
+/**
+ * Hapus KARTU tersimpan. Hanya boleh untuk kontak yang belum punya hubungan
+ * aktif; hubungan yang sudah diterima harus diputus lewat `disconnectContact`.
+ */
+export async function removeSavedContact(_userId: string, contactId: string) {
+  const { error } = await supabase.rpc("remove_saved_contact", { _target: contactId });
+  if (error)
+    throw new Error(
+      mapRpcError(error.message, "Kontak gagal dihapus.", {
+        connected_requires_disconnect: "Kalian masih terhubung. Putuskan hubungan terlebih dahulu.",
+        invalid_target: "Akun tujuan tidak valid.",
+      }),
+    );
+}
+
+/** Putuskan hubungan yang sudah diterima (menonaktifkan koneksi, menjaga audit). */
+export async function disconnectContact(_userId: string, contactId: string) {
+  const { error } = await supabase.rpc("disconnect_contact", { _target: contactId });
+  if (error) throw new Error(friendly(error.message, "Gagal memutus hubungan."));
 }
 
 export async function cancelContactRequest(_userId: string, targetId: string) {

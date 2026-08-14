@@ -298,6 +298,47 @@ export type Database = {
           },
         ]
       }
+      contact_connections: {
+        Row: {
+          accepted_at: string
+          accepted_request_id: string | null
+          created_at: string
+          disconnected_at: string | null
+          id: string
+          updated_at: string
+          user_high: string
+          user_low: string
+        }
+        Insert: {
+          accepted_at?: string
+          accepted_request_id?: string | null
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          updated_at?: string
+          user_high: string
+          user_low: string
+        }
+        Update: {
+          accepted_at?: string
+          accepted_request_id?: string | null
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          updated_at?: string
+          user_high?: string
+          user_low?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_connections_accepted_request_id_fkey"
+            columns: ["accepted_request_id"]
+            isOneToOne: false
+            referencedRelation: "contact_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_requests: {
         Row: {
           created_at: string
@@ -2293,6 +2334,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      are_connected: { Args: { _a: string; _b: string }; Returns: boolean }
       bg_mark_delivered: {
         Args: { _conv: string; _message?: string; _token: string }
         Returns: Json
@@ -2478,6 +2520,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      disconnect_contact: { Args: { _target: string }; Returns: Json }
       end_call: {
         Args: {
           _call: string
@@ -2515,6 +2558,7 @@ export type Database = {
         Args: { _feature: string; _user_id: string }
         Returns: boolean
       }
+      i_am_connected_to: { Args: { _other: string }; Returns: boolean }
       is_business_member: {
         Args: { _biz: string; _uid: string }
         Returns: boolean
@@ -2579,6 +2623,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      lock_contact_pair: {
+        Args: { _a: string; _b: string }
+        Returns: undefined
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
@@ -2710,6 +2758,7 @@ export type Database = {
         Returns: Json
       }
       remove_my_avatar: { Args: never; Returns: Json }
+      remove_saved_contact: { Args: { _target: string }; Returns: Json }
       respond_contact_request: {
         Args: {
           _action: Database["public"]["Enums"]["contact_request_status"]
@@ -2742,12 +2791,12 @@ export type Database = {
       }
       safe_uuid: { Args: { _t: string }; Returns: string }
       save_contact_card: {
-        Args: { _alias: string; _source: string; _target: string }
+        Args: { _alias?: string; _source?: string; _target: string }
         Returns: Json
       }
       search_profile_by_pin: { Args: { _pin: string }; Returns: Json }
       send_contact_request: {
-        Args: { _message: string; _target: string }
+        Args: { _message?: string; _target: string }
         Returns: Json
       }
       set_avatar_privacy_audience: {
@@ -2782,10 +2831,10 @@ export type Database = {
       status_owner_of: { Args: { _status: string }; Returns: string }
       update_my_contact: {
         Args: {
-          _alias: string
-          _is_favorite: boolean
-          _note: string
-          _starred: boolean
+          _alias?: string
+          _is_favorite?: boolean
+          _note?: string
+          _starred?: boolean
           _target: string
         }
         Returns: Json
