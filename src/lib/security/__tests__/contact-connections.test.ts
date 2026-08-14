@@ -183,7 +183,9 @@ describe("siklus hidup hubungan", () => {
 
   it("unblock tidak mengaktifkan kembali hubungan atau request", () => {
     const body = lastFunctionBody("set_contact_blocked");
-    const elseBranch = body.slice(body.indexOf("else update public.contacts set is_blocked = false"));
+    const elseBranch = body.slice(
+      body.indexOf("else update public.contacts set is_blocked = false"),
+    );
     expect(elseBranch).not.toMatch(/contact_connections/);
     // request blocked hanya diturunkan ke 'cancelled'; tidak pernah dibuka lagi
     expect(elseBranch).not.toMatch(/status = 'accepted'/);
