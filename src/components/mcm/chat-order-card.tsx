@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ import {
   dispatchChatOrder,
   finalizeChatOrderDelivery,
   getChatOrder,
+  getChatOrderCapability,
   orderTotals,
   requestChatOrderChanges,
   totalUnits,
