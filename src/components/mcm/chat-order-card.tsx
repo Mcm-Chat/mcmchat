@@ -518,6 +518,13 @@ function DispatchDialog({
     [order.items],
   );
 
+  type AvailUnit = {
+    id: string;
+    label: string;
+    photoCount: number;
+    hasLocation: boolean;
+  };
+
   const { data: unitsByVariant = {} } = useQuery({
     queryKey: ["chat-order", "avail", order.id, variantIds],
     queryFn: async () => {
@@ -526,8 +533,6 @@ function DispatchDialog({
         out[vid] = (await listAvailableUnits(vid)).map((u) => ({
           id: u.id,
           label: u.unit_label || `Unit #${u.unit_seq}`,
-          qty: Number(u.qty_display ?? 0),
-          unit: u.display_unit ?? "",
           photoCount: u.photos.length,
           hasLocation: u.photos.some((p) => p.location_lat !== null && p.location_lng !== null),
         }));
@@ -634,7 +639,7 @@ function DispatchDialog({
                     <SelectItem value="new">Siapkan unit baru</SelectItem>
                     {avail.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.label} · {u.qty} {u.unit} · {u.photoCount} foto
+                        {u.label} · {u.photoCount} foto
                         {u.hasLocation ? " + lokasi" : " (tanpa lokasi)"}
                       </SelectItem>
                     ))}
