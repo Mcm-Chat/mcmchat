@@ -62,7 +62,9 @@ describe("2) slot cancelled mempertahankan audit link", () => {
 describe("3) urutan lock konsisten", () => {
   it("cancel: chat_order → preparation_job → slots → units", () => {
     const order = cancel.indexOf("from public.chat_orders where id = _order for update");
-    const job = cancel.indexOf("from public.preparation_jobs where id = o.preparation_job_id for update");
+    const job = cancel.indexOf(
+      "from public.preparation_jobs where id = o.preparation_job_id for update",
+    );
     const slots = cancel.indexOf("from public.chat_order_unit_slots where chat_order_id = o.id");
     expect(order).toBeGreaterThan(-1);
     expect(job).toBeGreaterThan(order);
@@ -92,8 +94,12 @@ describe("5-6) verifikasi unit existing", () => {
     expect(complete).toMatch(/u\.status not in \('reserved','preparing','ready'\)/);
   });
   it("tetap memvalidasi foto/lokasi wajib untuk unit existing", () => {
-    expect(complete).toMatch(/it\.require_photo and not \([\s\S]{0,300}product_photos where stock_unit_id = u\.id/);
-    expect(complete).toMatch(/it\.require_location and not \([\s\S]{0,400}location_lat is not null/);
+    expect(complete).toMatch(
+      /it\.require_photo and not \([\s\S]{0,300}product_photos where stock_unit_id = u\.id/,
+    );
+    expect(complete).toMatch(
+      /it\.require_location and not \([\s\S]{0,400}location_lat is not null/,
+    );
   });
 });
 
@@ -111,13 +117,17 @@ describe("8) movement idempoten", () => {
     expect(balance).not.toMatch(/gen_random_uuid\(\)/);
     expect(balance).toMatch(/_ref := md5\('stock_unit:'/);
     expect(balance).toMatch(/ref key wajib/);
-    expect(balance).toMatch(/if exists \(select 1 from public\.inventory_movements m where m\.ref_type = _reftype and m\.ref_id = _ref\)/);
+    expect(balance).toMatch(
+      /if exists \(select 1 from public\.inventory_movements m where m\.ref_type = _reftype and m\.ref_id = _ref\)/,
+    );
   });
 });
 
 describe("9) validasi slot dispatch", () => {
   it("menolak slot_no ganda, jumlah salah, dan pesanan berlebihan", () => {
-    expect(dispatch).toMatch(/group by \(e->>'item_id'\)::uuid, \(e->>'slot_no'\)::int having count\(\*\) > 1/);
+    expect(dispatch).toMatch(
+      /group by \(e->>'item_id'\)::uuid, \(e->>'slot_no'\)::int having count\(\*\) > 1/,
+    );
     expect(dispatch).toMatch(/total slot \(%\) harus sama dengan total unit pesanan/);
     expect(dispatch).toMatch(/nomor slot % harus 1\.\.%/);
     expect(dispatch).toMatch(/_total > 200/);
@@ -162,6 +172,8 @@ describe("14) validasi pembayaran", () => {
     expect(finalize).toMatch(/jumlah dibayar melebihi total/);
   });
   it("ledger idempoten mengambil ledger yang sudah ada", () => {
-    expect(finalize).toMatch(/if _ledger is null then\s*select id into _ledger from public\.ledgers where sales_record_id = _rec\.id;/);
+    expect(finalize).toMatch(
+      /if _ledger is null then\s*select id into _ledger from public\.ledgers where sales_record_id = _rec\.id;/,
+    );
   });
 });
