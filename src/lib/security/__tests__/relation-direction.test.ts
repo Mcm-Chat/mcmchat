@@ -18,7 +18,10 @@ const files = readdirSync(MIGRATIONS_DIR)
 function latestFunction(name: string): string {
   let found = "";
   for (const file of files) {
-    const re = new RegExp(`create (?:or replace )?function public\\.${name}\\b[\\s\\S]*?\\$\\$;`, "gi");
+    const re = new RegExp(
+      `create (?:or replace )?function public\\.${name}\\b[\\s\\S]*?\\$(?:function)?\\$;`,
+      "gi",
+    );
     const matches = file.match(re);
     if (matches?.length) found = matches[matches.length - 1]!;
   }
