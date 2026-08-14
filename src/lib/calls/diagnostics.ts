@@ -13,6 +13,10 @@ export type DiagnosticResult = {
   detail: string;
   /** Tindakan yang harus dilakukan bila gagal. */
   action?: string;
+  /** Latensi sambung (ms) bila tes mengukurnya. */
+  latencyMs?: number;
+  /** Kode mesin untuk riwayat diagnostik. */
+  code?: string;
 };
 
 export const result = (
@@ -21,7 +25,16 @@ export const result = (
   status: CheckStatus,
   detail: string,
   action?: string,
-): DiagnosticResult => ({ id, label, status, detail, ...(action ? { action } : {}) });
+  extra?: { latencyMs?: number; code?: string },
+): DiagnosticResult => ({
+  id,
+  label,
+  status,
+  detail,
+  ...(action ? { action } : {}),
+  ...(extra?.latencyMs !== undefined ? { latencyMs: extra.latencyMs } : {}),
+  ...(extra?.code ? { code: extra.code } : {}),
+});
 
 /** Ringkasan keseluruhan: gagal > peringatan > menunggu > lulus. */
 export function overallStatus(results: DiagnosticResult[]): CheckStatus {
@@ -168,6 +181,7 @@ export async function runLiveKitConnectTest(
       "fail",
       "Server tidak dapat dihubungi. (server_unreachable)",
       "Periksa koneksi internet lalu coba lagi.",
+      { code: "server_unreachable" },
     );
   }
   if (!t.ok) {
@@ -178,6 +192,7 @@ export async function runLiveKitConnectTest(
       "fail",
       `${info?.detail ?? "Tes tidak dapat dijalankan."} (${t.code})`,
       info?.action ?? "Hubungi pemilik aplikasi.",
+      { code: t.code },
     );
   }
   const started = Date.now();
@@ -186,7 +201,10 @@ export async function runLiveKitConnectTest(
   try {
     await room.connect(t.url, t.token, { autoSubscribe: false });
     const ms = Date.now() - started;
-    return result("livekit", label, "pass", `Tersambung ke server panggilan dalam ${ms} ms.`);
+    return result("livekit", label, "pass", `Tersambung ke server panggilan dalam ${ms} ms.`, undefined, {
+      latencyMs: ms,
+      code: "ok",
+    });
   } catch (e) {
     return result(
       "livekit",
@@ -196,6 +214,7 @@ export async function runLiveKitConnectTest(
         e instanceof Error ? e.name : "unknown"
       })`,
       "Periksa LIVEKIT_URL/kredensial dan pastikan jaringan tidak memblokir WebSocket.",
+      { latencyMs: Date.now() - started, code: "livekit_connect_failed" },
     );
   } finally {
     await room.disconnect().catch(() => undefined);
