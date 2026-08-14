@@ -63,6 +63,7 @@ import {
   type StockType,
   type VariantRow,
 } from "@/lib/api/catalog";
+import { VariantUnitsPanel } from "@/components/mcm/unit-parts";
 import { useRequireAuth } from "@/lib/api/guard";
 import { compressImage } from "@/lib/mcm/geo";
 import { jam } from "@/lib/mcm/format";
@@ -207,6 +208,9 @@ function CatalogDetail() {
   };
 
   const allPhotos = product.photos;
+  // Foto unit fisik dirender di dalam kartu variannya masing-masing, bukan di galeri global,
+  // supaya foto satu barang tidak pernah tertukar dengan barang lain.
+  const genericPhotos = allPhotos.filter((p) => !p.variant_id && !p.stock_unit_id);
 
   return (
     <AppShell
@@ -280,7 +284,9 @@ function CatalogDetail() {
                 <VariantRowCard
                   key={v.id}
                   variant={v}
-                  photos={allPhotos.filter((p) => p.variant_id === v.id)}
+                  businessId={product.business_id}
+                  productId={product.id}
+                  photos={allPhotos.filter((p) => p.variant_id === v.id && !p.stock_unit_id)}
                   onAdd={() => setStockDialog({ variant: v, mode: "add" })}
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
@@ -308,8 +314,8 @@ function CatalogDetail() {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Semua foto</h2>
-            <span className="text-[11px] text-muted-foreground">{allPhotos.length} foto</span>
+            <h2 className="text-sm font-semibold">Foto umum produk</h2>
+            <span className="text-[11px] text-muted-foreground">{genericPhotos.length} foto</span>
           </div>
           <input
             ref={addPhotoRef}
@@ -331,13 +337,13 @@ function CatalogDetail() {
           >
             <ImagePlus className="size-4" /> {uploading ? "Mengunggah…" : "Tambah foto"}
           </Button>
-          {allPhotos.length === 0 ? (
+          {genericPhotos.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
-              Belum ada foto untuk produk ini.
+              Belum ada foto umum. Foto tiap barang nyata dikelola di kartu unit fisik varian.
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {allPhotos.map((ph, i) => (
+              {genericPhotos.map((ph, i) => (
                 <div key={ph.id} className="space-y-1.5">
                   <PhotoCard
                     photo={ph}
@@ -362,7 +368,7 @@ function CatalogDetail() {
                           size="icon"
                           className="size-7 rounded-lg"
                           aria-label="Naikkan"
-                          onClick={() => void movePhoto(ph.id, -1, allPhotos)}
+                          onClick={() => void movePhoto(ph.id, -1, genericPhotos)}
                         >
                           ↑
                         </Button>
@@ -372,7 +378,7 @@ function CatalogDetail() {
                           size="icon"
                           className="size-7 rounded-lg"
                           aria-label="Turunkan"
-                          onClick={() => void movePhoto(ph.id, 1, allPhotos)}
+                          onClick={() => void movePhoto(ph.id, 1, genericPhotos)}
                         >
                           ↓
                         </Button>
@@ -524,6 +530,8 @@ function CatalogDetail() {
 
 function VariantRowCard({
   variant,
+  businessId,
+  productId,
   photos,
   onAdd,
   onCorrect,
@@ -534,6 +542,8 @@ function VariantRowCard({
   onDeletePhoto,
 }: {
   variant: VariantRow & { balance: number };
+  businessId: string;
+  productId: string;
   photos: PhotoRow[];
   onAdd: () => void;
   onCorrect: () => void;
@@ -594,6 +604,13 @@ function VariantRowCard({
           ))}
         </div>
       )}
+      <VariantUnitsPanel
+        variant={variant}
+        businessId={businessId}
+        productId={productId}
+        onEditLocation={onEditLocation}
+        onDeletePhoto={onDeletePhoto}
+      />
     </div>
   );
 }
