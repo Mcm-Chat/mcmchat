@@ -146,13 +146,13 @@ function CallScreen() {
       <div className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-navy-foreground">
         <ShieldAlert className="size-10" />
         <p className="text-sm">Data panggilan tidak ditemukan atau gagal dimuat.</p>
-        <div className="flex gap-2">
-          <Button variant="secondary" className="rounded-xl" onClick={load}>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button variant="secondary" className="min-h-11 rounded-xl px-5" onClick={load}>
             Coba lagi
           </Button>
           <Button
             variant="secondary"
-            className="rounded-xl"
+            className="min-h-11 rounded-xl px-5"
             onClick={() => void navigate({ to: "/calls" })}
           >
             Kembali
@@ -213,7 +213,7 @@ function CallScreen() {
               variant="ghost"
               size="icon"
               aria-label="Kembali"
-              className="text-navy-foreground hover:bg-white/15"
+              className="size-11 text-navy-foreground hover:bg-white/15"
               onClick={() => void navigate({ to: "/calls" })}
             >
               <ArrowLeft className="size-5" />
@@ -381,7 +381,7 @@ function CallScreen() {
           variant="ghost"
           size="icon"
           aria-label="Kembali"
-          className="text-navy-foreground hover:bg-white/15"
+          className="size-11 text-navy-foreground hover:bg-white/15"
           onClick={() => void navigate({ to: "/calls" })}
         >
           <ArrowLeft className="size-5" />
@@ -422,8 +422,19 @@ function CallScreen() {
       )}
 
       {session.phase === "error" && session.reason && (
-        <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4 text-sm">
-          {session.reason}
+        <div
+          role="alert"
+          className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4 text-sm"
+        >
+          <p className="font-semibold">Panggilan gagal</p>
+          <p className="mt-1 text-navy-foreground/85">{session.reason}</p>
+          <Button
+            variant="secondary"
+            className="mt-3 min-h-11 rounded-xl px-4"
+            onClick={() => void navigate({ to: "/settings/calls" })}
+          >
+            Buka diagnostik panggilan
+          </Button>
         </div>
       )}
 
@@ -450,7 +461,7 @@ function CallScreen() {
           <Button
             size="sm"
             variant="secondary"
-            className="rounded-xl"
+            className="min-h-11 shrink-0 rounded-xl px-4"
             onClick={() => setVoiceOpen(true)}
           >
             Atur

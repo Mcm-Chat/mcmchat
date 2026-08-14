@@ -74,8 +74,8 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-10">
+    <div className="min-h-dvh bg-background">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-6 px-6 py-10">
         <div className="text-center">
           <img src={logo} alt="Logo MCM" width={512} height={512} className="mx-auto size-16" />
           <h1 className="mt-3 text-2xl font-bold">Masuk ke MCM</h1>

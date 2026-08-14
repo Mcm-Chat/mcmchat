@@ -176,7 +176,7 @@ export function ChatListItem({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0"
+            className="size-11 shrink-0"
             aria-label={`Opsi ${name}`}
           >
             <MoreVertical className="size-4" />
@@ -803,7 +803,7 @@ export function ChatComposer({
             <p className="text-[11px] font-semibold text-primary">{replySenderName ?? "Pesan"}</p>
             <p className="truncate text-xs text-muted-foreground">{previewOf(replyPreview)}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onCancelReply}>
+          <Button variant="ghost" size="sm" className="min-h-11 px-3" onClick={onCancelReply}>
             Batal
           </Button>
         </div>
@@ -811,7 +811,12 @@ export function ChatComposer({
       {editing && (
         <div className="flex items-center gap-2 border-b border-border/70 bg-warning/15 px-3 py-2 text-xs">
           <Pencil className="size-4" /> Mengedit pesan
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={onCancelEdit}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto min-h-11 px-3"
+            onClick={onCancelEdit}
+          >
             Batal
           </Button>
         </div>
@@ -825,7 +830,7 @@ export function ChatComposer({
         <Button
           variant="ghost"
           size="icon"
-          className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+          className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Tindakan lain"
           disabled={disabled}
           onClick={() => setActionsOpen(true)}
@@ -874,7 +879,7 @@ export function ChatComposer({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-9 shrink-0 rounded-full text-muted-foreground"
+                className="size-11 shrink-0 rounded-full text-muted-foreground"
                 aria-label="Emoji"
                 disabled={disabled}
               >
@@ -913,7 +918,7 @@ export function ChatComposer({
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 shrink-0 rounded-full text-muted-foreground"
+            className="size-11 shrink-0 rounded-full text-muted-foreground"
             aria-label="Kamera"
             disabled={disabled}
             onClick={() => onAttach("camera")}
@@ -924,7 +929,7 @@ export function ChatComposer({
         {value.trim() ? (
           <Button
             size="icon"
-            className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
+            className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label="Kirim"
             disabled={disabled}
             onClick={onSend}
@@ -935,7 +940,7 @@ export function ChatComposer({
           <Button
             size="icon"
             variant={recording ? "destructive" : "default"}
-            className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
+            className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label={recording ? "Hentikan rekaman" : "Rekam pesan suara"}
             disabled={disabled}
             onClick={() => (recording ? stop() : void start())}

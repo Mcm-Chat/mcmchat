@@ -46,7 +46,7 @@ const FEATURES = [
 
 function DownloadPage() {
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background px-5 py-10">
+    <main className="mx-auto min-h-dvh w-full max-w-md bg-background px-5 py-10">
       <h1 className="text-2xl font-bold tracking-tight">Unduh MCM</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         MCM — Private Chat, Calls &amp; Smart Ledger untuk Android. Versi web dapat langsung dipakai

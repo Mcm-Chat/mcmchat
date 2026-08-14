@@ -23,7 +23,7 @@ function HomeRedirect() {
     navigate({ to: "/chat", replace: true });
   }, [navigate]);
   return (
-    <div className="flex min-h-screen items-center justify-center gap-2 text-sm text-muted-foreground">
+    <div className="flex min-h-dvh items-center justify-center gap-2 text-sm text-muted-foreground">
       <Loader2 className="size-4 animate-spin" /> Membuka beranda…
     </div>
   );

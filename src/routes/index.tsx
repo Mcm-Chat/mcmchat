@@ -74,7 +74,7 @@ function Splash() {
   }, [loading, session, navigate]);
 
   return (
-    <div className="app-gradient flex min-h-screen flex-col items-center justify-center gap-6 px-6 text-navy-foreground">
+    <div className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-6 px-6 text-navy-foreground">
       <img src={logo} alt="Logo MCM" width={512} height={512} className="size-28 animate-pulse" />
       <div className="text-center">
         <h1 className="text-3xl font-extrabold tracking-tight">
