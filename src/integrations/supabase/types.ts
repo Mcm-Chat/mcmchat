@@ -79,6 +79,42 @@ export type Database = {
           },
         ]
       }
+      business_conversations: {
+        Row: {
+          business_id: string
+          conversation_id: string
+          created_at: string
+          customer_id: string
+        }
+        Insert: {
+          business_id: string
+          conversation_id: string
+          created_at?: string
+          customer_id: string
+        }
+        Update: {
+          business_id?: string
+          conversation_id?: string
+          created_at?: string
+          customer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_conversations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_members: {
         Row: {
           business_id: string
@@ -2466,6 +2502,17 @@ export type Database = {
         Args: { _conversation: string; _user: string }
         Returns: string
       }
+      conversation_capability: {
+        Args: { _conversation: string; _user: string }
+        Returns: {
+          callable: boolean
+          manageable: boolean
+          readable: boolean
+          reason: string
+          role: string
+          sendable: boolean
+        }[]
+      }
       conversation_overview: {
         Args: never
         Returns: {
@@ -2535,6 +2582,42 @@ export type Database = {
         Returns: Json
       }
       create_sale_tx: { Args: { _payload: Json }; Returns: Json }
+      current_user_business_role: {
+        Args: { _business: string }
+        Returns: Database["public"]["Enums"]["business_role"]
+      }
+      current_user_can_call_conversation: {
+        Args: { _conversation: string }
+        Returns: boolean
+      }
+      current_user_can_manage_business: {
+        Args: { _business: string }
+        Returns: boolean
+      }
+      current_user_can_manage_conversation: {
+        Args: { _conversation: string }
+        Returns: boolean
+      }
+      current_user_can_read_conversation: {
+        Args: { _conversation: string }
+        Returns: boolean
+      }
+      current_user_can_sell_business: {
+        Args: { _business: string }
+        Returns: boolean
+      }
+      current_user_can_send_conversation: {
+        Args: { _conversation: string }
+        Returns: boolean
+      }
+      current_user_is_business_member: {
+        Args: { _business: string }
+        Returns: boolean
+      }
+      current_user_is_conv_member: {
+        Args: { _conversation: string }
+        Returns: boolean
+      }
       customer_pin: { Args: { _customer: string }; Returns: string }
       decline_call: {
         Args: { _call: string }
