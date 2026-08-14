@@ -126,6 +126,9 @@ export function PhotoEditorDialog({
   const [text, setText] = useState("");
   const [crop, setCrop] = useState<Rect | null>(null);
   const [dragging, setDragging] = useState<{ x: number; y: number } | null>(null);
+  const [applied, setApplied] = useState(0);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [compare, setCompare] = useState<"side" | "after">("side");
 
   useEffect(() => {
     let alive = true;
@@ -226,6 +229,7 @@ export function PhotoEditorDialog({
   const applyCrop = () => {
     if (!img || !crop || crop.w < 16 || crop.h < 16) return;
     setBaseUrl(bake(img, anns, crop).toDataURL("image/jpeg", 0.9));
+    setApplied((n) => n + 1 + anns.length);
     setAnns([]);
     setCrop(null);
     setTool("arrow");
@@ -234,13 +238,21 @@ export function PhotoEditorDialog({
   const rotate = () => {
     if (!img) return;
     setBaseUrl(rotated(img, anns).toDataURL("image/jpeg", 0.9));
+    setApplied((n) => n + 1 + anns.length);
     setAnns([]);
     setCrop(null);
   };
 
-  const save = () => {
+  const cropReady = !!crop && crop.w > 16 && crop.h > 16;
+  const pending = anns.length + (cropReady ? 1 : 0);
+  const totalChanges = applied + pending;
+
+  const render = () =>
+    bake(img!, anns, cropReady ? crop : null).toDataURL("image/jpeg", 0.85);
+
+  const openPreview = () => {
     if (!img) return;
-    onDone(bake(img, anns, crop && crop.w > 16 && crop.h > 16 ? crop : null).toDataURL("image/jpeg", 0.85));
+    setPreview(render());
   };
 
   const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
