@@ -277,6 +277,14 @@ function ItemBlock({
           <h2 className="truncate text-sm font-semibold">
             {item.product_name} — {item.variant_name}
           </h2>
+          {item.unit_total > 1 && (
+            <p className="text-[11px] font-semibold text-primary">
+              Unit {item.unit_index}/{item.unit_total} · setiap unit difoto terpisah
+            </p>
+          )}
+          {item.chat_order_slot_id && (
+            <p className="text-[11px] text-muted-foreground">Dari pesanan pembeli di chat</p>
+          )}
           <p className="text-xs text-muted-foreground">
             Diminta {item.requested_qty} {item.requested_unit} ({item.requested_qty_base}{" "}
             {item.base_unit})
