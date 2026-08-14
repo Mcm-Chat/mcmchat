@@ -149,6 +149,10 @@ export function drawScene(
   cache?: SceneCache,
 ) {
   const ctx = canvas.getContext("2d")!;
+  // Pratinjau boleh memakai kanvas lebih kecil (mode performa); seluruh adegan
+  // diskalakan agar koordinat lapisan tetap dalam ruang 1080x1920.
+  const sx = canvas.width / CANVAS_W;
+  const sy = canvas.height / CANVAS_H;
   const key = baseKey(image, state);
   let base: HTMLCanvasElement;
   if (cache && cache.base && cache.key === key) {
@@ -162,6 +166,7 @@ export function drawScene(
     }
   }
 
+  ctx.setTransform(sx, 0, 0, sy, 0, 0);
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
   ctx.drawImage(base, 0, 0);
 
@@ -184,6 +189,7 @@ export function drawScene(
     }
   }
 
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   return canvas;
 }
 
