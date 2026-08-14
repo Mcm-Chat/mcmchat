@@ -803,7 +803,7 @@ export function ChatComposer({
             <p className="text-[11px] font-semibold text-primary">{replySenderName ?? "Pesan"}</p>
             <p className="truncate text-xs text-muted-foreground">{previewOf(replyPreview)}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onCancelReply}>
+          <Button variant="ghost" size="sm" className="min-h-11 px-3" onClick={onCancelReply}>
             Batal
           </Button>
         </div>
@@ -811,7 +811,7 @@ export function ChatComposer({
       {editing && (
         <div className="flex items-center gap-2 border-b border-border/70 bg-warning/15 px-3 py-2 text-xs">
           <Pencil className="size-4" /> Mengedit pesan
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={onCancelEdit}>
+          <Button variant="ghost" size="sm" className="ml-auto min-h-11 px-3" onClick={onCancelEdit}>
             Batal
           </Button>
         </div>
