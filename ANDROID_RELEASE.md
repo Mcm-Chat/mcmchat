@@ -3,19 +3,21 @@
 Paket final: **`com.mcm.privateconnect`** · Nama aplikasi: **MCM** · Domain produksi: **https://mcmchat.id**
 
 > Catatan jujur: JDK dan Android SDK **tidak tersedia** di lingkungan editor, jadi APK/AAB belum pernah dibangun di sini.
-> Yang sudah dipastikan di repo: dependency Capacitor terdeklarasi (`@capacitor/core`, `@capacitor/cli`,
-> `@capacitor/android` v7.6.8), `bunx cap sync android` berjalan sukses, dan file generated
-> (`android/capacitor.settings.gradle`, `android/app/capacitor.build.gradle`,
-> `android/capacitor-cordova-android-plugins/`) plus Gradle wrapper resmi
+> Yang sudah dipastikan di repo: dependency Capacitor di-pin **exact** (`@capacitor/core`, `@capacitor/cli`,
+> `@capacitor/android` = `7.6.8`, tanpa caret), `bunx cap sync android` berjalan sukses, dan Gradle wrapper resmi
 > (`android/gradlew`, `gradlew.bat`, `gradle/wrapper/*`, Gradle 8.11.1) ada di repo.
+>
+> `android/capacitor-cordova-android-plugins/` **tidak** di-commit (di-ignore oleh `android/.gitignore`);
+> folder itu—bersama `android/capacitor.settings.gradle` dan `android/app/capacitor.build.gradle` bila
+> ter-ignore—diregenerasi otomatis oleh `bunx cap sync android` pada fresh clone.
 
 ## 0. Versi toolchain (exact, tanpa versi dinamis)
 | Komponen | Versi |
 | --- | --- |
 | Capacitor (core/cli/android) | 7.6.8 |
-| Android Gradle Plugin | 8.9.1 |
+| Android Gradle Plugin | 8.10.1 (AGP 8.9 maksimal API 35; API 36 butuh AGP ≥ 8.10) |
 | Gradle wrapper | 8.11.1 |
-| JDK | 21 (Temurin) |
+| JDK | 21 (Temurin) — AGP 8.10 sendiri minimum JDK 17; proyek memilih 21 karena `capacitor.build.gradle` Capacitor 7 menargetkan Java 21 |
 | Kotlin | 2.0.21 |
 | compileSdk / targetSdk / minSdk | 36 / 36 / 23 |
 
@@ -29,7 +31,9 @@ Paket final: **`com.mcm.privateconnect`** · Nama aplikasi: **MCM** · Domain pr
 bunx cap sync android     # JANGAN `cap add android` — akan menimpa kustomisasi MCM
 ```
 `capacitor.config.ts` memakai appId `com.mcm.privateconnect`, appName `MCM`, `webDir: capacitor/www`
-(fallback offline; UI nyata dimuat dari `server.url` HTTPS produksi).
+— `capacitor/www` hanyalah webDir minimal yang diwajibkan Capacitor/`cap sync`, **bukan** fallback offline:
+selama `server.url` aktif, aplikasi produksi selalu memuat `https://mcmchat.id` dan membutuhkan koneksi
+serta domain yang tersedia.
 File di `android/` pada repo ini menimpa hasil scaffold Capacitor — jangan hapus:
 
 | Berkas | Isi |
