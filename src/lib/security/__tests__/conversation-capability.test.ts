@@ -66,6 +66,11 @@ describe("koreksi 2B — policy tidak boleh memanggil helper arbitrary-user", ()
   });
 
   it("helper self-scoped tersedia untuk authenticated", () => {
+    // Grant dikeluarkan lewat loop format() atas daftar nama fungsi.
+    const grantLoop = /foreach f in array array\[(.*?)\] loop execute format\('revoke all on function public\.%s from public, anon', f\); execute format\('grant execute on function public\.%s to authenticated, service_role', f\)/s.exec(
+      sql,
+    );
+    expect(grantLoop).not.toBeNull();
     for (const fn of [
       "current_user_can_read_conversation",
       "current_user_can_send_conversation",
@@ -75,7 +80,8 @@ describe("koreksi 2B — policy tidak boleh memanggil helper arbitrary-user", ()
       "current_user_can_manage_business",
       "current_user_can_sell_business",
     ]) {
-      expect(sql).toMatch(new RegExp(`grant execute on function public\\.${fn}\\(uuid\\) to authenticated`));
+      expect(sql).toMatch(new RegExp(`create or replace function public\\.${fn}\\(_`));
+      expect(grantLoop?.[1] ?? "").toContain(`'${fn}(uuid)'`);
     }
   });
 
