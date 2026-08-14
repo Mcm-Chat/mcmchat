@@ -70,11 +70,11 @@
             android:name="com.mcm.privateconnect.PushActionReceiver"
             android:exported="false" />
 
-        <!-- Foreground service HANYA selama panggilan berdering / berlangsung. -->
+        <!-- Foreground service HANYA selama panggilan aktif (tipe microphone). -->
         <service
             android:name="com.mcm.privateconnect.CallForegroundService"
             android:exported="false"
-            android:foregroundServiceType="phoneCall|microphone" />
+            android:foregroundServiceType="microphone" />
 
         <!-- Kanal notifikasi default MCM -->
         <meta-data
@@ -95,7 +95,6 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />

@@ -63,17 +63,13 @@ class McmPushPlugin : Plugin() {
             .addOnFailureListener { call.resolve(JSObject().put("token", null as String?).put("reason", "fcm_failed")) }
     }
 
+    /**
+     * Bersihkan seluruh notifikasi MCM (logout / ganti akun). Tidak ada
+     * kredensial bearer persisten yang disimpan di perangkat: token aksi
+     * hanya dikirim sebagai extras per notifikasi.
+     */
     @PluginMethod
-    fun saveActionToken(call: PluginCall) {
-        val token = call.getString("token")
-        if (token.isNullOrBlank()) { call.reject("token_required"); return }
-        ActionCredentials.save(context, token)
-        call.resolve()
-    }
-
-    @PluginMethod
-    fun clearActionToken(call: PluginCall) {
-        ActionCredentials.clear(context)
+    fun clearAllNotifications(call: PluginCall) {
         NotificationManagerCompat.from(context).cancelAll()
         call.resolve()
     }
@@ -100,7 +96,6 @@ class McmPushPlugin : Plugin() {
                 .put("fullScreenIntent", fullScreen)
                 .put("batteryUnrestricted", unrestricted)
                 .put("firebaseConfigured", firebaseConfigured())
-                .put("actionCredentialStored", ActionCredentials.has(context))
         )
     }
 
@@ -110,6 +105,48 @@ class McmPushPlugin : Plugin() {
             .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { context.startActivity(intent) }
+        call.resolve()
+    }
+
+    /** Setelan sistem khusus izin full-screen intent (Android 14+). */
+    @PluginMethod
+    fun openFullScreenIntentSettings(call: PluginCall) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            call.resolve(JSObject().put("opened", false)); return
+        }
+        val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
+            .setData(android.net.Uri.parse("package:" + context.packageName))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val ok = runCatching { context.startActivity(intent); true }.getOrDefault(false)
+        call.resolve(JSObject().put("opened", ok))
+    }
+
+    /** Aksi "Jawab" tertunda dari notifikasi panggilan (Activity, bukan receiver). */
+    @PluginMethod
+    fun consumePendingCallAnswer(call: PluginCall) {
+        val pending = (activity as? MainActivity)?.consumePendingCallAnswer()
+        val res = JSObject()
+        res.put("callId", pending?.first)
+        res.put("token", pending?.second)
+        res.put("actionId", pending?.third)
+        call.resolve(res)
+    }
+
+    /**
+     * FGS panggilan HANYA dimulai dari sini: plugin berjalan di Activity yang
+     * sedang foreground, sesudah aksi jawab diterima server.
+     */
+    @PluginMethod
+    fun startCallForeground(call: PluginCall) {
+        val callId = call.getString("callId")
+        if (callId.isNullOrBlank()) { call.reject("callId_required"); return }
+        CallForegroundService.start(context, callId, call.getString("title") ?: "Panggilan aktif", ringing = false)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun stopCallForeground(call: PluginCall) {
+        CallForegroundService.stop(context)
         call.resolve()
     }
 
