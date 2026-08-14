@@ -32,12 +32,16 @@ function lastFunctionBody(name: string): string {
   return body;
 }
 
-/** Bentuk akhir setiap policy (definisi terakhir menang). */
+/** Bentuk akhir setiap policy: create/drop diproses berurutan. */
 function finalPolicies(): Map<string, string> {
-  const re = /create policy "([^"]+)" on ([a-z_.]+)(.*?);/gs;
+  const re = /(create|drop) policy (?:if exists )?"([^"]+)" on ([a-z_.]+)(.*?);/gs;
   const out = new Map<string, string>();
   let m: RegExpExecArray | null;
-  while ((m = re.exec(sql)) !== null) out.set(`${m[2]}::${m[1]}`, m[3] ?? "");
+  while ((m = re.exec(sql)) !== null) {
+    const key = `${m[3]}::${m[2]}`;
+    if (m[1] === "drop") out.delete(key);
+    else out.set(key, m[4] ?? "");
+  }
   return out;
 }
 
