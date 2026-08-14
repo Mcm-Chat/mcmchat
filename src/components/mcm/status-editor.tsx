@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import {
   Eraser,
   FlipHorizontal,
+  Gauge,
   Highlighter,
   Pencil,
   Redo2,
@@ -15,8 +16,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { CANVAS_H, CANVAS_W, createSceneCache, drawScene } from "@/lib/status/compose";
+import {
+  FpsMeter,
+  frameInterval,
+  pointSpacing,
+  previewSize,
+  type PerfMode,
+} from "@/lib/status/perf";
 import {
   canRedo,
   canUndo,
@@ -49,29 +58,51 @@ export function StatusEditor({
   const [color, setColor] = useState(COLORS[0]!);
   const [width, setWidth] = useState(18);
   const [text, setText] = useState("");
+  const [perf, setPerf] = useState<PerfMode>("performance");
+  const [fps, setFps] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingId = useRef<string | null>(null);
   const dragId = useRef<string | null>(null);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const cacheRef = useRef(createSceneCache());
   const frameRef = useRef<number | null>(null);
+  const lastFrameAt = useRef(0);
+  const fpsMeter = useRef(new FpsMeter());
+  const perfRef = useRef(perf);
+  perfRef.current = perf;
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Satu penggambaran ulang per frame (requestAnimationFrame). Tanpa ini setiap
-  // gerakan jari memicu render 1080x1920 berkali-kali dan pratinjau tersendat.
+  // Satu penggambaran ulang per frame (requestAnimationFrame), dengan throttle
+  // tambahan pada mode performa. Tanpa ini setiap gerakan jari memicu render
+  // 1080x1920 berkali-kali dan pratinjau tersendat.
   const scheduleDraw = useCallback(() => {
     if (frameRef.current !== null) return;
-    frameRef.current = requestAnimationFrame(() => {
+    const run = (now: number) => {
       frameRef.current = null;
+      const gap = frameInterval(perfRef.current);
+      if (gap && now - lastFrameAt.current < gap) {
+        frameRef.current = requestAnimationFrame(run);
+        return;
+      }
+      lastFrameAt.current = now;
       if (canvasRef.current)
         drawScene(canvasRef.current, image, stateRef.current, cacheRef.current);
-    });
+      setFps(fpsMeter.current.tick(now));
+    };
+    frameRef.current = requestAnimationFrame(run);
   }, [image]);
 
   useEffect(() => {
     cacheRef.current = createSceneCache();
   }, [image]);
+
+  // Ganti mode = ganti resolusi kanvas; gambar ulang segera.
+  useEffect(() => {
+    fpsMeter.current.reset();
+    setFps(0);
+    scheduleDraw();
+  }, [perf, scheduleDraw]);
 
   useEffect(() => {
     scheduleDraw();
@@ -153,7 +184,7 @@ export function StatusEditor({
     if (drawingId.current) {
       // Titik terlalu rapat tidak menambah kualitas garis, hanya beban render.
       const prev = lastPoint.current;
-      if (prev && Math.hypot(p.x - prev.x, p.y - prev.y) < 8) return;
+      if (prev && Math.hypot(p.x - prev.x, p.y - prev.y) < pointSpacing(perf)) return;
       lastPoint.current = p;
       dispatch({ type: "appendPoint", id: drawingId.current, point: p });
     } else if (dragId.current)
@@ -175,14 +206,33 @@ export function StatusEditor({
       <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl bg-black">
         <canvas
           ref={canvasRef}
-          width={CANVAS_W}
-          height={CANVAS_H}
+          width={previewSize(perf, CANVAS_W, CANVAS_H).width}
+          height={previewSize(perf, CANVAS_W, CANVAS_H).height}
           className="w-full touch-none"
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}
           onPointerCancel={onUp}
         />
+        <div className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[11px] text-white tabular-nums">
+          {fps > 0 ? `${fps} FPS` : "— FPS"}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2">
+        <Label htmlFor="status-perf" className="flex items-center gap-2 text-sm">
+          <Gauge className="size-4" /> Mode performa
+        </Label>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            {perf === "performance" ? "Pratinjau ringan" : "Pratinjau penuh"}
+          </span>
+          <Switch
+            id="status-perf"
+            checked={perf === "performance"}
+            onCheckedChange={(v) => setPerf(v ? "performance" : "quality")}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
