@@ -66,11 +66,8 @@ export const issueCallToken = createServerFn({ method: "POST" })
       };
     }
 
-    const { data: profile } = await context.supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", context.userId)
-      .maybeSingle();
+    // Tabel profiles tidak lagi dapat dibaca langsung oleh role authenticated.
+    const { data: profile } = await context.supabase.rpc("my_profile");
 
     const room = call.room_name;
     const { token, expiresAt } = await mintAccessToken(cfg, {
