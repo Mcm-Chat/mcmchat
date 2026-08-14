@@ -3099,6 +3099,19 @@ export type Database = {
           i_blocked: boolean
         }[]
       }
+      build_product_card: {
+        Args: { _product: string; _variant: string }
+        Returns: Json
+      }
+      business_preparation_staff: {
+        Args: { _business: string }
+        Returns: {
+          avatar_color: string
+          display_name: string
+          role: Database["public"]["Enums"]["business_role"]
+          user_id: string
+        }[]
+      }
       business_role_of: {
         Args: { _biz: string; _uid: string }
         Returns: Database["public"]["Enums"]["business_role"]
@@ -3325,6 +3338,10 @@ export type Database = {
         }
       }
       create_chat_order: { Args: { _payload: Json }; Returns: string }
+      create_chat_order_with_message: {
+        Args: { _payload: Json }
+        Returns: Json
+      }
       create_group: {
         Args: { _member_ids: string[]; _title: string }
         Returns: string
@@ -3617,6 +3634,7 @@ export type Database = {
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
+      my_chat_order_capability: { Args: { _order: string }; Returns: Json }
       my_connected_contacts: {
         Args: never
         Returns: {
@@ -3943,6 +3961,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      variant_display_factor: { Args: { _variant: string }; Returns: number }
+      variant_unit_quantity: { Args: { _variant: string }; Returns: Json }
       void_stock_unit: {
         Args: { _reason?: string; _unit: string }
         Returns: {
