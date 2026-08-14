@@ -55,10 +55,31 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+
+        <!-- Penerima FCM latar NYATA: bekerja saat aplikasi ditutup/proses mati. -->
+        <service
+            android:name="com.mcm.privateconnect.PushDeliveryService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Aksi notifikasi: Balas (RemoteInput), Tandai dibaca, Jawab, Tolak. -->
+        <receiver
+            android:name="com.mcm.privateconnect.PushActionReceiver"
+            android:exported="false" />
+
+        <!-- Foreground service HANYA selama panggilan berdering / berlangsung. -->
+        <service
+            android:name="com.mcm.privateconnect.CallForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall|microphone" />
+
         <!-- Kanal notifikasi default MCM -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="mcm_chat" />
+            android:value="mcm_messages" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_mcm" />
@@ -74,6 +95,10 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
