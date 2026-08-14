@@ -27,6 +27,7 @@ import {
   savePrepareItem,
 } from "@/lib/prepare.functions";
 import { fileToDataUrl, koordinat, mapsUrlFor } from "@/lib/mcm/geo";
+import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
 import type { PrepItem, PrepTask } from "@/lib/prepare.server.types";
 
 export const Route = createFileRoute("/prepare/$token")({
