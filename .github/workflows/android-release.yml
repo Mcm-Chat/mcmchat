@@ -10,6 +10,9 @@ on:
 jobs:
   bundle:
     runs-on: ubuntu-latest
+    env:
+      # Secret opsional harus lewat env: GitHub melarang `secrets.*` di dalam `if:`.
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,8 +43,8 @@ jobs:
 
       # google-services.json tidak pernah di-commit; disuntik dari secret (base64).
       - name: Inject FCM config
-        if: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 != '' }}
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 -d > android/app/google-services.json
+        if: ${{ env.GOOGLE_SERVICES_JSON_BASE64 != '' }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
 
       - name: Sync Capacitor
         run: bunx cap sync android
@@ -54,7 +57,11 @@ jobs:
 
       # Keystore juga hanya hidup di runner, tidak pernah masuk repo.
       - name: Restore keystore
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/mcm-release.jks"
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "ANDROID_KEYSTORE_BASE64 belum diset"; exit 1; }
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mcm-release.jks"
 
       - name: Build signed AAB
         working-directory: android
