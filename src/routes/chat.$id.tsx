@@ -236,6 +236,9 @@ function ChatRoom() {
 
   const blocked = block?.iBlocked ?? false;
   const blockedByOther = block?.blockedMe ?? false;
+  // Kapabilitas berasal dari server: direct yang diputus/diblokir hanya bisa
+  // dibaca. Tombol yang disembunyikan di sini tetap ditolak oleh RPC.
+  const inactive = !!conv && conv.type === "direct" && !conv.usable;
 
   const doSend = async () => {
     const body = text.trim();
@@ -369,6 +372,10 @@ function ChatRoom() {
 
   const call = async (kind: "audio" | "video") => {
     if (!userId || !conv) return;
+    if (conv.type === "direct" && !conv.usable) {
+      toast.error("Hubungan kontak tidak aktif");
+      return;
+    }
     try {
       // Jangan pernah membuat panggilan berdering bila penyedia belum
       // terhubung — lawan bicara tidak boleh menerima panggilan yang mustahil
@@ -672,7 +679,13 @@ function ChatRoom() {
         </div>
       )}
 
-      {blocked || blockedByOther ? (
+      {inactive && !blocked && !blockedByOther ? (
+        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
+          </p>
+        </div>
+      ) : blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">
           <p className="text-sm text-muted-foreground">
             {blocked
