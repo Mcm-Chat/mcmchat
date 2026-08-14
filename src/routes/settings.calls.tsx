@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, RefreshCw, TriangleAlert, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { useAuth } from "@/lib/auth";
+import {
+  clearDiagnosticRuns,
+  listDiagnosticRuns,
+  recordDiagnosticRun,
+  type DiagnosticRun,
+} from "@/lib/api/call-diagnostics";
 import { Button } from "@/components/ui/button";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { issueDiagnosticToken } from "@/lib/calls/diagnostics.functions";
@@ -68,6 +76,22 @@ function CallDiagnosticsPage() {
   const [configured, setConfigured] = useState(false);
   const [netTest, setNetTest] = useState<DiagnosticResult | null>(null);
   const [netRunning, setNetRunning] = useState(false);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const [history, setHistory] = useState<DiagnosticRun[]>([]);
+
+  const loadHistory = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setHistory(await listDiagnosticRuns());
+    } catch {
+      /* riwayat opsional; kegagalan muat tidak memblokir diagnostik */
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    void loadHistory();
+  }, [loadHistory]);
 
   const run = useCallback(async () => {
     setRunning(true);
@@ -154,7 +178,16 @@ function CallDiagnosticsPage() {
             onClick={() => {
               setNetRunning(true);
               void runLiveKitConnectTest(() => issueDiagnosticToken())
-                .then(setNetTest)
+                .then(async (r) => {
+                  setNetTest(r);
+                  if (!userId) return;
+                  try {
+                    await recordDiagnosticRun(userId, r);
+                    await loadHistory();
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Riwayat gagal disimpan");
+                  }
+                })
                 .finally(() => setNetRunning(false));
             }}
           >
@@ -171,6 +204,72 @@ function CallDiagnosticsPage() {
               {netTest.status === "pass" ? "Lulus" : "Gagal"}: {netTest.detail}
               {netTest.action ? ` Langkah: ${netTest.action}` : ""}
             </p>
+          )}
+        </section>
+
+        <section className="space-y-3 rounded-2xl border bg-card p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold">Riwayat diagnostik</h2>
+              <p className="text-xs text-muted-foreground">
+                Hasil tes koneksi tersimpan di akun Anda (status, latensi, kode error).
+              </p>
+            </div>
+            {history.length > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-xl text-destructive"
+                onClick={() => {
+                  if (!userId) return;
+                  void clearDiagnosticRuns(userId)
+                    .then(() => setHistory([]))
+                    .catch((err: unknown) =>
+                      toast.error(err instanceof Error ? err.message : "Gagal menghapus"),
+                    );
+                }}
+              >
+                Hapus
+              </Button>
+            )}
+          </div>
+          {history.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Belum ada hasil tersimpan. Jalankan tes koneksi di atas.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/70">
+              {history.map((h) => (
+                <li key={h.id} className="flex items-start gap-3 py-2">
+                  <span
+                    className={`mt-1 size-2 shrink-0 rounded-full ${
+                      h.status === "pass"
+                        ? "bg-emerald-500"
+                        : h.status === "warn"
+                          ? "bg-amber-500"
+                          : "bg-destructive"
+                    }`}
+                    aria-hidden
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium">
+                      {h.status === "pass" ? "Lulus" : h.status === "warn" ? "Peringatan" : "Gagal"}
+                      {h.latency_ms !== null ? ` · ${h.latency_ms} ms` : ""}
+                      {h.code && h.code !== "ok" ? ` · ${h.code}` : ""}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{h.detail}</p>
+                  </div>
+                  <time className="shrink-0 text-[11px] text-muted-foreground">
+                    {new Date(h.created_at).toLocaleString("id-ID", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </time>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 
