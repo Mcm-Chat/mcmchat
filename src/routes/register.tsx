@@ -90,7 +90,10 @@ function RegisterPage() {
     }
     const uid = data.session.user.id;
     if (form.bio.trim())
-      await supabase.from("profiles").update({ bio: form.bio.trim() }).eq("id", uid);
+      await supabase.rpc("update_my_profile", {
+        _display_name: form.name.trim(),
+        _bio: form.bio.trim(),
+      });
     const { myPin } = await import("@/lib/api/pins");
     setPin(await myPin().catch(() => ""));
     await refresh();

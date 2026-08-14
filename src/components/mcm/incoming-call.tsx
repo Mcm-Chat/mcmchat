@@ -11,6 +11,7 @@ import { Phone, PhoneOff, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
 import { useAuth } from "@/lib/auth";
+import { fetchProfileCard } from "@/lib/api/profiles";
 import { supabase } from "@/integrations/supabase/client";
 import {
   declineCall,
@@ -44,12 +45,9 @@ export function IncomingCallListener() {
               ? cur
               : { call: row, name: "Pengguna MCM", color: "from-slate-500 to-slate-700" },
           );
-          void supabase
-            .from("profiles")
-            .select("display_name, avatar_color")
-            .eq("id", row.initiator_id)
-            .maybeSingle()
-            .then(({ data }) =>
+          void fetchProfileCard(row.initiator_id)
+            .catch(() => null)
+            .then((data) =>
               setIncoming((cur) =>
                 cur?.call.id === row.id
                   ? {
@@ -80,12 +78,9 @@ export function IncomingCallListener() {
   useEffect(() => {
     if (!user?.id) return;
     return subscribeIncomingCalls(user.id, (call) => {
-      void supabase
-        .from("profiles")
-        .select("display_name, avatar_color")
-        .eq("id", call.initiator_id)
-        .maybeSingle()
-        .then(({ data }) =>
+      void fetchProfileCard(call.initiator_id)
+        .catch(() => null)
+        .then((data) =>
           setIncoming((cur) =>
             cur?.call.id === call.id
               ? cur

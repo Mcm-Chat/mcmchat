@@ -27,26 +27,17 @@ export function usePresence(uid?: string): Set<string> {
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           void channel.track({ at: new Date().toISOString() });
-          void supabase
-            .from("profiles")
-            .update({ is_online: true, last_seen_at: new Date().toISOString() })
-            .eq("id", uid);
+          void supabase.rpc("set_my_presence", { _online: true });
         }
       });
 
     const beat = setInterval(() => {
-      void supabase
-        .from("profiles")
-        .update({ last_seen_at: new Date().toISOString() })
-        .eq("id", uid);
+      void supabase.rpc("set_my_presence", { _online: true });
     }, 60_000);
 
     return () => {
       clearInterval(beat);
-      void supabase
-        .from("profiles")
-        .update({ is_online: false, last_seen_at: new Date().toISOString() })
-        .eq("id", uid);
+      void supabase.rpc("set_my_presence", { _online: false });
       void supabase.removeChannel(channel);
     };
   }, [uid]);
