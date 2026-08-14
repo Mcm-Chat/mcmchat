@@ -12,7 +12,11 @@ import { useEffect, useRef } from "react";
 export const BACK_GUARD_KEY = "__mcmOverlay";
 
 export function isGuardState(state: unknown): boolean {
-  return !!state && typeof state === "object" && (state as Record<string, unknown>)[BACK_GUARD_KEY] === true;
+  return (
+    !!state &&
+    typeof state === "object" &&
+    (state as Record<string, unknown>)[BACK_GUARD_KEY] === true
+  );
 }
 
 export function useBackDismiss(open: boolean, onDismiss: () => void): void {

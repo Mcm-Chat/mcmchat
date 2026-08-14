@@ -545,16 +545,16 @@ export function MessageBubble({
             isSticker
               ? "bg-transparent px-0 py-0 shadow-none"
               : mine
-              ? cn(
-                  "bubble-elevate",
-                  "bg-bubble-out text-bubble-out-foreground",
-                  grouped ? "rounded-br-lg" : "rounded-br-sm",
-                )
-              : cn(
-                  "bubble-elevate",
-                  "border border-border/70 bg-bubble-in text-bubble-in-foreground",
-                  grouped ? "rounded-bl-lg" : "rounded-bl-sm",
-                ),
+                ? cn(
+                    "bubble-elevate",
+                    "bg-bubble-out text-bubble-out-foreground",
+                    grouped ? "rounded-br-lg" : "rounded-br-sm",
+                  )
+                : cn(
+                    "bubble-elevate",
+                    "border border-border/70 bg-bubble-in text-bubble-in-foreground",
+                    grouped ? "rounded-bl-lg" : "rounded-bl-sm",
+                  ),
           )}
         >
           {showSender && !mine && !grouped && (
