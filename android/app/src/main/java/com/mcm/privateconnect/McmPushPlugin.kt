@@ -163,6 +163,24 @@ class McmPushPlugin : Plugin() {
         call.resolve(JSObject().put("token", token))
     }
 
+    /**
+     * ID instalasi stabil (bukan rahasia): dibuat sekali per pemasangan aplikasi
+     * dan bertahan lintas rotasi token FCM serta lintas akun pada perangkat ini.
+     * Dipakai server untuk dedupe perangkat.
+     */
+    @PluginMethod
+    fun getInstallationId(call: PluginCall) {
+        call.resolve(JSObject().put("installationId", installationId()))
+    }
+
+    private fun installationId(): String {
+        val prefs = context.getSharedPreferences("mcm_push", Context.MODE_PRIVATE)
+        prefs.getString("installation_id", null)?.let { if (it.length >= 8) return it }
+        val fresh = java.util.UUID.randomUUID().toString()
+        prefs.edit().putString("installation_id", fresh).apply()
+        return fresh
+    }
+
     private fun granted(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==

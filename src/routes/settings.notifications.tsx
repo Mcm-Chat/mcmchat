@@ -155,6 +155,18 @@ function NotificationSettingsPage() {
     }
   };
 
+  /** Opsi eksplisit: cabut push di seluruh perangkat akun ini. */
+  const revokeAll = async () => {
+    try {
+      const { removeAllDevices } = await import("@/lib/api/settings");
+      await removeAllDevices();
+      setDevices((d) => d.map((x) => ({ ...x, push_enabled: false, revoked: true })));
+      toast.success("Semua perangkat dikeluarkan");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal mengeluarkan perangkat");
+    }
+  };
+
   return (
     <AppShell
       nav={false}
@@ -354,6 +366,7 @@ function NotificationSettingsPage() {
                       <p className="text-xs text-muted-foreground">
                         {d.platform ?? "web"} • aktif{" "}
                         {new Date(d.last_active_at ?? d.created_at).toLocaleDateString("id-ID")}
+                        {d.revoked ? " • dicabut" : d.push_enabled ? "" : " • push nonaktif"}
                       </p>
                     </div>
                   </div>
@@ -369,6 +382,16 @@ function NotificationSettingsPage() {
               ))}
             </ul>
           )}
+          {devices.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full rounded-lg text-xs text-destructive"
+              onClick={() => void revokeAll()}
+            >
+              Keluar dari semua perangkat
+            </Button>
+          ) : null}
         </section>
 
         {busy ? (

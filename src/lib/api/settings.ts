@@ -126,6 +126,7 @@ export async function updateSettings(
  */
 export type DeviceRow = {
   id: string;
+  installation_id: string | null;
   name: string;
   platform: string;
   app_version: string;
@@ -148,6 +149,15 @@ export async function removeDevice(deviceId: string) {
 
 export async function removeAllDevices(): Promise<number> {
   const { data, error } = await supabase.rpc("revoke_my_push_devices");
+  if (error) throw new Error(friendly(error.message, "Gagal mengeluarkan perangkat"));
+  return Number(data ?? 0);
+}
+
+/** Cabut hanya instalasi tertentu (perangkat yang sedang dipakai). */
+export async function removeInstallation(installationId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("revoke_my_push_installation", {
+    _installation_id: installationId,
+  });
   if (error) throw new Error(friendly(error.message, "Gagal mengeluarkan perangkat"));
   return Number(data ?? 0);
 }

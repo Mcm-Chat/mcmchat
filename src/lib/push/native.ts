@@ -36,6 +36,7 @@ type McmPushPlugin = {
   clearConversationNotifications(o: { conversationId: string }): Promise<void>;
   consumePendingRoute(): Promise<{ route: string | null }>;
   consumePendingFcmToken(): Promise<{ token: string | null }>;
+  getInstallationId(): Promise<{ installationId: string }>;
 };
 
 const McmPush = registerPlugin<McmPushPlugin>("McmPush");
@@ -91,6 +92,38 @@ export async function ensureChannels(_sound?: boolean, _vibrate?: boolean) {
 export type RegisterResult = { registered: boolean; reason?: string };
 
 /**
+ * ID instalasi stabil (non-secret) yang dibuat sekali oleh lapisan native dan
+ * bertahan selama aplikasi terpasang. Dedupe perangkat memakai ID ini, bukan
+ * token FCM yang bisa berotasi kapan saja.
+ */
+export async function installationId(): Promise<string | null> {
+  if (!isNative()) return null;
+  try {
+    const { installationId: id } = await McmPush.getInstallationId();
+    return id && id.length >= 8 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+async function upsertDevice(
+  deviceName: string,
+  token: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const install = await installationId();
+  if (!install) return { ok: false, reason: "id instalasi perangkat tidak tersedia" };
+  const { error } = await supabase.rpc("register_push_device", {
+    _installation_id: install,
+    _name: deviceName,
+    _platform: "android",
+    _push_token: token,
+    _app_version: "",
+  });
+  if (error) return { ok: false, reason: "gagal mendaftar perangkat" };
+  return { ok: true };
+}
+
+/**
  * Minta izin POST_NOTIFICATIONS, ambil token FCM, daftarkan perangkat, lalu
  * simpan kredensial aksi ke Android Keystore. Token auth Supabase TIDAK PERNAH
  * dikirim ke lapisan native.
@@ -104,46 +137,51 @@ export async function registerNativePush(deviceName: string): Promise<RegisterRe
     const { token } = await McmPush.getToken();
     if (!token) return { registered: false, reason: "Firebase belum dikonfigurasi di aplikasi" };
 
-    const { data, error } = await supabase.rpc("register_push_device", {
-      _name: deviceName,
-      _platform: "android",
-      _push_token: token,
-      _app_version: "",
-    });
-    if (error || !data) return { registered: false, reason: "gagal mendaftar perangkat" };
-
-    const payload = data as unknown as { action_token?: string };
-    if (payload.action_token) await McmPush.saveActionToken({ token: payload.action_token });
+    const res = await upsertDevice(deviceName, token);
+    if (!res.ok) return { registered: false, ...(res.reason ? { reason: res.reason } : {}) };
+    // Kredensial aksi persisten sudah dihapus dari model keamanan.
+    await McmPush.clearActionToken().catch(() => undefined);
     return { registered: true };
   } catch {
     return { registered: false, reason: "jembatan push native tidak tersedia" };
   }
 }
 
-/** Rotasi token: dipanggil saat aplikasi dibuka setelah `onNewToken`. */
+/**
+ * Rotasi token: dipanggil saat aplikasi dibuka setelah `onNewToken`.
+ * Karena dedupe memakai installation id, rotasi memperbarui baris yang sama.
+ */
 export async function syncRotatedToken(deviceName: string): Promise<boolean> {
   if (!isNative()) return false;
   try {
     const { token } = await McmPush.consumePendingFcmToken();
     if (!token) return false;
-    const { data, error } = await supabase.rpc("register_push_device", {
-      _name: deviceName,
-      _platform: "android",
-      _push_token: token,
-      _app_version: "",
-    });
-    if (error || !data) return false;
-    const payload = data as unknown as { action_token?: string };
-    if (payload.action_token) await McmPush.saveActionToken({ token: payload.action_token });
-    return true;
+    const res = await upsertDevice(deviceName, token);
+    return res.ok;
   } catch {
     return false;
   }
 }
 
-/** Cabut token & kredensial aksi saat logout atau perangkat dikeluarkan. */
+/**
+ * Logout normal: HANYA cabut instalasi saat ini. Perangkat lain milik akun
+ * tetap menerima notifikasi.
+ */
 export async function revokeNativePush() {
-  await supabase.rpc("revoke_my_push_devices", {}).then(
+  const install = await installationId();
+  if (install) {
+    await supabase.rpc("revoke_my_push_installation", { _installation_id: install }).then(
+      () => undefined,
+      () => undefined,
+    );
+  }
+  if (!isNative()) return;
+  await McmPush.clearActionToken().catch(() => undefined);
+}
+
+/** Opsi eksplisit "Keluar dari semua perangkat". */
+export async function revokeAllNativePush() {
+  await supabase.rpc("revoke_my_push_devices").then(
     () => undefined,
     () => undefined,
   );

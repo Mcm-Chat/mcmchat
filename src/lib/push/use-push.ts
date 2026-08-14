@@ -18,6 +18,7 @@ import {
   isNative,
   nativeReceiverInstalled,
   registerNativePush,
+  syncRotatedToken,
 } from "./native";
 import { checkPermission, requestPermission } from "./permissions";
 
@@ -61,7 +62,7 @@ const serverSnapshot = (): PushState => ({
 
 /** Daftarkan perangkat sekali per pengguna; aman dipanggil berulang. */
 async function registerOnce(userId: string) {
-  if (registeredForUser === userId) return;
+  if (registeredForUser === userId) return drainRotatedToken();
   if (inFlight) return inFlight;
   inFlight = (async () => {
     const res = await registerNativePush(
@@ -76,6 +77,18 @@ async function registerOnce(userId: string) {
     inFlight = null;
   });
   return inFlight;
+}
+
+/**
+ * `onNewToken` menyimpan token baru secara lokal saat aplikasi mati. Setelah
+ * sesi tersedia, token tertunda WAJIB disinkronkan — termasuk ketika perangkat
+ * sudah pernah terdaftar pada sesi ini (registeredForUser sudah true).
+ */
+async function drainRotatedToken() {
+  if (!isNative()) return;
+  const name = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 60) : "Android";
+  const synced = await syncRotatedToken(name).catch(() => false);
+  if (synced) emit({ registered: true, reason: undefined });
 }
 
 /** Opt-in kontekstual: HANYA dipanggil dari gestur pengguna (tombol di pengaturan). */
@@ -104,7 +117,11 @@ export function usePushSession(userId?: string) {
       if (!alive) return;
       emit({ native: isNative(), receiverInstalled: nativeReceiverInstalled(), permission: perm });
       // Registrasi otomatis hanya bila izin sudah diberikan sebelumnya.
-      if (userId && isNative() && perm === "granted") await registerOnce(userId);
+      if (userId && isNative() && perm === "granted") {
+        await registerOnce(userId);
+        // Rotasi tertunda selalu dikuras, walau registrasi sudah pernah terjadi.
+        await drainRotatedToken();
+      }
     })();
     return () => {
       alive = false;

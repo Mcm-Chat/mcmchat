@@ -958,6 +958,7 @@ export type Database = {
           app_version: string
           created_at: string
           id: string
+          installation_id: string | null
           last_active_at: string
           name: string
           platform: string
@@ -973,6 +974,7 @@ export type Database = {
           app_version?: string
           created_at?: string
           id?: string
+          installation_id?: string | null
           last_active_at?: string
           name: string
           platform?: string
@@ -988,6 +990,7 @@ export type Database = {
           app_version?: string
           created_at?: string
           id?: string
+          installation_id?: string | null
           last_active_at?: string
           name?: string
           platform?: string
@@ -3823,6 +3826,7 @@ export type Database = {
           app_version: string
           created_at: string
           id: string
+          installation_id: string
           last_active_at: string
           name: string
           platform: string
@@ -3935,6 +3939,7 @@ export type Database = {
       register_push_device: {
         Args: {
           _app_version?: string
+          _installation_id: string
           _name: string
           _platform: string
           _push_token: string
@@ -4024,9 +4029,11 @@ export type Database = {
         }
       }
       revoke_my_push_device: { Args: { _device: string }; Returns: boolean }
-      revoke_my_push_devices:
-        | { Args: never; Returns: number }
-        | { Args: { _push_token?: string }; Returns: number }
+      revoke_my_push_devices: { Args: never; Returns: number }
+      revoke_my_push_installation: {
+        Args: { _installation_id: string }
+        Returns: number
+      }
       revoke_push_device: { Args: { _device: string }; Returns: boolean }
       rotate_preparation_token: {
         Args: { _expires_hours?: number; _job: string }
