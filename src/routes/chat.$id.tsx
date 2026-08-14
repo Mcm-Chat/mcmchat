@@ -748,7 +748,7 @@ function ChatRoom() {
             setText(v);
             if (v) notifyTyping();
           }}
-          onSend={() => void doSend()}
+          onSend={doSend}
           onAttach={(kind) => (kind === "document" ? docRef.current?.click() : setPhotoOpen(true))}
           onVoice={(blob, sec) => void sendVoice(blob, sec)}
           onNewLedger={() => setLedgerOpen(true)}

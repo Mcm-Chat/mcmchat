@@ -2,22 +2,34 @@
 
 Paket final: **`com.mcm.privateconnect`** · Nama aplikasi: **MCM** · Domain produksi: **https://mcmchat.id**
 
-> Catatan jujur: Android SDK/Gradle **tidak tersedia** di lingkungan editor, jadi APK/AAB belum pernah dibangun di sini.
-> Belum ada AAB rilis yang benar-benar dibangun/ditandatangani. Seluruh sumber, konfigurasi Gradle, manifest, resource, dan workflow signed AAB sudah lengkap dan siap dibuild di
-> mesin lokal atau GitHub Actions.
+> Catatan jujur: JDK dan Android SDK **tidak tersedia** di lingkungan editor, jadi APK/AAB belum pernah dibangun di sini.
+> Yang sudah dipastikan di repo: dependency Capacitor terdeklarasi (`@capacitor/core`, `@capacitor/cli`,
+> `@capacitor/android` v7.6.8), `bunx cap sync android` berjalan sukses, dan file generated
+> (`android/capacitor.settings.gradle`, `android/app/capacitor.build.gradle`,
+> `android/capacitor-cordova-android-plugins/`) plus Gradle wrapper resmi
+> (`android/gradlew`, `gradlew.bat`, `gradle/wrapper/*`, Gradle 8.11.1) ada di repo.
+
+## 0. Versi toolchain (exact, tanpa versi dinamis)
+| Komponen | Versi |
+| --- | --- |
+| Capacitor (core/cli/android) | 7.6.8 |
+| Android Gradle Plugin | 8.9.1 |
+| Gradle wrapper | 8.11.1 |
+| JDK | 21 (Temurin) |
+| Kotlin | 2.0.21 |
+| compileSdk / targetSdk / minSdk | 36 / 36 / 23 |
 
 ## 1. Ekspor & prasyarat
 1. GitHub → Export to GitHub, lalu `git clone`.
-2. `bun install` && `bun run build` (harus lolos).
-3. JDK 17 + Android Studio (SDK 36 / Android 16, AGP 8.9.1).
+2. `bun install --frozen-lockfile` && `bun run build:web` (harus lolos).
+3. JDK 21 + Android SDK 36 (Android Studio / `sdkmanager "platforms;android-36" "build-tools;36.0.0"`).
 
 ## 2. Capacitor
 ```bash
-bun add @capacitor/core @capacitor/cli @capacitor/android
-bunx cap add android      # hanya jika folder android/ belum lengkap
-bunx cap sync android
+bunx cap sync android     # JANGAN `cap add android` — akan menimpa kustomisasi MCM
 ```
-`capacitor.config.ts` sudah memakai appId `com.mcm.privateconnect`, appName `MCM`, dan `server.url` produksi HTTPS.
+`capacitor.config.ts` memakai appId `com.mcm.privateconnect`, appName `MCM`, `webDir: capacitor/www`
+(fallback offline; UI nyata dimuat dari `server.url` HTTPS produksi).
 File di `android/` pada repo ini menimpa hasil scaffold Capacitor — jangan hapus:
 
 | Berkas | Isi |

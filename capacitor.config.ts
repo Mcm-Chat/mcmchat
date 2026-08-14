@@ -10,7 +10,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.mcm.privateconnect",
   appName: "MCM",
-  webDir: "dist",
+  webDir: "capacitor/www",
   server: {
     url: process.env["MCM_APP_URL"] ?? "https://mcmchat.id",
     cleartext: false,

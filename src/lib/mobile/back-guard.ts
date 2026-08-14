@@ -1,15 +1,24 @@
 /**
- * Tombol Back Android (WebView) menutup overlay lebih dulu, bukan langsung
- * meninggalkan halaman.
+ * Tombol Back Android (WebView) menutup overlay paling atas lebih dulu (LIFO),
+ * bukan meninggalkan halaman dan bukan menutup semua overlay sekaligus.
  *
- * Implementasi tanpa plugin tambahan: saat overlay terbuka, satu entri history
- * "penanda" didorong. Back berikutnya memicu `popstate` yang menutup overlay,
- * bukan berpindah route. Saat overlay ditutup lewat UI, entri penanda dibuang
- * kembali agar tidak menumpuk (tidak ada history loop).
+ * Implementasi tanpa plugin tambahan: seluruh overlay yang aktif terdaftar pada
+ * satu registry global. Registry memelihara TEPAT SATU entri history "penanda".
+ * Satu Back mengonsumsi penanda itu, menutup overlay teratas, lalu memasang
+ * ulang penanda bila masih ada overlay di bawahnya. Penutupan lewat UI hanya
+ * mencabut entri dari stack; penanda dibuang saat stack kosong sehingga tidak
+ * pernah terjadi history loop.
  */
 import { useEffect, useRef } from "react";
 
 export const BACK_GUARD_KEY = "__mcmOverlay";
+
+type Entry = { id: number; dismiss: () => void };
+
+let stack: Entry[] = [];
+let markerActive = false;
+let listening = false;
+let seq = 0;
 
 export function isGuardState(state: unknown): boolean {
   return (
@@ -19,26 +28,85 @@ export function isGuardState(state: unknown): boolean {
   );
 }
 
+/** Jumlah overlay yang sedang terdaftar (dipakai tes/diagnostik). */
+export function backGuardDepth(): number {
+  return stack.length;
+}
+
+/** Apakah penanda history sedang terpasang (dipakai tes/diagnostik). */
+export function backGuardMarkerActive(): boolean {
+  return markerActive;
+}
+
+function onPop() {
+  if (!markerActive) return; // penanda bukan milik kita / sudah dilepas.
+  markerActive = false;
+  const top = stack.pop();
+  if (!top) {
+    stopListening();
+    return;
+  }
+  if (stack.length > 0) armMarker();
+  else stopListening();
+  top.dismiss();
+}
+
+function startListening() {
+  if (listening || typeof window === "undefined") return;
+  window.addEventListener("popstate", onPop);
+  listening = true;
+}
+
+function stopListening() {
+  if (!listening || typeof window === "undefined") return;
+  window.removeEventListener("popstate", onPop);
+  listening = false;
+}
+
+function armMarker() {
+  if (markerActive || typeof window === "undefined") return;
+  window.history.pushState({ [BACK_GUARD_KEY]: true }, "");
+  markerActive = true;
+}
+
+function disarmMarker() {
+  if (!markerActive || typeof window === "undefined") return;
+  markerActive = false;
+  if (isGuardState(window.history.state)) window.history.back();
+}
+
+function register(dismiss: () => void): number {
+  const id = ++seq;
+  stack.push({ id, dismiss });
+  startListening();
+  armMarker();
+  return id;
+}
+
+function unregister(id: number) {
+  const i = stack.findIndex((e) => e.id === id);
+  if (i === -1) return;
+  stack.splice(i, 1);
+  if (stack.length === 0) {
+    disarmMarker();
+    stopListening();
+  }
+}
+
+/** Reset penuh registry — hanya untuk tes. */
+export function __resetBackGuard() {
+  stack = [];
+  markerActive = false;
+  stopListening();
+}
+
 export function useBackDismiss(open: boolean, onDismiss: () => void): void {
   const dismiss = useRef(onDismiss);
   dismiss.current = onDismiss;
 
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
-    let armed = true;
-    window.history.pushState({ [BACK_GUARD_KEY]: true }, "");
-
-    const onPop = () => {
-      if (!armed) return;
-      armed = false; // entri penanda sudah dikonsumsi oleh Back.
-      dismiss.current();
-    };
-    window.addEventListener("popstate", onPop);
-
-    return () => {
-      window.removeEventListener("popstate", onPop);
-      // Ditutup lewat UI: buang entri penanda agar Back berikutnya normal.
-      if (armed && isGuardState(window.history.state)) window.history.back();
-    };
+    const id = register(() => dismiss.current());
+    return () => unregister(id);
   }, [open]);
 }

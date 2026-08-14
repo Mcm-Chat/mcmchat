@@ -33,10 +33,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        // Capacitor 7 mengompilasi dengan JDK 21 (lihat capacitor.build.gradle).
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
-    kotlinOptions { jvmTarget = "17" }
+    kotlinOptions { jvmTarget = "21" }
     bundle { language { enableSplit = false } }
 }
 
@@ -51,6 +52,9 @@ dependencies {
     implementation project(':capacitor-android')
     implementation project(':capacitor-cordova-android-plugins')
 }
+
+// File generated oleh `cap sync` (jangan diedit manual).
+apply from: 'capacitor.build.gradle'
 
 // google-services.json disiapkan pemilik akun; jangan gagal build bila belum ada.
 if (file('google-services.json').exists()) {

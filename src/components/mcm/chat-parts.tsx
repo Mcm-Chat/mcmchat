@@ -39,6 +39,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { cn } from "@/lib/utils";
 import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
@@ -631,19 +632,26 @@ export function MessageBubble({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 self-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-60"
+              className="size-11 self-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-60"
               aria-label="Opsi pesan"
             >
-              <MoreVertical className="size-3.5" />
+              <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align={mine ? "end" : "start"}>
             <div className="flex gap-1 px-1 pb-1">
-              {["👍", "❤️", "😂", "🙏", "🔥"].map((e) => (
+              {[
+                ["👍", "Suka"],
+                ["❤️", "Cinta"],
+                ["😂", "Tertawa"],
+                ["🙏", "Terima kasih"],
+                ["🔥", "Keren"],
+              ].map(([e, label]) => (
                 <button
                   key={e}
                   type="button"
-                  className="rounded-md px-1.5 py-1 text-base hover:bg-muted"
+                  aria-label={`Reaksi ${label}`}
+                  className="flex size-11 items-center justify-center rounded-md text-lg hover:bg-muted"
                   onClick={() => onAction("react", message, e)}
                 >
                   {e}
@@ -691,6 +699,10 @@ function useVoiceRecorder(onDone: (blob: Blob, seconds: number) => void) {
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const started = useRef(0);
+  // Guard sinkron: tap cepat pada tombol mic tidak boleh memicu dua
+  // getUserMedia / dua MediaRecorder sekaligus.
+  const busy = useRef(false);
+  const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
     if (!recording) return;
@@ -699,8 +711,15 @@ function useVoiceRecorder(onDone: (blob: Blob, seconds: number) => void) {
   }, [recording]);
 
   const start = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setPreparing(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (recorder.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       const mr = new MediaRecorder(stream);
       chunks.current = [];
       mr.ondataavailable = (e) => chunks.current.push(e.data);
@@ -716,16 +735,20 @@ function useVoiceRecorder(onDone: (blob: Blob, seconds: number) => void) {
       setRecording(true);
     } catch {
       toast.error("Tidak bisa mengakses mikrofon. Izinkan akses lalu coba lagi.");
+    } finally {
+      busy.current = false;
+      setPreparing(false);
     }
   };
 
   const stop = () => {
+    if (busy.current) return;
     recorder.current?.stop();
     recorder.current = null;
     setRecording(false);
   };
 
-  return { recording, seconds, start, stop };
+  return { recording, preparing, seconds, start, stop };
 }
 
 export function ChatComposer({
@@ -750,7 +773,7 @@ export function ChatComposer({
 }: {
   value: string;
   onChange: (v: string) => void;
-  onSend: () => void;
+  onSend: () => void | Promise<void>;
   onAttach: (kind: "image" | "document" | "camera") => void;
   onVoice: (blob: Blob, seconds: number) => void;
   onNewLedger: () => void;
@@ -767,8 +790,28 @@ export function ChatComposer({
   quickReplies?: { shortcut: string; text: string }[] | undefined;
   disabled?: boolean | undefined;
 }) {
-  const { recording, seconds, start, stop } = useVoiceRecorder(onVoice);
+  const { recording, preparing, seconds, start, stop } = useVoiceRecorder(onVoice);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  useBackDismiss(actionsOpen, () => setActionsOpen(false));
+  useBackDismiss(emojiOpen, () => setEmojiOpen(false));
+  // Guard sinkron anti double-tap kirim; outbox tidak diubah.
+  const sendLock = useRef(false);
+  const [sending, setSending] = useState(false);
+  const submit = () => {
+    if (sendLock.current || disabled || !value.trim()) return;
+    sendLock.current = true;
+    setSending(true);
+    const release = () => {
+      sendLock.current = false;
+      setSending(false);
+    };
+    try {
+      void Promise.resolve(onSend()).finally(release);
+    } catch {
+      release();
+    }
+  };
   const runAction = (fn?: () => void) => {
     setActionsOpen(false);
     fn?.();
@@ -874,7 +917,7 @@ export function ChatComposer({
           </SheetContent>
         </Sheet>
         <div className="flex flex-1 items-end rounded-3xl border border-input bg-background px-1.5 transition-colors focus-within:border-ring/60 focus-within:ring-2 focus-within:ring-ring/20">
-          <Popover>
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -908,7 +951,7 @@ export function ChatComposer({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                onSend();
+                submit();
               }
             }}
             rows={1}
@@ -931,8 +974,8 @@ export function ChatComposer({
             size="icon"
             className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label="Kirim"
-            disabled={disabled}
-            onClick={onSend}
+            disabled={disabled || sending}
+            onClick={submit}
           >
             <Send className="size-4.5" />
           </Button>
@@ -942,7 +985,7 @@ export function ChatComposer({
             variant={recording ? "destructive" : "default"}
             className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label={recording ? "Hentikan rekaman" : "Rekam pesan suara"}
-            disabled={disabled}
+            disabled={disabled || preparing}
             onClick={() => (recording ? stop() : void start())}
           >
             {recording ? <Square className="size-4" /> : <Mic className="size-4.5" />}
