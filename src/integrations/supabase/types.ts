@@ -2549,6 +2549,12 @@ export type Database = {
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
+      my_connected_contacts: {
+        Args: never
+        Returns: {
+          contact_id: string
+        }[]
+      }
       my_pin: { Args: never; Returns: string }
       my_profile: {
         Args: never
