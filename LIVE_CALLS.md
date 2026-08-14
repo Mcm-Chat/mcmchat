@@ -1,69 +1,43 @@
-# MCM — Panggilan Suara & Video (LiveKit)
+# Panggilan Suara & Video MCM
 
-Stack panggilan production-grade dengan **provider terpisah**. UI tidak pernah bergantung
-pada SDK tertentu: seluruh media berjalan lewat `CallProvider`.
+## Status jujur
 
-## Status kejujuran implementasi
+Seluruh jalur panggilan (state machine, RPC, token, media) sudah production-ready,
+**tetapi panggilan tidak akan berjalan sampai kredensial penyedia diisi**. Tanpa
+kredensial, aplikasi menolak membuat panggilan sejak awal (tidak ada baris
+`ringing` hantu dan tidak ada notifikasi ke penerima).
 
-| Bagian | Status |
-| --- | --- |
-| Sinyal (ringing / answer / decline / end / missed) di database + Realtime | **Selesai** |
-| Endpoint token server-side (LiveKit JWT HS256, umur 15 menit) | **Selesai** |
-| State machine panggilan + UI aktif (timer, mute, kamera, speaker, flip) | **Selesai** |
-| Integrasi track audio hasil VoicePipeline ke sender | **Selesai** |
-| Notifikasi panggilan masuk (channel `mcm_calls`) + deep link `/call/<id>` | **Selesai** |
-| Kredensial LiveKit (`LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`) | **Belum diisi** → UI menampilkan **Belum terhubung** |
+Secret yang wajib diisi di Project Settings → Secrets:
 
-Tidak ada panggilan simulasi. Selama secret belum diisi, `getCallConfig()` mengembalikan
-`configured: false`, tidak ada mikrofon yang dibuka dan tidak ada koneksi yang dibuat.
-
-## Arsitektur
-
-```text
-UI (call.$id.tsx, incoming-call.tsx)
-        |
-        v
-useCall()  <-- state machine: loading → outgoing/incoming → connecting → connected → ended
-        |                    (sinyal: tabel `calls` + Supabase Realtime)
-        +--> issueCallToken()  (server fn, auth + cek peserta)  --> LiveKit JWT
-        |
-        +--> VoicePipeline (mic → efek premium) --> MediaStreamTrack
-                                                        |
-                                                        v
-                                        CallProvider (LiveKit Room) --> SFU
-```
-
-File:
-
-- `src/lib/calls/livekit.server.ts` — baca secret + mint JWT (Web Crypto, aman di Worker).
-- `src/lib/calls/calls.functions.ts` — `getCallConfig`, `issueCallToken` (server fn).
-- `src/lib/calls/provider.ts` — `CallProvider`, `liveKitProvider`, `unconfiguredProvider`.
-- `src/lib/calls/use-call.ts` — state machine + integrasi VoicePipeline.
-- `src/lib/api/calls.ts` — start/answer/decline/end/leave + langganan Realtime.
-- `src/routes/call.$id.tsx` — layar panggilan aktif; jatuh ke detail riwayat bila selesai.
-- `src/components/mcm/incoming-call.tsx` — panggilan masuk global (dipasang di `__root`).
-
-## Keamanan
-
-- API key/secret LiveKit **tidak pernah** ada di klien; token diterbitkan server dan hanya
-  untuk peserta yang terdaftar pada baris `calls` (dicek lewat RLS).
-- Token berumur 15 menit, terikat pada satu room, dan `canPublishSources` dibatasi
-  ke mikrofon saja untuk panggilan suara.
-- Panggilan yang sudah `ended`/`missed`/`declined` tidak pernah menerbitkan token baru.
-
-## Voice Privacy
-
-Track audio keluar diambil dari `VoicePipeline` saat entitlement premium aktif dan efek
-dinyalakan. Ganti preset saat panggilan hanya memanggil `pipe.setParams()` — tanpa
-renegosiasi, panggilan tidak drop. Mute mematikan **track sumber**, bukan gain pipeline.
-Audio lawan bicara tidak pernah diproses.
-
-## Mengaktifkan panggilan
-
-Isi tiga secret di Project Settings → Secrets:
-
-- `LIVEKIT_URL` (mis. `wss://<subdomain>.livekit.cloud`)
+- `LIVEKIT_URL` (contoh `wss://<subdomain>.livekit.cloud`)
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
 
-Setelah itu status "Belum terhubung" hilang dengan sendirinya, tanpa perubahan kode.
+Secret hanya dibaca di server; klien hanya menerima token berumur pendek (15 menit).
+
+## Alur status
+
+1. Pemanggil membuat panggilan → status `ringing`. Pemanggil **belum** masuk room.
+2. Penerima menjawab → `answer_call` mengubah status jadi `ongoing`.
+3. Kedua sisi memanggil `join_call` (idempotent) lalu meminta token dan masuk room.
+4. Menutup panggilan memakai `leave_call`: pada 1:1 panggilan langsung berakhir;
+   pada grup, panggilan hanya berakhir bila pemanggil keluar atau tidak ada peserta aktif.
+5. Dering kedaluwarsa dihitung absolut dari `created_at`, sehingga membuka ulang
+   layar tidak memperpanjang waktu dering.
+
+Semua transisi status dilakukan lewat RPC `SECURITY DEFINER`; klien tidak punya
+izin `INSERT/UPDATE/DELETE` langsung pada tabel `calls` dan `call_participants`.
+
+## Diagnostik
+
+Halaman **Profil → Diagnostik panggilan** (`/settings/calls`) memeriksa:
+penyedia panggilan, konteks HTTPS, dukungan `mediaDevices`, izin mikrofon dan
+kamera, serta tes membuka perangkat secara nyata. Setiap kegagalan disertai
+langkah perbaikan dalam Bahasa Indonesia.
+
+## Catatan perangkat
+
+- Layar tetap menyala selama panggilan aktif (Wake Lock, diabaikan bila tidak didukung).
+- Bila browser memblokir autoplay, tombol **Aktifkan suara** muncul di layar panggilan.
+- Putus koneksi tak terduga ditandai sebagai error yang bisa dicoba ulang, sedangkan
+  penutupan normal tidak memunculkan pesan error.
