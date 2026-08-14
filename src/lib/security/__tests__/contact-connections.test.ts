@@ -300,3 +300,86 @@ describe("kontrak klien", () => {
     expect(api).toMatch(/rpc\("contact_relation"/);
   });
 });
+
+describe("hardening final 2A — profiles tertutup", () => {
+  it("authenticated/anon/public tidak punya privilege apa pun pada tabel profiles", () => {
+    const revoke = lastIndexOfPattern(
+      /revoke all on table public\.profiles from authenticated, anon, public/,
+    );
+    expect(revoke).toBeGreaterThan(-1);
+    expect(
+      lastIndexOfPattern(/grant [^;]*on table public\.profiles to [^;]*authenticated/),
+    ).toBeLessThan(revoke);
+    expect(has(/drop policy if exists "profiles readable when related" on public\.profiles/)).toBe(
+      true,
+    );
+  });
+
+  it("tidak ada pembacaan tabel profiles langsung dari kode aplikasi", () => {
+    for (const { p, text } of clientFiles) {
+      if (p.endsWith("client.server.ts") || p.includes("/push/dispatch.server.ts")) continue;
+      expect(/\.from\(["']profiles["']\)/.test(text), `${p} membaca tabel profiles`).toBe(false);
+    }
+  });
+
+  it("pembacaan profil klien hanya lewat RPC kontrak-terbatas", () => {
+    const api = readFileSync(path.join(SRC, "lib/api/profiles.ts"), "utf8");
+    for (const fn of ["my_profile", "profile_cards", "profile_full"])
+      expect(api).toMatch(new RegExp(`rpc\\("${fn}"`));
+    expect(api).toMatch(/pin: string \| null/);
+    expect(api).toMatch(/avatar_privacy: string \| null/);
+  });
+
+  it("profile_full memasker PIN dan avatar_privacy, tanpa email/phone", () => {
+    const body = lastFunctionBody("profile_full");
+    expect(body).toMatch(/case when p\.id = auth\.uid\(\) or public\.are_connected\([^)]*\) then p\.pin else null end/);
+    expect(body).toMatch(/case when p\.id = auth\.uid\(\) then p\.avatar_privacy else null end/);
+    expect(body).not.toMatch(/email|phone/);
+  });
+});
+
+describe("hardening final 2A — race & state terminal", () => {
+  it("respond_contact_request memvalidasi ulang otorisasi SETELAH pair lock", () => {
+    const body = lastFunctionBody("respond_contact_request");
+    const lock = body.indexOf("lock_contact_pair");
+    const forUpdate = body.indexOf("for update");
+    expect(lock).toBeGreaterThan(-1);
+    expect(forUpdate).toBeGreaterThan(lock);
+    // re-check target, pair, dan keberadaan row hanya sesudah re-read terkunci
+    expect(body.indexOf("r.target_id <> uid")).toBeGreaterThan(forUpdate);
+    expect(body).toMatch(/least\(r\.requester_id, r\.target_id\) <> lo/);
+    expect(body).toMatch(/raise exception 'request_changed'/);
+  });
+
+  it("accept idempotent tidak dapat menghidupkan kembali hubungan yang diputus/diblokir", () => {
+    const body = lastFunctionBody("respond_contact_request");
+    const idem = body.indexOf("r.status = 'accepted' and _action = 'accepted'");
+    expect(idem).toBeGreaterThan(-1);
+    const branch = body.slice(idem, idem + 400);
+    expect(branch).toMatch(/raise exception 'blocked'/);
+    expect(branch).toMatch(/not public\.are_connected/);
+    expect(branch).toMatch(/raise exception 'connection_revoked'/);
+    expect(branch).not.toMatch(/insert into public\.contact_connections/);
+  });
+
+  it("accept baru selalu cek block dua arah setelah lock", () => {
+    const body = lastFunctionBody("respond_contact_request");
+    expect(body).toMatch(/blocked_pair/);
+    expect(body).toMatch(/_action = 'accepted' and blocked_pair then raise exception 'blocked'/);
+  });
+
+  it("block menjadikan request pending MAUPUN accepted terminal 'blocked'", () => {
+    const body = lastFunctionBody("set_contact_blocked");
+    expect(body).toMatch(/set status = 'blocked'[^;]*where status in \('pending','accepted'\)/);
+    expect(body).toMatch(/set disconnected_at = now\(\)/);
+  });
+
+  it("unblock tidak menyambung ulang hubungan, hanya membatalkan request blocked", () => {
+    const body = lastFunctionBody("set_contact_blocked");
+    const unblock = body.slice(body.indexOf("else"));
+    expect(unblock).toMatch(/still_blocked/);
+    expect(unblock).toMatch(/set status = 'cancelled'[^;]*where status = 'blocked'/);
+    expect(unblock).not.toMatch(/disconnected_at = null/);
+    expect(unblock).not.toMatch(/insert into public\.contact_connections/);
+  });
+});
