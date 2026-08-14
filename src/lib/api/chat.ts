@@ -29,7 +29,13 @@ type OverviewRow = {
   last_attachment_name: string | null;
   last_location_lat: number | null;
   unread_count: number;
-  usable: boolean;
+  readable: boolean;
+  sendable: boolean;
+  callable: boolean;
+  manageable: boolean;
+  role: string | null;
+  reason: string;
+  last_read_at: string | null;
 };
 
 /**
@@ -49,8 +55,12 @@ export type ConversationView = ConversationRow & {
   lastMessage: LastMessagePreview | null;
   unread: number;
   title_resolved: string;
-  /** Kapabilitas server: direct yang diputus/diblokir hanya bisa dibaca. */
-  usable: boolean;
+  /** Kapabilitas server per aksi; direct yang diputus tetap `readable`. */
+  readable: boolean;
+  sendable: boolean;
+  callable: boolean;
+  manageable: boolean;
+  capabilityReason: string;
 };
 
 export type MessageLocationInput = {
@@ -90,38 +100,51 @@ export function previewOf(m: LastMessagePreview | MessageRow | null): string {
 }
 
 export async function listConversations(userId: string): Promise<ConversationView[]> {
-  const memberships = unwrap(
-    await supabase.from("conversation_members").select("*").eq("user_id", userId),
-    "Gagal memuat percakapan",
-  );
-  if (memberships.length === 0) return [];
-  const ids = memberships.map((m) => m.conversation_id);
-  // Pesan terakhir + jumlah belum dibaca dihitung di database (satu baris per
-  // percakapan), bukan dengan menarik ratusan pesan ke browser.
-  const [convs, allMembers, overview] = await Promise.all([
+  // Cakupan percakapan berasal dari server (`conversation_overview`) agar
+  // percakapan bisnis yang menjadi tanggung jawab kita ikut muncul walau baris
+  // keanggotaannya belum ada.
+  const overviewRes = await supabase.rpc("conversation_overview");
+  const overviewRows = (overviewRes.data ?? []) as unknown as OverviewRow[];
+  if (overviewRows.length === 0) return [];
+  const ids = overviewRows.map((o) => o.conversation_id);
+  const [convs, allMembers, memberRows] = await Promise.all([
     supabase.from("conversations").select("*").in("id", ids),
     supabase
       .from("conversation_members")
       .select("conversation_id, user_id")
       .in("conversation_id", ids),
-    supabase.rpc("conversation_overview"),
+    supabase.from("conversation_members").select("*").eq("user_id", userId).in("conversation_id", ids),
   ]);
+  const memberships = memberRows.data ?? [];
   const profileIds = [...new Set((allMembers.data ?? []).map((m) => m.user_id))];
   const cards = await fetchProfileCards(profileIds);
   const pmap = new Map(
     [...cards.values()].map((p) => [p.id, { ...p, pin: "" } as MemberProfile]),
   );
-  const omap = new Map(((overview.data ?? []) as OverviewRow[]).map((o) => [o.conversation_id, o]));
+  const omap = new Map(overviewRows.map((o) => [o.conversation_id, o]));
 
   return (convs.data ?? [])
     .map((c) => {
-      const me = memberships.find((m) => m.conversation_id === c.id)!;
+      const o = omap.get(c.id);
+      const me: Tables<"conversation_members"> = memberships.find(
+        (m) => m.conversation_id === c.id,
+      ) ?? {
+        id: `virtual-${c.id}`,
+        conversation_id: c.id,
+        user_id: userId,
+        role: o?.role ?? "member",
+        is_muted: false,
+        is_pinned: false,
+        is_archived: false,
+        last_read_at: o?.last_read_at ?? new Date(0).toISOString(),
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+      };
       const members = (allMembers.data ?? [])
         .filter((m) => m.conversation_id === c.id)
         .map((m) => pmap.get(m.user_id))
         .filter((p): p is MemberProfile => !!p);
       const other = c.type === "direct" ? (members.find((m) => m.id !== userId) ?? null) : null;
-      const o = omap.get(c.id);
       const lastMessage: LastMessagePreview | null =
         o && o.last_message_id && o.last_message_at
           ? {
@@ -141,7 +164,11 @@ export async function listConversations(userId: string): Promise<ConversationVie
         other,
         lastMessage,
         unread: o?.unread_count ?? 0,
-        usable: o?.usable ?? false,
+        readable: o?.readable ?? false,
+        sendable: o?.sendable ?? false,
+        callable: o?.callable ?? false,
+        manageable: o?.manageable ?? false,
+        capabilityReason: o?.reason ?? "not_member",
         title_resolved: c.title || other?.display_name || "Percakapan",
       };
     })
