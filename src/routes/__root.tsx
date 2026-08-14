@@ -18,6 +18,7 @@ import { usePushSession } from "@/lib/push/use-push";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
 import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
+import { installViewportMetrics } from "@/lib/mobile/viewport";
 import { initOutboxFlush } from "@/lib/api/outbox";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 
@@ -179,9 +180,11 @@ function RootComponent() {
   useEffect(() => {
     const offConn = initConnectionWatcher();
     const offOutbox = initOutboxFlush();
+    const offViewport = installViewportMetrics();
     return () => {
       offConn();
       offOutbox();
+      offViewport();
     };
   }, []);
 
