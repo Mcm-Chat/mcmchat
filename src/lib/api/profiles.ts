@@ -18,9 +18,11 @@ export type ProfileCard = {
 };
 
 export type FullProfile = ProfileCard & {
-  pin: string;
+  /** PIN hanya diisi untuk diri sendiri atau hubungan aktif yang diterima. */
+  pin: string | null;
   bio: string;
-  avatar_privacy: string;
+  /** Hanya diisi untuk diri sendiri. */
+  avatar_privacy: string | null;
   is_online: boolean;
   last_seen_at: string;
 };
