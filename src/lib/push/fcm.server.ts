@@ -91,7 +91,13 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
   return json.access_token;
 }
 
-export type PushTarget = { token: string; sound: boolean; vibrate: boolean };
+export type PushTarget = {
+  token: string;
+  sound: boolean;
+  vibrate: boolean;
+  /** Field tambahan khusus perangkat ini (mis. token aksi sekali-pakai). */
+  extra?: Record<string, string>;
+};
 
 /**
  * Hanya error yang benar-benar berarti "token tidak berlaku lagi" yang boleh
@@ -123,7 +129,11 @@ export function isDeadTokenError(status: number, body: unknown): boolean {
  * membangun notifikasi — termasuk aksi Balas / Tandai dibaca — tetap jalan
  * saat proses aplikasi mati.
  */
-export async function sendPush(targets: PushTarget[], data: PushData): Promise<FcmResult> {
+export async function sendPush(
+  targets: PushTarget[],
+  data: PushData,
+  options?: { ttlSeconds?: number },
+): Promise<FcmResult> {
   const sa = readServiceAccount();
   if (!sa) {
     return {
@@ -137,6 +147,7 @@ export async function sendPush(targets: PushTarget[], data: PushData): Promise<F
   if (targets.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
 
   const bearer = await accessToken(sa);
+  const ttl = `${Math.max(30, Math.min(86400, options?.ttlSeconds ?? 86400))}s`;
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
   const invalidTokens: string[] = [];
   let sent = 0;
@@ -145,6 +156,7 @@ export async function sendPush(targets: PushTarget[], data: PushData): Promise<F
   await Promise.all(
     targets.map(async (t) => {
       const payload: Record<string, string> = { ...(data as unknown as Record<string, string>) };
+      for (const [k, v] of Object.entries(t.extra ?? {})) payload[k] = v;
       payload["sound"] = t.sound ? "1" : "0";
       payload["vibrate"] = t.vibrate ? "1" : "0";
       const res = await fetch(url, {
@@ -156,7 +168,7 @@ export async function sendPush(targets: PushTarget[], data: PushData): Promise<F
             data: payload,
             android: {
               priority: "HIGH",
-              ttl: "86400s",
+              ttl,
               // Data-only: notifikasi dibangun receiver native (channel + actions).
             },
           },

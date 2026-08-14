@@ -28,19 +28,25 @@ const schema = z.discriminatedUnion("action", [
     token: z.string().min(20).max(200),
     conversationId: z.string().uuid(),
     body: z.string().min(1).max(4000),
-    idempotencyKey: z.string().min(8).max(120),
+    actionId: z.string().min(4).max(120),
   }),
   z.object({
     action: z.literal("read"),
     token: z.string().min(20).max(200),
     conversationId: z.string().uuid(),
-    idempotencyKey: z.string().min(8).max(120),
+    actionId: z.string().min(4).max(120),
   }),
   z.object({
     action: z.literal("delivered"),
     token: z.string().min(20).max(200),
     conversationId: z.string().uuid(),
     messageId: z.string().uuid().optional(),
+  }),
+  z.object({
+    action: z.enum(["answer", "decline"]),
+    token: z.string().min(20).max(200),
+    callId: z.string().uuid(),
+    actionId: z.string().min(4).max(120),
   }),
 ]);
 
@@ -70,7 +76,7 @@ export const Route = createFileRoute("/api/public/push/actions")({
             _token: parsed.token,
             _conv: parsed.conversationId,
             _body: parsed.body,
-            _idempotency_key: parsed.idempotencyKey,
+            _action_id: parsed.actionId,
           });
           if (error) return json({ ok: false, error: "action_failed" }, 500);
           const result = data as { ok?: boolean; error?: string } | null;
@@ -91,7 +97,7 @@ export const Route = createFileRoute("/api/public/push/actions")({
           const { data, error } = await supabaseAdmin.rpc("bg_mark_read", {
             _token: parsed.token,
             _conv: parsed.conversationId,
-            _idempotency_key: parsed.idempotencyKey,
+            _action_id: parsed.actionId,
           });
           if (error) return json({ ok: false, error: "action_failed" }, 500);
           const result = data as { ok?: boolean; read_receipts?: boolean } | null;
@@ -101,15 +107,32 @@ export const Route = createFileRoute("/api/public/push/actions")({
           return json({ ok: true, readReceipts: result.read_receipts !== false });
         }
 
-        const { data, error } = await supabaseAdmin.rpc("bg_mark_delivered", {
-          _token: parsed.token,
-          _conv: parsed.conversationId,
-          ...(parsed.messageId ? { _message: parsed.messageId } : {}),
-        });
-        if (error) return json({ ok: false, error: "action_failed" }, 500);
-        const result = data as { ok?: boolean } | null;
-        if (!result?.ok) return json({ ok: false, error: "denied" }, 401);
-        return json({ ok: true });
+        if (parsed.action === "answer" || parsed.action === "decline") {
+          const { data, error } = await supabaseAdmin.rpc("bg_call_action", {
+            _token: parsed.token,
+            _call: parsed.callId,
+            _action: parsed.action,
+            _action_id: parsed.actionId,
+          });
+          if (error) return json({ ok: false, error: "action_failed" }, 500);
+          const result = data as { ok?: boolean; error?: string; status?: string } | null;
+          if (!result?.ok) return json({ ok: false, error: result?.error ?? "denied" }, 401);
+          return json({ ok: true, status: result.status ?? null });
+        }
+
+        if (parsed.action === "delivered") {
+          const { data, error } = await supabaseAdmin.rpc("bg_mark_delivered", {
+            _token: parsed.token,
+            _conv: parsed.conversationId,
+            ...(parsed.messageId ? { _message: parsed.messageId } : {}),
+          });
+          if (error) return json({ ok: false, error: "action_failed" }, 500);
+          const result = data as { ok?: boolean } | null;
+          if (!result?.ok) return json({ ok: false, error: "denied" }, 401);
+          return json({ ok: true });
+        }
+
+        return json({ ok: false, error: "invalid_request" }, 400);
       },
     },
   },

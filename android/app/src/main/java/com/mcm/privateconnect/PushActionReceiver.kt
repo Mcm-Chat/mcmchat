@@ -32,6 +32,8 @@ class PushActionReceiver : BroadcastReceiver() {
         const val EXTRA_CONVERSATION = "conversationId"
         const val EXTRA_CALL = "callId"
         const val EXTRA_ROUTE = "route"
+        const val EXTRA_ACTION_TOKEN = "actionToken"
+        const val EXTRA_ACTION_ID = "actionId"
         const val EXTRA_NOTIFICATION_ID = "notificationId"
 
         private val pool = Executors.newFixedThreadPool(2)
@@ -48,8 +50,8 @@ class PushActionReceiver : BroadcastReceiver() {
                 when (intent.action) {
                     ACTION_REPLY -> doReply(app, intent, notificationId)
                     ACTION_READ -> doRead(app, intent, notificationId)
-                    ACTION_CALL_ANSWER -> doCall(app, intent, "call_answer", notificationId, open = true)
-                    ACTION_CALL_DECLINE -> doCall(app, intent, "call_decline", notificationId, open = false)
+                    ACTION_CALL_ANSWER -> doCall(app, intent, "answer", notificationId, open = true)
+                    ACTION_CALL_DECLINE -> doCall(app, intent, "decline", notificationId, open = false)
                 }
             } finally {
                 pending.finish()
@@ -72,7 +74,7 @@ class PushActionReceiver : BroadcastReceiver() {
             feedback(context, notificationId, "Balasan terlalu panjang.")
             return
         }
-        val token = ActionCredentials.read(context)
+        val token = intent.getStringExtra(EXTRA_ACTION_TOKEN)
         if (token.isNullOrBlank()) {
             feedback(context, notificationId, "Buka MCM untuk mengaktifkan balas cepat.")
             return
@@ -83,8 +85,8 @@ class PushActionReceiver : BroadcastReceiver() {
             .put("token", token)
             .put("conversationId", conversationId)
             .put("body", body)
-            // Idempotency key stabil per intent: retry receiver tidak menggandakan.
-            .put("idempotencyKey", idempotencyKey(intent, "reply:$conversationId:$body"))
+            // Id aksi unik per notifikasi: retry receiver tidak menggandakan balasan.
+            .put("actionId", actionId(intent, "reply"))
 
         val result = post(payload)
         if (result.ok) {
@@ -96,27 +98,34 @@ class PushActionReceiver : BroadcastReceiver() {
 
     private fun doRead(context: Context, intent: Intent, notificationId: Int) {
         val conversationId = intent.getStringExtra(EXTRA_CONVERSATION) ?: return
-        val token = ActionCredentials.read(context) ?: return
+        val token = intent.getStringExtra(EXTRA_ACTION_TOKEN) ?: return
         val payload = JSONObject()
             .put("action", "read")
             .put("token", token)
             .put("conversationId", conversationId)
-            .put("idempotencyKey", idempotencyKey(intent, "read:$conversationId"))
+            .put("actionId", actionId(intent, "read"))
         if (post(payload).ok) NotificationManagerCompat.from(context).cancel(notificationId)
     }
 
     private fun doCall(context: Context, intent: Intent, action: String, notificationId: Int, open: Boolean) {
         val callId = intent.getStringExtra(EXTRA_CALL) ?: return
-        val token = ActionCredentials.read(context)
+        val token = intent.getStringExtra(EXTRA_ACTION_TOKEN)
         NotificationManagerCompat.from(context).cancel(notificationId)
 
+        var accepted = false
         if (!token.isNullOrBlank()) {
-            post(JSONObject().put("action", action).put("token", token).put("callId", callId))
+            accepted = post(
+                JSONObject()
+                    .put("action", action)
+                    .put("token", token)
+                    .put("callId", callId)
+                    .put("actionId", actionId(intent, action))
+            ).ok
         }
 
         if (open) {
-            // Jangan pernah auto-answer tanpa aksi pengguna: ini hasil tap "Jawab".
-            CallForegroundService.start(context, callId, "Panggilan aktif", ringing = false)
+            // FGS panggilan hanya dimulai setelah server menerima "answer".
+            if (accepted) CallForegroundService.start(context, callId, "Panggilan aktif", ringing = false)
             context.startActivity(
                 Intent(context, MainActivity::class.java).apply {
                     this.action = Intent.ACTION_VIEW
@@ -172,12 +181,14 @@ class PushActionReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun idempotencyKey(intent: Intent, seed: String): String {
-        val existing = intent.getStringExtra("idempotencyKey")
-        if (!existing.isNullOrBlank()) return existing
-        val key = UUID.nameUUIDFromBytes(seed.toByteArray()).toString()
-        intent.putExtra("idempotencyKey", key)
-        return key
+    /** Id aksi unik & stabil per notifikasi + jenis aksi. */
+    private fun actionId(intent: Intent, suffix: String): String {
+        val base = intent.getStringExtra(EXTRA_ACTION_ID)
+            ?: UUID.nameUUIDFromBytes(
+                (intent.getStringExtra(EXTRA_CONVERSATION)
+                    ?: intent.getStringExtra(EXTRA_CALL) ?: "mcm").toByteArray()
+            ).toString()
+        return "$base:$suffix"
     }
 
     private fun failureText(error: String?): String = when (error) {

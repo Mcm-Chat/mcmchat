@@ -38,6 +38,10 @@ export type PushData = {
   ledgerId?: string;
   /** "1" bila balasan inline boleh ditampilkan pada notifikasi ini. */
   canReply?: string;
+  /** Token aksi sekali-pakai per notifikasi (device-scoped, TTL pendek). */
+  actionToken?: string;
+  /** Id unik notifikasi untuk idempotensi aksi latar. */
+  actionId?: string;
   title: string;
   body: string;
 };

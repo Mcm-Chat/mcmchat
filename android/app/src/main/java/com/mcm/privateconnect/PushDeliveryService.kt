@@ -60,6 +60,9 @@ class PushDeliveryService : FirebaseMessagingService() {
         val title = data["title"] ?: "MCM"
         val body = data["body"] ?: ""
         val canReply = data["canReply"] == "1"
+        // Token aksi sekali-pakai untuk notifikasi ini saja (bukan token perangkat).
+        val actionToken = data["actionToken"]
+        val actionId = data["actionId"] ?: data["messageId"] ?: group
         val id = notificationId(group)
 
         val person = Person.Builder().setName(title).build()
@@ -77,11 +80,13 @@ class PushDeliveryService : FirebaseMessagingService() {
             .setGroup(group)
             .setContentIntent(openAppIntent(data["route"] ?: "/chat/$conversationId", id))
 
-        if (canReply) {
+        if (canReply && !actionToken.isNullOrBlank()) {
             val remoteInput = RemoteInput.Builder(KEY_REPLY_TEXT).setLabel("Balas").build()
             val replyIntent = actionIntent(id) {
                 it.action = PushActionReceiver.ACTION_REPLY
                 it.putExtra(PushActionReceiver.EXTRA_CONVERSATION, conversationId)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
                 it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
             }
             builder.addAction(
@@ -93,16 +98,20 @@ class PushDeliveryService : FirebaseMessagingService() {
             )
         }
 
-        val readIntent = actionIntent(id + 1) {
-            it.action = PushActionReceiver.ACTION_READ
-            it.putExtra(PushActionReceiver.EXTRA_CONVERSATION, conversationId)
-            it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
+        if (!actionToken.isNullOrBlank()) {
+            val readIntent = actionIntent(id + 1) {
+                it.action = PushActionReceiver.ACTION_READ
+                it.putExtra(PushActionReceiver.EXTRA_CONVERSATION, conversationId)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
+                it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
+                it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
+            }
+            builder.addAction(
+                NotificationCompat.Action.Builder(0, "Tandai dibaca", readIntent)
+                    .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
+                    .build()
+            )
         }
-        builder.addAction(
-            NotificationCompat.Action.Builder(0, "Tandai dibaca", readIntent)
-                .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
-                .build()
-        )
 
         notify(id, builder.build())
     }
@@ -112,17 +121,23 @@ class PushDeliveryService : FirebaseMessagingService() {
     private fun handleCall(data: Map<String, String>) {
         val callId = data["callId"] ?: return
         val caller = data["title"] ?: "Panggilan masuk"
+        val actionToken = data["actionToken"]
+        val actionId = data["actionId"] ?: callId
         val id = notificationId("call:$callId")
 
         val answer = actionIntent(id + 2) {
             it.action = PushActionReceiver.ACTION_CALL_ANSWER
             it.putExtra(PushActionReceiver.EXTRA_CALL, callId)
+            it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
+            it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
             it.putExtra(PushActionReceiver.EXTRA_ROUTE, "/call/$callId")
             it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
         }
         val decline = actionIntent(id + 3) {
             it.action = PushActionReceiver.ACTION_CALL_DECLINE
             it.putExtra(PushActionReceiver.EXTRA_CALL, callId)
+            it.putExtra(PushActionReceiver.EXTRA_ACTION_TOKEN, actionToken)
+            it.putExtra(PushActionReceiver.EXTRA_ACTION_ID, actionId)
             it.putExtra(PushActionReceiver.EXTRA_NOTIFICATION_ID, id)
         }
         val fullScreen = openAppIntent("/call/$callId", id + 4)
@@ -148,8 +163,10 @@ class PushDeliveryService : FirebaseMessagingService() {
             builder.addAction(0, "Jawab", answer)
         }
 
+        // Tidak ada foreground service saat berdering: Android 12+ melarang
+        // memulai FGS dari latar. CallStyle + full-screen intent sudah cukup;
+        // FGS baru dimulai setelah pengguna benar-benar menjawab.
         notify(id, builder.build())
-        CallForegroundService.start(this, callId, caller, ringing = true)
     }
 
     /** Panggilan berakhir di perangkat lain: bersihkan notifikasi di sini. */
