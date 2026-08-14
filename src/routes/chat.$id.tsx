@@ -213,6 +213,20 @@ function ChatRoom() {
     if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
   }, [hasOlder, isFetchingOlder, fetchOlder]);
 
+  // Keyboard (IME) muncul/hilang: pertahankan posisi baca. Hanya menempel ke
+  // dasar bila pengguna memang sedang di pesan terbaru — saat membaca riwayat
+  // lama, posisi tidak dipaksa berpindah.
+  useEffect(() => {
+    const vv = typeof window !== "undefined" ? window.visualViewport : undefined;
+    if (!vv) return;
+    const onResize = () => {
+      if (!atBottom) return;
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, [atBottom]);
+
   // Draf per percakapan bertahan saat pindah layar atau reload.
   const draftKey = scopedKey(`draft:${id}`, userId ?? null);
   useEffect(() => {
