@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getOrCreateDirect } from "@/lib/api/chat";
 import {
   respondToRequest,
+  sendContactRequest,
   setBlocked,
   type ContactWithProfile,
   type RequestRow,
@@ -74,7 +75,8 @@ function ContactsPage() {
     void qc.invalidateQueries({ queryKey: qk.requests(userId ?? "") });
   };
 
-  const active = (contacts ?? []).filter((c) => !c.is_blocked);
+  const active = (contacts ?? []).filter((c) => !c.is_blocked && c.connected);
+  const savedOnly = (contacts ?? []).filter((c) => !c.is_blocked && !c.connected);
   const blocked = (contacts ?? []).filter((c) => c.is_blocked);
   const incoming = requests?.incoming ?? [];
   const outgoing = requests?.outgoing ?? [];
@@ -84,6 +86,7 @@ function ContactsPage() {
     name.toLowerCase().includes(term) || pin.toLowerCase().includes(term);
 
   const filteredActive = active.filter((c) => matches(c.profile.display_name, c.profile.pin));
+  const filteredSaved = savedOnly.filter((c) => matches(c.profile.display_name, c.profile.pin));
   const filteredIncoming = incoming.filter((r) =>
     matches(r.profile?.display_name ?? "", r.profile?.pin ?? ""),
   );
@@ -124,6 +127,20 @@ function ContactsPage() {
     }
   };
 
+  const askConnect = async (contactId: string) => {
+    if (!userId) return;
+    setBusy(contactId);
+    try {
+      await sendContactRequest(userId, contactId, "Halo, saya ingin terhubung di MCM.");
+      refreshAll();
+      toast.success("Permintaan kontak dikirim");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permintaan gagal dikirim");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const toggleBlock = async (contactId: string, block: boolean) => {
     if (!userId) return;
     setBusy(contactId);
@@ -144,7 +161,7 @@ function ContactsPage() {
         <MobileHeader
           back
           title="Kontak"
-          subtitle={`${active.length} kontak tersimpan`}
+          subtitle={`${active.length} terhubung · ${savedOnly.length} disimpan`}
           actions={
             <Button variant="ghost" size="icon" aria-label="Tambah kontak" asChild>
               <Link to="/contacts/add">
@@ -168,7 +185,10 @@ function ContactsPage() {
             <Tabs value={tab} onValueChange={setTab} className="mt-3">
               <TabsList className="w-full rounded-xl">
                 <TabsTrigger value="kontak" className="flex-1 rounded-lg text-xs">
-                  Kontak
+                  Terhubung
+                </TabsTrigger>
+                <TabsTrigger value="disimpan" className="flex-1 rounded-lg text-xs">
+                  Disimpan{savedOnly.length > 0 ? ` (${savedOnly.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="masuk" className="flex-1 rounded-lg text-xs">
                   Masuk{incoming.length > 0 ? ` (${incoming.length})` : ""}
@@ -206,7 +226,7 @@ function ContactsPage() {
         filteredActive.length === 0 ? (
           <EmptyState
             icon={UserPlus}
-            title="Belum ada kontak"
+            title="Belum ada kontak terhubung"
             description="Tambahkan teman dengan memasukkan PIN MCM mereka — tanpa perlu bertukar nomor telepon."
             action={
               <Button className="rounded-xl" asChild>
@@ -253,6 +273,44 @@ function ContactsPage() {
                     <Ban className="size-5" />
                   </Button>
                 </div>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : tab === "disimpan" ? (
+        filteredSaved.length === 0 ? (
+          <EmptyState
+            icon={UserPlus}
+            title="Tidak ada kartu tersimpan"
+            description="Kartu yang Anda simpan dari QR/PIN muncul di sini. Menyimpan bukan berarti terhubung — kirim permintaan agar bisa chat."
+          />
+        ) : (
+          <ul className="divide-y divide-border/70 pb-24">
+            {filteredSaved.map((c) => (
+              <li key={c.id} className="flex items-center gap-3 px-4 py-3">
+                <UserAvatar
+                  userId={c.profile.id}
+                  path={c.profile.avatar_url}
+                  version={c.profile.avatar_version ?? 0}
+                  name={c.profile.display_name}
+                  color={c.profile.avatar_color}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">
+                    {c.alias || c.profile.display_name}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Disimpan satu arah — belum terhubung
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={busy === c.contact_id}
+                  onClick={() => void askConnect(c.contact_id)}
+                >
+                  Kirim permintaan
+                </Button>
               </li>
             ))}
           </ul>
