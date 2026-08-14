@@ -16,6 +16,10 @@ export type FcmResult = {
   reason?: string;
 };
 
+/** Hasil per-pesan, dipakai pemanggil untuk mencabut token aksi yang gagal kirim. */
+export type PushOutcome = { token: string; ok: boolean; deadToken: boolean };
+export type FcmEachResult = FcmResult & { outcomes: PushOutcome[] };
+
 function readServiceAccount(): ServiceAccount | null {
   const raw = process.env["FCM_SERVICE_ACCOUNT_JSON"];
   if (!raw) return null;
