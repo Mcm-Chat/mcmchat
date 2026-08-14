@@ -772,7 +772,7 @@ export function ChatComposer({
 }: {
   value: string;
   onChange: (v: string) => void;
-  onSend: () => void;
+  onSend: () => void | Promise<void>;
   onAttach: (kind: "image" | "document" | "camera") => void;
   onVoice: (blob: Blob, seconds: number) => void;
   onNewLedger: () => void;
@@ -789,8 +789,28 @@ export function ChatComposer({
   quickReplies?: { shortcut: string; text: string }[] | undefined;
   disabled?: boolean | undefined;
 }) {
-  const { recording, seconds, start, stop } = useVoiceRecorder(onVoice);
+  const { recording, preparing, seconds, start, stop } = useVoiceRecorder(onVoice);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  useBackDismiss(actionsOpen, () => setActionsOpen(false));
+  useBackDismiss(emojiOpen, () => setEmojiOpen(false));
+  // Guard sinkron anti double-tap kirim; outbox tidak diubah.
+  const sendLock = useRef(false);
+  const [sending, setSending] = useState(false);
+  const submit = () => {
+    if (sendLock.current || disabled || !value.trim()) return;
+    sendLock.current = true;
+    setSending(true);
+    const release = () => {
+      sendLock.current = false;
+      setSending(false);
+    };
+    try {
+      void Promise.resolve(onSend()).finally(release);
+    } catch {
+      release();
+    }
+  };
   const runAction = (fn?: () => void) => {
     setActionsOpen(false);
     fn?.();
@@ -896,7 +916,7 @@ export function ChatComposer({
           </SheetContent>
         </Sheet>
         <div className="flex flex-1 items-end rounded-3xl border border-input bg-background px-1.5 transition-colors focus-within:border-ring/60 focus-within:ring-2 focus-within:ring-ring/20">
-          <Popover>
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
@@ -930,7 +950,7 @@ export function ChatComposer({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                onSend();
+                submit();
               }
             }}
             rows={1}
@@ -953,8 +973,8 @@ export function ChatComposer({
             size="icon"
             className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label="Kirim"
-            disabled={disabled}
-            onClick={onSend}
+            disabled={disabled || sending}
+            onClick={submit}
           >
             <Send className="size-4.5" />
           </Button>
@@ -964,7 +984,7 @@ export function ChatComposer({
             variant={recording ? "destructive" : "default"}
             className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label={recording ? "Hentikan rekaman" : "Rekam pesan suara"}
-            disabled={disabled}
+            disabled={disabled || preparing}
             onClick={() => (recording ? stop() : void start())}
           >
             {recording ? <Square className="size-4" /> : <Mic className="size-4.5" />}
