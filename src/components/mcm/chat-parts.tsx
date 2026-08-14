@@ -806,10 +806,16 @@ export function ChatComposer({
       sendLock.current = false;
       setSending(false);
     };
+    // Lepas lock paling cepat pada frame berikutnya agar dua klik/Enter
+    // sinkron (microtask yang sama) tidak lolos jadi dua kiriman.
+    const releaseNextFrame = () => {
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(release);
+      else setTimeout(release, 16);
+    };
     try {
-      void Promise.resolve(onSend()).finally(release);
+      void Promise.resolve(onSend()).finally(releaseNextFrame);
     } catch {
-      release();
+      releaseNextFrame();
     }
   };
   const runAction = (fn?: () => void) => {
