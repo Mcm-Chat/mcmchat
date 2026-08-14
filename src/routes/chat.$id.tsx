@@ -40,6 +40,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
+import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import {
   deleteForEveryone,
   deleteForMe,
@@ -779,9 +780,11 @@ function ChatRoom() {
                     size="xs"
                   />
                   <span className="truncate">{m.display_name}</span>
-                  <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                    {m.pin}
-                  </span>
+                  {m.pin ? (
+                    <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                      {m.pin}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -803,14 +806,13 @@ function ChatRoom() {
               variant="secondary"
               className="w-full rounded-xl"
               onClick={() =>
-                void supabase
-                  .from("conversation_members")
-                  .update({ is_muted: !conv.me.is_muted })
-                  .eq("conversation_id", id)
-                  .eq("user_id", userId!)
+                void updateMyConversationPreferences(id, { muted: !conv.me.is_muted })
                   .then(() => {
                     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
                   })
+                  .catch((err: unknown) =>
+                    toast.error(err instanceof Error ? err.message : "Gagal menyimpan preferensi"),
+                  )
               }
             >
               {conv.me.is_muted ? "Bunyikan notifikasi" : "Bisukan notifikasi"}

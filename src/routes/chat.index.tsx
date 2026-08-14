@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { createGroup, getOrCreateDirect } from "@/lib/api/chat";
+import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import { sendProductCard } from "@/lib/api/product-card";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk, useContacts, useConversations } from "@/lib/api/queries";
