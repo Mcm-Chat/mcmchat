@@ -795,13 +795,44 @@ function ChatRoom() {
       )}
 
       {inactive && !blocked && !blockedByOther ? (
-        <div className="sticky bottom-0 border-t border-border bg-card px-4 py-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
-          </p>
-          <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => void claimLegacy()}>
-            Aktifkan kontak untuk membalas
-          </Button>
+        <div className="sticky bottom-0 space-y-3 border-t border-border bg-card px-4 py-4 text-center">
+          {relation?.request_status === "pending" && relation.request_direction === "outgoing" ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {`Permintaan kontak sudah dikirim ke ${conv.other?.display_name ?? "kontak ini"}. Menunggu diterima.`}
+              </p>
+              <Button variant="secondary" className="rounded-xl" onClick={() => void cancelOutgoing()}>
+                Batalkan permintaan
+              </Button>
+            </>
+          ) : relation?.request_status === "pending" && relation.request_direction === "incoming" ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {`${conv.other?.display_name ?? "Kontak ini"} ingin terhubung dengan Anda.`}
+              </p>
+              <div className="flex justify-center gap-2">
+                <Button className="rounded-xl" onClick={() => void respondRequest("accepted")}>
+                  Terima
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="rounded-xl"
+                  onClick={() => void respondRequest("rejected")}
+                >
+                  Tolak
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
+              </p>
+              <Button variant="secondary" className="rounded-xl" onClick={() => void claimLegacy()}>
+                Aktifkan kontak untuk membalas
+              </Button>
+            </>
+          )}
         </div>
       ) : blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">
