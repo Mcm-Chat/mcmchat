@@ -25,6 +25,41 @@ type Rect = { x: number; y: number; w: number; h: number };
 const COLORS = ["#ef4444", "#facc15", "#22c55e", "#3b82f6", "#ffffff", "#111827"];
 const STICKERS = ["✅", "⚠️", "📍", "🔥", "⭐", "❌", "👍", "📦"];
 
+const QUALITIES = [
+  { id: "high", label: "Tinggi", q: 0.92, max: 2400, hint: "Detail maksimal" },
+  { id: "balanced", label: "Seimbang", q: 0.85, max: 1600, hint: "Rekomendasi" },
+  { id: "saver", label: "Hemat", q: 0.68, max: 1080, hint: "Kuota kecil" },
+] as const;
+type QualityId = (typeof QUALITIES)[number]["id"];
+
+/** Perkiraan ukuran berkas dari panjang data URL base64. */
+function dataUrlBytes(url: string) {
+  const i = url.indexOf(",");
+  const b64 = i >= 0 ? url.slice(i + 1) : url;
+  const pad = b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0;
+  return Math.max(0, Math.floor((b64.length * 3) / 4) - pad);
+}
+
+function formatBytes(n: number) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/** Perkecil kanvas agar sisi terpanjang tidak melewati batas preset. */
+function limitCanvas(source: HTMLCanvasElement, max: number) {
+  const longest = Math.max(source.width, source.height);
+  if (longest <= max) return source;
+  const scale = max / longest;
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(source.width * scale));
+  c.height = Math.max(1, Math.round(source.height * scale));
+  const ctx = c.getContext("2d")!;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(source, 0, 0, c.width, c.height);
+  return c;
+}
+
 function drawArrow(ctx: CanvasRenderingContext2D, a: Extract<Ann, { kind: "arrow" }>, w: number) {
   const width = Math.max(3, w / 180);
   ctx.strokeStyle = a.color;
