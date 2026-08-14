@@ -2516,6 +2516,7 @@ export type Database = {
       conversation_overview: {
         Args: never
         Returns: {
+          callable: boolean
           conversation_id: string
           last_attachment_name: string
           last_location_lat: number
@@ -2524,8 +2525,13 @@ export type Database = {
           last_message_id: string
           last_message_kind: Database["public"]["Enums"]["message_kind"]
           last_message_sender: string
+          last_read_at: string
+          manageable: boolean
+          readable: boolean
+          reason: string
+          role: string
+          sendable: boolean
           unread_count: number
-          usable: boolean
         }[]
       }
       convert_to_base: {
@@ -2789,9 +2795,12 @@ export type Database = {
       my_conversation_capability: {
         Args: { _conversation: string }
         Returns: {
+          callable: boolean
+          manageable: boolean
+          readable: boolean
           reason: string
           role: string
-          usable: boolean
+          sendable: boolean
         }[]
       }
       my_pin: { Args: never; Returns: string }
