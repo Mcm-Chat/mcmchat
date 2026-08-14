@@ -21,14 +21,20 @@ export type NativeCapabilities = {
   fullScreenIntent: boolean;
   batteryUnrestricted: boolean;
   firebaseConfigured: boolean;
-  actionCredentialStored: boolean;
 };
 
 type McmPushPlugin = {
   requestPermission(): Promise<{ granted: boolean }>;
   getToken(): Promise<{ token: string | null; reason?: string }>;
-  saveActionToken(o: { token: string }): Promise<void>;
-  clearActionToken(): Promise<void>;
+  clearAllNotifications(): Promise<void>;
+  openFullScreenIntentSettings(): Promise<{ opened: boolean }>;
+  consumePendingCallAnswer(): Promise<{
+    callId: string | null;
+    token: string | null;
+    actionId: string | null;
+  }>;
+  startCallForeground(o: { callId: string; title?: string }): Promise<void>;
+  stopCallForeground(): Promise<void>;
   capabilities(): Promise<NativeCapabilities>;
   openNotificationSettings(): Promise<void>;
   openBatterySettings(): Promise<{ opened: boolean }>;
@@ -139,8 +145,7 @@ export async function registerNativePush(deviceName: string): Promise<RegisterRe
 
     const res = await upsertDevice(deviceName, token);
     if (!res.ok) return { registered: false, ...(res.reason ? { reason: res.reason } : {}) };
-    // Kredensial aksi persisten sudah dihapus dari model keamanan.
-    await McmPush.clearActionToken().catch(() => undefined);
+    // Tidak ada kredensial aksi persisten: token dikirim per notifikasi.
     return { registered: true };
   } catch {
     return { registered: false, reason: "jembatan push native tidak tersedia" };
@@ -176,7 +181,7 @@ export async function revokeNativePush() {
     );
   }
   if (!isNative()) return;
-  await McmPush.clearActionToken().catch(() => undefined);
+  await McmPush.clearAllNotifications().catch(() => undefined);
 }
 
 /** Opsi eksplisit "Keluar dari semua perangkat". */
@@ -186,7 +191,7 @@ export async function revokeAllNativePush() {
     () => undefined,
   );
   if (!isNative()) return;
-  await McmPush.clearActionToken().catch(() => undefined);
+  await McmPush.clearAllNotifications().catch(() => undefined);
 }
 
 /** Bersihkan notifikasi satu percakapan setelah dibuka/dibaca. */
@@ -207,6 +212,50 @@ export async function sendTestNotification(): Promise<{ shown: boolean; reason?:
 export async function openNotificationSettings() {
   if (!isNative()) return;
   await McmPush.openNotificationSettings().catch(() => undefined);
+}
+
+/** Buka setelan izin full-screen intent (Android 14+). */
+export async function openFullScreenIntentSettings(): Promise<{ opened: boolean }> {
+  if (!isNative()) return { opened: false };
+  return await McmPush.openFullScreenIntentSettings().catch(() => ({ opened: false }));
+}
+
+/**
+ * Aksi "Jawab" dari notifikasi panggilan.
+ *
+ * Notifikasi TIDAK memakai trampoline: PendingIntent-nya membuka Activity, lalu
+ * lapisan web inilah yang menukar token sekali-pakai di endpoint aman. Media dan
+ * foreground service hanya dimulai setelah server menerima aksi tersebut.
+ */
+export async function consumePendingCallAnswer(): Promise<{ callId: string } | null> {
+  if (!isNative()) return null;
+  try {
+    const pending = await McmPush.consumePendingCallAnswer();
+    if (!pending?.callId || !pending.token || !pending.actionId) return null;
+    const res = await fetch("/api/public/push/actions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        action: "answer",
+        token: pending.token,
+        callId: pending.callId,
+        actionId: pending.actionId,
+      }),
+    });
+    if (!res.ok) return null;
+    await McmPush.startCallForeground({ callId: pending.callId, title: "Panggilan aktif" }).catch(
+      () => undefined,
+    );
+    return { callId: pending.callId };
+  } catch {
+    return null;
+  }
+}
+
+/** Hentikan foreground service panggilan saat panggilan berakhir. */
+export async function stopCallForeground() {
+  if (!isNative()) return;
+  await McmPush.stopCallForeground().catch(() => undefined);
 }
 
 export async function openBatterySettings() {
@@ -239,6 +288,9 @@ export function attachPushListeners(navigateTo: (route: string) => void): () => 
   let disposed = false;
 
   const drain = async () => {
+    // Jawab panggilan diproses lebih dulu: token sekali-pakai punya TTL pendek.
+    const answered = await consumePendingCallAnswer();
+    if (answered && !disposed) navigateTo(`/call/${answered.callId}`);
     const route = await consumePendingRoute();
     if (disposed || !route) return;
     const conv = /^\/chat\/([0-9a-f-]{36})/i.exec(route)?.[1];
