@@ -267,16 +267,30 @@ export function ScanResultSheet({
                 </p>
               )}
 
-              {relation?.saved && (
+              {relation?.saved && !relation?.connected && (
                 <Button
                   variant="ghost"
                   className="h-12 rounded-xl text-destructive"
                   disabled={busy}
                   onClick={() =>
-                    void run(() => removeContact(userId, profile.id), "Kontak dihapus")
+                    void run(() => removeSavedContact(userId, profile.id), "Kartu kontak dihapus")
                   }
                 >
-                  <Trash2 className="size-4" /> Hapus dari Kontak
+                  <Trash2 className="size-4" /> Hapus Kartu Kontak
+                </Button>
+              )}
+
+              {relation?.connected && (
+                <Button
+                  variant="ghost"
+                  className="h-12 rounded-xl text-destructive"
+                  disabled={busy}
+                  onClick={() => {
+                    if (!window.confirm("Putuskan hubungan dengan kontak ini?")) return;
+                    void run(() => disconnectContact(userId, profile.id), "Hubungan diputus");
+                  }}
+                >
+                  <Trash2 className="size-4" /> Putuskan Hubungan
                 </Button>
               )}
 
