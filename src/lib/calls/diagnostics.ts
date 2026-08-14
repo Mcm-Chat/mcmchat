@@ -42,11 +42,20 @@ export const PROVIDER_CODE_DETAIL: Record<string, { detail: string; action: stri
   },
 };
 
-export function providerCheck(configured: boolean, code = "provider_unconfigured"): DiagnosticResult {
+export function providerCheck(
+  configured: boolean,
+  code = "provider_unconfigured",
+): DiagnosticResult {
   if (configured)
     return result("provider", "Konfigurasi penyedia", "pass", "Kredensial panggilan sudah terisi.");
   const info = PROVIDER_CODE_DETAIL[code] ?? PROVIDER_CODE_DETAIL["provider_unconfigured"]!;
-  return result("provider", "Konfigurasi penyedia", "fail", `${info.detail} (${code})`, info.action);
+  return result(
+    "provider",
+    "Konfigurasi penyedia",
+    "fail",
+    `${info.detail} (${code})`,
+    info.action,
+  );
 }
 
 export function secureContextCheck(secure: boolean, host: string): DiagnosticResult {
@@ -153,7 +162,13 @@ export async function runLiveKitConnectTest(
   try {
     t = await issueToken();
   } catch {
-    return result("livekit", label, "fail", "Server tidak dapat dihubungi. (server_unreachable)", "Periksa koneksi internet lalu coba lagi.");
+    return result(
+      "livekit",
+      label,
+      "fail",
+      "Server tidak dapat dihubungi. (server_unreachable)",
+      "Periksa koneksi internet lalu coba lagi.",
+    );
   }
   if (!t.ok) {
     const info = PROVIDER_CODE_DETAIL[t.code];

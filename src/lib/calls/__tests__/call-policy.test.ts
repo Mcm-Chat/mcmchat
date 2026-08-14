@@ -198,8 +198,6 @@ describe("Android App Link panggilan", () => {
 
   it("memuat /call untuk mcmchat.id dan www.mcmchat.id", () => {
     for (const host of ["mcmchat.id", "www.mcmchat.id"])
-      expect(manifest).toContain(
-        `android:host="${host}" android:pathPrefix="/call"`,
-      );
+      expect(manifest).toContain(`android:host="${host}" android:pathPrefix="/call"`);
   });
 });

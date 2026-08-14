@@ -7,13 +7,7 @@
  * aturan tanpa jaringan.
  */
 export type CallStatusValue =
-  | "ringing"
-  | "ongoing"
-  | "ended"
-  | "missed"
-  | "declined"
-  | "failed"
-  | "unconfigured";
+  "ringing" | "ongoing" | "ended" | "missed" | "declined" | "failed" | "unconfigured";
 
 /** Kode alasan resmi; teks bebas ditolak server. */
 export const END_REASONS = [
@@ -97,8 +91,7 @@ export function resolveLeaveOutcome(input: {
   activeAfterLeave: number;
 }): { endsCall: boolean; outcome: EndOutcome | null } {
   if (isTerminal(input.status)) return { endsCall: false, outcome: null };
-  const ends =
-    input.totalParticipants <= 2 || input.isInitiator || input.activeAfterLeave === 0;
+  const ends = input.totalParticipants <= 2 || input.isInitiator || input.activeAfterLeave === 0;
   if (!ends) return { endsCall: false, outcome: null };
   if (input.status === "ringing")
     return {
