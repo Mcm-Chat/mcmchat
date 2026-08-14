@@ -10,7 +10,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ANDROID = join(process.cwd(), "android/app/src/main");
-const read = (p: string) => readFileSync(join(ANDROID, p), "utf8");
+/** Baca sumber tanpa komentar: invarian diuji terhadap kode nyata. */
+const read = (p: string) =>
+  readFileSync(join(ANDROID, p), "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("<!--"))
+    .join("\n");
 
 const delivery = read("java/com/mcm/privateconnect/PushDeliveryService.kt");
 const receiver = read("java/com/mcm/privateconnect/PushActionReceiver.kt");
