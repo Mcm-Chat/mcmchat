@@ -214,7 +214,7 @@ export async function saveContact(
   const { error } = await supabase.rpc("save_contact_card", {
     _target: contactId,
     _source: source,
-    _alias: alias ?? null,
+    _alias: (alias ?? null) as unknown as string,
   });
   if (error)
     throw new Error(
@@ -235,7 +235,7 @@ export async function updateMyContact(
     _note: patch.note ?? null,
     _starred: patch.starred ?? null,
     _is_favorite: patch.isFavorite ?? null,
-  });
+  } as unknown as { _target: string; _alias: string; _note: string; _starred: boolean; _is_favorite: boolean });
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui kontak."));
 }
 

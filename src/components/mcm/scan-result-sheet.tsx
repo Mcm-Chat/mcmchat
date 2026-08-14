@@ -195,7 +195,7 @@ export function ScanResultSheet({
                   disabled={busy || !relation}
                   onClick={() =>
                     void run(async () => {
-                      await saveContact(userId, profile.id, "qr_scan", alias.trim() || null);
+                      await saveContact(userId, profile.id, "qr", alias.trim() || null);
                       if (!relation?.outgoingPending && !relation?.incomingRequest) {
                         await sendContactRequest(
                           userId,
