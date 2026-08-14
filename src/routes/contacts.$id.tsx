@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Ban, MessageSquare, UserPlus } from "lucide-react";
+import { Ban, MessageSquare, Trash2, UserPlus, Unlink } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { LoadingSkeleton, StatusBadge } from "@/components/mcm/primitives";
@@ -13,7 +13,9 @@ import { getOrCreateDirect } from "@/lib/api/chat";
 import { fetchFullProfile, fetchProfileCard } from "@/lib/api/profiles";
 import {
   cancelContactRequest,
+  disconnectContact,
   getContactRelation,
+  removeSavedContact,
   saveContact,
   sendContactRequest,
   setBlocked,
@@ -180,6 +182,33 @@ function ContactDetailPage() {
                 onClick={() => void run(() => saveContact(userId!, id, "manual"), "Kartu disimpan")}
               >
                 Simpan kartu
+              </Button>
+            )}
+
+            {rel?.saved && !rel?.connected && (
+              <Button
+                variant="outline"
+                className="h-12 rounded-xl"
+                disabled={busy}
+                onClick={() =>
+                  void run(() => removeSavedContact(userId!, id), "Kartu kontak dihapus")
+                }
+              >
+                <Trash2 className="size-4" /> Hapus kartu kontak
+              </Button>
+            )}
+
+            {rel?.connected && (
+              <Button
+                variant="outline"
+                className="h-12 rounded-xl text-destructive"
+                disabled={busy}
+                onClick={() => {
+                  if (!window.confirm("Putuskan hubungan dengan kontak ini?")) return;
+                  void run(() => disconnectContact(userId!, id), "Hubungan diputus");
+                }}
+              >
+                <Unlink className="size-4" /> Putuskan hubungan
               </Button>
             )}
 
