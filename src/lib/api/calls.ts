@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
 import { notifyIncomingCall } from "@/lib/push/push.functions";
+import { getCallConfig } from "@/lib/calls/calls.functions";
 
 export type CallRow = Tables<"calls">;
 export type CallParticipantRow = Tables<"call_participants">;
@@ -16,6 +17,16 @@ export const CALL_PROVIDER_NOTICE =
 
 export const RING_TIMEOUT_MS = 45_000;
 
+/** Sisa waktu dering dihitung absolut dari `created_at`, bukan dari saat layar dibuka. */
+export function ringRemainingMs(createdAt: string, now = Date.now()): number {
+  const started = new Date(createdAt).getTime();
+  if (!Number.isFinite(started)) return 0;
+  return Math.max(0, started + RING_TIMEOUT_MS - now);
+}
+
+export const CALL_UNCONFIGURED_MESSAGE =
+  "Panggilan belum aktif: kredensial penyedia panggilan belum diisi. Minta pemilik aplikasi mengisi LIVEKIT_URL, LIVEKIT_API_KEY, dan LIVEKIT_API_SECRET.";
+
 /**
  * Panggilan dibuat lewat satu transaksi server (`create_call_tx`): baris
  * `calls` dan seluruh `call_participants` commit bersamaan, sehingga penerima
@@ -27,6 +38,10 @@ export async function startCall(
   kind: CallRow["kind"],
   maxParticipants = 8,
 ) {
+  // Preflight: tanpa penyedia yang siap, jangan membuat baris `ringing` hantu
+  // dan jangan mengganggu penerima dengan notifikasi.
+  const cfg = await getCallConfig().catch(() => ({ configured: false }));
+  if (!cfg.configured) throw new Error(CALL_UNCONFIGURED_MESSAGE);
   const { data, error } = await supabase.rpc("create_call_tx", {
     _conversation: conversationId,
     _kind: kind,
@@ -69,12 +84,33 @@ export async function declineCall(callId: string) {
   await endCall(callId, "declined", 0, "declined");
 }
 
-export async function leaveCall(callId: string, userId: string) {
-  await supabase
+/** Bergabung ke room (idempotent) — juga membatalkan `left_at` saat bergabung lagi. */
+export async function joinCall(callId: string) {
+  const { data, error } = await supabase.rpc("join_call", { _call: callId });
+  if (error) throw new Error(friendly(error.message, "Gagal bergabung ke panggilan"));
+  return data as unknown as CallRow;
+}
+
+/**
+ * Keluar dari panggilan. Server yang memutuskan apakah panggilan ikut berakhir:
+ * 1:1 dan pemanggil grup mengakhiri, peserta grup biasa hanya keluar.
+ */
+export async function leaveCall(callId: string, durationSec = 0) {
+  const { data, error } = await supabase.rpc("leave_call", {
+    _call: callId,
+    _duration: Math.max(0, Math.round(durationSec)),
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal keluar dari panggilan"));
+  return data as unknown as CallRow;
+}
+
+/** Panggilan 1:1 bila hanya ada dua peserta terdaftar. */
+export async function countParticipants(callId: string): Promise<number> {
+  const { count } = await supabase
     .from("call_participants")
-    .update({ left_at: new Date().toISOString() })
-    .eq("call_id", callId)
-    .eq("user_id", userId);
+    .select("user_id", { count: "exact", head: true })
+    .eq("call_id", callId);
+  return count ?? 0;
 }
 
 /** Tandai panggilan berdering yang kedaluwarsa sebagai tak terjawab. */
