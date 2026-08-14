@@ -236,9 +236,11 @@ function ChatRoom() {
 
   const blocked = block?.iBlocked ?? false;
   const blockedByOther = block?.blockedMe ?? false;
-  // Kapabilitas berasal dari server: direct yang diputus/diblokir hanya bisa
-  // dibaca. Tombol yang disembunyikan di sini tetap ditolak oleh RPC.
-  const inactive = !!conv && conv.type === "direct" && !conv.usable;
+  // Kapabilitas berasal dari server dan dipecah per aksi: percakapan yang
+  // hanya bisa dibaca tetap menampilkan riwayat, tetapi komposer dimatikan.
+  // Tombol yang disembunyikan di sini tetap ditolak oleh RPC.
+  const inactive = !!conv && !conv.sendable;
+  const canCall = !!conv && conv.callable;
 
   const doSend = async () => {
     const body = text.trim();
@@ -372,8 +374,12 @@ function ChatRoom() {
 
   const call = async (kind: "audio" | "video") => {
     if (!userId || !conv) return;
-    if (conv.type === "direct" && !conv.usable) {
-      toast.error("Hubungan kontak tidak aktif");
+    if (!canCall) {
+      toast.error(
+        conv.capabilityReason === "blocked"
+          ? "Kontak diblokir"
+          : "Panggilan tidak tersedia untuk percakapan ini",
+      );
       return;
     }
     try {

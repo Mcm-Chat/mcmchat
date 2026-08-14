@@ -147,7 +147,14 @@ export function markConversationRead(conversationId: string, throughMessageId?: 
   );
 }
 
-export type ConversationCapability = { usable: boolean; role: string | null; reason: string };
+export type ConversationCapability = {
+  readable: boolean;
+  sendable: boolean;
+  callable: boolean;
+  manageable: boolean;
+  role: string | null;
+  reason: string;
+};
 
 /** Kapabilitas dari server menjadi sumber kebenaran tombol UI. */
 export async function fetchConversationCapability(
@@ -158,9 +165,12 @@ export async function fetchConversationCapability(
   });
   const row = Array.isArray(data) ? data[0] : null;
   return {
-    usable: row?.usable ?? false,
+    readable: row?.readable ?? false,
+    sendable: row?.sendable ?? false,
+    callable: row?.callable ?? false,
+    manageable: row?.manageable ?? false,
     role: row?.role ?? null,
-    reason: row?.reason ?? "Hubungan kontak tidak aktif",
+    reason: row?.reason ?? "not_member",
   };
 }
 
