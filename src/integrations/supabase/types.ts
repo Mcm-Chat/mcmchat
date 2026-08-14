@@ -334,6 +334,329 @@ export type Database = {
           },
         ]
       }
+      chat_order_items: {
+        Row: {
+          availability_note: string
+          business_id: string
+          chat_order_id: string
+          created_at: string
+          discount: number
+          id: string
+          per_unit_qty: number
+          per_unit_qty_base: number
+          per_unit_unit: string
+          price: number
+          product_id: string | null
+          product_name: string
+          sort_order: number
+          unit_count: number
+          updated_at: string
+          variant_id: string | null
+          variant_name: string
+        }
+        Insert: {
+          availability_note?: string
+          business_id: string
+          chat_order_id: string
+          created_at?: string
+          discount?: number
+          id?: string
+          per_unit_qty?: number
+          per_unit_qty_base?: number
+          per_unit_unit?: string
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          sort_order?: number
+          unit_count?: number
+          updated_at?: string
+          variant_id?: string | null
+          variant_name?: string
+        }
+        Update: {
+          availability_note?: string
+          business_id?: string
+          chat_order_id?: string
+          created_at?: string
+          discount?: number
+          id?: string
+          per_unit_qty?: number
+          per_unit_qty_base?: number
+          per_unit_unit?: string
+          price?: number
+          product_id?: string | null
+          product_name?: string
+          sort_order?: number
+          unit_count?: number
+          updated_at?: string
+          variant_id?: string | null
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_order_items_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_order_items_chat_order_id_fkey"
+            columns: ["chat_order_id"]
+            isOneToOne: false
+            referencedRelation: "chat_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_order_unit_slots: {
+        Row: {
+          chat_order_id: string
+          created_at: string
+          id: string
+          item_id: string
+          mode: Database["public"]["Enums"]["unit_slot_mode"]
+          preparation_job_item_id: string | null
+          qty_base: number
+          slot_no: number
+          status: Database["public"]["Enums"]["unit_slot_status"]
+          stock_unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          chat_order_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          mode?: Database["public"]["Enums"]["unit_slot_mode"]
+          preparation_job_item_id?: string | null
+          qty_base: number
+          slot_no: number
+          status?: Database["public"]["Enums"]["unit_slot_status"]
+          stock_unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chat_order_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          mode?: Database["public"]["Enums"]["unit_slot_mode"]
+          preparation_job_item_id?: string | null
+          qty_base?: number
+          slot_no?: number
+          status?: Database["public"]["Enums"]["unit_slot_status"]
+          stock_unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_order_unit_slots_chat_order_id_fkey"
+            columns: ["chat_order_id"]
+            isOneToOne: false
+            referencedRelation: "chat_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_order_unit_slots_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "chat_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_order_unit_slots_preparation_job_item_id_fkey"
+            columns: ["preparation_job_item_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_job_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_order_unit_slots_stock_unit_id_fkey"
+            columns: ["stock_unit_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_orders: {
+        Row: {
+          approved_at: string | null
+          business_id: string
+          buyer_user_id: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          delivered_at: string | null
+          discount: number
+          dispatched_at: string | null
+          extra_fee: number
+          id: string
+          idempotency_key: string
+          ledger_id: string | null
+          note: string
+          order_id: string | null
+          preparation_job_id: string | null
+          ready_at: string | null
+          request_message_id: string | null
+          result_message_id: string | null
+          sales_record_id: string | null
+          seller_id: string | null
+          seller_note: string
+          status: Database["public"]["Enums"]["chat_order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          business_id: string
+          buyer_user_id?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          conversation_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          delivered_at?: string | null
+          discount?: number
+          dispatched_at?: string | null
+          extra_fee?: number
+          id?: string
+          idempotency_key?: string
+          ledger_id?: string | null
+          note?: string
+          order_id?: string | null
+          preparation_job_id?: string | null
+          ready_at?: string | null
+          request_message_id?: string | null
+          result_message_id?: string | null
+          sales_record_id?: string | null
+          seller_id?: string | null
+          seller_note?: string
+          status?: Database["public"]["Enums"]["chat_order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          business_id?: string
+          buyer_user_id?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          conversation_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string
+          delivered_at?: string | null
+          discount?: number
+          dispatched_at?: string | null
+          extra_fee?: number
+          id?: string
+          idempotency_key?: string
+          ledger_id?: string | null
+          note?: string
+          order_id?: string | null
+          preparation_job_id?: string | null
+          ready_at?: string | null
+          request_message_id?: string | null
+          result_message_id?: string | null
+          sales_record_id?: string | null
+          seller_id?: string | null
+          seller_note?: string
+          status?: Database["public"]["Enums"]["chat_order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "ledgers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_preparation_job_id_fkey"
+            columns: ["preparation_job_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_request_message_id_fkey"
+            columns: ["request_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_result_message_id_fkey"
+            columns: ["result_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_orders_sales_record_id_fkey"
+            columns: ["sales_record_id"]
+            isOneToOne: false
+            referencedRelation: "sales_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_connections: {
         Row: {
           accepted_at: string
@@ -801,6 +1124,7 @@ export type Database = {
           qty_base: number
           ref_id: string | null
           ref_type: string
+          stock_unit_id: string | null
           variant_id: string
         }
         Insert: {
@@ -816,6 +1140,7 @@ export type Database = {
           qty_base: number
           ref_id?: string | null
           ref_type?: string
+          stock_unit_id?: string | null
           variant_id: string
         }
         Update: {
@@ -831,6 +1156,7 @@ export type Database = {
           qty_base?: number
           ref_id?: string | null
           ref_type?: string
+          stock_unit_id?: string | null
           variant_id?: string
         }
         Relationships: [
@@ -846,6 +1172,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_stock_unit_id_fkey"
+            columns: ["stock_unit_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock_units"
             referencedColumns: ["id"]
           },
           {
@@ -1226,6 +1559,7 @@ export type Database = {
           qty: number
           qty_base: number
           qty_num: number
+          stock_unit_ids: string[]
           unit: string
           variant_id: string | null
           variant_name: string
@@ -1243,6 +1577,7 @@ export type Database = {
           qty?: number
           qty_base?: number
           qty_num?: number
+          stock_unit_ids?: string[]
           unit?: string
           variant_id?: string | null
           variant_name?: string
@@ -1260,6 +1595,7 @@ export type Database = {
           qty?: number
           qty_base?: number
           qty_num?: number
+          stock_unit_ids?: string[]
           unit?: string
           variant_id?: string | null
           variant_name?: string
@@ -1442,6 +1778,7 @@ export type Database = {
       preparation_job_items: {
         Row: {
           actual_qty_base: number | null
+          chat_order_slot_id: string | null
           created_at: string
           id: string
           job_id: string
@@ -1455,12 +1792,16 @@ export type Database = {
           require_photo: boolean
           sort_order: number
           status: Database["public"]["Enums"]["preparation_item_status"]
+          stock_unit_id: string | null
+          unit_index: number
+          unit_total: number
           updated_at: string
           variant_id: string
           variant_name: string
         }
         Insert: {
           actual_qty_base?: number | null
+          chat_order_slot_id?: string | null
           created_at?: string
           id?: string
           job_id: string
@@ -1474,12 +1815,16 @@ export type Database = {
           require_photo?: boolean
           sort_order?: number
           status?: Database["public"]["Enums"]["preparation_item_status"]
+          stock_unit_id?: string | null
+          unit_index?: number
+          unit_total?: number
           updated_at?: string
           variant_id: string
           variant_name?: string
         }
         Update: {
           actual_qty_base?: number | null
+          chat_order_slot_id?: string | null
           created_at?: string
           id?: string
           job_id?: string
@@ -1493,11 +1838,21 @@ export type Database = {
           require_photo?: boolean
           sort_order?: number
           status?: Database["public"]["Enums"]["preparation_item_status"]
+          stock_unit_id?: string | null
+          unit_index?: number
+          unit_total?: number
           updated_at?: string
           variant_id?: string
           variant_name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "preparation_job_items_chat_order_slot_id_fkey"
+            columns: ["chat_order_slot_id"]
+            isOneToOne: false
+            referencedRelation: "chat_order_unit_slots"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "preparation_job_items_job_id_fkey"
             columns: ["job_id"]
@@ -1513,6 +1868,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "preparation_job_items_stock_unit_id_fkey"
+            columns: ["stock_unit_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock_units"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "preparation_job_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
@@ -1525,6 +1887,7 @@ export type Database = {
         Row: {
           assigned_user_id: string
           business_id: string
+          chat_order_id: string | null
           code: string
           completed_at: string | null
           conversation_id: string | null
@@ -1550,6 +1913,7 @@ export type Database = {
         Insert: {
           assigned_user_id: string
           business_id: string
+          chat_order_id?: string | null
           code: string
           completed_at?: string | null
           conversation_id?: string | null
@@ -1575,6 +1939,7 @@ export type Database = {
         Update: {
           assigned_user_id?: string
           business_id?: string
+          chat_order_id?: string | null
           code?: string
           completed_at?: string | null
           conversation_id?: string | null
@@ -1603,6 +1968,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preparation_jobs_chat_order_id_fkey"
+            columns: ["chat_order_id"]
+            isOneToOne: false
+            referencedRelation: "chat_orders"
             referencedColumns: ["id"]
           },
           {
@@ -1638,6 +2010,7 @@ export type Database = {
           id: string
           image_path: string
           image_url: string | null
+          is_primary: boolean
           location_accuracy: number | null
           location_label: string
           location_lat: number | null
@@ -1645,12 +2018,14 @@ export type Database = {
           location_mode: string
           location_url: string
           media_version: number
+          needs_variant_confirmation: boolean
           preparation_job_id: string | null
           preparation_job_item_id: string | null
           product_id: string
           sort_order: number
           source_photo_id: string | null
           source_type: string
+          stock_unit_id: string | null
           thumbnail_path: string | null
           updated_at: string
           variant_id: string | null
@@ -1664,6 +2039,7 @@ export type Database = {
           id?: string
           image_path: string
           image_url?: string | null
+          is_primary?: boolean
           location_accuracy?: number | null
           location_label?: string
           location_lat?: number | null
@@ -1671,12 +2047,14 @@ export type Database = {
           location_mode?: string
           location_url?: string
           media_version?: number
+          needs_variant_confirmation?: boolean
           preparation_job_id?: string | null
           preparation_job_item_id?: string | null
           product_id: string
           sort_order?: number
           source_photo_id?: string | null
           source_type?: string
+          stock_unit_id?: string | null
           thumbnail_path?: string | null
           updated_at?: string
           variant_id?: string | null
@@ -1690,6 +2068,7 @@ export type Database = {
           id?: string
           image_path?: string
           image_url?: string | null
+          is_primary?: boolean
           location_accuracy?: number | null
           location_label?: string
           location_lat?: number | null
@@ -1697,12 +2076,14 @@ export type Database = {
           location_mode?: string
           location_url?: string
           media_version?: number
+          needs_variant_confirmation?: boolean
           preparation_job_id?: string | null
           preparation_job_item_id?: string | null
           product_id?: string
           sort_order?: number
           source_photo_id?: string | null
           source_type?: string
+          stock_unit_id?: string | null
           thumbnail_path?: string | null
           updated_at?: string
           variant_id?: string | null
@@ -1734,6 +2115,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_photos_stock_unit_id_fkey"
+            columns: ["stock_unit_id"]
+            isOneToOne: false
+            referencedRelation: "variant_stock_units"
             referencedColumns: ["id"]
           },
           {
@@ -2362,11 +2750,210 @@ export type Database = {
         }
         Relationships: []
       }
+      variant_stock_units: {
+        Row: {
+          business_id: string
+          chat_order_id: string | null
+          chat_order_item_id: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_user_id: string | null
+          delivered_at: string | null
+          id: string
+          note: string
+          preparation_job_id: string | null
+          preparation_job_item_id: string | null
+          product_id: string
+          qty_base: number
+          ready_at: string | null
+          released_at: string | null
+          reserved_at: string | null
+          source_type: Database["public"]["Enums"]["stock_unit_source"]
+          status: Database["public"]["Enums"]["stock_unit_status"]
+          unit_label: string
+          unit_seq: number
+          unit_slot_id: string | null
+          updated_at: string
+          updated_by: string | null
+          variant_id: string
+          version: number
+        }
+        Insert: {
+          business_id: string
+          chat_order_id?: string | null
+          chat_order_item_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_user_id?: string | null
+          delivered_at?: string | null
+          id?: string
+          note?: string
+          preparation_job_id?: string | null
+          preparation_job_item_id?: string | null
+          product_id: string
+          qty_base?: number
+          ready_at?: string | null
+          released_at?: string | null
+          reserved_at?: string | null
+          source_type?: Database["public"]["Enums"]["stock_unit_source"]
+          status?: Database["public"]["Enums"]["stock_unit_status"]
+          unit_label?: string
+          unit_seq?: number
+          unit_slot_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          variant_id: string
+          version?: number
+        }
+        Update: {
+          business_id?: string
+          chat_order_id?: string | null
+          chat_order_item_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_user_id?: string | null
+          delivered_at?: string | null
+          id?: string
+          note?: string
+          preparation_job_id?: string | null
+          preparation_job_item_id?: string | null
+          product_id?: string
+          qty_base?: number
+          ready_at?: string | null
+          released_at?: string | null
+          reserved_at?: string | null
+          source_type?: Database["public"]["Enums"]["stock_unit_source"]
+          status?: Database["public"]["Enums"]["stock_unit_status"]
+          unit_label?: string
+          unit_seq?: number
+          unit_slot_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          variant_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variant_stock_units_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_preparation_job_id_fkey"
+            columns: ["preparation_job_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_preparation_job_item_id_fkey"
+            columns: ["preparation_job_item_id"]
+            isOneToOne: false
+            referencedRelation: "preparation_job_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "variant_stock_units_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vsu_order_fk"
+            columns: ["chat_order_id"]
+            isOneToOne: false
+            referencedRelation: "chat_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vsu_order_item_fk"
+            columns: ["chat_order_item_id"]
+            isOneToOne: false
+            referencedRelation: "chat_order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vsu_slot_fk"
+            columns: ["unit_slot_id"]
+            isOneToOne: false
+            referencedRelation: "chat_order_unit_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      activate_stock_unit: {
+        Args: { _unit: string }
+        Returns: {
+          business_id: string
+          chat_order_id: string | null
+          chat_order_item_id: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_user_id: string | null
+          delivered_at: string | null
+          id: string
+          note: string
+          preparation_job_id: string | null
+          preparation_job_item_id: string | null
+          product_id: string
+          qty_base: number
+          ready_at: string | null
+          released_at: string | null
+          reserved_at: string | null
+          source_type: Database["public"]["Enums"]["stock_unit_source"]
+          status: Database["public"]["Enums"]["stock_unit_status"]
+          unit_label: string
+          unit_seq: number
+          unit_slot_id: string | null
+          updated_at: string
+          updated_by: string | null
+          variant_id: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "variant_stock_units"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_group_members: {
         Args: { _conversation: string; _member_ids: string[] }
         Returns: number
@@ -2402,6 +2989,56 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      apply_unit_balance: {
+        Args: {
+          _delta: number
+          _kind: string
+          _note: string
+          _unit: Database["public"]["Tables"]["variant_stock_units"]["Row"]
+        }
+        Returns: undefined
+      }
+      approve_chat_order: {
+        Args: { _order: string }
+        Returns: {
+          approved_at: string | null
+          business_id: string
+          buyer_user_id: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          delivered_at: string | null
+          discount: number
+          dispatched_at: string | null
+          extra_fee: number
+          id: string
+          idempotency_key: string
+          ledger_id: string | null
+          note: string
+          order_id: string | null
+          preparation_job_id: string | null
+          ready_at: string | null
+          request_message_id: string | null
+          result_message_id: string | null
+          sales_record_id: string | null
+          seller_id: string | null
+          seller_note: string
+          status: Database["public"]["Enums"]["chat_order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_orders"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -2485,9 +3122,97 @@ export type Database = {
         Args: { _status: string; _uid: string }
         Returns: boolean
       }
+      cancel_chat_order: {
+        Args: { _order: string; _reason?: string; _void_ready?: boolean }
+        Returns: {
+          approved_at: string | null
+          business_id: string
+          buyer_user_id: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          delivered_at: string | null
+          discount: number
+          dispatched_at: string | null
+          extra_fee: number
+          id: string
+          idempotency_key: string
+          ledger_id: string | null
+          note: string
+          order_id: string | null
+          preparation_job_id: string | null
+          ready_at: string | null
+          request_message_id: string | null
+          result_message_id: string | null
+          sales_record_id: string | null
+          seller_id: string | null
+          seller_note: string
+          status: Database["public"]["Enums"]["chat_order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cancel_contact_request: { Args: { _target: string }; Returns: Json }
       commit_my_avatar: { Args: { _path: string }; Returns: Json }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
+      confirm_chat_order: {
+        Args: {
+          _discount?: number
+          _extra?: number
+          _items?: Json
+          _note?: string
+          _order: string
+        }
+        Returns: {
+          approved_at: string | null
+          business_id: string
+          buyer_user_id: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          delivered_at: string | null
+          discount: number
+          dispatched_at: string | null
+          extra_fee: number
+          id: string
+          idempotency_key: string
+          ledger_id: string | null
+          note: string
+          order_id: string | null
+          preparation_job_id: string | null
+          ready_at: string | null
+          request_message_id: string | null
+          result_message_id: string | null
+          sales_record_id: string | null
+          seller_id: string | null
+          seller_note: string
+          status: Database["public"]["Enums"]["chat_order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       confirm_staff_pin: {
         Args: {
           _business: string
@@ -2568,6 +3293,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_chat_order: { Args: { _payload: Json }; Returns: string }
       create_group: {
         Args: { _member_ids: string[]; _title: string }
         Returns: string
@@ -2588,6 +3314,49 @@ export type Database = {
         Returns: Json
       }
       create_sale_tx: { Args: { _payload: Json }; Returns: Json }
+      create_stock_unit: {
+        Args: {
+          _label?: string
+          _note?: string
+          _qty_base: number
+          _variant: string
+        }
+        Returns: {
+          business_id: string
+          chat_order_id: string | null
+          chat_order_item_id: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_user_id: string | null
+          delivered_at: string | null
+          id: string
+          note: string
+          preparation_job_id: string | null
+          preparation_job_item_id: string | null
+          product_id: string
+          qty_base: number
+          ready_at: string | null
+          released_at: string | null
+          reserved_at: string | null
+          source_type: Database["public"]["Enums"]["stock_unit_source"]
+          status: Database["public"]["Enums"]["stock_unit_status"]
+          unit_label: string
+          unit_seq: number
+          unit_slot_id: string | null
+          updated_at: string
+          updated_by: string | null
+          variant_id: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "variant_stock_units"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_user_business_role: {
         Args: { _business: string }
         Returns: Database["public"]["Enums"]["business_role"]
@@ -2604,8 +3373,16 @@ export type Database = {
         Args: { _conversation: string }
         Returns: boolean
       }
+      current_user_can_read_chat_order: {
+        Args: { _order: string }
+        Returns: boolean
+      }
       current_user_can_read_conversation: {
         Args: { _conversation: string }
+        Returns: boolean
+      }
+      current_user_can_read_stock_unit: {
+        Args: { _unit: string }
         Returns: boolean
       }
       current_user_can_sell_business: {
@@ -2667,6 +3444,15 @@ export type Database = {
         }[]
       }
       disconnect_contact: { Args: { _target: string }; Returns: Json }
+      dispatch_chat_order: {
+        Args: {
+          _assigned: string
+          _expires_hours?: number
+          _order: string
+          _slots: Json
+        }
+        Returns: Json
+      }
       end_call: {
         Args: {
           _call: string
@@ -2699,6 +3485,10 @@ export type Database = {
         }
       }
       expire_stale_calls: { Args: never; Returns: number }
+      finalize_chat_order_delivery: {
+        Args: { _order: string; _payment: Json }
+        Returns: Json
+      }
       gen_mcm_pin: { Args: never; Returns: string }
       get_or_create_business_conversation: {
         Args: { _business: string; _customer: string }
@@ -2935,6 +3725,47 @@ export type Database = {
       }
       remove_my_avatar: { Args: never; Returns: Json }
       remove_saved_contact: { Args: { _target: string }; Returns: Json }
+      request_chat_order_changes: {
+        Args: { _note?: string; _order: string }
+        Returns: {
+          approved_at: string | null
+          business_id: string
+          buyer_user_id: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string
+          delivered_at: string | null
+          discount: number
+          dispatched_at: string | null
+          extra_fee: number
+          id: string
+          idempotency_key: string
+          ledger_id: string | null
+          note: string
+          order_id: string | null
+          preparation_job_id: string | null
+          ready_at: string | null
+          request_message_id: string | null
+          result_message_id: string | null
+          sales_record_id: string | null
+          seller_id: string | null
+          seller_note: string
+          status: Database["public"]["Enums"]["chat_order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "chat_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       respond_contact_request: {
         Args: {
           _action: Database["public"]["Enums"]["contact_request_status"]
@@ -3075,6 +3906,44 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      void_stock_unit: {
+        Args: { _reason?: string; _unit: string }
+        Returns: {
+          business_id: string
+          chat_order_id: string | null
+          chat_order_item_id: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_user_id: string | null
+          delivered_at: string | null
+          id: string
+          note: string
+          preparation_job_id: string | null
+          preparation_job_item_id: string | null
+          product_id: string
+          qty_base: number
+          ready_at: string | null
+          released_at: string | null
+          reserved_at: string | null
+          source_type: Database["public"]["Enums"]["stock_unit_source"]
+          status: Database["public"]["Enums"]["stock_unit_status"]
+          unit_label: string
+          unit_seq: number
+          unit_slot_id: string | null
+          updated_at: string
+          updated_by: string | null
+          variant_id: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "variant_stock_units"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       business_role: "owner" | "admin" | "agent" | "cashier" | "viewer"
@@ -3087,6 +3956,16 @@ export type Database = {
         | "declined"
         | "failed"
         | "unconfigured"
+      chat_order_status:
+        | "buyer_requested"
+        | "seller_confirmed"
+        | "changes_requested"
+        | "buyer_approved"
+        | "dispatched_to_preparation"
+        | "preparing"
+        | "ready_for_payment"
+        | "delivered"
+        | "cancelled"
       contact_request_status:
         | "pending"
         | "accepted"
@@ -3136,6 +4015,23 @@ export type Database = {
       status_item_kind: "image" | "text" | "video"
       status_privacy: "contacts" | "contacts_except" | "only_share_with"
       stock_type: "weight" | "count"
+      stock_unit_source: "manual" | "preparation" | "legacy" | "return"
+      stock_unit_status:
+        | "draft"
+        | "available"
+        | "reserved"
+        | "preparing"
+        | "ready"
+        | "delivered"
+        | "void"
+      unit_slot_mode: "existing" | "prepare_new"
+      unit_slot_status:
+        | "pending"
+        | "reserved"
+        | "preparing"
+        | "ready"
+        | "delivered"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3274,6 +4170,17 @@ export const Constants = {
         "failed",
         "unconfigured",
       ],
+      chat_order_status: [
+        "buyer_requested",
+        "seller_confirmed",
+        "changes_requested",
+        "buyer_approved",
+        "dispatched_to_preparation",
+        "preparing",
+        "ready_for_payment",
+        "delivered",
+        "cancelled",
+      ],
       contact_request_status: [
         "pending",
         "accepted",
@@ -3328,6 +4235,25 @@ export const Constants = {
       status_item_kind: ["image", "text", "video"],
       status_privacy: ["contacts", "contacts_except", "only_share_with"],
       stock_type: ["weight", "count"],
+      stock_unit_source: ["manual", "preparation", "legacy", "return"],
+      stock_unit_status: [
+        "draft",
+        "available",
+        "reserved",
+        "preparing",
+        "ready",
+        "delivered",
+        "void",
+      ],
+      unit_slot_mode: ["existing", "prepare_new"],
+      unit_slot_status: [
+        "pending",
+        "reserved",
+        "preparing",
+        "ready",
+        "delivered",
+        "cancelled",
+      ],
     },
   },
 } as const
