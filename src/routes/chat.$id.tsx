@@ -39,7 +39,12 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { cancelContactRequest, isBlockedBetween, setBlocked } from "@/lib/api/contacts";
+import {
+  cancelContactRequest,
+  isBlockedBetween,
+  sendContactRequest,
+  setBlocked,
+} from "@/lib/api/contacts";
 import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import {
   deleteForEveryone,
@@ -421,28 +426,71 @@ function ChatRoom() {
   };
 
   /**
-   * Percakapan lama (dibuat sebelum aturan kontak diperketat) bisa "diklaim":
-   * server membuat/menggunakan ulang permintaan kontak kanonik dari pengirim
-   * ke pengguna ini. Tidak ada RLS yang dilonggarkan — RPC memutuskan.
+   * Segarkan semua cache yang bergantung pada hubungan kontak. Tidak pernah
+   * memuat ulang halaman: cukup invalidasi query terkait.
    */
-  const claimLegacy = async () => {
+  const invalidateRelation = () => {
+    void refetchRelation();
+    void qc.invalidateQueries({ queryKey: ["relation-state", id] });
+    void qc.invalidateQueries({ queryKey: ["block", userId, conv?.other?.id] });
+    void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+    void qc.invalidateQueries({ queryKey: ["contact-requests"] });
+    void qc.invalidateQueries({ queryKey: ["contacts"] });
+    refresh();
+  };
+
+  /**
+   * Satu ketukan: server memverifikasi peserta + pesan masuk, mengunci pasangan
+   * kanonik, membuat permintaan (bila belum ada) DAN menerimanya dalam satu
+   * transaksi sehingga percakapan langsung bisa dibalas dan ditelepon.
+   */
+  const acceptLegacy = async () => {
     try {
-      const { data, error } = await supabase.rpc("claim_legacy_direct_conversation", {
+      const { data, error } = await supabase.rpc("accept_legacy_direct_conversation", {
         _conversation: id,
       });
       if (error) throw new Error(error.message);
-      const res = (data ?? {}) as { direction?: string; status?: string };
-      // Server tidak pernah membalik arah: bila permintaan saya sendiri masih
-      // menunggu, tampilkan status menunggu, bukan ajakan menerima.
-      if (res.status === "pending" && res.direction === "outgoing") {
+      const res = (data ?? {}) as { status?: string; code?: string; retry_at?: string };
+      if (res.status === "waiting_for_other") {
         toast.info("Permintaan kontak Anda masih menunggu diterima.");
-      } else if (res.status === "pending") {
-        toast.success("Permintaan kontak dibuat. Terima untuk mulai membalas.");
+      } else if (res.code === "cooldown" || res.code === "rejected_by_other") {
+        toast.error("Permintaan belum bisa dikirim ulang. Coba lagi nanti.");
+      } else {
+        toast.success("Kontak terhubung. Anda sudah bisa membalas dan menelepon.");
       }
-      void refetchRelation();
-      refresh();
+      invalidateRelation();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengaktifkan percakapan");
+    }
+  };
+
+  const rejectLegacy = async () => {
+    try {
+      const { data, error } = await supabase.rpc("reject_legacy_direct_conversation", {
+        _conversation: id,
+      });
+      if (error) throw new Error(error.message);
+      const res = (data ?? {}) as { status?: string };
+      if (res.status === "waiting_for_other") {
+        toast.info("Ini permintaan Anda sendiri. Batalkan bila tidak jadi.");
+      } else {
+        toast.success("Permintaan ditolak");
+      }
+      invalidateRelation();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menolak permintaan");
+    }
+  };
+
+  const sendRequest = async () => {
+    const other = conv?.other?.id;
+    if (!other) return;
+    try {
+      await sendContactRequest(userId!, other, "");
+      toast.success("Permintaan kontak dikirim");
+      invalidateRelation();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permintaan gagal dikirim");
     }
   };
 
@@ -456,9 +504,7 @@ function ChatRoom() {
       });
       if (error) throw new Error(error.message);
       toast.success(action === "accepted" ? "Permintaan diterima" : "Permintaan ditolak");
-      void refetchRelation();
-      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
-      refresh();
+      invalidateRelation();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui permintaan");
     }
@@ -470,8 +516,7 @@ function ChatRoom() {
     try {
       await cancelContactRequest(userId!, other);
       toast.success("Permintaan dibatalkan");
-      void refetchRelation();
-      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+      invalidateRelation();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Permintaan gagal dibatalkan");
     }
