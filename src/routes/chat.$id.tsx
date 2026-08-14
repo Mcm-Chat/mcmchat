@@ -39,7 +39,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { isBlockedBetween, setBlocked } from "@/lib/api/contacts";
+import { cancelContactRequest, isBlockedBetween, setBlocked } from "@/lib/api/contacts";
 import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import {
   deleteForEveryone,
