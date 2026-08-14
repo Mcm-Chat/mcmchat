@@ -10,7 +10,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import {
   cancelContactRequest,
   getContactRelation,
-  removeContact,
+  removeSavedContact,
+  disconnectContact,
   respondToRequest,
   saveContact,
   sendContactRequest,
