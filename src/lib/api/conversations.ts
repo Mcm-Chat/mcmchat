@@ -105,9 +105,11 @@ export function updateGroupSettings(
     () =>
       supabase.rpc("update_group_settings", {
         _conversation: conversationId,
-        _title: patch.title ?? undefined,
-        _avatar_color: patch.avatarColor ?? undefined,
-        _disappearing_hours: patch.disappearingHours ?? undefined,
+        ...(patch.title === undefined ? {} : { _title: patch.title }),
+        ...(patch.avatarColor === undefined ? {} : { _avatar_color: patch.avatarColor }),
+        ...(patch.disappearingHours === undefined
+          ? {}
+          : { _disappearing_hours: patch.disappearingHours }),
       }),
     "Gagal menyimpan pengaturan grup",
   );
@@ -122,9 +124,9 @@ export function updateMyConversationPreferences(
     () =>
       supabase.rpc("update_my_conversation_preferences", {
         _conversation: conversationId,
-        _muted: patch.muted ?? undefined,
-        _pinned: patch.pinned ?? undefined,
-        _archived: patch.archived ?? undefined,
+        ...(patch.muted === undefined ? {} : { _muted: patch.muted }),
+        ...(patch.pinned === undefined ? {} : { _pinned: patch.pinned }),
+        ...(patch.archived === undefined ? {} : { _archived: patch.archived }),
       }),
     "Gagal menyimpan preferensi",
   );
@@ -135,7 +137,7 @@ export function markConversationRead(conversationId: string, throughMessageId?: 
     () =>
       supabase.rpc("mark_conversation_read", {
         _conversation: conversationId,
-        _through_message_id: throughMessageId ?? undefined,
+        ...(throughMessageId === undefined ? {} : { _through_message_id: throughMessageId }),
       }),
     "Gagal menandai dibaca",
   );
@@ -174,7 +176,7 @@ export function setConversationAssignee(conversationId: string, assigneeId: stri
     () =>
       supabase.rpc("set_conversation_assignee", {
         _conversation: conversationId,
-        _assignee: assigneeId ?? undefined,
+        ...(assigneeId === null ? {} : { _assignee: assigneeId }),
       }),
     "Gagal menetapkan penanggung jawab",
   );
