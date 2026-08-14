@@ -3071,6 +3071,10 @@ export type Database = {
         Args: { _conversation: string; _owner_only: boolean; _uid: string }
         Returns: string
       }
+      bg_call_action: {
+        Args: { _action: string; _call: string; _token: string }
+        Returns: Json
+      }
       bg_mark_delivered: {
         Args: { _conv: string; _message?: string; _token: string }
         Returns: Json
