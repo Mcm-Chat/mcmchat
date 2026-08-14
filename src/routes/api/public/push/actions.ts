@@ -120,15 +120,19 @@ export const Route = createFileRoute("/api/public/push/actions")({
           return json({ ok: true, status: result.status ?? null });
         }
 
-        const { data, error } = await supabaseAdmin.rpc("bg_mark_delivered", {
-          _token: parsed.token,
-          _conv: parsed.conversationId,
-          ...(parsed.messageId ? { _message: parsed.messageId } : {}),
-        });
-        if (error) return json({ ok: false, error: "action_failed" }, 500);
-        const result = data as { ok?: boolean } | null;
-        if (!result?.ok) return json({ ok: false, error: "denied" }, 401);
-        return json({ ok: true });
+        if (parsed.action === "delivered") {
+          const { data, error } = await supabaseAdmin.rpc("bg_mark_delivered", {
+            _token: parsed.token,
+            _conv: parsed.conversationId,
+            ...(parsed.messageId ? { _message: parsed.messageId } : {}),
+          });
+          if (error) return json({ ok: false, error: "action_failed" }, 500);
+          const result = data as { ok?: boolean } | null;
+          if (!result?.ok) return json({ ok: false, error: "denied" }, 401);
+          return json({ ok: true });
+        }
+
+        return json({ ok: false, error: "invalid_request" }, 400);
       },
     },
   },
