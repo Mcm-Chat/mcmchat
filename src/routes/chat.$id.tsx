@@ -134,7 +134,10 @@ function ChatRoom() {
   useBackDismiss(prepOpen, () => setPrepOpen(false));
   useBackDismiss(saleOpen, () => setSaleOpen(false));
   useBackDismiss(confirmAll, () => setConfirmAll(false));
-  useBackDismiss(selection.length > 0, () => setSelection([]));
+  // Prioritas eksplisit: saat dialog konfirmasi terbuka, guard selection
+  // dinonaktifkan sehingga Back pertama menutup dialog, Back kedua baru
+  // keluar dari mode pilih (walau kedua state di-set pada render yang sama).
+  useBackDismiss(selection.length > 0 && !confirmAll, () => setSelection([]));
 
   const { data: business } = useMyBusiness(userId);
   const { data: prepJobs } = useQuery({
