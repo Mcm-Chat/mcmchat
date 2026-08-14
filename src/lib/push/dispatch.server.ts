@@ -208,6 +208,9 @@ export async function dispatchCallPush(input: {
       vibrate: Boolean(row["vibrate"]),
       extra: {
         actionId: `${input.callId}:${String(row["device_id"])}`,
+        // Perangkat yang mematikan pratinjau tidak pernah menerima nama penelepon
+        // pada layar kunci (notifikasi memakai versi publik generik).
+        preview: row["allow_preview"] ? "1" : "0",
         ...(actionToken ? { actionToken } : {}),
       },
     });
