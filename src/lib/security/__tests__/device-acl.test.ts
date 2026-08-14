@@ -62,10 +62,9 @@ describe("ACL tabel perangkat", () => {
   });
 
   it("RPC perangkat tidak pernah membocorkan token atau sidik jari kredensial", () => {
-    const fn = sql.slice(
-      lastIndexOfPattern(/create or replace function public\.my_push_devices/),
-      lastIndexOfPattern(/create or replace function public\.revoke_my_push_device\(/),
-    );
+    const start = lastIndexOfPattern(/create or replace function public\.my_push_devices/);
+    expect(start).toBeGreaterThan(-1);
+    const fn = sql.slice(start, sql.indexOf("$$;", start));
     expect(fn).not.toMatch(/action_token_hash|action_token_prefix/);
     expect(fn).not.toMatch(/select[^;]*\bd\.push_token\b(?!\s+is)/);
     expect(fn).toMatch(/set search_path to 'public'/);
