@@ -119,20 +119,35 @@ export async function updateSettings(
   );
 }
 
-export type DeviceRow = Tables<"devices">;
+/**
+ * Tabel `devices` tertutup penuh untuk klien (tanpa grant, tanpa policy).
+ * Semua akses perangkat lewat RPC yang tidak pernah mengembalikan
+ * `push_token`, `action_token_hash`, atau `action_token_prefix`.
+ */
+export type DeviceRow = {
+  id: string;
+  name: string;
+  platform: string;
+  app_version: string;
+  push_enabled: boolean;
+  revoked: boolean;
+  last_active_at: string;
+  created_at: string;
+};
 
-export async function listDevices(userId: string): Promise<DeviceRow[]> {
-  return unwrap(
-    await supabase
-      .from("devices")
-      .select("*")
-      .eq("user_id", userId)
-      .order("last_active_at", { ascending: false }),
-    "Gagal memuat daftar perangkat",
-  );
+export async function listDevices(): Promise<DeviceRow[]> {
+  const { data, error } = await supabase.rpc("my_push_devices");
+  if (error) throw new Error(friendly(error.message, "Gagal memuat daftar perangkat"));
+  return (data ?? []) as DeviceRow[];
 }
 
 export async function removeDevice(deviceId: string) {
-  const { error } = await supabase.from("devices").delete().eq("id", deviceId);
+  const { error } = await supabase.rpc("revoke_my_push_device", { _device: deviceId });
   if (error) throw new Error(friendly(error.message, "Gagal mengeluarkan perangkat"));
+}
+
+export async function removeAllDevices(): Promise<number> {
+  const { data, error } = await supabase.rpc("revoke_my_push_devices");
+  if (error) throw new Error(friendly(error.message, "Gagal mengeluarkan perangkat"));
+  return Number(data ?? 0);
 }

@@ -3817,6 +3817,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      my_push_devices: {
+        Args: never
+        Returns: {
+          app_version: string
+          created_at: string
+          id: string
+          last_active_at: string
+          name: string
+          platform: string
+          push_enabled: boolean
+          revoked: boolean
+        }[]
+      }
       pair_blocked: { Args: { _a: string; _b: string }; Returns: boolean }
       pins_for_me: {
         Args: { _ids: string[] }
@@ -4010,10 +4023,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      revoke_my_push_devices: {
-        Args: { _push_token?: string }
-        Returns: number
-      }
+      revoke_my_push_device: { Args: { _device: string }; Returns: boolean }
+      revoke_my_push_devices:
+        | { Args: never; Returns: number }
+        | { Args: { _push_token?: string }; Returns: number }
       revoke_push_device: { Args: { _device: string }; Returns: boolean }
       rotate_preparation_token: {
         Args: { _expires_hours?: number; _job: string }

@@ -111,7 +111,7 @@ function NotificationSettingsPage() {
     void getSettings(userId)
       .then(setSettings)
       .catch(() => undefined);
-    void listDevices(userId)
+    void listDevices()
       .then(setDevices)
       .catch(() => undefined);
   }, [userId]);

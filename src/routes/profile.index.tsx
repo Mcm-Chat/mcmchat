@@ -216,7 +216,7 @@ function ProfilePage() {
   const loadDevices = () => {
     if (!userId) return;
     setDevicesError(null);
-    listDevices(userId)
+    listDevices()
       .then(setDevices)
       .catch((err) =>
         setDevicesError(err instanceof Error ? err.message : "Gagal memuat perangkat"),
