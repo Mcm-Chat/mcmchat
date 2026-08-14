@@ -631,19 +631,26 @@ export function MessageBubble({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 self-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-60"
+              className="size-11 self-center text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-60"
               aria-label="Opsi pesan"
             >
-              <MoreVertical className="size-3.5" />
+              <MoreVertical className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align={mine ? "end" : "start"}>
             <div className="flex gap-1 px-1 pb-1">
-              {["👍", "❤️", "😂", "🙏", "🔥"].map((e) => (
+              {[
+                ["👍", "Suka"],
+                ["❤️", "Cinta"],
+                ["😂", "Tertawa"],
+                ["🙏", "Terima kasih"],
+                ["🔥", "Keren"],
+              ].map(([e, label]) => (
                 <button
                   key={e}
                   type="button"
-                  className="rounded-md px-1.5 py-1 text-base hover:bg-muted"
+                  aria-label={`Reaksi ${label}`}
+                  className="flex size-11 items-center justify-center rounded-md text-lg hover:bg-muted"
                   onClick={() => onAction("react", message, e)}
                 >
                   {e}
