@@ -369,7 +369,7 @@ function ItemBlock({
             capture="environment"
             hidden
             onChange={(e) => {
-              void upload(e.target.files?.[0]);
+              void pickFile(e.target.files?.[0]);
               e.target.value = "";
             }}
           />
@@ -379,7 +379,7 @@ function ItemBlock({
             accept="image/*"
             hidden
             onChange={(e) => {
-              void upload(e.target.files?.[0]);
+              void pickFile(e.target.files?.[0]);
               e.target.value = "";
             }}
           />
