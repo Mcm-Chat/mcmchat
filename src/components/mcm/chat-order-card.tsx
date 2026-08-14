@@ -670,6 +670,7 @@ function PaymentDialog({
                 const m = v as PaymentInput["paymentMethod"];
                 setMethod(m);
                 if (m === "cash" || m === "transfer") setPaid(String(total));
+                if (m === "dp") setPaid(String(Math.max(0, Math.round(total / 2))));
                 if (m === "credit") setPaid("0");
               }}
             >

@@ -270,8 +270,17 @@ export function validatePayment(p: PaymentInput, total: number): string[] {
   if (total <= 0) errors.push("Total pesanan harus lebih dari nol.");
   if (p.paidAmount < 0 || p.paidAmount > total) errors.push("Jumlah dibayar tidak valid.");
   if (p.paymentMethod === "dp" && p.paidAmount <= 0) errors.push("DP harus lebih dari nol.");
+  if (p.paymentMethod === "dp" && p.paidAmount >= total)
+    errors.push("DP lunas: gunakan metode tunai atau transfer.");
+  if (p.paymentMethod === "credit" && p.paidAmount !== 0)
+    errors.push("Kredit tidak menerima pembayaran awal: gunakan DP.");
   if ((p.paymentMethod === "dp" || p.paymentMethod === "credit") && !p.dueDate)
     errors.push("Tanggal jatuh tempo wajib untuk DP atau kredit.");
+  if (p.dueDate) {
+    const today = new Date();
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    if (p.dueDate < iso) errors.push("Tanggal jatuh tempo tidak boleh sebelum hari ini.");
+  }
   return errors;
 }
 
