@@ -20,7 +20,14 @@ export type ChannelKey = keyof typeof CHANNELS;
 export type NotifCategory = "chat" | "group" | "calls" | "tasks" | "sales" | "ledger";
 
 export type PushKind =
-  "message" | "call" | "task_assigned" | "task_completed" | "sale" | "order" | "ledger";
+  | "message"
+  | "call"
+  | "call_terminal"
+  | "task_assigned"
+  | "task_completed"
+  | "sale"
+  | "order"
+  | "ledger";
 
 export type PushData = {
   kind: PushKind;
@@ -38,10 +45,21 @@ export type PushData = {
   ledgerId?: string;
   /** "1" bila balasan inline boleh ditampilkan pada notifikasi ini. */
   canReply?: string;
-  /** Token aksi sekali-pakai per notifikasi (device-scoped, TTL pendek). */
-  actionToken?: string;
-  /** Id unik notifikasi untuk idempotensi aksi latar. */
-  actionId?: string;
+  /**
+   * Aksi notifikasi: SATU pasangan id+token berbeda per aksi, per perangkat,
+   * per notifikasi. `*ActionId` adalah batas idempotensi di server; token
+   * mentah tidak pernah disimpan (hanya hash-nya).
+   */
+  replyActionId?: string;
+  replyToken?: string;
+  readActionId?: string;
+  readToken?: string;
+  answerActionId?: string;
+  answerToken?: string;
+  declineActionId?: string;
+  declineToken?: string;
+  /** Status akhir untuk push `call_terminal`. */
+  callStatus?: string;
   /** "1" bila pratinjau isi boleh ditampilkan di perangkat ini. */
   preview?: string;
   title: string;
