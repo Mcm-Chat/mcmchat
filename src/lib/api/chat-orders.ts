@@ -6,9 +6,9 @@
  * memeriksa ulang otorisasi setelah lock, dan bersifat idempoten sehingga
  * dobel-tap tidak pernah membuat pesanan/reservasi/penjualan ganda.
  */
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
-import { sendMessage } from "./chat";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ChatOrderRow = Tables<"chat_orders">;
