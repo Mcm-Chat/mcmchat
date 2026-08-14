@@ -14,6 +14,7 @@ import {
   Shield,
   Users,
   Sparkles,
+  Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
