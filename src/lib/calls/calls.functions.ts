@@ -39,6 +39,15 @@ export const issueCallToken = createServerFn({ method: "POST" })
         reason: "Anda bukan peserta panggilan ini",
       };
     }
+    // Peserta yang sudah keluar harus bergabung ulang (join_call) sebelum
+    // mendapat token baru — token lama pun tidak diperpanjang.
+    if (participant.left_at) {
+      return {
+        configured: true as const,
+        allowed: false as const,
+        reason: "Anda sudah keluar dari panggilan ini",
+      };
+    }
 
     const { data: call } = await context.supabase
       .from("calls")

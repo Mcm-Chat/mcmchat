@@ -2476,6 +2476,58 @@ export type Database = {
         Args: { _conv: string; _uid: string }
         Returns: boolean
       }
+      join_call: {
+        Args: { _call: string }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      leave_call: {
+        Args: { _call: string; _duration?: number }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
       my_pin: { Args: never; Returns: string }

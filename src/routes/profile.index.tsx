@@ -14,6 +14,7 @@ import {
   Shield,
   Users,
   Sparkles,
+  Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -729,6 +730,22 @@ function ProfilePage() {
                   <span className="block text-sm font-medium">Panggilan • Efek Suara Premium</span>
                   <span className="block text-xs text-muted-foreground">
                     Preset Voice Privacy default dan tes mikrofon sebelum menelepon
+                  </span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+              <button
+                type="button"
+                onClick={() => void navigate({ to: "/settings/calls" })}
+                className="flex w-full items-center gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-muted/60"
+              >
+                <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Stethoscope className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium">Diagnostik panggilan</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Cek penyedia, HTTPS, izin mikrofon/kamera, dan tes perangkat
                   </span>
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />

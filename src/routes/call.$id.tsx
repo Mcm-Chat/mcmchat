@@ -253,6 +253,16 @@ function CallScreen() {
             {session.pipelineState.reason && (
               <p className="text-[11px] text-navy-foreground/60">{session.pipelineState.reason}</p>
             )}
+            {session.audioBlocked && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="mt-2 rounded-xl"
+                onClick={session.enableAudio}
+              >
+                Aktifkan suara
+              </Button>
+            )}
           </div>
 
           <div className="mt-auto space-y-6 pt-10">

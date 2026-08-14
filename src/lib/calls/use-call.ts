@@ -17,16 +17,59 @@ import {
 } from "./provider";
 import {
   answerCall,
+  countParticipants,
   declineCall,
   endCall,
   getCall,
+  joinCall,
   leaveCall,
   subscribeCall,
-  RING_TIMEOUT_MS,
+  ringRemainingMs,
   type CallRow,
 } from "@/lib/api/calls";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
+
+/**
+ * Log teknis hanya saat pengembangan. Tidak pernah memuat token, secret, atau
+ * SDP — hanya kode kesalahan pendek dan konteks non-sensitif.
+ */
+function devLog(code: string, detail?: unknown) {
+  if (import.meta.env.DEV) console.warn(`[call:${code}]`, detail ?? "");
+}
+
+/** Wake lock selama panggilan aktif; aman bila browser tidak mendukung. */
+function useWakeLock(active: boolean) {
+  useEffect(() => {
+    if (!active || typeof navigator === "undefined") return;
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+    };
+    if (!nav.wakeLock) return;
+    let sentinel: { release: () => Promise<void> } | null = null;
+    let disposed = false;
+    const acquire = () => {
+      void nav
+        .wakeLock!.request("screen")
+        .then((s) => {
+          if (disposed) void s.release().catch(() => undefined);
+          else sentinel = s;
+        })
+        .catch(() => devLog("wakelock_denied"));
+    };
+    acquire();
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !sentinel) acquire();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      disposed = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void sentinel?.release().catch(() => undefined);
+      sentinel = null;
+    };
+  }, [active]);
+}
 
 export type CallPhase =
   | "loading"
@@ -54,6 +97,9 @@ export type UseCallResult = {
   voiceFallback: boolean;
   /** Tombol speaker hanya ditampilkan bila rute keluaran benar-benar bisa diatur. */
   speakerSupported: boolean;
+  /** Autoplay audio diblokir; UI wajib menampilkan tombol "Aktifkan suara". */
+  audioBlocked: boolean;
+  enableAudio: () => void;
   answer: () => void;
   decline: () => void;
   hangup: (status?: CallRow["status"], reason?: string) => void;
@@ -93,6 +139,7 @@ export function useCall(opts: {
   const [voiceFallback, setVoiceFallback] = useState(false);
   const [voiceActive, setVoiceActive] = useState(false);
   const [speakerSupported, setSpeakerSupported] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
@@ -100,6 +147,9 @@ export function useCall(opts: {
   const startedRef = useRef<number | null>(null);
   const joinedRef = useRef(false);
   const endedRef = useRef(false);
+  const participantsRef = useRef<number>(2);
+
+  useWakeLock(phase === "connected" || phase === "connecting");
 
   const voiceApplied = premium && prefs.enabled && prefs.preset !== "off";
 
@@ -152,6 +202,9 @@ export function useCall(opts: {
       joinedRef.current = true;
       setPhase("connecting");
       try {
+        // Daftar hadir dulu (idempotent, membatalkan `left_at`) supaya token
+        // hanya terbit untuk peserta yang benar-benar aktif.
+        await joinCall(row.id);
         const t = await token({ data: { callId: row.id } });
         if (!t.configured) {
           setPhase("unconfigured");
@@ -174,12 +227,15 @@ export function useCall(opts: {
           audioTrack: audio,
           onState: (s: ProviderState) => {
             setRemotes(s.remotes);
+            setAudioBlocked(Boolean(s.audioBlocked));
             if (s.status === "failed") {
+              devLog("media_failed", s.reason);
               setPhase("error");
               setReason(s.reason ?? "Koneksi media gagal");
             } else if (s.status === "connected") {
               setPhase("connected");
               startedRef.current ??= Date.now();
+              if (s.reason) setReason(s.reason);
             } else if (s.status === "reconnecting") {
               setReason("Menyambung ulang…");
             }
@@ -190,6 +246,7 @@ export function useCall(opts: {
         if (row.kind === "video") setControls((c) => ({ ...c, cameraOn: true }));
       } catch (e) {
         joinedRef.current = false;
+        devLog("join_failed", e instanceof Error ? e.message : "unknown");
         setPhase("error");
         setReason(e instanceof Error ? e.message : "Gagal menyambungkan panggilan");
       }
@@ -197,6 +254,10 @@ export function useCall(opts: {
     [buildOutgoingAudio, token],
   );
 
+  /**
+   * Akhiri sesi milik pengguna ini. Server memutuskan apakah panggilan ikut
+   * berakhir: 1:1 dan pemanggil grup mengakhiri, peserta grup biasa hanya keluar.
+   */
   const finish = useCallback(
     (status: CallRow["status"], why?: string) => {
       if (endedRef.current) return;
@@ -205,10 +266,13 @@ export function useCall(opts: {
       setPhase("ended");
       if (why) setReason(why);
       void cleanup();
-      if (userId) void leaveCall(callId, userId).catch(() => undefined);
-      void endCall(callId, status, secs, why).catch(() => undefined);
+      if (status === "ended") {
+        void leaveCall(callId, secs).catch((e: unknown) => devLog("leave_failed", e));
+      } else {
+        void endCall(callId, status, secs, why).catch((e: unknown) => devLog("end_failed", e));
+      }
     },
-    [callId, cleanup, userId],
+    [callId, cleanup],
   );
 
   // Muat panggilan + status penyedia, lalu tentukan fase awal.
@@ -243,12 +307,16 @@ export function useCall(opts: {
         return;
       }
       const outgoing = row.initiator_id === userId;
+      void countParticipants(callId)
+        .then((n) => (participantsRef.current = n || 2))
+        .catch(() => undefined);
       if (row.status === "ongoing") {
         startedRef.current = row.answered_at ? new Date(row.answered_at).getTime() : Date.now();
         void join(row);
       } else if (outgoing) {
+        // Pemanggil TETAP "memanggil" sampai DB berubah menjadi `ongoing`;
+        // media baru dibuka setelah penerima benar-benar menjawab.
         setPhase("outgoing");
-        void join(row);
       } else {
         setPhase("incoming");
       }
@@ -290,12 +358,17 @@ export function useCall(opts: {
     return () => clearInterval(t);
   }, [phase]);
 
-  // Timeout dering: panggilan keluar yang tidak dijawab jadi "tak terjawab".
+  // Timeout dering absolut: dihitung dari `created_at`, bukan dari saat layar
+  // dibuka, dan idempotent karena `finish` menolak pemanggilan kedua.
   useEffect(() => {
     if (phase !== "outgoing" && phase !== "incoming") return;
-    const t = setTimeout(() => finish("missed", "Tidak dijawab"), RING_TIMEOUT_MS);
+    if (!call) return;
+    const t = setTimeout(
+      () => finish("missed", "Tidak dijawab"),
+      ringRemainingMs(call.created_at),
+    );
     return () => clearTimeout(t);
-  }, [phase, finish]);
+  }, [phase, finish, call]);
 
   // Ganti preset saat panggilan berjalan — tanpa renegosiasi, panggilan tidak drop.
   useEffect(() => {
@@ -316,6 +389,13 @@ export function useCall(opts: {
       voiceApplied: voiceActive,
       voiceFallback,
       speakerSupported,
+      audioBlocked,
+      enableAudio: () => {
+        void sessionRef.current?.startAudio().then((ok) => {
+          setAudioBlocked(!ok);
+          if (ok) setReason(null);
+        });
+      },
       answer: () => {
         if (!userId || !call) return;
         void answerCall(call.id)
@@ -374,6 +454,7 @@ export function useCall(opts: {
       voiceActive,
       voiceFallback,
       speakerSupported,
+      audioBlocked,
       userId,
       callId,
       cleanup,
