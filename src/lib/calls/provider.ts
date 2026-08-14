@@ -120,14 +120,45 @@ export const liveKitProvider: CallProvider = {
         micEnabled: p.isMicrophoneEnabled,
         cameraEnabled: p.isCameraEnabled,
       }));
-    const emit = (status: ProviderStatus, reason?: string) =>
-      opts.onState({ status, remotes: remotes(), ...(reason ? { reason } : {}) });
+    const emit = (status: ProviderStatus, reason?: string, unexpected?: boolean) =>
+      opts.onState({
+        status,
+        remotes: remotes(),
+        audioBlocked,
+        ...(reason ? { reason } : {}),
+        ...(unexpected ? { unexpected: true } : {}),
+      });
+
+    /** Pasang track kamera lokal ke elemen yang sudah/baru saja mount. */
+    const attachLocal = () => {
+      const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+      if (localVideoEl && pub?.track) pub.track.attach(localVideoEl);
+    };
+    const attachRemote = () => {
+      if (!remoteVideoEl) return;
+      for (const p of room.remoteParticipants.values()) {
+        const pub = p.getTrackPublication(Track.Source.Camera);
+        if (pub?.track) {
+          pub.track.attach(remoteVideoEl);
+          return;
+        }
+      }
+    };
 
     room
       .on(RoomEvent.Connected, () => emit("connected"))
       .on(RoomEvent.Reconnecting, () => emit("reconnecting", "Menyambung ulang…"))
       .on(RoomEvent.Reconnected, () => emit("connected"))
-      .on(RoomEvent.Disconnected, () => emit("disconnected"))
+      // Putus normal (hangup) tidak boleh memunculkan error; putus tak terduga bisa dipulihkan.
+      .on(RoomEvent.Disconnected, () =>
+        closing
+          ? emit("disconnected")
+          : emit("failed", "Koneksi panggilan terputus", true),
+      )
+      .on(RoomEvent.LocalTrackPublished, () => {
+        attachLocal();
+        emit("connected");
+      })
       .on(RoomEvent.ParticipantConnected, () => emit("connected"))
       .on(RoomEvent.ParticipantDisconnected, () => emit("connected"))
       .on(RoomEvent.ActiveSpeakersChanged, () => emit("connected"))
@@ -140,15 +171,13 @@ export const liveKitProvider: CallProvider = {
           el.autoplay = true;
           audioEls.set(track.sid ?? el.id ?? String(audioEls.size), el);
           void applySink(el);
-          void el.play().catch(() =>
-            opts.onState({
-              status: "connected",
-              remotes: remotes(),
-              reason: "Ketuk layar untuk mengizinkan suara",
-            }),
-          );
+          void el.play().catch(() => {
+            audioBlocked = true;
+            emit("connected", "Suara diblokir browser — ketuk \u201cAktifkan suara\u201d");
+          });
         }
         if (track.kind === Track.Kind.Video && remoteVideoEl) track.attach(remoteVideoEl);
+        else if (track.kind === Track.Kind.Video) attachRemote();
         emit("connected");
       })
       .on(RoomEvent.TrackUnsubscribed, (track) => {
@@ -167,19 +196,27 @@ export const liveKitProvider: CallProvider = {
     } else {
       await room.localParticipant.setMicrophoneEnabled(true);
     }
-    if (opts.kind === "video") await room.localParticipant.setCameraEnabled(true);
+    if (opts.kind === "video") {
+      await room.localParticipant.setCameraEnabled(true);
+      attachLocal();
+    }
+    if (!room.canPlaybackAudio) audioBlocked = true;
     emit("connected");
-
-    const firstRemoteVideo = () => {
-      for (const p of room.remoteParticipants.values()) {
-        const pub = p.getTrackPublication(Track.Source.Camera);
-        if (pub?.track) return pub.track;
-      }
-      return null;
-    };
 
     return {
       provider: "livekit",
+      async startAudio() {
+        try {
+          await room.startAudio();
+          for (const el of audioEls.values()) await el.play().catch(() => undefined);
+          audioBlocked = !room.canPlaybackAudio;
+          emit("connected");
+          return !audioBlocked;
+        } catch {
+          emit("connected", "Browser masih memblokir suara");
+          return false;
+        }
+      },
       async setMicEnabled(enabled) {
         for (const pub of room.localParticipant.audioTrackPublications.values()) {
           if (enabled) await pub.unmute();
@@ -189,6 +226,7 @@ export const liveKitProvider: CallProvider = {
       },
       async setCameraEnabled(enabled) {
         await room.localParticipant.setCameraEnabled(enabled);
+        if (enabled) attachLocal();
         emit("connected");
       },
       async switchCamera() {
@@ -197,6 +235,7 @@ export const liveKitProvider: CallProvider = {
         await room.localParticipant.setCameraEnabled(true, {
           facingMode: facingUser ? "user" : "environment",
         });
+        attachLocal();
         emit("connected");
       },
       async replaceAudioTrack(track) {
@@ -207,8 +246,8 @@ export const liveKitProvider: CallProvider = {
         await room.localParticipant.publishTrack(track, { dtx: true, red: true });
       },
       attachLocalVideo(el) {
-        const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-        if (el && pub?.track) pub.track.attach(el);
+        localVideoEl = el;
+        attachLocal();
       },
       speakerCapability,
       async setSpeaker(on) {
@@ -229,10 +268,10 @@ export const liveKitProvider: CallProvider = {
       },
       attachRemoteMedia(el) {
         remoteVideoEl = el;
-        const track = firstRemoteVideo();
-        if (el && track) track.attach(el);
+        attachRemote();
       },
       async disconnect() {
+        closing = true;
         for (const el of audioEls.values()) {
           el.pause();
           el.srcObject = null;
