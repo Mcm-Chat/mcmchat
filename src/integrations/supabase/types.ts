@@ -2620,6 +2620,10 @@ export type Database = {
         Args: { _business: string }
         Returns: boolean
       }
+      current_user_is_call_participant: {
+        Args: { _call: string }
+        Returns: boolean
+      }
       current_user_is_conv_member: {
         Args: { _conversation: string }
         Returns: boolean
