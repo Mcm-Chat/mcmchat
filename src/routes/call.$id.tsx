@@ -213,7 +213,7 @@ function CallScreen() {
               variant="ghost"
               size="icon"
               aria-label="Kembali"
-              className="text-navy-foreground hover:bg-white/15"
+              className="size-11 text-navy-foreground hover:bg-white/15"
               onClick={() => void navigate({ to: "/calls" })}
             >
               <ArrowLeft className="size-5" />
@@ -381,7 +381,7 @@ function CallScreen() {
           variant="ghost"
           size="icon"
           aria-label="Kembali"
-          className="text-navy-foreground hover:bg-white/15"
+          className="size-11 text-navy-foreground hover:bg-white/15"
           onClick={() => void navigate({ to: "/calls" })}
         >
           <ArrowLeft className="size-5" />
