@@ -165,3 +165,36 @@ export const notifyIncomingCall = createServerFn({ method: "POST" })
     });
     return { configured: res.configured, sent: res.sent };
   });
+
+/**
+ * Panggilan sudah berakhir (dijawab di perangkat lain, ditolak, ditutup,
+ * dibatalkan, atau timeout): kirim `call_terminal` best-effort ke semua
+ * perangkat peserta supaya notifikasi basi dibatalkan. Hanya peserta panggilan
+ * yang boleh memicunya, dan hanya untuk panggilan yang benar-benar terminal
+ * atau sudah dijawab.
+ */
+export const notifyCallTerminal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ callId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: participant } = await context.supabase
+      .from("call_participants")
+      .select("user_id")
+      .eq("call_id", data.callId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!participant) return { configured: false, sent: 0 };
+
+    const { data: call } = await context.supabase
+      .from("calls")
+      .select("id, status")
+      .eq("id", data.callId)
+      .maybeSingle();
+    if (!call) return { configured: false, sent: 0 };
+    const terminal = ["ended", "declined", "missed", "failed", "ongoing"];
+    if (!terminal.includes(String(call.status))) return { configured: false, sent: 0 };
+
+    const { dispatchCallTerminalPush } = await import("./dispatch.server");
+    const res = await dispatchCallTerminalPush({ callId: call.id, status: String(call.status) });
+    return { configured: res.configured, sent: res.sent };
+  });
