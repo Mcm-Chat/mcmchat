@@ -70,15 +70,22 @@ describe("policy hanya memakai helper self-scoped", () => {
 
   it("policy tabel baru tidak memanggil helper arbitrary-user", () => {
     const policies = sql.match(/create policy [^;]*;/g) ?? [];
-    const relevant = policies.filter((p) => TABLES.some((t) => p.includes(t)));
-    expect(relevant.length).toBeGreaterThan(0);
-    for (const p of relevant) {
+    // Hanya definisi TERAKHIR per (tabel, nama policy) yang berlaku di database.
+    const latest = new Map<string, string>();
+    for (const p of policies) {
+      const table = TABLES.find((t) => p.includes(`public.${t}`));
+      if (!table) continue;
+      const name = p.match(/create policy "([^"]+)"/)?.[1] ?? p.slice(0, 60);
+      latest.set(`${table}|${name}`, p);
+    }
+    expect(latest.size).toBeGreaterThan(0);
+    for (const p of latest.values()) {
       for (const helper of ARBITRARY) {
         // helper self-scoped (current_user_*) diperbolehkan
         const bare = new RegExp(`(?<!current_user_)\\b${helper}\\s*\\(`);
         expect(bare.test(p), `${helper} dipakai di policy: ${p.slice(0, 120)}`).toBe(false);
       }
-      expect(p).not.toMatch(/auth\.uid\(\)\s*\)/.source.includes("x") ? /zz/ : /,\s*auth\.uid\(\)\s*\)/);
+      expect(p).not.toMatch(/,\s*auth\.uid\(\)\s*\)/);
     }
   });
 });
