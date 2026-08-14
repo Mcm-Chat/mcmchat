@@ -13,7 +13,11 @@ export type ProfileLite = {
   avatar_color: string;
   avatar_version?: number;
 };
-export type ContactWithProfile = ContactRow & { profile: ProfileLite };
+export type ContactWithProfile = ContactRow & {
+  profile: ProfileLite;
+  /** true bila hubungan sudah diterima kedua sisi (bukan sekadar disimpan). */
+  connected: boolean;
+};
 export type RequestRow = Tables<"contact_requests"> & { profile: ProfileLite | null };
 
 export const PIN_PATTERN = /^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/;
@@ -117,9 +121,13 @@ export async function listContacts(userId: string): Promise<ContactWithProfile[]
     await supabase.from("contacts").select("*").eq("owner_id", userId),
     "Gagal memuat kontak",
   );
-  const map = await profilesByIds(rows.map((r) => r.contact_id));
+  const [map, { data: connectedRows }] = await Promise.all([
+    profilesByIds(rows.map((r) => r.contact_id)),
+    supabase.rpc("my_connected_contacts"),
+  ]);
+  const connected = new Set((connectedRows ?? []).map((c) => c.contact_id));
   return rows
-    .map((r) => ({ ...r, profile: map.get(r.contact_id) }))
+    .map((r) => ({ ...r, profile: map.get(r.contact_id), connected: connected.has(r.contact_id) }))
     .filter((r): r is ContactWithProfile => !!r.profile)
     .sort((a, b) => a.profile.display_name.localeCompare(b.profile.display_name));
 }
