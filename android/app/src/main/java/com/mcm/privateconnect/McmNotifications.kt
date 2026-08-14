@@ -47,8 +47,8 @@ object McmNotifications {
             "Panggilan suara/video masuk. Tampil di layar kunci.",
             NotificationManager.IMPORTANCE_HIGH
         ) {
-            it.setBypassDnd(true)
-            it.lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            // Tidak pernah setBypassDnd(true): mode Jangan Ganggu pengguna dihormati.
+            it.lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
         }
         channel(
             CH_CALLS_ONGOING, "Panggilan aktif",
@@ -59,6 +59,17 @@ object McmNotifications {
         channel(CH_SALES, "Penjualan & Pesanan", "Pembaruan pesanan dan penjualan.", NotificationManager.IMPORTANCE_DEFAULT)
         channel(CH_LEDGER, "Hutang & Pembayaran", "Pengingat hutang-piutang.", NotificationManager.IMPORTANCE_DEFAULT)
         channel(CH_GENERAL, "Umum", "Pemberitahuan lain dari MCM.", NotificationManager.IMPORTANCE_LOW)
+    }
+
+    /** Pilih channel untuk event non-chat; fallback aman ke Umum. */
+    fun channelFor(channel: String?, kind: String?): String {
+        if (channel != null && ALL.contains(channel)) return channel
+        return when (kind) {
+            "task_assigned", "task_completed" -> CH_TASKS
+            "sale", "order" -> CH_SALES
+            "ledger" -> CH_LEDGER
+            else -> CH_GENERAL
+        }
     }
 
     /** Channel yang benar-benar terdaftar di sistem (untuk diagnostik jujur). */
