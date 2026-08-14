@@ -355,7 +355,9 @@ function ProductCard({ message }: { message: MessageRow }) {
   const photos = p.photos ?? [];
   const perUnitLabel =
     p.perUnitQty && p.perUnitQty > 0
-      ? `${formatNumber(p.perUnitQty)} ${p.perUnitUnit ?? p.unit ?? ""}`.trim()
+      ? `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 3 }).format(p.perUnitQty)} ${
+          p.perUnitUnit ?? p.unit ?? ""
+        }`.trim()
       : "";
   const availableUnits = Number(p.availableUnitCount ?? 0);
   return (
@@ -1052,16 +1054,17 @@ function OrderFromProductButton({
   businessId,
   variantId,
   conversationId,
-  unit,
+  perUnitLabel,
+  availableUnits,
 }: {
   businessId: string;
   variantId: string;
   conversationId: string;
-  unit: string;
+  perUnitLabel: string;
+  availableUnits: number;
 }) {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState("1");
-  const [qty, setQty] = useState("1");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const keyRef = useRef(crypto.randomUUID());
@@ -1069,27 +1072,19 @@ function OrderFromProductButton({
   const submit = async () => {
     if (saving) return;
     const c = Number(count);
-    const q = Number(qty.replace(",", "."));
     if (!Number.isInteger(c) || c <= 0) {
       toast.error("Jumlah unit tidak valid");
       return;
     }
-    if (!Number.isFinite(q) || q <= 0) {
-      toast.error("Jumlah per unit tidak valid");
-      return;
-    }
     setSaving(true);
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      const uid = auth.user?.id;
-      if (!uid) throw new Error("Harus masuk terlebih dahulu");
       await createChatOrder({
         businessId,
         conversationId,
-        senderUserId: uid,
         idempotencyKey: keyRef.current,
         note: note.trim(),
-        items: [{ variantId, unitCount: c, perUnitQty: q, perUnitUnit: unit || "pcs" }],
+        // Isi per unit sengaja tidak dikirim: server memakai definisi varian.
+        items: [{ variantId, unitCount: c }],
       });
       toast.success("Pesanan dikirim ke toko");
       setOpen(false);
@@ -1115,11 +1110,20 @@ function OrderFromProductButton({
             <div className="space-y-1.5">
               <Label>Jumlah unit</Label>
               <Input inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value)} />
+              {availableUnits > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  {availableUnits} unit siap kirim. Sisanya disiapkan pegawai lebih dulu.
+                </p>
+              )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Isi per unit {unit ? `(${unit})` : ""}</Label>
-              <Input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
-            </div>
+            {perUnitLabel && (
+              <div className="rounded-xl border border-border bg-muted/40 p-3 text-[12px]">
+                Isi per unit: <span className="font-semibold">{perUnitLabel}</span>
+                <span className="block text-[11px] text-muted-foreground">
+                  Ditetapkan toko pada varian ini.
+                </span>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Catatan (opsional)</Label>
               <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
