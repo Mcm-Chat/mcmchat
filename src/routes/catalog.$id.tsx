@@ -104,8 +104,6 @@ function CatalogDetail() {
   } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
-  const addPhotoRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
   if (loading || isLoading) {
     return (
