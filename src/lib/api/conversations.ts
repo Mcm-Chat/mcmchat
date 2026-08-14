@@ -176,7 +176,8 @@ export function setConversationAssignee(conversationId: string, assigneeId: stri
     () =>
       supabase.rpc("set_conversation_assignee", {
         _conversation: conversationId,
-        ...(assigneeId === null ? {} : { _assignee: assigneeId }),
+        // Tipe generated menandai argumen wajib; null berarti melepas penugasan.
+        _assignee: assigneeId as string,
       }),
     "Gagal menetapkan penanggung jawab",
   );
