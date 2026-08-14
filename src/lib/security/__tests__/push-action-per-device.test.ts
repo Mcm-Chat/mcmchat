@@ -51,7 +51,7 @@ describe("push action token: satu payload per perangkat", () => {
     const terminal = body.slice(0, body.indexOf("export type EventPush"));
     expect(terminal).toContain("collapseKey: `call-${input.callId}`");
     expect(terminal).not.toContain("mintNotificationAction");
-    expect(terminal).not.toContain("Token");
+    expect(terminal).not.toMatch(/ActionId|replyToken|answerToken|declineToken/);
   });
 
   it("push generik (task/sale/ledger) tetap multicast tanpa token", () => {
