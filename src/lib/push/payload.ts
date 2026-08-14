@@ -42,6 +42,8 @@ export type PushData = {
   actionToken?: string;
   /** Id unik notifikasi untuk idempotensi aksi latar. */
   actionId?: string;
+  /** "1" bila pratinjau isi boleh ditampilkan di perangkat ini. */
+  preview?: string;
   title: string;
   body: string;
 };

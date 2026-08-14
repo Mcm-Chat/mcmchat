@@ -22,6 +22,15 @@ class MainActivity : BridgeActivity() {
     /** Rute deep link dari notifikasi yang membangunkan aplikasi (cold start). */
     private var pendingRoute: String? = null
 
+    /**
+     * Aksi "Jawab" dari notifikasi panggilan. PendingIntent-nya menunjuk
+     * langsung ke Activity ini (tanpa trampoline). Token sekali-pakai diteruskan
+     * ke lapisan web yang memvalidasinya lewat endpoint aman sebelum media/FGS.
+     */
+    private var pendingAnswerCall: String? = null
+    private var pendingAnswerToken: String? = null
+    private var pendingAnswerActionId: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         applyScreenSecurity()
         registerPlugin(McmPushPlugin::class.java)
@@ -29,12 +38,14 @@ class MainActivity : BridgeActivity() {
         applyScreenSecurity()
         McmNotifications.ensure(this)
         capturePendingRoute(intent)
+        capturePendingAnswer(intent)
         markBridge()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         capturePendingRoute(intent)
+        capturePendingAnswer(intent)
         markBridge()
     }
 
@@ -54,6 +65,29 @@ class MainActivity : BridgeActivity() {
         val route = pendingRoute
         pendingRoute = null
         return route
+    }
+
+    /** Diambil sekali oleh lapisan web; setelah itu dikosongkan. */
+    fun consumePendingCallAnswer(): Triple<String, String, String>? {
+        val call = pendingAnswerCall
+        val token = pendingAnswerToken
+        val actionId = pendingAnswerActionId
+        pendingAnswerCall = null
+        pendingAnswerToken = null
+        pendingAnswerActionId = null
+        if (call.isNullOrBlank() || token.isNullOrBlank() || actionId.isNullOrBlank()) return null
+        return Triple(call, token, actionId)
+    }
+
+    private fun capturePendingAnswer(intent: Intent?) {
+        val call = intent?.getStringExtra(PushDeliveryService.EXTRA_ANSWER_CALL) ?: return
+        val token = intent.getStringExtra(PushDeliveryService.EXTRA_ANSWER_TOKEN) ?: return
+        val actionId = intent.getStringExtra(PushDeliveryService.EXTRA_ANSWER_ACTION_ID) ?: return
+        pendingAnswerCall = call
+        pendingAnswerToken = token
+        pendingAnswerActionId = actionId
+        // Extras dibersihkan agar token tidak terbawa ke recreate berikutnya.
+        intent.removeExtra(PushDeliveryService.EXTRA_ANSWER_TOKEN)
     }
 
     private fun capturePendingRoute(intent: Intent?) {

@@ -372,37 +372,43 @@ describe("durasi panggilan", () => {
 
 describe("invarian migrasi panggilan terbaru", () => {
   const dir = "supabase/migrations";
-  const latest = readdirSync(dir)
+  const files = readdirSync(dir)
     .filter((f) => f.endsWith(".sql"))
     .sort()
-    .map((f) => readFileSync(`${dir}/${f}`, "utf8"))
-    .filter((sql) => sql.includes("FUNCTION public.decline_call"))
-    .at(-1);
+    .map((f) => readFileSync(`${dir}/${f}`, "utf8"));
+
+  /** Migrasi TERBARU yang mendefinisikan fungsi tersebut (bukan file terakhir). */
+  const latestWith = (needle: string) => files.filter((sql) => sql.includes(needle)).at(-1) ?? "";
+
+  const decline = latestWith("FUNCTION public.decline_call");
+  const join = latestWith("FUNCTION public.join_call");
+  const end = latestWith("FUNCTION public.end_call");
+  const declineAcl = latestWith("ON FUNCTION public.decline_call(uuid) FROM PUBLIC");
 
   it("migrasi decline_call ada", () => {
-    expect(latest).toBeTruthy();
+    expect(decline).toBeTruthy();
   });
 
   it("join_call tidak lagi menghidupkan peserta yang keluar", () => {
-    expect(latest).toContain("Anda sudah keluar dari panggilan ini");
-    expect(latest).not.toContain("left_at = NULL");
+    expect(join).toContain("Anda sudah keluar dari panggilan ini");
+    expect(join).not.toContain("left_at = NULL");
   });
 
   it("end_call menolak peserta non-host dan timeout dini", () => {
-    expect(latest).toContain("Peserta harus memakai leave_call untuk keluar");
-    expect(latest).toContain("Gunakan decline_call untuk menolak panggilan");
-    expect(latest).toContain("Batas waktu dering belum tercapai");
+    expect(end).toContain("Peserta harus memakai leave_call untuk keluar");
+    expect(end).toContain("Gunakan decline_call untuk menolak panggilan");
+    expect(end).toContain("Batas waktu dering belum tercapai");
   });
 
   it("durasi dihitung server dari answered_at/started_at", () => {
-    expect(latest).toContain("extract(epoch FROM (_now - COALESCE(_row.answered_at");
+    expect(end).toContain("extract(epoch FROM (_now - COALESCE(_row.answered_at");
   });
 
   it("ACL decline_call tanpa anon/PUBLIC", () => {
-    expect(latest).toContain(
+    expect(declineAcl).toContain(
       "REVOKE EXECUTE ON FUNCTION public.decline_call(uuid) FROM PUBLIC, anon",
     );
-    expect(latest).toContain(
+    expect(declineAcl).toContain(
       "GRANT EXECUTE ON FUNCTION public.decline_call(uuid) TO authenticated, service_role",
     );
   });

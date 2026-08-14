@@ -18,6 +18,11 @@ import {
   type UserSettingsRow,
 } from "@/lib/api/settings";
 import { getPushStatus } from "@/lib/push/push.functions";
+import {
+  openFullScreenIntentSettings,
+  pushCapabilities,
+  type NativeCapabilities,
+} from "@/lib/push/native";
 import { enablePush, usePushChannels, usePushState } from "@/lib/push/use-push";
 import {
   PERM_LABEL,
@@ -95,6 +100,7 @@ function NotificationSettingsPage() {
   const [perms, setPerms] = useState<Record<string, PermState>>({});
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [caps, setCaps] = useState<NativeCapabilities | null>(null);
   const notif = notificationsOf(settings);
   const push = usePushState();
   usePushChannels({ sound: notif.sound, vibrate: notif.vibrate });
@@ -121,6 +127,9 @@ function NotificationSettingsPage() {
     void getPushStatus()
       .then((s) => setConfigured(s.configured))
       .catch(() => setConfigured(false));
+    void pushCapabilities()
+      .then(setCaps)
+      .catch(() => setCaps(null));
   }, [refreshPerms]);
 
   const patch = async (value: Partial<NotificationsPrefs>) => {
@@ -309,6 +318,24 @@ function NotificationSettingsPage() {
             ))}
           </ul>
         </section>
+
+        {caps && !caps.fullScreenIntent ? (
+          <section className="space-y-2 rounded-2xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold">Panggilan di layar kunci</h2>
+            <p className="text-xs text-muted-foreground">
+              Android membatasi tampilan panggilan layar penuh untuk aplikasi ini. Notifikasi
+              panggilan tetap muncul sebagai pop-up, tetapi tidak membuka layar panggilan otomatis.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full rounded-lg text-xs"
+              onClick={() => void openFullScreenIntentSettings()}
+            >
+              Izinkan tampilan layar penuh
+            </Button>
+          </section>
+        ) : null}
 
         <section className="space-y-3 rounded-2xl border border-border bg-card p-4">
           <h2 className="text-sm font-semibold">Tampilan notifikasi</h2>

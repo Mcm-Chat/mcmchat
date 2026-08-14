@@ -10,7 +10,11 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 
 /**
- * Foreground service khusus panggilan.
+ * Foreground service panggilan (tipe microphone).
+ *
+ * HANYA dimulai dari Activity yang sedang foreground setelah pengguna menekan
+ * "Jawab" dan server menerima aksi tersebut. Tidak pernah dimulai saat
+ * berdering di latar (dilarang Android 12+).
  *
  * HANYA aktif selama panggilan berdering atau sedang berlangsung. Bukan service
  * "selalu hidup" dan tidak dipakai untuk polling. Berhenti dan melepas wake lock
@@ -61,12 +65,12 @@ class CallForegroundService : Service() {
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
-            } else {
+            // Tipe phoneCall butuh MANAGE_OWN_CALLS + ConnectionService atau
+            // ROLE_DIALER yang TIDAK dimiliki aplikasi ini; pakai microphone.
+            startForeground(
+                NOTIFICATION_ID, notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-            }
-            startForeground(NOTIFICATION_ID, notification, type)
+            )
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
