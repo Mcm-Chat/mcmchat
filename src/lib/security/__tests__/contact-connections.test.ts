@@ -175,17 +175,19 @@ describe("atomisitas dan race condition", () => {
 });
 
 describe("siklus hidup hubungan", () => {
-  it("blokir menonaktifkan hubungan dan membatalkan request pending dua arah", () => {
+  it("blokir menonaktifkan hubungan dan menerminalkan request dua arah", () => {
     const body = lastFunctionBody("set_contact_blocked");
     expect(body).toMatch(/update public\.contact_connections set disconnected_at = now\(\)/);
-    expect(body).toMatch(/where status = 'pending'/);
+    expect(body).toMatch(/where status in \('pending','accepted'\)/);
   });
 
   it("unblock tidak mengaktifkan kembali hubungan atau request", () => {
     const body = lastFunctionBody("set_contact_blocked");
-    const elseBranch = body.slice(body.lastIndexOf("else"));
+    const elseBranch = body.slice(body.indexOf("else update public.contacts set is_blocked = false"));
     expect(elseBranch).not.toMatch(/contact_connections/);
-    expect(elseBranch).not.toMatch(/contact_requests/);
+    // request blocked hanya diturunkan ke 'cancelled'; tidak pernah dibuka lagi
+    expect(elseBranch).not.toMatch(/status = 'accepted'/);
+    expect(elseBranch).not.toMatch(/status = 'pending'/);
   });
 
   it("remove_saved_contact menolak memutus hubungan aktif", () => {
@@ -332,7 +334,9 @@ describe("hardening final 2A — profiles tertutup", () => {
 
   it("profile_full memasker PIN dan avatar_privacy, tanpa email/phone", () => {
     const body = lastFunctionBody("profile_full");
-    expect(body).toMatch(/case when p\.id = auth\.uid\(\) or public\.are_connected\([^)]*\) then p\.pin else null end/);
+    expect(body).toMatch(
+      /case when p\.id = auth\.uid\(\) or public\.are_connected\(auth\.uid\(\), p\.id\) then p\.pin else null end/,
+    );
     expect(body).toMatch(/case when p\.id = auth\.uid\(\) then p\.avatar_privacy else null end/);
     expect(body).not.toMatch(/email|phone/);
   });
