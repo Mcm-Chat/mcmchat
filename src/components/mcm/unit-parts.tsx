@@ -275,7 +275,7 @@ function UnitCard({
         multiple
         className="hidden"
         onChange={(e) => {
-          void upload(e.target.files);
+          void pickFiles(e.target.files);
           e.target.value = "";
         }}
       />
