@@ -58,6 +58,16 @@ export function nativeReceiverInstalled(): boolean {
   return isNative() && bridge?.backgroundReceiver === true;
 }
 
+/** Dialog izin notifikasi Android 13+ (hanya dari gestur pengguna). */
+export async function requestNativeNotificationPermission(): Promise<boolean> {
+  if (!isNative()) return false;
+  try {
+    return (await McmPush.requestPermission()).granted;
+  } catch {
+    return false;
+  }
+}
+
 /** Status kapabilitas nyata untuk halaman diagnostik. */
 export async function pushCapabilities(): Promise<NativeCapabilities | null> {
   if (!isNative()) return null;

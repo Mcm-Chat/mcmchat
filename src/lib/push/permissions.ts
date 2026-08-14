@@ -3,7 +3,7 @@
  * Prinsip least privilege: izin hanya diminta saat fitur dipakai, tidak ada
  * background location, tidak ada akses seluruh file, tidak ada exact alarm.
  */
-import { isNative, pushCapabilities } from "./native";
+import { isNative, pushCapabilities, requestNativeNotificationPermission } from "./native";
 
 export type PermState = "granted" | "prompt" | "denied" | "restricted" | "unsupported";
 
@@ -116,9 +116,8 @@ export async function requestPermission(key: PermKey): Promise<PermState> {
 
   if (isNative()) {
     if (key === "notifications") {
-      const push = await plugin("@capacitor/push-notifications");
-      const req = push?.["requestPermissions"] as (() => Promise<{ receive: string }>) | undefined;
-      return req ? normalize((await req()).receive) : "unsupported";
+      // Dialog POST_NOTIFICATIONS Android 13+ lewat plugin native MCM.
+      return (await requestNativeNotificationPermission()) ? "granted" : "denied";
     }
     if (key === "camera" || key === "photos") {
       const cam = await plugin("@capacitor/camera");
