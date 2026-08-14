@@ -18,6 +18,11 @@ export type PrepItem = {
   requested_unit: string;
   requested_qty_base: number;
   actual_qty_base: number | null;
+  /** Posisi unit fisik dalam pesanan: "Unit 2 dari 3". */
+  unit_index: number;
+  unit_total: number;
+  /** Terisi bila tugas ini berasal dari slot pesanan chat. */
+  chat_order_slot_id: string | null;
   base_unit: string;
   stock_type: "weight" | "count";
   require_photo: boolean;
