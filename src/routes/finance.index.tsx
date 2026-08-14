@@ -386,7 +386,7 @@ function FinancePage() {
         <Button
           size="icon"
           aria-label="Catat utang atau piutang"
-          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 size-14 rounded-full shadow-lg"
+          className="fixed right-4 bottom-[calc(max(env(safe-area-inset-bottom),var(--mcm-kb,0px))+4.75rem)] z-40 size-14 rounded-full shadow-lg"
           onClick={() => setLedgerFormOpen(true)}
         >
           <Plus className="size-6" />

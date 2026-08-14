@@ -251,7 +251,7 @@ function TasksIndex() {
         )}
 
         <Button
-          className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-40 h-14 rounded-full px-5 shadow-lg"
+          className="fixed right-4 bottom-[calc(max(env(safe-area-inset-bottom),var(--mcm-kb,0px))+4.75rem)] z-40 h-14 rounded-full px-5 shadow-lg"
           onClick={() => setCreateOpen(true)}
         >
           <Plus className="size-5" /> Buat Penyiapan
