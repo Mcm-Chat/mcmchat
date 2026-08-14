@@ -203,6 +203,14 @@ function CallsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                setNotice(false);
+                void navigate({ to: "/settings/calls" });
+              }}
+            >
+              Buka diagnostik
+            </AlertDialogAction>
             <AlertDialogAction onClick={() => setNotice(false)}>Mengerti</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
