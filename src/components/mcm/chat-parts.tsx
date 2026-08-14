@@ -698,6 +698,10 @@ function useVoiceRecorder(onDone: (blob: Blob, seconds: number) => void) {
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const started = useRef(0);
+  // Guard sinkron: tap cepat pada tombol mic tidak boleh memicu dua
+  // getUserMedia / dua MediaRecorder sekaligus.
+  const busy = useRef(false);
+  const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
     if (!recording) return;
@@ -706,8 +710,15 @@ function useVoiceRecorder(onDone: (blob: Blob, seconds: number) => void) {
   }, [recording]);
 
   const start = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setPreparing(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (recorder.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
       const mr = new MediaRecorder(stream);
       chunks.current = [];
       mr.ondataavailable = (e) => chunks.current.push(e.data);
@@ -723,16 +734,20 @@ function useVoiceRecorder(onDone: (blob: Blob, seconds: number) => void) {
       setRecording(true);
     } catch {
       toast.error("Tidak bisa mengakses mikrofon. Izinkan akses lalu coba lagi.");
+    } finally {
+      busy.current = false;
+      setPreparing(false);
     }
   };
 
   const stop = () => {
+    if (busy.current) return;
     recorder.current?.stop();
     recorder.current = null;
     setRecording(false);
   };
 
-  return { recording, seconds, start, stop };
+  return { recording, preparing, seconds, start, stop };
 }
 
 export function ChatComposer({
