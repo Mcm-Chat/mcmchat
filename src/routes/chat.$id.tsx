@@ -65,6 +65,7 @@ import { listJobsForConversation } from "@/lib/api/prepare";
 import { labelHari } from "@/lib/mcm/format";
 import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "@/lib/api/outbox";
 import { useConnectionState } from "@/lib/realtime/connection";
+import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { useTyping } from "@/lib/api/presence";
 import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
 
