@@ -357,7 +357,9 @@ export async function dispatchCallTerminalPush(input: {
   const res = await sendPush(
     rows.map((r) => ({ token: String(r["push_token"]), sound: false, vibrate: false })),
     payload,
-    { ttlSeconds: 60 },
+    // Tanpa token aksi apa pun; collapse key = call id agar notifikasi dering
+    // yang basi digantikan/dibatalkan, bukan ditumpuk.
+    { ttlSeconds: 60, collapseKey: `call-${input.callId}` },
   );
   await pruneTokens(res.invalidTokens);
   return res;
