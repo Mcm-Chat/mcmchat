@@ -8,6 +8,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { sendMessage } from "./chat";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ChatOrderRow = Tables<"chat_orders">;
@@ -109,6 +110,7 @@ export async function createChatOrder(input: {
   note?: string;
   customerName?: string;
   buyerUserId?: string | null;
+  senderUserId: string;
   idempotencyKey: string;
 }): Promise<string> {
   const { data, error } = await supabase.rpc("create_chat_order", {
@@ -130,7 +132,43 @@ export async function createChatOrder(input: {
     } as never,
   });
   if (error) throw new Error(friendly(error.message, "Gagal mengajukan pesanan"));
-  return data as unknown as string;
+  const orderId = data as unknown as string;
+  await ensureOrderMessage({
+    conversationId: input.conversationId,
+    senderId: input.senderUserId,
+    orderId,
+  });
+  return orderId;
+}
+
+/**
+ * Kartu pesanan di chat adalah satu pesan saja; statusnya dibaca langsung dari
+ * `chat_orders` sehingga tidak pernah ada dua kartu yang saling bertentangan.
+ * client_id membuat pengiriman kartu idempoten terhadap dobel-tap.
+ */
+async function ensureOrderMessage(input: {
+  conversationId: string;
+  senderId: string;
+  orderId: string;
+}) {
+  const existing = unwrap(
+    await supabase
+      .from("messages")
+      .select("id")
+      .eq("conversation_id", input.conversationId)
+      .eq("client_id", `chat-order:${input.orderId}`)
+      .limit(1),
+    "Gagal memeriksa kartu pesanan",
+  );
+  if (existing.length > 0) return;
+  await sendMessage({
+    conversationId: input.conversationId,
+    senderId: input.senderId,
+    kind: "order",
+    body: "Permintaan pesanan",
+    clientId: `chat-order:${input.orderId}`,
+    payload: { chatOrderId: input.orderId },
+  });
 }
 
 export async function confirmChatOrder(input: {
