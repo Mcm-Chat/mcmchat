@@ -174,6 +174,39 @@ export type Database = {
         }
         Relationships: []
       }
+      call_diagnostic_runs: {
+        Row: {
+          code: string
+          created_at: string
+          detail: string
+          id: string
+          kind: string
+          latency_ms: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          detail?: string
+          id?: string
+          kind?: string
+          latency_ms?: number | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          detail?: string
+          id?: string
+          kind?: string
+          latency_ms?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       call_participants: {
         Row: {
           call_id: string
