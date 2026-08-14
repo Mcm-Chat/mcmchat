@@ -31,6 +31,8 @@ Secret hanya dibaca di server; klien hanya menerima token berumur pendek (15 men
    yang bisa masuk room sebelum panggilan dijawab.
 4. Menutup panggilan memakai `leave_call`: pada 1:1 panggilan langsung berakhir;
    pada grup, panggilan hanya berakhir bila pemanggil keluar atau tidak ada peserta aktif.
+   `end_call` saat `ongoing` **hanya boleh dipakai pemanggil/host**; peserta lain
+   wajib memakai `leave_call` dan hanya keluar sendiri.
 5. Alasan akhir dibedakan tegas dan divalidasi server (kode resmi saja):
    - 45 detik tanpa jawaban → `missed` / `timeout`
    - pemanggil menutup sebelum dijawab → `ended` / `cancelled`
@@ -38,10 +40,20 @@ Secret hanya dibaca di server; klien hanya menerima token berumur pendek (15 men
    - menutup saat berlangsung → `ended` / `hangup`
 6. Dering kedaluwarsa dihitung absolut dari `created_at`, sehingga membuka ulang
    layar tidak memperpanjang waktu dering.
+7. Penolakan memakai RPC khusus `decline_call`: pada 1:1 panggilan langsung
+   `declined`; pada grup hanya penolak yang keluar dan panggilan tetap `ringing`
+   sampai penerima aktif terakhir menolak. Pemanggil tidak bisa memanggil decline.
+8. Peserta yang sudah keluar/menolak **tidak pernah dihidupkan kembali**:
+   `join_call`, `answer_call`, dan penerbitan token menolak `left_at IS NOT NULL`.
+   Pemulihan panggilan masuk juga mengabaikan panggilan tersebut. Reconnect media
+   biasa tetap aman karena putus jaringan tidak menulis `left_at`.
+9. Timeout `missed`/`timeout` hanya diterima setelah 45 detik nyata di server
+   (`now() >= created_at + 45s`), dan durasi panggilan dihitung server dari
+   `answered_at`/`started_at` — angka dari klien hanya fallback.
 
 Semua transisi status dilakukan lewat RPC `SECURITY DEFINER`; klien tidak punya
 izin `INSERT/UPDATE/DELETE` langsung pada tabel `calls` dan `call_participants`.
-ACL RPC panggilan (`join_call`, `leave_call`, `answer_call`, `end_call`,
+ACL RPC panggilan (`join_call`, `leave_call`, `answer_call`, `end_call`, `decline_call`,
 `create_call_tx`, `expire_stale_calls`) hanya `authenticated` + `service_role`;
 `anon`/`PUBLIC` sudah dicabut.
 
