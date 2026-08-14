@@ -103,6 +103,13 @@ export type PushTarget = {
   extra?: Record<string, string>;
 };
 
+/** Pesan lengkap untuk SATU perangkat (payload + TTL + collapse key sendiri). */
+export type PushMessage = PushTarget & {
+  data: PushData;
+  ttlSeconds?: number;
+  collapseKey?: string;
+};
+
 /**
  * Hanya error yang benar-benar berarti "token tidak berlaku lagi" yang boleh
  * menghapus token. Bug payload (INVALID_ARGUMENT pada field lain, quota,
