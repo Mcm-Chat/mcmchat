@@ -1,0 +1,90 @@
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { render, act, cleanup } from "@testing-library/react";
+import { useState } from "react";
+import {
+  useBackDismiss,
+  backGuardDepth,
+  backGuardMarkerActive,
+  __resetBackGuard,
+} from "@/lib/mobile/back-guard";
+
+function Overlay({ open, onDismiss }: { open: boolean; onDismiss: () => void }) {
+  useBackDismiss(open, onDismiss);
+  return null;
+}
+
+function pressBack() {
+  act(() => {
+    window.dispatchEvent(new PopStateEvent("popstate", { state: null }));
+  });
+}
+
+function Stacked() {
+  const [bottom, setBottom] = useState(true);
+  const [top, setTop] = useState(true);
+  return (
+    <>
+      <Overlay open={bottom} onDismiss={() => setBottom(false)} />
+      <Overlay open={top} onDismiss={() => setTop(false)} />
+      <span data-testid="state">{`${bottom ? "b" : "-"}${top ? "t" : "-"}`}</span>
+    </>
+  );
+}
+
+describe("back-guard LIFO", () => {
+  beforeEach(() => {
+    __resetBackGuard();
+    window.history.replaceState(null, "", "/chat/1");
+  });
+  afterEach(() => {
+    cleanup();
+    __resetBackGuard();
+  });
+
+  it("menutup hanya overlay teratas per Back", () => {
+    const { getByTestId } = render(<Stacked />);
+    expect(getByTestId("state").textContent).toBe("bt");
+    expect(backGuardDepth()).toBe(2);
+    // Satu penanda saja untuk seluruh stack.
+    expect(backGuardMarkerActive()).toBe(true);
+
+    pressBack();
+    expect(getByTestId("state").textContent).toBe("b-");
+    expect(backGuardDepth()).toBe(1);
+    expect(backGuardMarkerActive()).toBe(true);
+
+    pressBack();
+    expect(getByTestId("state").textContent).toBe("--");
+    expect(backGuardDepth()).toBe(0);
+    expect(backGuardMarkerActive()).toBe(false);
+  });
+
+  it("penutupan lewat UI tidak mengubah route dan tidak menyisakan penanda", () => {
+    const before = window.location.pathname;
+    function UiClose() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <Overlay open={open} onDismiss={() => setOpen(false)} />
+          <button onClick={() => setOpen(false)}>tutup</button>
+        </>
+      );
+    }
+    const { getByText } = render(<UiClose />);
+    expect(backGuardDepth()).toBe(1);
+    act(() => getByText("tutup").click());
+    expect(backGuardDepth()).toBe(0);
+    expect(backGuardMarkerActive()).toBe(false);
+    expect(window.location.pathname).toBe(before);
+  });
+
+  it("unmount tidak menyisakan listener atau penanda", () => {
+    const { unmount } = render(<Stacked />);
+    expect(backGuardDepth()).toBe(2);
+    unmount();
+    expect(backGuardDepth()).toBe(0);
+    expect(backGuardMarkerActive()).toBe(false);
+    // Back setelah unmount tidak boleh melempar / memanggil dismiss apa pun.
+    expect(() => pressBack()).not.toThrow();
+  });
+});
