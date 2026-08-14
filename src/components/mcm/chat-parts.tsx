@@ -321,6 +321,9 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
 }
 
 type ProductCardData = {
+  businessId?: string;
+  productId?: string;
+  variantId?: string | null;
   productName?: string;
   variantName?: string;
   price?: number;
@@ -356,6 +359,14 @@ function ProductCard({ message }: { message: MessageRow }) {
         </div>
       )}
       {p.note && <p className="text-[11px] break-words opacity-90">{p.note}</p>}
+      {p.businessId && p.variantId && (
+        <OrderFromProductButton
+          businessId={p.businessId}
+          variantId={p.variantId}
+          conversationId={message.conversation_id}
+          unit={p.unit ?? ""}
+        />
+      )}
     </div>
   );
 }
@@ -1009,4 +1020,99 @@ export function ChatComposer({
 function chatOrderIdOf(message: { payload: unknown }): string | null {
   const p = message.payload as { chatOrderId?: unknown } | null;
   return typeof p?.chatOrderId === "string" ? p.chatOrderId : null;
+}
+
+/**
+ * Pembeli memesan langsung dari kartu produk. Satu ketuk membuat pesanan chat
+ * berstatus `buyer_requested`; idempotency key mencegah pesanan ganda.
+ */
+function OrderFromProductButton({
+  businessId,
+  variantId,
+  conversationId,
+  unit,
+}: {
+  businessId: string;
+  variantId: string;
+  conversationId: string;
+  unit: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState("1");
+  const [qty, setQty] = useState("1");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const keyRef = useRef(crypto.randomUUID());
+
+  const submit = async () => {
+    if (saving) return;
+    const c = Number(count);
+    const q = Number(qty.replace(",", "."));
+    if (!Number.isInteger(c) || c <= 0) return toast.error("Jumlah unit tidak valid");
+    if (!Number.isFinite(q) || q <= 0) return toast.error("Jumlah per unit tidak valid");
+    setSaving(true);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) throw new Error("Harus masuk terlebih dahulu");
+      await createChatOrder({
+        businessId,
+        conversationId,
+        senderUserId: uid,
+        idempotencyKey: keyRef.current,
+        note: note.trim(),
+        items: [
+          { variantId, unitCount: c, perUnitQty: q, perUnitUnit: unit || "pcs" },
+        ],
+      });
+      toast.success("Pesanan dikirim ke toko");
+      setOpen(false);
+    } catch (err) {
+      keyRef.current = crypto.randomUUID();
+      toast.error(err instanceof Error ? err.message : "Gagal mengirim pesanan");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <Button
+        size="sm"
+        className="h-9 w-full rounded-lg text-[11px]"
+        onClick={() => setOpen(true)}
+      >
+        Pesan sekarang
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Pesan produk</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Jumlah unit</Label>
+              <Input inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Isi per unit {unit ? `(${unit})` : ""}</Label>
+              <Input inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Catatan (opsional)</Label>
+              <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Tiap unit disiapkan dan difoto terpisah oleh pegawai toko sebelum dikirim.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button className="w-full rounded-xl" disabled={saving} onClick={() => void submit()}>
+              {saving ? "Mengirim…" : "Kirim pesanan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
