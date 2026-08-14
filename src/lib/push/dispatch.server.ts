@@ -7,7 +7,13 @@ import {
   type PushData,
   type PushKind,
 } from "./payload";
-import { sendPush, pushConfigured, type FcmResult, type PushTarget } from "./fcm.server";
+import {
+  sendPush,
+  sendEach,
+  pushConfigured,
+  type FcmResult,
+  type PushMessage,
+} from "./fcm.server";
 
 type Row = Record<string, unknown>;
 
@@ -54,6 +60,18 @@ export async function mintNotificationAction(input: {
 /** TTL aksi pesan (10 menit) dan aksi panggilan (batas dering 45 detik). */
 export const MESSAGE_ACTION_TTL_SEC = 600;
 export const CALL_ACTION_TTL_SEC = 45;
+
+/**
+ * Batalkan aksi yang sudah dicetak tetapi pushnya gagal terkirim, sehingga
+ * token tidak pernah bisa dipakai ulang (pengiriman ke perangkat lain tidak
+ * mungkin karena setiap token terikat device_id).
+ */
+export async function revokeNotificationActions(actionIds: string[]) {
+  const ids = actionIds.filter(Boolean);
+  if (ids.length === 0) return;
+  const db = await admin();
+  await db.rpc("revoke_notification_actions", { _ids: ids });
+}
 
 /** Bersihkan token yang ditolak FCM agar tidak dipakai lagi. */
 async function pruneTokens(tokens: string[]) {
