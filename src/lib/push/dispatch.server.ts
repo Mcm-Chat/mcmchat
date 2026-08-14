@@ -121,25 +121,51 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
   });
 
   const rows = (targets ?? []) as unknown as Row[];
-  const invalid: string[] = [];
-  let sent = 0;
-  let failed = 0;
+  if (rows.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
 
-  // Kelompokkan per preferensi pratinjau DAN per kapabilitas balas.
-  // Isi pesan tidak boleh bocor ke perangkat yang mematikan pratinjau, dan
-  // tombol "Balas" hanya dikirim ke penerima yang memang boleh mengirim pesan
-  // di percakapan ini (server yang menentukan, bukan klien).
-  for (const allowPreview of [true, false]) {
-    for (const canReply of [true, false]) {
-      const group = rows.filter(
-        (r) => Boolean(r["allow_preview"]) === allowPreview && Boolean(r["can_reply"]) === canReply,
-      );
-      if (group.length === 0) continue;
-      const chatTitle =
-        (conv?.type === "group" ? conv?.title : sender?.display_name) ??
-        sender?.display_name ??
-        "MCM";
-      const data: PushData = {
+  const chatTitle =
+    (conv?.type === "group" ? conv?.title : sender?.display_name) ?? sender?.display_name ?? "MCM";
+
+  // SATU pesan per perangkat: pratinjau, kapabilitas balas, dan token aksi
+  // sekali-pakai semuanya berbeda per perangkat, jadi tidak boleh ada payload
+  // bersama yang dikirim multicast.
+  const messages: PushMessage[] = [];
+  const mintedByToken = new Map<string, string[]>();
+  for (const row of rows) {
+    const allowPreview = Boolean(row["allow_preview"]);
+    const canReply = Boolean(row["can_reply"]);
+    const userId = String(row["user_id"]);
+    const deviceId = String(row["device_id"]);
+    const pushToken = String(row["push_token"]);
+
+    const read = await mintNotificationAction({
+      userId,
+      deviceId,
+      action: "read",
+      conversationId: String(msg.conversation_id),
+      messageId: String(msg.id),
+      ttlSeconds: MESSAGE_ACTION_TTL_SEC,
+    });
+    // canReply=false → tombol balas tidak dicetak sama sekali.
+    const reply = canReply
+      ? await mintNotificationAction({
+          userId,
+          deviceId,
+          action: "reply",
+          conversationId: String(msg.conversation_id),
+          ttlSeconds: MESSAGE_ACTION_TTL_SEC,
+        })
+      : null;
+
+    const minted = [read?.actionId, reply?.actionId].filter(Boolean) as string[];
+    mintedByToken.set(pushToken, [...(mintedByToken.get(pushToken) ?? []), ...minted]);
+
+    messages.push({
+      token: pushToken,
+      sound: Boolean(row["sound"]),
+      vibrate: Boolean(row["vibrate"]),
+      ttlSeconds: MESSAGE_ACTION_TTL_SEC,
+      data: {
         kind: "message",
         channel: CHANNELS.messages.id,
         group: String(msg.conversation_id),
@@ -152,52 +178,28 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
           conv?.type === "group" && allowPreview
             ? `${sender?.display_name ?? "Anggota"}: ${previewBody(String(msg.kind), String(msg.body ?? ""), true)}`
             : previewBody(String(msg.kind), String(msg.body ?? ""), allowPreview),
-      };
-      const list: PushTarget[] = group.map((r) => ({
-        token: String(r["push_token"]),
-        sound: Boolean(r["sound"]),
-        vibrate: Boolean(r["vibrate"]),
-      }));
-      const withTokens: PushTarget[] = [];
-      for (let i = 0; i < group.length; i += 1) {
-        const row = group[i] as Row;
-        const base = list[i] as PushTarget;
-        const userId = String(row["user_id"]);
-        const deviceId = String(row["device_id"]);
-        const read = await mintNotificationAction({
-          userId,
-          deviceId,
-          action: "read",
-          conversationId: String(msg.conversation_id),
-          messageId: String(msg.id),
-          ttlSeconds: MESSAGE_ACTION_TTL_SEC,
-        });
-        const reply = canReply
-          ? await mintNotificationAction({
-              userId,
-              deviceId,
-              action: "reply",
-              conversationId: String(msg.conversation_id),
-              ttlSeconds: MESSAGE_ACTION_TTL_SEC,
-            })
-          : null;
-        withTokens.push({
-          ...base,
-          extra: {
-            ...(read ? { readActionId: read.actionId, readToken: read.token } : {}),
-            ...(reply ? { replyActionId: reply.actionId, replyToken: reply.token } : {}),
-          },
-        });
-      }
-      const res = await sendPush(withTokens, data);
-      sent += res.sent;
-      failed += res.failed;
-      invalid.push(...res.invalidTokens);
-    }
+      },
+      extra: {
+        ...(read ? { readActionId: read.actionId, readToken: read.token } : {}),
+        ...(reply ? { replyActionId: reply.actionId, replyToken: reply.token } : {}),
+      },
+    });
   }
 
-  await pruneTokens(invalid);
-  return { configured: true, sent, failed, invalidTokens: invalid };
+  const res = await sendEach(messages);
+  // Token aksi yang notifikasinya gagal terkirim langsung dicabut; tidak pernah
+  // dipakai ulang untuk perangkat lain.
+  const orphaned = res.outcomes
+    .filter((o) => !o.ok)
+    .flatMap((o) => mintedByToken.get(o.token) ?? []);
+  await revokeNotificationActions(orphaned);
+  await pruneTokens(res.invalidTokens);
+  return {
+    configured: true,
+    sent: res.sent,
+    failed: res.failed,
+    invalidTokens: res.invalidTokens,
+  };
 }
 
 /**
