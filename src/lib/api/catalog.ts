@@ -356,6 +356,8 @@ export type PhotoInput = {
   group_label?: string;
   source_type?: "camera" | "gallery" | "preparation";
   location_mode?: "auto" | "manual" | "none";
+  /** Foto milik satu unit fisik tertentu (bukan foto varian generik). */
+  stock_unit_id?: string | null;
 };
 
 export async function addProductPhotos(
@@ -380,6 +382,7 @@ export async function addProductPhotos(
       business_id: businessId,
       product_id: productId,
       variant_id: d.variant_id ?? null,
+      stock_unit_id: d.stock_unit_id ?? null,
       image_path: up.path,
       caption: d.caption ?? "",
       location_url: d.location_url ?? "",
