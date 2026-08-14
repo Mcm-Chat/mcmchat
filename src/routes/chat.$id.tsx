@@ -868,13 +868,31 @@ function ChatRoom() {
                 </Button>
               </div>
             </>
+          ) : relation?.has_incoming_messages ? (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {`${conv.other?.display_name ?? "Kontak ini"} pernah mengirim pesan ke Anda. Terima untuk mulai membalas.`}
+              </p>
+              <div className="flex justify-center gap-2">
+                <Button className="rounded-xl" onClick={() => void acceptLegacy()}>
+                  Terima percakapan &amp; hubungkan
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="rounded-xl"
+                  onClick={() => void rejectLegacy()}
+                >
+                  Tolak
+                </Button>
+              </div>
+            </>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
                 Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
               </p>
-              <Button variant="secondary" className="rounded-xl" onClick={() => void claimLegacy()}>
-                Aktifkan kontak untuk membalas
+              <Button variant="secondary" className="rounded-xl" onClick={() => void sendRequest()}>
+                Kirim permintaan
               </Button>
             </>
           )}
