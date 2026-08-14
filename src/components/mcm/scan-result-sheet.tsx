@@ -6,7 +6,13 @@ import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   cancelContactRequest,
   getContactRelation,
@@ -77,7 +83,9 @@ export function ScanResultSheet({
       await refresh();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Kontak gagal disimpan. Periksa koneksi lalu coba lagi.",
+        err instanceof Error
+          ? err.message
+          : "Kontak gagal disimpan. Periksa koneksi lalu coba lagi.",
       );
     } finally {
       setBusy(false);
@@ -129,9 +137,7 @@ export function ScanResultSheet({
                       : "Belum tersimpan di kontak Anda."}
         </p>
 
-        {saved && (
-          <p className="mt-2 text-xs font-medium text-primary">Kontak berhasil disimpan</p>
-        )}
+        {saved && <p className="mt-2 text-xs font-medium text-primary">Kontak berhasil disimpan</p>}
 
         {!blockedMe && !relation?.saved && (
           <div className="mt-3 space-y-1.5">
@@ -220,7 +226,10 @@ export function ScanResultSheet({
                   className="h-12 rounded-xl"
                   disabled={busy}
                   onClick={() =>
-                    void run(() => cancelContactRequest(userId, profile.id), "Permintaan dibatalkan")
+                    void run(
+                      () => cancelContactRequest(userId, profile.id),
+                      "Permintaan dibatalkan",
+                    )
                   }
                 >
                   Batalkan Permintaan

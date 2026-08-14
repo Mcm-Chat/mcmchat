@@ -28,7 +28,10 @@ function loadMigrations(): string {
 const sql = loadMigrations();
 
 function lastIndexOfPattern(pattern: RegExp): number {
-  const re = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+  const re = new RegExp(
+    pattern.source,
+    pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`,
+  );
   let idx = -1;
   let m: RegExpExecArray | null;
   while ((m = re.exec(sql)) !== null) idx = m.index;
@@ -70,7 +73,9 @@ describe("SSOT hubungan diterima", () => {
 
   it("backfill hanya dari request accepted, bukan dari kartu mutual", () => {
     const insert =
-      sql.match(/insert into public\.contact_connections \(user_low, user_high, accepted_request_id, accepted_at\)[^;]*from public\.contact_requests r where r\.status = 'accepted'[^;]*;/s) ?? [];
+      sql.match(
+        /insert into public\.contact_connections \(user_low, user_high, accepted_request_id, accepted_at\)[^;]*from public\.contact_requests r where r\.status = 'accepted'[^;]*;/s,
+      ) ?? [];
     expect(insert.length).toBeGreaterThan(0);
     expect(insert[0]).not.toMatch(/from public\.contacts/);
   });
@@ -96,7 +101,9 @@ describe("SSOT hubungan diterima", () => {
     const pins = lastFunctionBody("pins_for_me");
     expect(pins).toMatch(/p\.id = auth\.uid\(\) or public\.are_connected\(auth\.uid\(\), p\.id\)/);
     const full = lastFunctionBody("profile_full");
-    expect(full).toMatch(/case when p\.id = auth\.uid\(\) or public\.are_connected\(auth\.uid\(\), p\.id\) then p\.pin else null end/);
+    expect(full).toMatch(
+      /case when p\.id = auth\.uid\(\) or public\.are_connected\(auth\.uid\(\), p\.id\) then p\.pin else null end/,
+    );
   });
 
   it("avatar_privacy hanya untuk diri sendiri", () => {
@@ -195,7 +202,13 @@ describe("siklus hidup hubungan", () => {
 });
 
 describe("least privilege", () => {
-  const CORE = ["profiles", "contacts", "contact_requests", "pin_search_log", "contact_connections"];
+  const CORE = [
+    "profiles",
+    "contacts",
+    "contact_requests",
+    "pin_search_log",
+    "contact_connections",
+  ];
 
   it("authenticated hanya punya SELECT pada tabel inti", () => {
     const revoke = lastIndexOfPattern(
@@ -204,7 +217,9 @@ describe("least privilege", () => {
     expect(revoke).toBeGreaterThan(-1);
     for (const t of CORE) {
       const write = lastIndexOfPattern(
-        new RegExp(`grant [^;]*(insert|update|delete|truncate|trigger|references)[^;]*on (table )?public\\.${t}[^;]*to [^;]*authenticated`),
+        new RegExp(
+          `grant [^;]*(insert|update|delete|truncate|trigger|references)[^;]*on (table )?public\\.${t}[^;]*to [^;]*authenticated`,
+        ),
       );
       expect(write).toBeLessThan(revoke);
     }
@@ -221,15 +236,23 @@ describe("least privilege", () => {
   });
 
   it("pin_search_log tidak dapat dibaca klien", () => {
-    const revoke = lastIndexOfPattern(/revoke all on table[^;]*public\.pin_search_log[^;]*from authenticated/);
-    expect(lastIndexOfPattern(/grant [^;]*on public\.pin_search_log[^;]*to [^;]*authenticated/)).toBeLessThan(revoke);
+    const revoke = lastIndexOfPattern(
+      /revoke all on table[^;]*public\.pin_search_log[^;]*from authenticated/,
+    );
+    expect(
+      lastIndexOfPattern(/grant [^;]*on public\.pin_search_log[^;]*to [^;]*authenticated/),
+    ).toBeLessThan(revoke);
     expect(has(/drop policy if exists "own search log" on public\.pin_search_log/)).toBe(true);
   });
 
   it("helper internal tidak executable oleh authenticated/anon", () => {
     for (const fn of ["lock_contact_pair\\(uuid,uuid\\)", "are_connected\\(uuid,uuid\\)"]) {
-      expect(has(new RegExp(`revoke all on function public\\.${fn} from public, anon, authenticated`))).toBe(true);
-      expect(has(new RegExp(`grant execute on function public\\.${fn} to authenticated`))).toBe(false);
+      expect(
+        has(new RegExp(`revoke all on function public\\.${fn} from public, anon, authenticated`)),
+      ).toBe(true);
+      expect(has(new RegExp(`grant execute on function public\\.${fn} to authenticated`))).toBe(
+        false,
+      );
     }
   });
 
@@ -243,13 +266,21 @@ describe("least privilege", () => {
 });
 
 describe("kontrak klien", () => {
-  const CORE_TABLES = ["profiles", "contacts", "contact_requests", "pin_search_log", "contact_connections"];
+  const CORE_TABLES = [
+    "profiles",
+    "contacts",
+    "contact_requests",
+    "pin_search_log",
+    "contact_connections",
+  ];
 
   it("tidak ada tulis langsung dari klien ke tabel inti", () => {
     for (const { p, text } of clientFiles) {
       if (p.includes(".server.") || p.includes("/push/") || p.includes("functions.ts")) continue;
       for (const t of CORE_TABLES) {
-        const re = new RegExp(`from\\(["']${t}["']\\)[\\s\\S]{0,80}?\\.(insert|update|delete|upsert)\\(`);
+        const re = new RegExp(
+          `from\\(["']${t}["']\\)[\\s\\S]{0,80}?\\.(insert|update|delete|upsert)\\(`,
+        );
         expect(re.test(text), `${p} menulis langsung ke ${t}`).toBe(false);
       }
     }

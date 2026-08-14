@@ -103,9 +103,7 @@ function ContactDetailPage() {
             />
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-semibold">{card.display_name}</h1>
-              {full?.pin && (
-                <p className="font-mono text-xs text-muted-foreground">{full.pin}</p>
-              )}
+              {full?.pin && <p className="font-mono text-xs text-muted-foreground">{full.pin}</p>}
               <div className="mt-1">
                 {rel?.connected ? (
                   <StatusBadge tone="success">Terhubung</StatusBadge>

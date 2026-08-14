@@ -256,8 +256,7 @@ export async function removeSavedContact(_userId: string, contactId: string) {
   if (error)
     throw new Error(
       mapRpcError(error.message, "Kontak gagal dihapus.", {
-        connected_requires_disconnect:
-          "Kalian masih terhubung. Putuskan hubungan terlebih dahulu.",
+        connected_requires_disconnect: "Kalian masih terhubung. Putuskan hubungan terlebih dahulu.",
         invalid_target: "Akun tujuan tidak valid.",
       }),
     );
