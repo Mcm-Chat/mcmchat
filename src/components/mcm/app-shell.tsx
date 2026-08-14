@@ -40,7 +40,7 @@ export function BottomNavigation({
   const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="sticky bottom-0 z-30 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+    <nav className="sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur">
       <ul className="grid grid-cols-6">
         {NAV.map((item) => {
           const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
@@ -50,9 +50,10 @@ export function BottomNavigation({
               <Link
                 to={item.to}
                 className={cn(
-                  "relative flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors",
+                  "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
+                aria-current={active ? "page" : undefined}
               >
                 <span className="relative">
                   <item.icon className={cn("size-5.5", active && "stroke-[2.4]")} />
@@ -97,11 +98,11 @@ export function MobileHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 border-b border-border/60 pt-[env(safe-area-inset-top)]",
+        "sticky top-0 z-30 shrink-0 border-b border-border/60 pt-[env(safe-area-inset-top)]",
         "bg-card/95 text-foreground backdrop-blur",
       )}
     >
-      <div className="flex items-center gap-2 px-3 py-3">
+      <div className="flex items-center gap-1 px-3 py-2.5">
         {back && (
           <Button
             type="button"
@@ -145,10 +146,12 @@ export function AppShell({
   className?: string | undefined;
 }) {
   return (
-    <div className="min-h-screen bg-muted/40">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background shadow-2xl sm:min-h-[100dvh]">
+    <div className="h-dvh bg-muted/40">
+      <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] shadow-2xl">
         {header}
-        <main className={cn("flex-1 overflow-x-hidden", className)}>{children}</main>
+        <main className={cn("min-h-0 flex-1 overflow-x-hidden overflow-y-auto", className)}>
+          {children}
+        </main>
         {nav && <BottomNavigation badges={badges} />}
       </div>
     </div>
