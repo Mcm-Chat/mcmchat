@@ -221,6 +221,33 @@ export async function dispatchCallPush(input: {
     };
   }
   const db = await admin();
+  // Deadline dering absolut: created_at + 45 detik. Tidak ada push aksi yang
+  // boleh dikirim setelah deadline lewat.
+  const { data: callRow } = await db
+    .from("calls")
+    .select("id, created_at")
+    .eq("id", input.callId)
+    .maybeSingle();
+  if (!callRow?.created_at)
+    return {
+      configured: true,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "panggilan tidak ditemukan",
+    };
+  const deadlineMs = new Date(String(callRow.created_at)).getTime() + CALL_ACTION_TTL_SEC * 1000;
+  const remainingSec = Math.ceil((deadlineMs - Date.now()) / 1000);
+  if (remainingSec <= 0)
+    return {
+      configured: true,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "ring_deadline_passed",
+    };
+  const ttlSeconds = Math.max(1, Math.min(CALL_ACTION_TTL_SEC, remainingSec));
+
   const { data } = await db.rpc("push_targets_for_call", { _call: input.callId });
   const rows = (data ?? []) as unknown as Row[];
   if (rows.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
@@ -235,10 +262,12 @@ export async function dispatchCallPush(input: {
     body: input.kind === "video" ? "Panggilan video masuk" : "Panggilan suara masuk",
   };
 
-  const targets: PushTarget[] = [];
+  const messages: PushMessage[] = [];
+  const mintedByToken = new Map<string, string[]>();
   for (const row of rows) {
     const userId = String(row["user_id"]);
     const deviceId = String(row["device_id"]);
+    const pushToken = String(row["push_token"]);
     // Aksi jawab dan tolak memakai token BERBEDA, keduanya kedaluwarsa
     // bersamaan dengan batas dering 45 detik.
     const answer = await mintNotificationAction({
@@ -246,32 +275,49 @@ export async function dispatchCallPush(input: {
       deviceId,
       action: "call_answer",
       callId: input.callId,
-      ttlSeconds: CALL_ACTION_TTL_SEC,
+      ttlSeconds: ttlSeconds,
     });
     const decline = await mintNotificationAction({
       userId,
       deviceId,
       action: "call_decline",
       callId: input.callId,
-      ttlSeconds: CALL_ACTION_TTL_SEC,
+      ttlSeconds: ttlSeconds,
     });
-    targets.push({
-      token: String(row["push_token"]),
+    mintedByToken.set(pushToken, [
+      ...(mintedByToken.get(pushToken) ?? []),
+      ...([answer?.actionId, decline?.actionId].filter(Boolean) as string[]),
+    ]);
+    messages.push({
+      token: pushToken,
       sound: Boolean(row["sound"]),
       vibrate: Boolean(row["vibrate"]),
+      data: payload,
+      // TTL FCM = sisa detik dering yang persis (min 1, maks 45).
+      ttlSeconds,
       extra: {
         // Perangkat yang mematikan pratinjau tidak pernah menerima nama penelepon
         // pada layar kunci (notifikasi memakai versi publik generik).
         preview: row["allow_preview"] ? "1" : "0",
+        ringDeadline: String(Math.floor(deadlineMs / 1000)),
         ...(answer ? { answerActionId: answer.actionId, answerToken: answer.token } : {}),
         ...(decline ? { declineActionId: decline.actionId, declineToken: decline.token } : {}),
       },
     });
   }
 
-  const res = await sendPush(targets, payload, { ttlSeconds: 45 });
+  const res = await sendEach(messages);
+  const orphaned = res.outcomes
+    .filter((o) => !o.ok)
+    .flatMap((o) => mintedByToken.get(o.token) ?? []);
+  await revokeNotificationActions(orphaned);
   await pruneTokens(res.invalidTokens);
-  return res;
+  return {
+    configured: true,
+    sent: res.sent,
+    failed: res.failed,
+    invalidTokens: res.invalidTokens,
+  };
 }
 
 /**
