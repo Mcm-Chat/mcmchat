@@ -340,6 +340,10 @@ type ProductCardData = {
   price?: number;
   unit?: string;
   stockLabel?: string;
+  perUnitQty?: number;
+  perUnitUnit?: string;
+  availableUnitCount?: number;
+  availableQtyDisplay?: number;
   description?: string;
   note?: string;
   photos?: SalesCardPhoto[];
@@ -349,6 +353,11 @@ type ProductCardData = {
 function ProductCard({ message }: { message: MessageRow }) {
   const p = (message.payload ?? {}) as ProductCardData;
   const photos = p.photos ?? [];
+  const perUnitLabel =
+    p.perUnitQty && p.perUnitQty > 0
+      ? `${formatNumber(p.perUnitQty)} ${p.perUnitUnit ?? p.unit ?? ""}`.trim()
+      : "";
+  const availableUnits = Number(p.availableUnitCount ?? 0);
   return (
     <div className="w-64 max-w-[78vw] space-y-2">
       <p className="text-[10px] font-bold tracking-wide uppercase opacity-70">Produk</p>
@@ -360,6 +369,7 @@ function ProductCard({ message }: { message: MessageRow }) {
         <span className="font-semibold">{rupiah(Number(p.price ?? 0))}</span>
         {p.unit && <span className="opacity-75">per {p.unit}</span>}
       </div>
+      {perUnitLabel && <p className="text-[11px] opacity-80">Isi per unit: {perUnitLabel}</p>}
       {p.stockLabel && <p className="text-[11px] opacity-80">Stok tersedia: {p.stockLabel}</p>}
       {p.description && <p className="line-clamp-3 text-[11px] opacity-80">{p.description}</p>}
       {photos.length > 0 && (
@@ -375,7 +385,8 @@ function ProductCard({ message }: { message: MessageRow }) {
           businessId={p.businessId}
           variantId={p.variantId}
           conversationId={message.conversation_id}
-          unit={p.unit ?? ""}
+          perUnitLabel={perUnitLabel}
+          availableUnits={availableUnits}
         />
       )}
     </div>
