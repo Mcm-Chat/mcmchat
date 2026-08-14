@@ -3062,6 +3062,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      accept_legacy_direct_conversation: {
+        Args: { _conversation: string }
+        Returns: Json
+      }
       activate_stock_unit: {
         Args: { _unit: string }
         Returns: {
@@ -3992,6 +3996,10 @@ export type Database = {
           _platform?: string
           _push_token?: string
         }
+        Returns: Json
+      }
+      reject_legacy_direct_conversation: {
+        Args: { _conversation: string }
         Returns: Json
       }
       remove_group_member: {
