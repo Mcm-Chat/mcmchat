@@ -138,6 +138,26 @@ export async function sendPush(
   data: PushData,
   options?: { ttlSeconds?: number },
 ): Promise<FcmResult> {
+  const { outcomes: _o, ...rest } = await sendEach(
+    targets.map((t) => ({
+      token: t.token,
+      sound: t.sound,
+      vibrate: t.vibrate,
+      data,
+      ...(t.extra ? { extra: t.extra } : {}),
+      ...(options?.ttlSeconds !== undefined ? { ttlSeconds: options.ttlSeconds } : {}),
+      ...(options?.collapseKey ? { collapseKey: options.collapseKey } : {}),
+    })),
+  );
+  return rest;
+}
+
+/**
+ * Satu payload + satu TTL PER PERANGKAT. Wajib dipakai untuk notifikasi
+ * yang membawa token aksi sekali-pakai: token perangkat A tidak boleh
+ * pernah ikut terkirim ke perangkat B.
+ */
+export async function sendEach(messages: PushMessage[]): Promise<FcmEachResult> {
   const sa = readServiceAccount();
   if (!sa) {
     return {
@@ -145,21 +165,24 @@ export async function sendPush(
       sent: 0,
       failed: 0,
       invalidTokens: [],
+      outcomes: [],
       reason: "FCM_SERVICE_ACCOUNT_JSON belum diatur",
     };
   }
-  if (targets.length === 0) return { configured: true, sent: 0, failed: 0, invalidTokens: [] };
+  if (messages.length === 0)
+    return { configured: true, sent: 0, failed: 0, invalidTokens: [], outcomes: [] };
 
   const bearer = await accessToken(sa);
-  const ttl = `${Math.max(30, Math.min(86400, options?.ttlSeconds ?? 86400))}s`;
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
   const invalidTokens: string[] = [];
+  const outcomes: PushOutcome[] = [];
   let sent = 0;
   let failed = 0;
 
   await Promise.all(
-    targets.map(async (t) => {
-      const payload: Record<string, string> = { ...(data as unknown as Record<string, string>) };
+    messages.map(async (t) => {
+      const ttl = `${Math.max(1, Math.min(86400, Math.round(t.ttlSeconds ?? 86400)))}s`;
+      const payload: Record<string, string> = { ...(t.data as unknown as Record<string, string>) };
       for (const [k, v] of Object.entries(t.extra ?? {})) payload[k] = v;
       payload["sound"] = t.sound ? "1" : "0";
       payload["vibrate"] = t.vibrate ? "1" : "0";
@@ -173,6 +196,7 @@ export async function sendPush(
             android: {
               priority: "HIGH",
               ttl,
+              ...(t.collapseKey ? { collapseKey: t.collapseKey } : {}),
               // Data-only: notifikasi dibangun receiver native (channel + actions).
             },
           },
@@ -180,13 +204,16 @@ export async function sendPush(
       });
       if (res.ok) {
         sent += 1;
+        outcomes.push({ token: t.token, ok: true, deadToken: false });
         return;
       }
       failed += 1;
       const body = await res.json().catch(() => null);
-      if (isDeadTokenError(res.status, body)) invalidTokens.push(t.token);
+      const dead = isDeadTokenError(res.status, body);
+      if (dead) invalidTokens.push(t.token);
+      outcomes.push({ token: t.token, ok: false, deadToken: dead });
     }),
   );
 
-  return { configured: true, sent, failed, invalidTokens };
+  return { configured: true, sent, failed, invalidTokens, outcomes };
 }
