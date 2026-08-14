@@ -52,14 +52,16 @@ describe("message_receipts RLS", () => {
       const body = lastPolicy(name, "message_receipts");
       expect(body).not.toBe("");
       expect(body).toMatch(/user_id = auth\.uid\(\)/);
-      expect(body).toMatch(/is_conv_member\(m\.conversation_id, auth\.uid\(\)\)/);
+      // Helper self-scoped: policy tidak boleh lagi menanyakan hak user lain.
+      expect(body).toMatch(/current_user_can_read_conversation\(m\.conversation_id\)/);
+      expect(body).not.toMatch(/is_conv_member\(/);
       expect(body).toMatch(/to authenticated/);
     }
   });
 
   it("select receipt tetap dibatasi anggota percakapan", () => {
     expect(sql).toMatch(
-      /create policy "member reads receipts" on public\.message_receipts[\s\S]*?is_conv_member/,
+      /create policy "member reads receipts" on public\.message_receipts[\s\S]*?current_user_can_read_conversation/,
     );
   });
 
@@ -79,11 +81,10 @@ describe("message_receipts RLS", () => {
 
 describe("message_hides RLS", () => {
   it("policy select & insert mengikat pemilik dan keanggotaan percakapan", () => {
-    for (const name of ["own hides", "own hides insert"]) {
-      const body = lastPolicy(name, "message_hides");
-      expect(body).toMatch(/user_id = auth\.uid\(\)/);
-      expect(body).toMatch(/is_conv_member\(m\.conversation_id, auth\.uid\(\)\)/);
-    }
+    expect(lastPolicy("own hides", "message_hides")).toMatch(/user_id = auth\.uid\(\)/);
+    const insertBody = lastPolicy("own hides insert", "message_hides");
+    expect(insertBody).toMatch(/user_id = auth\.uid\(\)/);
+    expect(insertBody).toMatch(/current_user_can_read_conversation\(m\.conversation_id\)/);
     expect(lastPolicy("own hides delete", "message_hides")).toMatch(/user_id = auth\.uid\(\)/);
   });
 
