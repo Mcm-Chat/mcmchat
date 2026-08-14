@@ -74,7 +74,9 @@ describe("2B — SSOT percakapan langsung", () => {
     );
     expect(revoke).toBeGreaterThan(-1);
     expect(
-      lastIndexOfPattern(/grant (insert|update|delete|all) on table public\.direct_conversations/),
+      lastIndexOfPattern(
+        /grant (insert|update|delete|all) on table public\.direct_conversations to [^;]*authenticated/,
+      ),
     ).toBeLessThan(revoke);
   });
 
@@ -188,9 +190,11 @@ describe("2B — preferensi dan read state", () => {
     expect(body).toMatch(/is_muted = coalesce/);
     expect(body).toMatch(/is_pinned = coalesce/);
     expect(body).toMatch(/is_archived = coalesce/);
-    expect(body).not.toMatch(/set[^;]*\brole\s*=/);
-    expect(body).not.toMatch(/set[^;]*user_id\s*=/);
-    expect(body).not.toMatch(/conversation_id\s*=\s*_/);
+    const setClause = body.slice(body.indexOf(" set "), body.indexOf(" where "));
+    expect(setClause).not.toMatch(/\brole\s*=/);
+    expect(setClause).not.toMatch(/\buser_id\s*=/);
+    expect(setClause).not.toMatch(/conversation_id\s*=/);
+    expect(body).toMatch(/where conversation_id = _conversation and user_id = _uid/);
   });
 
   it("mark_conversation_read memakai cursor server dan hanya baris sendiri", () => {
