@@ -23,7 +23,7 @@ const sql = files.join("\n");
 function latestFunction(name: string): string {
   let found = "";
   for (const file of files) {
-    const re = new RegExp(`create (?:or replace )?function public\\.${name}\\b[\\s\\S]*?\\n\\$\\$;`, "gi");
+    const re = new RegExp(`create (?:or replace )?function public\\.${name}\\b[\\s\\S]*?\\$\\$;`, "gi");
     const matches = file.match(re);
     if (matches?.length) found = matches[matches.length - 1]!;
   }
