@@ -39,6 +39,17 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { createChatOrder } from "@/lib/api/chat-orders";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { ChatOrderCard } from "@/components/mcm/chat-order-card";
 import { cn } from "@/lib/utils";
@@ -1048,8 +1059,14 @@ function OrderFromProductButton({
     if (saving) return;
     const c = Number(count);
     const q = Number(qty.replace(",", "."));
-    if (!Number.isInteger(c) || c <= 0) return toast.error("Jumlah unit tidak valid");
-    if (!Number.isFinite(q) || q <= 0) return toast.error("Jumlah per unit tidak valid");
+    if (!Number.isInteger(c) || c <= 0) {
+      toast.error("Jumlah unit tidak valid");
+      return;
+    }
+    if (!Number.isFinite(q) || q <= 0) {
+      toast.error("Jumlah per unit tidak valid");
+      return;
+    }
     setSaving(true);
     try {
       const { data: auth } = await supabase.auth.getUser();
