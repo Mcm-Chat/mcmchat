@@ -149,66 +149,60 @@ export async function listRequests(
   };
 }
 
-export async function sendContactRequest(userId: string, targetId: string, message: string) {
-  const recent = unwrap(
-    await supabase
-      .from("contact_requests")
-      .select("id, created_at")
-      .eq("requester_id", userId)
-      .gte("created_at", new Date(Date.now() - 60_000).toISOString()),
-    "Gagal memeriksa permintaan",
-  );
-  if (recent.length >= 5) throw new Error("Terlalu banyak permintaan kontak. Tunggu sebentar.");
+const REQUEST_ERROR: Record<string, string> = {
+  already_connected: "Kalian sudah terhubung sebagai kontak.",
+  blocked: "Permintaan tidak dapat dikirim ke akun ini.",
+  cooldown: "Permintaan baru saja ditolak/dibatalkan. Tunggu 10 menit sebelum mengirim ulang.",
+  rate_limited: "Terlalu banyak permintaan kontak. Tunggu sebentar.",
+  invalid_target: "Akun tujuan tidak valid.",
+  not_authenticated: "Sesi berakhir. Masuk kembali.",
+};
 
-  const blocked = unwrap(
-    await supabase
-      .from("contacts")
-      .select("is_blocked")
-      .eq("owner_id", userId)
-      .eq("contact_id", targetId)
-      .limit(1),
-    "Gagal memeriksa kontak",
-  );
-  if (blocked[0]?.is_blocked) throw new Error("Kontak ini Anda blokir. Buka blokir dulu.");
-
-  const { error } = await supabase
-    .from("contact_requests")
-    .upsert(
-      { requester_id: userId, target_id: targetId, message, status: "pending" },
-      { onConflict: "requester_id,target_id" },
-    );
-  if (error) throw new Error(friendly(error.message, "Permintaan gagal dikirim"));
+/** Kirim permintaan kontak lewat RPC atomik (anti-duplikat + cooldown). */
+export async function sendContactRequest(_userId: string, targetId: string, message: string) {
+  const { data, error } = await supabase.rpc("send_contact_request", {
+    _target: targetId,
+    _message: message,
+  });
+  if (error) throw new Error(mapRpcError(error.message, "Permintaan gagal dikirim", REQUEST_ERROR));
+  return (data ?? {}) as { status?: string; code?: string };
 }
 
 export async function respondToRequest(
   request: Tables<"contact_requests">,
   action: "accepted" | "rejected" | "blocked",
 ) {
-  // Menerima permintaan harus menulis dua baris kontak (milik penerima dan
-  // milik pengirim). Dari sesi penerima, baris milik pengirim ditolak RLS,
-  // jadi seluruh proses dijalankan oleh fungsi database tervalidasi.
+  // Hanya target yang boleh merespons; accept menulis dua baris kontak mutual
+  // secara atomik di server.
   const { error } = await supabase.rpc("respond_contact_request", {
     _request: request.id,
     _action: action,
   });
-  if (error) throw new Error(friendly(error.message, "Gagal memperbarui permintaan"));
+  if (error)
+    throw new Error(
+      mapRpcError(error.message, "Gagal memperbarui permintaan", {
+        not_authorized: "Anda tidak berwenang menjawab permintaan ini.",
+        request_not_pending: "Permintaan ini sudah tidak aktif.",
+        request_not_found: "Permintaan tidak ditemukan.",
+      }),
+    );
 }
 
-export async function setBlocked(userId: string, contactId: string, blocked: boolean) {
-  const { error } = await supabase
-    .from("contacts")
-    .upsert(
-      { owner_id: userId, contact_id: contactId, is_blocked: blocked },
-      { onConflict: "owner_id,contact_id" },
-    );
+/** Blokir/buka blokir atomik: membatalkan permintaan tertunda dua arah. */
+export async function setBlocked(_userId: string, contactId: string, blocked: boolean) {
+  const { error } = await supabase.rpc("set_contact_blocked", {
+    _target: contactId,
+    _blocked: blocked,
+  });
   if (error) throw new Error(friendly(error.message, "Gagal memperbarui blokir"));
 }
 
-export type ContactSource = "manual" | "qr_scan" | "request" | "import";
+export type ContactSource = "manual" | "qr" | "pin";
 
 /**
- * Simpan profil hasil pindai ke buku kontak pribadi pemindai.
- * Idempoten: menekan Simpan dua kali tidak membuat baris ganda.
+ * Simpan kartu profil ke buku kontak pribadi (SATU ARAH).
+ * Menyimpan bukan berarti terhubung: hak chat/panggilan/profil lengkap baru
+ * terbuka setelah permintaan diterima kedua sisi.
  */
 export async function saveContact(
   userId: string,
@@ -217,16 +211,32 @@ export async function saveContact(
   alias?: string | null,
 ) {
   if (userId === contactId) throw new Error("PIN ini milik Anda sendiri.");
-  const { error } = await supabase
-    .from("contacts")
-    .upsert(
-      { owner_id: userId, contact_id: contactId, source, alias: alias ?? null },
-      { onConflict: "owner_id,contact_id", ignoreDuplicates: true },
-    );
+  const { error } = await supabase.rpc("save_contact_card", {
+    _target: contactId,
+    _source: source,
+    _alias: alias ?? null,
+  });
   if (error)
     throw new Error(
-      friendly(error.message, "Kontak gagal disimpan. Periksa koneksi lalu coba lagi."),
+      mapRpcError(error.message, "Kontak gagal disimpan. Periksa koneksi lalu coba lagi.", {
+        blocked: "Kontak ini tidak dapat disimpan.",
+        invalid_target: "Akun tujuan tidak valid.",
+      }),
     );
+}
+
+export async function updateMyContact(
+  contactId: string,
+  patch: { alias?: string | null; note?: string | null; starred?: boolean; isFavorite?: boolean },
+) {
+  const { error } = await supabase.rpc("update_my_contact", {
+    _target: contactId,
+    _alias: patch.alias ?? null,
+    _note: patch.note ?? null,
+    _starred: patch.starred ?? null,
+    _is_favorite: patch.isFavorite ?? null,
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal memperbarui kontak."));
 }
 
 export async function removeContact(userId: string, contactId: string) {
@@ -238,63 +248,49 @@ export async function removeContact(userId: string, contactId: string) {
   if (error) throw new Error(friendly(error.message, "Kontak gagal dihapus."));
 }
 
-export async function cancelContactRequest(userId: string, targetId: string) {
-  const { error } = await supabase
-    .from("contact_requests")
-    .update({ status: "cancelled" })
-    .eq("requester_id", userId)
-    .eq("target_id", targetId)
-    .eq("status", "pending");
+export async function cancelContactRequest(_userId: string, targetId: string) {
+  const { error } = await supabase.rpc("cancel_contact_request", { _target: targetId });
   if (error) throw new Error(friendly(error.message, "Permintaan gagal dibatalkan."));
 }
 
 export type ContactRelation = {
   self: boolean;
+  /** Tersimpan satu arah di buku kontak saya (belum tentu terhubung). */
   saved: boolean;
+  /** Kontak mutual yang sudah diterima kedua sisi. */
+  connected: boolean;
   blockedByMe: boolean;
   blockedMe: boolean;
   outgoingPending: boolean;
   incomingRequest: Tables<"contact_requests"> | null;
 };
 
-/** Status relasi antara pemindai dan profil hasil pindai. */
+/** Status relasi antara pemindai dan profil hasil pindai (satu RPC). */
 export async function getContactRelation(
-  userId: string,
+  _userId: string,
   targetId: string,
 ): Promise<ContactRelation> {
-  if (userId === targetId)
-    return {
-      self: true,
-      saved: false,
-      blockedByMe: false,
-      blockedMe: false,
-      outgoingPending: false,
-      incomingRequest: null,
-    };
-  const [row, requests, blocks] = await Promise.all([
-    supabase
-      .from("contacts")
-      .select("id, is_blocked")
-      .eq("owner_id", userId)
-      .eq("contact_id", targetId)
-      .maybeSingle(),
-    supabase
+  const { data, error } = await supabase.rpc("contact_relation", { _other: targetId });
+  if (error) throw new Error(friendly(error.message, "Gagal memeriksa relasi"));
+  const r = (data ?? {}) as Record<string, unknown>;
+  let incoming: Tables<"contact_requests"> | null = null;
+  const incomingId = r["incoming_request_id"] as string | null;
+  if (incomingId) {
+    const { data: req } = await supabase
       .from("contact_requests")
       .select("*")
-      .eq("status", "pending")
-      .or(
-        `and(requester_id.eq.${userId},target_id.eq.${targetId}),and(requester_id.eq.${targetId},target_id.eq.${userId})`,
-      ),
-    isBlockedBetween(userId, targetId),
-  ]);
-  const pending = requests.data ?? [];
+      .eq("id", incomingId)
+      .maybeSingle();
+    incoming = req ?? null;
+  }
   return {
-    self: false,
-    saved: !!row.data,
-    blockedByMe: !!row.data?.is_blocked,
-    blockedMe: blocks.blockedMe,
-    outgoingPending: pending.some((r) => r.requester_id === userId),
-    incomingRequest: pending.find((r) => r.target_id === userId) ?? null,
+    self: !!r["self"],
+    saved: !!r["saved"],
+    connected: !!r["connected"],
+    blockedByMe: !!r["blocked_by_me"],
+    blockedMe: !!r["blocked_me"],
+    outgoingPending: !!r["outgoing_pending"],
+    incomingRequest: incoming,
   };
 }
 
