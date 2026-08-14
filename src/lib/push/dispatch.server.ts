@@ -68,38 +68,44 @@ export async function dispatchMessagePush(messageId: string): Promise<FcmResult>
   let sent = 0;
   let failed = 0;
 
-  // Kelompokkan per preferensi pratinjau: isi pesan tidak boleh bocor ke
-  // perangkat yang mematikan pratinjau layar kunci.
+  // Kelompokkan per preferensi pratinjau DAN per kapabilitas balas.
+  // Isi pesan tidak boleh bocor ke perangkat yang mematikan pratinjau, dan
+  // tombol "Balas" hanya dikirim ke penerima yang memang boleh mengirim pesan
+  // di percakapan ini (server yang menentukan, bukan klien).
   for (const allowPreview of [true, false]) {
-    const group = rows.filter((r) => Boolean(r["allow_preview"]) === allowPreview);
-    if (group.length === 0) continue;
-    const chatTitle =
-      (conv?.type === "group" ? conv?.title : sender?.display_name) ??
-      sender?.display_name ??
-      "MCM";
-    const data: PushData = {
-      kind: "message",
-      channel: CHANNELS.messages.id,
-      group: String(msg.conversation_id),
-      route: `/chat/${msg.conversation_id}?m=${msg.id}`,
-      conversationId: String(msg.conversation_id),
-      messageId: String(msg.id),
-      canReply: "1",
-      title: notificationTitle(String(chatTitle), allowPreview),
-      body:
-        conv?.type === "group" && allowPreview
-          ? `${sender?.display_name ?? "Anggota"}: ${previewBody(String(msg.kind), String(msg.body ?? ""), true)}`
-          : previewBody(String(msg.kind), String(msg.body ?? ""), allowPreview),
-    };
-    const list: PushTarget[] = group.map((r) => ({
-      token: String(r["push_token"]),
-      sound: Boolean(r["sound"]),
-      vibrate: Boolean(r["vibrate"]),
-    }));
-    const res = await sendPush(list, data);
-    sent += res.sent;
-    failed += res.failed;
-    invalid.push(...res.invalidTokens);
+    for (const canReply of [true, false]) {
+      const group = rows.filter(
+        (r) => Boolean(r["allow_preview"]) === allowPreview && Boolean(r["can_reply"]) === canReply,
+      );
+      if (group.length === 0) continue;
+      const chatTitle =
+        (conv?.type === "group" ? conv?.title : sender?.display_name) ??
+        sender?.display_name ??
+        "MCM";
+      const data: PushData = {
+        kind: "message",
+        channel: CHANNELS.messages.id,
+        group: String(msg.conversation_id),
+        route: `/chat/${msg.conversation_id}?m=${msg.id}`,
+        conversationId: String(msg.conversation_id),
+        messageId: String(msg.id),
+        canReply: canReply ? "1" : "0",
+        title: notificationTitle(String(chatTitle), allowPreview),
+        body:
+          conv?.type === "group" && allowPreview
+            ? `${sender?.display_name ?? "Anggota"}: ${previewBody(String(msg.kind), String(msg.body ?? ""), true)}`
+            : previewBody(String(msg.kind), String(msg.body ?? ""), allowPreview),
+      };
+      const list: PushTarget[] = group.map((r) => ({
+        token: String(r["push_token"]),
+        sound: Boolean(r["sound"]),
+        vibrate: Boolean(r["vibrate"]),
+      }));
+      const res = await sendPush(list, data);
+      sent += res.sent;
+      failed += res.failed;
+      invalid.push(...res.invalidTokens);
+    }
   }
 
   await pruneTokens(invalid);

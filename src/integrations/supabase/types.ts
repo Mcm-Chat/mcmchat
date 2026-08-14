@@ -3071,6 +3071,10 @@ export type Database = {
         Args: { _conversation: string; _owner_only: boolean; _uid: string }
         Returns: string
       }
+      bg_call_action: {
+        Args: { _action: string; _call: string; _token: string }
+        Returns: Json
+      }
       bg_mark_delivered: {
         Args: { _conv: string; _message?: string; _token: string }
         Returns: Json
@@ -3207,6 +3211,10 @@ export type Database = {
       chat_order_actor_can_read: {
         Args: { _order: string; _uid: string }
         Returns: boolean
+      }
+      claim_legacy_direct_conversation: {
+        Args: { _conversation: string }
+        Returns: Json
       }
       commit_my_avatar: { Args: { _path: string }; Returns: Json }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
@@ -3652,6 +3660,10 @@ export type Database = {
           sendable: boolean
         }[]
       }
+      my_direct_relation_state: {
+        Args: { _conversation: string }
+        Returns: Json
+      }
       my_pin: { Args: never; Returns: string }
       my_profile: {
         Args: never
@@ -3714,6 +3726,7 @@ export type Database = {
         Args: { _conv: string; _sender: string }
         Returns: {
           allow_preview: boolean
+          can_reply: boolean
           device_id: string
           muted: boolean
           platform: string
