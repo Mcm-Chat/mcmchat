@@ -953,8 +953,6 @@ export type Database = {
       }
       devices: {
         Row: {
-          action_token_hash: string | null
-          action_token_prefix: string | null
           app_version: string
           created_at: string
           id: string
@@ -969,8 +967,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          action_token_hash?: string | null
-          action_token_prefix?: string | null
           app_version?: string
           created_at?: string
           id?: string
@@ -985,8 +981,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          action_token_hash?: string | null
-          action_token_prefix?: string | null
           app_version?: string
           created_at?: string
           id?: string
@@ -2398,73 +2392,6 @@ export type Database = {
         }
         Relationships: []
       }
-      push_action_tokens: {
-        Row: {
-          allowed_actions: string[]
-          call_id: string | null
-          conversation_id: string | null
-          created_at: string
-          device_id: string
-          expires_at: string
-          id: string
-          prefix: string
-          scope: string
-          token_hash: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          allowed_actions: string[]
-          call_id?: string | null
-          conversation_id?: string | null
-          created_at?: string
-          device_id: string
-          expires_at: string
-          id?: string
-          prefix: string
-          scope: string
-          token_hash: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          allowed_actions?: string[]
-          call_id?: string | null
-          conversation_id?: string | null
-          created_at?: string
-          device_id?: string
-          expires_at?: string
-          id?: string
-          prefix?: string
-          scope?: string
-          token_hash?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_action_tokens_call_id_fkey"
-            columns: ["call_id"]
-            isOneToOne: false
-            referencedRelation: "calls"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "push_action_tokens_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "push_action_tokens_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quick_replies: {
         Row: {
           body: string
@@ -3411,6 +3338,10 @@ export type Database = {
         Args: { _conversation: string }
         Returns: Json
       }
+      cleanup_expired_notification_actions: {
+        Args: { _older_than?: string }
+        Returns: number
+      }
       cleanup_notification_actions: { Args: never; Returns: number }
       commit_my_avatar: { Args: { _path: string }; Returns: Json }
       complete_preparation_job: { Args: { _job: string }; Returns: Json }
@@ -3840,21 +3771,37 @@ export type Database = {
       }
       mark_messages_delivered: { Args: { _conv: string }; Returns: number }
       mark_messages_read: { Args: { _conv: string }; Returns: number }
-      mint_notification_action: {
-        Args: {
-          _action: Database["public"]["Enums"]["notification_action_kind"]
-          _call?: string
-          _conversation?: string
-          _device: string
-          _message?: string
-          _ttl_seconds?: number
-          _user: string
-        }
-        Returns: {
-          action_id: string
-          token: string
-        }[]
-      }
+      mint_notification_action:
+        | {
+            Args: {
+              _action: Database["public"]["Enums"]["notification_action_kind"]
+              _call?: string
+              _conversation?: string
+              _device: string
+              _message?: string
+              _ttl_seconds?: number
+              _user: string
+            }
+            Returns: {
+              action_id: string
+              token: string
+            }[]
+          }
+        | {
+            Args: {
+              _action: string
+              _call?: string
+              _conversation?: string
+              _device: string
+              _message?: string
+              _ttl_seconds?: number
+              _user: string
+            }
+            Returns: {
+              action_id: string
+              token: string
+            }[]
+          }
       mint_push_action_token: {
         Args: {
           _actions: string[]
@@ -4041,9 +3988,9 @@ export type Database = {
         Args: {
           _app_version?: string
           _installation_id: string
-          _name: string
-          _platform: string
-          _push_token: string
+          _name?: string
+          _platform?: string
+          _push_token?: string
         }
         Returns: Json
       }
