@@ -2404,6 +2404,32 @@ export type Database = {
       }
       create_sale_tx: { Args: { _payload: Json }; Returns: Json }
       customer_pin: { Args: { _customer: string }; Returns: string }
+      decline_call: {
+        Args: { _call: string }
+        Returns: {
+          answered_at: string | null
+          conversation_id: string | null
+          created_at: string
+          duration_sec: number
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          kind: Database["public"]["Enums"]["call_kind"]
+          max_participants: number
+          provider: string
+          room_name: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "calls"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       deliver_preparation_job: {
         Args: { _job: string; _link: string }
         Returns: Json

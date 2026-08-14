@@ -233,8 +233,8 @@ export function useCall(opts: {
       joinedRef.current = true;
       setPhase("connecting");
       try {
-        // Daftar hadir dulu (idempotent, membatalkan `left_at`) supaya token
-        // hanya terbit untuk peserta yang benar-benar aktif.
+        // Daftar hadir dulu (idempotent). Peserta yang sudah keluar/menolak
+        // ditolak server, sehingga token hanya terbit untuk peserta aktif.
         await joinCall(row.id);
         const t = await token({ data: { callId: row.id } });
         if (!t.configured) {
