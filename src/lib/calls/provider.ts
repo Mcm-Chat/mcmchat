@@ -151,9 +151,7 @@ export const liveKitProvider: CallProvider = {
       .on(RoomEvent.Reconnected, () => emit("connected"))
       // Putus normal (hangup) tidak boleh memunculkan error; putus tak terduga bisa dipulihkan.
       .on(RoomEvent.Disconnected, () =>
-        closing
-          ? emit("disconnected")
-          : emit("failed", "Koneksi panggilan terputus", true),
+        closing ? emit("disconnected") : emit("failed", "Koneksi panggilan terputus", true),
       )
       .on(RoomEvent.LocalTrackPublished, () => {
         attachLocal();
