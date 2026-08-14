@@ -280,12 +280,9 @@ export async function findByClientId(
   return data ?? null;
 }
 
-export async function markRead(conversationId: string, userId: string) {
-  await supabase
-    .from("conversation_members")
-    .update({ last_read_at: new Date().toISOString() })
-    .eq("conversation_id", conversationId)
-    .eq("user_id", userId);
+/** Kursor baca milik sendiri; server yang menentukan timestamp. */
+export async function markRead(conversationId: string) {
+  await markConversationRead(conversationId);
 }
 
 /** Sembunyikan pesan hanya untuk saya. */
