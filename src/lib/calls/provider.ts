@@ -23,6 +23,10 @@ export type ProviderState = {
   status: ProviderStatus;
   reason?: string;
   remotes: RemoteInfo[];
+  /** Autoplay audio diblokir browser — UI menampilkan tombol "Aktifkan suara". */
+  audioBlocked?: boolean;
+  /** Terputus tak terduga (bukan hangup normal) — dapat dipulihkan. */
+  unexpected?: boolean;
 };
 
 export type ConnectOptions = {
@@ -54,6 +58,8 @@ export interface CallSessionHandle {
   replaceAudioTrack(track: MediaStreamTrack): Promise<void>;
   attachLocalVideo(el: HTMLVideoElement | null): void;
   attachRemoteMedia(el: HTMLVideoElement | null): void;
+  /** Buka blokir autoplay audio (harus dipicu gestur pengguna). */
+  startAudio(): Promise<boolean>;
   disconnect(): Promise<void>;
 }
 
@@ -84,6 +90,9 @@ export const liveKitProvider: CallProvider = {
 
     let facingUser = true;
     let remoteVideoEl: HTMLVideoElement | null = null;
+    let localVideoEl: HTMLVideoElement | null = null;
+    let closing = false;
+    let audioBlocked = false;
     const audioEls = new Map<string, HTMLAudioElement>();
     let speakerSinkId: string | null = null;
 
