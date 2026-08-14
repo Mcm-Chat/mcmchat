@@ -122,7 +122,9 @@ function CallDiagnosticsPage() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{c.label}</p>
                   <p className="text-xs text-muted-foreground">{c.detail}</p>
-                  {c.action && <p className="mt-1 text-xs text-foreground/80">Langkah: {c.action}</p>}
+                  {c.action && (
+                    <p className="mt-1 text-xs text-foreground/80">Langkah: {c.action}</p>
+                  )}
                 </div>
               </li>
             );

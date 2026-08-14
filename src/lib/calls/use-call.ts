@@ -363,10 +363,7 @@ export function useCall(opts: {
   useEffect(() => {
     if (phase !== "outgoing" && phase !== "incoming") return;
     if (!call) return;
-    const t = setTimeout(
-      () => finish("missed", "Tidak dijawab"),
-      ringRemainingMs(call.created_at),
-    );
+    const t = setTimeout(() => finish("missed", "Tidak dijawab"), ringRemainingMs(call.created_at));
     return () => clearTimeout(t);
   }, [phase, finish, call]);
 
