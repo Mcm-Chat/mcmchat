@@ -399,6 +399,22 @@ function ChatRoom() {
     }
   };
 
+  /**
+   * Percakapan lama (dibuat sebelum aturan kontak diperketat) bisa "diklaim":
+   * server membuat/menggunakan ulang permintaan kontak kanonik dari pengirim
+   * ke pengguna ini. Tidak ada RLS yang dilonggarkan — RPC memutuskan.
+   */
+  const claimLegacy = async () => {
+    try {
+      const { error } = await supabase.rpc("claim_legacy_direct_conversation", { _conversation: id });
+      if (error) throw new Error(error.message);
+      toast.success("Permintaan kontak dibuat. Terima di halaman Kontak untuk mulai membalas.");
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengaktifkan percakapan");
+    }
+  };
+
   const loadCallConfig = useServerFn(getCallConfig);
 
   const call = async (kind: "audio" | "video") => {
@@ -721,6 +737,9 @@ function ChatRoom() {
           <p className="text-sm text-muted-foreground">
             Hubungan kontak tidak aktif. Riwayat percakapan tetap dapat dibaca.
           </p>
+          <Button variant="secondary" className="mt-3 rounded-xl" onClick={() => void claimLegacy()}>
+            Aktifkan kontak untuk membalas
+          </Button>
         </div>
       ) : blocked || blockedByOther ? (
         <div className="sticky bottom-0 space-y-2 border-t border-border bg-card px-4 py-4 text-center">
