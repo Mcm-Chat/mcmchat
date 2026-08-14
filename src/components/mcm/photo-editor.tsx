@@ -164,6 +164,8 @@ export function PhotoEditorDialog({
   const [applied, setApplied] = useState(0);
   const [preview, setPreview] = useState<string | null>(null);
   const [compare, setCompare] = useState<"side" | "after">("side");
+  const [quality, setQuality] = useState<QualityId>("balanced");
+  const [outputInfo, setOutputInfo] = useState<{ width: number; height: number; bytes: number } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -282,12 +284,27 @@ export function PhotoEditorDialog({
   const pending = anns.length + (cropReady ? 1 : 0);
   const totalChanges = applied + pending;
 
-  const render = () =>
-    bake(img!, anns, cropReady ? crop : null).toDataURL("image/jpeg", 0.85);
+  const render = (qualityId: QualityId) => {
+    if (!img) return null;
+    const preset = QUALITIES.find((item) => item.id === qualityId) ?? QUALITIES[1];
+    const canvas = limitCanvas(bake(img, anns, cropReady ? crop : null), preset.max);
+    const url = canvas.toDataURL("image/jpeg", preset.q);
+    return { url, width: canvas.width, height: canvas.height, bytes: dataUrlBytes(url) };
+  };
 
   const openPreview = () => {
-    if (!img) return;
-    setPreview(render());
+    const result = render(quality);
+    if (!result) return;
+    setPreview(result.url);
+    setOutputInfo(result);
+  };
+
+  const chooseQuality = (next: QualityId) => {
+    setQuality(next);
+    const result = render(next);
+    if (!result) return;
+    setPreview(result.url);
+    setOutputInfo(result);
   };
 
   const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
@@ -462,6 +479,37 @@ export function PhotoEditorDialog({
           </div>
 
           <div className="space-y-2 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {outputInfo && (
+              <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/40 p-2.5">
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Resolusi akhir</p>
+                  <p className="text-sm font-semibold tabular-nums">
+                    {outputInfo.width} × {outputInfo.height} px
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Estimasi ukuran</p>
+                  <p className="text-sm font-semibold tabular-nums">± {formatBytes(outputInfo.bytes)}</p>
+                </div>
+              </div>
+            )}
+            <div>
+              <p className="mb-1.5 text-[11px] font-medium">Kompresi</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {QUALITIES.map((item) => (
+                  <Button
+                    key={item.id}
+                    type="button"
+                    variant={quality === item.id ? "default" : "outline"}
+                    className="h-12 flex-col gap-0 rounded-lg px-1"
+                    onClick={() => chooseQuality(item.id)}
+                  >
+                    <span className="text-xs">{item.label}</span>
+                    <span className="text-[9px] font-normal opacity-75">{item.hint}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
             <p className="text-[11px] text-muted-foreground">
               {totalChanges === 0
                 ? "Belum ada perubahan — foto asli akan dipakai."
