@@ -26,6 +26,21 @@ const need = [
   ["deep link mcmchat.id", /android:host="mcmchat\.id"/],
   ["POST_NOTIFICATIONS", /android\.permission\.POST_NOTIFICATIONS/],
 ];
+// Guard pemisahan APK: bundle chat tidak boleh membawa jejak MCM Storage.
+const forbidden = [/mcmstorage/i, /biz\.mcmstorage\.app/i, /mcm[\s_-]?storage/i];
+const leaked = forbidden.filter((re) => re.test(dump));
+if (leaked.length > 0) {
+  console.error(`FAIL verify:aab — bundle memuat branding/package MCM Storage: ${leaked.join(", ")}`);
+  process.exit(1);
+}
+const otherPackages = [...dump.matchAll(/package="([^"]+)"/g)]
+  .map((m) => m[1])
+  .filter((pkg) => pkg !== "com.mcm.privateconnect");
+if (otherPackages.length > 0) {
+  console.error(`FAIL verify:aab — package selain com.mcm.privateconnect: ${otherPackages.join(", ")}`);
+  process.exit(1);
+}
+
 const failed = need.filter(([, re]) => !re.test(dump)).map(([name]) => name);
 if (failed.length > 0) {
   console.error(`FAIL verify:aab — tidak ditemukan: ${failed.join(", ")}`);

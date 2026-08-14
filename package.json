@@ -16,6 +16,7 @@
     "typecheck": "tsgo --noEmit",
     "verify:assetlinks": "node scripts/verify-assetlinks.mjs",
     "verify:aab": "node scripts/verify-aab.mjs",
+    "verify:identity": "node scripts/verify-app-identity.mjs",
     "android:sync": "cap sync android",
     "android:bundle": "cd android && ./gradlew bundleRelease",
     "android:debug-apk": "cd android && ./gradlew assembleDebug"

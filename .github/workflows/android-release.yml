@@ -24,6 +24,10 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       # Gate wajib: rilis dibatalkan bila fingerprint App Links masih placeholder.
+      # Guard pemisahan APK: repo ini hanya membangun aplikasi chat privat.
+      - name: Verifikasi identitas aplikasi
+        run: bun run verify:identity
+
       - name: Verifikasi assetlinks
         env:
           MCM_ASSETLINKS_SHA256: ${{ secrets.PLAY_APP_SIGNING_SHA256 }}
