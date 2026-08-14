@@ -31,7 +31,8 @@ import {
   voidUnit,
   type StockUnitWithPhotos,
 } from "@/lib/api/stock-units";
-import { compressImage } from "@/lib/mcm/geo";
+import { dataUrlToBlob, fileToDataUrl } from "@/lib/mcm/geo";
+import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
 
 export const unitsKey = (variantId: string) => ["catalog", "units", variantId];
 
@@ -160,18 +161,32 @@ function UnitCard({
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [confirmVoid, setConfirmVoid] = useState(false);
+  const [queue, setQueue] = useState<string[]>([]);
+  const [edited, setEdited] = useState<string[]>([]);
   const editable = unit.status === "draft" || unit.status === "available";
 
-  const upload = async (files: FileList | null) => {
+  /** Semua foto lewat editor dulu (potong/putar/panah/stiker/teks), baru diunggah. */
+  const pickFiles = async (files: FileList | null) => {
     if (!files || files.length === 0 || busy) return;
+    try {
+      const urls: string[] = [];
+      for (const f of Array.from(files)) urls.push(await fileToDataUrl(f, 1600));
+      setEdited([]);
+      setQueue(urls);
+    } catch {
+      toast.error("Foto gagal dibaca");
+    }
+  };
+
+  const uploadEdited = async (urls: string[]) => {
+    if (urls.length === 0 || busy) return;
     setBusy(true);
     try {
       const drafts = [];
-      for (const f of Array.from(files)) {
-        const { blob } = await compressImage(f);
+      for (const [i, url] of urls.entries()) {
         drafts.push({
-          file: blob,
-          fileName: f.name,
+          file: await dataUrlToBlob(url),
+          fileName: `unit-${unit.unit_seq}-${i + 1}.jpg`,
           variant_id: variant.id,
           stock_unit_id: unit.id,
           group_label: unit.unit_label || `Unit #${unit.unit_seq}`,
@@ -203,6 +218,23 @@ function UnitCard({
 
   return (
     <div className="card-soft space-y-2 p-2.5">
+      {queue[0] && (
+        <PhotoEditorDialog
+          src={queue[0]}
+          title={`Edit foto — ${unit.unit_label || `Unit #${unit.unit_seq}`}`}
+          onCancel={() => {
+            setQueue([]);
+            setEdited([]);
+          }}
+          onDone={(dataUrl) => {
+            const nextEdited = [...edited, dataUrl];
+            const rest = queue.slice(1);
+            setEdited(nextEdited);
+            setQueue(rest);
+            if (rest.length === 0) void uploadEdited(nextEdited);
+          }}
+        />
+      )}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-xs font-semibold">
