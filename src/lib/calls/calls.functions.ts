@@ -1,19 +1,33 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { canIssueCallToken, type CallStatusValue } from "./policy";
 
 /** Status penyedia panggilan — dipakai UI untuk menampilkan "Belum terhubung". */
 export const getCallConfig = createServerFn({ method: "GET" }).handler(async () => {
-  const { liveKitConfigured } = await import("./livekit.server");
-  return { provider: "livekit" as const, configured: liveKitConfigured() };
+  const { readLiveKitConfigResult } = await import("./livekit.server");
+  const r = readLiveKitConfigResult();
+  return {
+    provider: "livekit" as const,
+    configured: r.ok,
+    code: r.ok ? "ok" : r.code,
+  };
 });
 
 const tokenInput = z.object({ callId: z.string().uuid() });
 
+const DENY_MESSAGE: Record<string, string> = {
+  not_participant: "Anda bukan peserta panggilan ini",
+  already_left: "Anda sudah keluar dari panggilan ini",
+  call_invalid: "Panggilan tidak valid",
+  call_not_answered: "Panggilan belum dijawab",
+  call_ended: "Panggilan sudah berakhir",
+};
+
 /**
  * Terbitkan token LiveKit berumur pendek. Hanya peserta panggilan yang
- * terdaftar di database yang bisa mendapatkannya; secret tidak pernah
- * meninggalkan server.
+ * terdaftar DAN panggilan yang sudah dijawab (`ongoing`) yang mendapat token;
+ * secret tidak pernah meninggalkan server.
  */
 export const issueCallToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -24,60 +38,31 @@ export const issueCallToken = createServerFn({ method: "POST" })
     if (!cfg) return { configured: false as const, reason: "Penyedia panggilan belum terhubung" };
 
     // Otorisasi eksplisit: baris peserta harus ada untuk pengguna ini.
-    // RLS tetap berlaku, tetapi izin masuk room TIDAK boleh bergantung pada
-    // efek samping kebijakan saja.
     const { data: participant } = await context.supabase
       .from("call_participants")
       .select("user_id, left_at")
       .eq("call_id", data.callId)
       .eq("user_id", context.userId)
       .maybeSingle();
-    if (!participant) {
-      return {
-        configured: true as const,
-        allowed: false as const,
-        reason: "Anda bukan peserta panggilan ini",
-      };
-    }
-    // Peserta yang sudah keluar harus bergabung ulang (join_call) sebelum
-    // mendapat token baru — token lama pun tidak diperpanjang.
-    if (participant.left_at) {
-      return {
-        configured: true as const,
-        allowed: false as const,
-        reason: "Anda sudah keluar dari panggilan ini",
-      };
-    }
 
     const { data: call } = await context.supabase
       .from("calls")
       .select("id, kind, status, room_name")
       .eq("id", data.callId)
       .maybeSingle();
-    if (!call)
+
+    const decision = canIssueCallToken({
+      status: (call?.status ?? "ended") as CallStatusValue,
+      participantExists: Boolean(participant),
+      participantLeft: Boolean(participant?.left_at),
+      hasRoom: Boolean(call?.room_name),
+    });
+    if (!decision.allowed || !call?.room_name) {
       return {
         configured: true as const,
         allowed: false as const,
-        reason: "Panggilan tidak ditemukan",
-      };
-    if (
-      call.status === "ended" ||
-      call.status === "missed" ||
-      call.status === "declined" ||
-      call.status === "failed"
-    ) {
-      return {
-        configured: true as const,
-        allowed: false as const,
-        reason: "Panggilan sudah berakhir",
-      };
-    }
-    // Room dibuat server saat panggilan dibuat; tanpa itu token tidak diterbitkan.
-    if (!call.room_name) {
-      return {
-        configured: true as const,
-        allowed: false as const,
-        reason: "Panggilan tidak valid",
+        code: decision.code,
+        reason: DENY_MESSAGE[decision.code] ?? "Panggilan tidak tersedia",
       };
     }
 

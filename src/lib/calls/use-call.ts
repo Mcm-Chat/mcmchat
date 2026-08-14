@@ -17,7 +17,6 @@ import {
 } from "./provider";
 import {
   answerCall,
-  countParticipants,
   declineCall,
   endCall,
   getCall,
@@ -27,6 +26,7 @@ import {
   ringRemainingMs,
   type CallRow,
 } from "@/lib/api/calls";
+import type { EndReason } from "./policy";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
@@ -38,35 +38,67 @@ function devLog(code: string, detail?: unknown) {
   if (import.meta.env.DEV) console.warn(`[call:${code}]`, detail ?? "");
 }
 
-/** Wake lock selama panggilan aktif; aman bila browser tidak mendukung. */
+/**
+ * Wake lock selama panggilan aktif. Sistem bisa melepas sentinel sendiri
+ * (layar mati, tab tersembunyi); event `release` dipakai untuk mengambil ulang
+ * hanya saat halaman terlihat dan panggilan masih aktif. Acquire ganda dicegah.
+ */
 function useWakeLock(active: boolean) {
   useEffect(() => {
     if (!active || typeof navigator === "undefined") return;
+    type Sentinel = {
+      release: () => Promise<void>;
+      addEventListener?: (t: "release", cb: () => void) => void;
+      removeEventListener?: (t: "release", cb: () => void) => void;
+    };
     const nav = navigator as Navigator & {
-      wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+      wakeLock?: { request: (t: "screen") => Promise<Sentinel> };
     };
     if (!nav.wakeLock) return;
-    let sentinel: { release: () => Promise<void> } | null = null;
+    let sentinel: Sentinel | null = null;
+    let acquiring = false;
     let disposed = false;
-    const acquire = () => {
+
+    const onRelease = () => {
+      sentinel = null;
+      if (!disposed && document.visibilityState === "visible") acquire();
+    };
+    const detach = (s: Sentinel) => s.removeEventListener?.("release", onRelease);
+
+    function acquire() {
+      if (disposed || acquiring || sentinel) return;
+      acquiring = true;
       void nav
         .wakeLock!.request("screen")
         .then((s) => {
-          if (disposed) void s.release().catch(() => undefined);
-          else sentinel = s;
+          acquiring = false;
+          if (disposed) {
+            void s.release().catch(() => undefined);
+            return;
+          }
+          sentinel = s;
+          s.addEventListener?.("release", onRelease);
         })
-        .catch(() => devLog("wakelock_denied"));
-    };
+        .catch(() => {
+          acquiring = false;
+          devLog("wakelock_denied");
+        });
+    }
+
     acquire();
     const onVisible = () => {
-      if (document.visibilityState === "visible" && !sentinel) acquire();
+      if (document.visibilityState === "visible") acquire();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       disposed = true;
       document.removeEventListener("visibilitychange", onVisible);
-      void sentinel?.release().catch(() => undefined);
+      const s = sentinel;
       sentinel = null;
+      if (s) {
+        detach(s);
+        void s.release().catch(() => undefined);
+      }
     };
   }, [active]);
 }
@@ -102,7 +134,7 @@ export type UseCallResult = {
   enableAudio: () => void;
   answer: () => void;
   decline: () => void;
-  hangup: (status?: CallRow["status"], reason?: string) => void;
+  hangup: (status?: CallRow["status"], reason?: string, code?: EndReason) => void;
   toggleMute: () => void;
   toggleCamera: () => void;
   toggleSpeaker: () => void;
@@ -147,7 +179,6 @@ export function useCall(opts: {
   const startedRef = useRef<number | null>(null);
   const joinedRef = useRef(false);
   const endedRef = useRef(false);
-  const participantsRef = useRef<number>(2);
 
   useWakeLock(phase === "connected" || phase === "connecting");
 
@@ -235,7 +266,9 @@ export function useCall(opts: {
             } else if (s.status === "connected") {
               setPhase("connected");
               startedRef.current ??= Date.now();
-              if (s.reason) setReason(s.reason);
+              // Reconnected/Connected tanpa alasan membersihkan pesan lama
+              // seperti "Menyambung ulang…" agar tidak basi di layar.
+              setReason(s.reason ?? null);
             } else if (s.status === "reconnecting") {
               setReason("Menyambung ulang…");
             }
@@ -259,7 +292,7 @@ export function useCall(opts: {
    * berakhir: 1:1 dan pemanggil grup mengakhiri, peserta grup biasa hanya keluar.
    */
   const finish = useCallback(
-    (status: CallRow["status"], why?: string) => {
+    (status: CallRow["status"], why?: string, code?: EndReason) => {
       if (endedRef.current) return;
       endedRef.current = true;
       const secs = startedRef.current ? (Date.now() - startedRef.current) / 1000 : 0;
@@ -269,7 +302,7 @@ export function useCall(opts: {
       if (status === "ended") {
         void leaveCall(callId, secs).catch((e: unknown) => devLog("leave_failed", e));
       } else {
-        void endCall(callId, status, secs, why).catch((e: unknown) => devLog("end_failed", e));
+        void endCall(callId, status, secs, code).catch((e: unknown) => devLog("end_failed", e));
       }
     },
     [callId, cleanup],
@@ -307,9 +340,6 @@ export function useCall(opts: {
         return;
       }
       const outgoing = row.initiator_id === userId;
-      void countParticipants(callId)
-        .then((n) => (participantsRef.current = n || 2))
-        .catch(() => undefined);
       if (row.status === "ongoing") {
         startedRef.current = row.answered_at ? new Date(row.answered_at).getTime() : Date.now();
         void join(row);
@@ -336,8 +366,8 @@ export function useCall(opts: {
         startedRef.current ??= row.answered_at ? new Date(row.answered_at).getTime() : Date.now();
         if (row.initiator_id === userId) void join(row);
       }
-      if (row.status === "declined") finish("declined", "Panggilan ditolak");
-      if (row.status === "missed") finish("missed", "Tak terjawab");
+      if (row.status === "declined") finish("declined", "Panggilan ditolak", "declined");
+      if (row.status === "missed") finish("missed", "Tak terjawab", "timeout");
       if (row.status === "ended" && !endedRef.current) {
         endedRef.current = true;
         setPhase("ended");
@@ -363,7 +393,12 @@ export function useCall(opts: {
   useEffect(() => {
     if (phase !== "outgoing" && phase !== "incoming") return;
     if (!call) return;
-    const t = setTimeout(() => finish("missed", "Tidak dijawab"), ringRemainingMs(call.created_at));
+    // Batas 45 detik => tak terjawab (timeout). Pemanggil yang menutup lebih
+    // dulu memakai jalur `hangup` dan dicatat server sebagai `cancelled`.
+    const t = setTimeout(
+      () => finish("missed", "Tidak dijawab", "timeout"),
+      ringRemainingMs(call.created_at),
+    );
     return () => clearTimeout(t);
   }, [phase, finish, call]);
 
@@ -407,7 +442,9 @@ export function useCall(opts: {
         void cleanup();
         void declineCall(callId).catch(() => undefined);
       },
-      hangup: (status = "ended", why) => finish(status, why),
+      // Menutup panggilan keluar yang masih berdering = pembatalan; server yang
+      // menetapkan statusnya (`ended` + `cancelled`), klien tidak menebak.
+      hangup: (status = "ended", why, code) => finish(status, why, code),
       toggleMute: () => {
         setControls((c) => {
           const muted = !c.muted;

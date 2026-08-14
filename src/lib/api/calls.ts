@@ -3,6 +3,7 @@ import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
 import { notifyIncomingCall } from "@/lib/push/push.functions";
 import { getCallConfig } from "@/lib/calls/calls.functions";
+import type { EndReason } from "@/lib/calls/policy";
 
 export type CallRow = Tables<"calls">;
 export type CallParticipantRow = Tables<"call_participants">;
@@ -58,7 +59,7 @@ export async function endCall(
   callId: string,
   status: CallRow["status"],
   durationSec: number,
-  reason?: string,
+  reason?: EndReason,
 ) {
   const { error } = await supabase.rpc("end_call", {
     _call: callId,
@@ -102,15 +103,6 @@ export async function leaveCall(callId: string, durationSec = 0) {
   });
   if (error) throw new Error(friendly(error.message, "Gagal keluar dari panggilan"));
   return data as unknown as CallRow;
-}
-
-/** Panggilan 1:1 bila hanya ada dua peserta terdaftar. */
-export async function countParticipants(callId: string): Promise<number> {
-  const { count } = await supabase
-    .from("call_participants")
-    .select("user_id", { count: "exact", head: true })
-    .eq("call_id", callId);
-  return count ?? 0;
 }
 
 /** Tandai panggilan berdering yang kedaluwarsa sebagai tak terjawab. */

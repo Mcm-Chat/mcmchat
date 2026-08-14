@@ -4,6 +4,7 @@ import { CheckCircle2, Loader2, RefreshCw, TriangleAlert, XCircle } from "lucide
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { Button } from "@/components/ui/button";
 import { getCallConfig } from "@/lib/calls/calls.functions";
+import { issueDiagnosticToken } from "@/lib/calls/diagnostics.functions";
 import {
   mediaDevicesCheck,
   overallStatus,
@@ -11,6 +12,7 @@ import {
   providerCheck,
   readPermission,
   result,
+  runLiveKitConnectTest,
   secureContextCheck,
   testLocalDevices,
   type CheckStatus,
@@ -63,14 +65,19 @@ function CallDiagnosticsPage() {
   const [checks, setChecks] = useState<DiagnosticResult[]>([]);
   const [running, setRunning] = useState(false);
   const [deviceTest, setDeviceTest] = useState<DiagnosticResult | null>(null);
+  const [configured, setConfigured] = useState(false);
+  const [netTest, setNetTest] = useState<DiagnosticResult | null>(null);
+  const [netRunning, setNetRunning] = useState(false);
 
   const run = useCallback(async () => {
     setRunning(true);
     const items: DiagnosticResult[] = [];
     try {
       const cfg = await getCallConfig();
-      items.push(providerCheck(Boolean(cfg.configured)));
+      setConfigured(Boolean(cfg.configured));
+      items.push(providerCheck(Boolean(cfg.configured), cfg.code));
     } catch {
+      setConfigured(false);
       items.push(
         result(
           "provider",
@@ -130,6 +137,42 @@ function CallDiagnosticsPage() {
             );
           })}
         </ul>
+
+        <section className="space-y-3 rounded-2xl border bg-card p-4">
+          <div>
+            <h2 className="text-sm font-semibold">Tes koneksi LiveKit</h2>
+            <p className="text-xs text-muted-foreground">
+              Menyambung sebentar ke ruang diagnostik acak (tanpa suara, tanpa video, tanpa data)
+              lalu memutusnya. Riwayat panggilan tidak berubah.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="rounded-xl"
+            disabled={!configured || netRunning}
+            onClick={() => {
+              setNetRunning(true);
+              void runLiveKitConnectTest(() => issueDiagnosticToken())
+                .then(setNetTest)
+                .finally(() => setNetRunning(false));
+            }}
+          >
+            {netRunning && <Loader2 className="mr-1.5 size-4 animate-spin" />}
+            Tes koneksi LiveKit
+          </Button>
+          {!configured && (
+            <p className="text-xs text-muted-foreground">
+              Tes dinonaktifkan: penyedia panggilan belum terhubung (provider_unconfigured).
+            </p>
+          )}
+          {netTest && (
+            <p className={`text-xs ${TONE[netTest.status]}`}>
+              {netTest.status === "pass" ? "Lulus" : "Gagal"}: {netTest.detail}
+              {netTest.action ? ` Langkah: ${netTest.action}` : ""}
+            </p>
+          )}
+        </section>
 
         <section className="space-y-3 rounded-2xl border bg-card p-4">
           <div>

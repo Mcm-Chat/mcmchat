@@ -31,16 +31,31 @@ export function overallStatus(results: DiagnosticResult[]): CheckStatus {
   return "pass";
 }
 
-export function providerCheck(configured: boolean): DiagnosticResult {
-  return configured
-    ? result("provider", "Konfigurasi penyedia", "pass", "Kredensial panggilan sudah terisi.")
-    : result(
-        "provider",
-        "Konfigurasi penyedia",
-        "fail",
-        "Kredensial panggilan belum terisi di server.",
-        "Pemilik aplikasi mengisi LIVEKIT_URL, LIVEKIT_API_KEY, dan LIVEKIT_API_SECRET.",
-      );
+export const PROVIDER_CODE_DETAIL: Record<string, { detail: string; action: string }> = {
+  provider_unconfigured: {
+    detail: "Kredensial panggilan belum terisi di server.",
+    action: "Pemilik aplikasi mengisi LIVEKIT_URL, LIVEKIT_API_KEY, dan LIVEKIT_API_SECRET.",
+  },
+  provider_url_invalid: {
+    detail: "LIVEKIT_URL tidak valid (harus diawali wss://).",
+    action: "Perbaiki LIVEKIT_URL menjadi wss://<subdomain>.livekit.cloud.",
+  },
+};
+
+export function providerCheck(
+  configured: boolean,
+  code = "provider_unconfigured",
+): DiagnosticResult {
+  if (configured)
+    return result("provider", "Konfigurasi penyedia", "pass", "Kredensial panggilan sudah terisi.");
+  const info = PROVIDER_CODE_DETAIL[code] ?? PROVIDER_CODE_DETAIL["provider_unconfigured"]!;
+  return result(
+    "provider",
+    "Konfigurasi penyedia",
+    "fail",
+    `${info.detail} (${code})`,
+    info.action,
+  );
 }
 
 export function secureContextCheck(secure: boolean, host: string): DiagnosticResult {
@@ -127,5 +142,62 @@ export async function testLocalDevices(video: boolean): Promise<DiagnosticResult
   } catch (e) {
     const { code, message } = deviceErrorMessage(e instanceof Error ? e.name : "");
     return result("device-test", label, "fail", `${message} (${code})`, "Periksa izin perangkat.");
+  }
+}
+
+export type DiagnosticTokenResult =
+  | { ok: true; url: string; token: string; room: string; expiresInSec: number }
+  | { ok: false; code: string };
+
+/**
+ * Tes koneksi end-to-end ke LiveKit memakai token diagnostik sekali pakai
+ * (observer, TTL <= 60 detik). Token dibuang setelah tes; tidak ada media,
+ * tidak ada data, dan tidak ada baris panggilan yang tersentuh.
+ */
+export async function runLiveKitConnectTest(
+  issueToken: () => Promise<DiagnosticTokenResult>,
+): Promise<DiagnosticResult> {
+  const label = "Tes koneksi LiveKit";
+  let t: DiagnosticTokenResult;
+  try {
+    t = await issueToken();
+  } catch {
+    return result(
+      "livekit",
+      label,
+      "fail",
+      "Server tidak dapat dihubungi. (server_unreachable)",
+      "Periksa koneksi internet lalu coba lagi.",
+    );
+  }
+  if (!t.ok) {
+    const info = PROVIDER_CODE_DETAIL[t.code];
+    return result(
+      "livekit",
+      label,
+      "fail",
+      `${info?.detail ?? "Tes tidak dapat dijalankan."} (${t.code})`,
+      info?.action ?? "Hubungi pemilik aplikasi.",
+    );
+  }
+  const started = Date.now();
+  const { Room } = await import("livekit-client");
+  const room = new Room();
+  try {
+    await room.connect(t.url, t.token, { autoSubscribe: false });
+    const ms = Date.now() - started;
+    return result("livekit", label, "pass", `Tersambung ke server panggilan dalam ${ms} ms.`);
+  } catch (e) {
+    return result(
+      "livekit",
+      label,
+      "fail",
+      `Gagal menyambung ke server panggilan. (livekit_connect_failed: ${
+        e instanceof Error ? e.name : "unknown"
+      })`,
+      "Periksa LIVEKIT_URL/kredensial dan pastikan jaringan tidak memblokir WebSocket.",
+    );
+  } finally {
+    await room.disconnect().catch(() => undefined);
   }
 }
