@@ -143,7 +143,7 @@ export function isDeadTokenError(status: number, body: unknown): boolean {
 export async function sendPush(
   targets: PushTarget[],
   data: PushData,
-  options?: { ttlSeconds?: number },
+  options?: { ttlSeconds?: number; collapseKey?: string },
 ): Promise<FcmResult> {
   const { outcomes: _o, ...rest } = await sendEach(
     targets.map((t) => ({
