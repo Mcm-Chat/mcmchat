@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
+import { Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDecimalId, fromGrams, isWeightUnit, validateVariantDraft } from "@/lib/mcm/decimal";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -41,7 +41,6 @@ import {
   MOVEMENT_LABEL,
   WEIGHT_UNITS,
   adjustStock,
-  addProductPhotos,
   deletePhoto,
   deleteProduct,
   deleteVariant,
@@ -60,7 +59,6 @@ import {
 } from "@/lib/api/catalog";
 import { VariantUnitsPanel } from "@/components/mcm/unit-parts";
 import { useRequireAuth } from "@/lib/api/guard";
-import { compressImage } from "@/lib/mcm/geo";
 import { jam } from "@/lib/mcm/format";
 
 export const Route = createFileRoute("/catalog/$id")({
