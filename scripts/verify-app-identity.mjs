@@ -22,6 +22,13 @@ const SKIP_DIRS = new Set([
 ]);
 const SELF = path.resolve("scripts/verify-app-identity.mjs");
 const SELF_TEST = path.resolve("src/lib/security/__tests__/apk-separation.test.ts");
+// File yang memang MENJELASKAN atau MENEGAKKAN larangan ini boleh menyebut namanya.
+const ALLOW = new Set([
+  SELF,
+  SELF_TEST,
+  path.resolve("docs/app-identity.md"),
+  path.resolve("scripts/verify-aab.mjs"),
+]);
 
 const errors = [];
 
@@ -34,7 +41,7 @@ function walk(dir) {
     if (st.isDirectory()) { walk(full); continue; }
     if (st.size > 2_000_000) continue;
     if (/\.(png|jpe?g|webp|ico|jks|keystore|aab|apk|zip|jar|woff2?)$/i.test(entry)) continue;
-    if (full === SELF || full === SELF_TEST) continue;
+    if (ALLOW.has(full)) continue;
     let text;
     try { text = readFileSync(full, "utf8"); } catch { continue; }
     for (const re of FORBIDDEN) {
