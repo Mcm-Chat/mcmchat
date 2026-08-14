@@ -213,15 +213,16 @@ describe("otorisasi mengakhiri panggilan", () => {
   const ongoing = { status: "ongoing" as const, requested: "ended" as const, reason: null };
 
   it("peserta grup biasa tidak bisa mengakhiri panggilan berlangsung untuk semua", () => {
-    expect(
-      canEndForEveryone({ ...ongoing, isInitiator: false, timeoutElapsed: true }),
-    ).toEqual({ allowed: false, code: "use_leave_call" });
+    expect(canEndForEveryone({ ...ongoing, isInitiator: false, timeoutElapsed: true })).toEqual({
+      allowed: false,
+      code: "use_leave_call",
+    });
   });
 
   it("host boleh mengakhiri panggilan berlangsung", () => {
-    expect(canEndForEveryone({ ...ongoing, isInitiator: true, timeoutElapsed: false }).allowed).toBe(
-      true,
-    );
+    expect(
+      canEndForEveryone({ ...ongoing, isInitiator: true, timeoutElapsed: false }).allowed,
+    ).toBe(true);
   });
 
   it("penerima tidak boleh memakai end_call untuk menolak", () => {
@@ -240,7 +241,11 @@ describe("otorisasi mengakhiri panggilan", () => {
     const t0 = 1_000_000;
     expect(canMarkTimeout(t0, t0 + 44_000)).toBe(false);
     expect(canMarkTimeout(t0, t0 + RING_TIMEOUT_SEC * 1000)).toBe(true);
-    const req = { status: "ringing" as const, requested: "missed" as const, reason: "timeout" as const };
+    const req = {
+      status: "ringing" as const,
+      requested: "missed" as const,
+      reason: "timeout" as const,
+    };
     expect(canEndForEveryone({ ...req, isInitiator: false, timeoutElapsed: false }).code).toBe(
       "timeout_too_early",
     );
@@ -394,7 +399,9 @@ describe("invarian migrasi panggilan terbaru", () => {
   });
 
   it("ACL decline_call tanpa anon/PUBLIC", () => {
-    expect(latest).toContain("REVOKE EXECUTE ON FUNCTION public.decline_call(uuid) FROM PUBLIC, anon");
+    expect(latest).toContain(
+      "REVOKE EXECUTE ON FUNCTION public.decline_call(uuid) FROM PUBLIC, anon",
+    );
     expect(latest).toContain(
       "GRANT EXECUTE ON FUNCTION public.decline_call(uuid) TO authenticated, service_role",
     );
