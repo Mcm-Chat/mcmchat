@@ -26,6 +26,7 @@ import {
   type ProfileLite,
 } from "@/lib/api/contacts";
 import { getOrCreateDirect } from "@/lib/api/chat";
+import { useBackDismiss } from "@/lib/mobile/back-guard";
 
 export type ScanUsage = { profile: ProfileLite };
 
@@ -55,6 +56,8 @@ export function ScanResultSheet({
   const [alias, setAlias] = useState("");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useBackDismiss(open, () => onOpenChange(false));
 
   useEffect(() => {
     if (!open || !profile) return;
