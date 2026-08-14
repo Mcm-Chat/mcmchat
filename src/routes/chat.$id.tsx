@@ -427,12 +427,53 @@ function ChatRoom() {
    */
   const claimLegacy = async () => {
     try {
-      const { error } = await supabase.rpc("claim_legacy_direct_conversation", { _conversation: id });
+      const { data, error } = await supabase.rpc("claim_legacy_direct_conversation", {
+        _conversation: id,
+      });
       if (error) throw new Error(error.message);
-      toast.success("Permintaan kontak dibuat. Terima di halaman Kontak untuk mulai membalas.");
+      const res = (data ?? {}) as { direction?: string; status?: string };
+      // Server tidak pernah membalik arah: bila permintaan saya sendiri masih
+      // menunggu, tampilkan status menunggu, bukan ajakan menerima.
+      if (res.status === "pending" && res.direction === "outgoing") {
+        toast.info("Permintaan kontak Anda masih menunggu diterima.");
+      } else if (res.status === "pending") {
+        toast.success("Permintaan kontak dibuat. Terima untuk mulai membalas.");
+      }
+      void refetchRelation();
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengaktifkan percakapan");
+    }
+  };
+
+  const respondRequest = async (action: "accepted" | "rejected") => {
+    const requestId = relation?.request_id;
+    if (!requestId) return;
+    try {
+      const { error } = await supabase.rpc("respond_contact_request", {
+        _request: requestId,
+        _action: action,
+      });
+      if (error) throw new Error(error.message);
+      toast.success(action === "accepted" ? "Permintaan diterima" : "Permintaan ditolak");
+      void refetchRelation();
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui permintaan");
+    }
+  };
+
+  const cancelOutgoing = async () => {
+    const other = conv?.other?.id;
+    if (!other) return;
+    try {
+      await cancelContactRequest(userId!, other);
+      toast.success("Permintaan dibatalkan");
+      void refetchRelation();
+      void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Permintaan gagal dibatalkan");
     }
   };
 
