@@ -462,7 +462,10 @@ function DispatchDialog({
   });
 
   const variantIds = useMemo(
-    () => Array.from(new Set(order.items.map((i) => i.variant_id))),
+    () =>
+      Array.from(
+        new Set(order.items.map((i) => i.variant_id).filter((v): v is string => !!v)),
+      ),
     [order.items],
   );
 
@@ -511,7 +514,7 @@ function DispatchDialog({
       payload.push({
         itemId: s.item.id,
         slotNo: s.slotNo,
-        mode: choice === "new" ? "new_unit" : "existing_unit",
+        mode: choice === "new" ? "prepare_new" : "existing",
         stockUnitId: choice === "new" ? null : choice,
       });
     }
@@ -558,7 +561,7 @@ function DispatchDialog({
             menyiapkan unit baru lengkap dengan foto dan lokasi.
           </p>
           {slots.map((s) => {
-            const avail = unitsByVariant[s.item.variant_id] ?? [];
+            const avail = s.item.variant_id ? (unitsByVariant[s.item.variant_id] ?? []) : [];
             return (
               <div key={s.key} className="space-y-1.5 rounded-xl border border-border p-2.5">
                 <p className="text-xs font-semibold">
