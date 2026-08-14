@@ -1078,9 +1078,7 @@ function OrderFromProductButton({
         senderUserId: uid,
         idempotencyKey: keyRef.current,
         note: note.trim(),
-        items: [
-          { variantId, unitCount: c, perUnitQty: q, perUnitUnit: unit || "pcs" },
-        ],
+        items: [{ variantId, unitCount: c, perUnitQty: q, perUnitUnit: unit || "pcs" }],
       });
       toast.success("Pesanan dikirim ke toko");
       setOpen(false);
@@ -1094,11 +1092,7 @@ function OrderFromProductButton({
 
   return (
     <>
-      <Button
-        size="sm"
-        className="h-9 w-full rounded-lg text-[11px]"
-        onClick={() => setOpen(true)}
-      >
+      <Button size="sm" className="h-9 w-full rounded-lg text-[11px]" onClick={() => setOpen(true)}>
         Pesan sekarang
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

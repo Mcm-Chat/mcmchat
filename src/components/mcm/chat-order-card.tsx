@@ -122,7 +122,9 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
         <div className="flex items-center gap-1.5 text-xs font-semibold">
           <ClipboardList className="size-4 text-primary" /> Pesanan
         </div>
-        <StatusBadge tone={statusTone(order.status)}>{ORDER_STATUS_LABEL[order.status]}</StatusBadge>
+        <StatusBadge tone={statusTone(order.status)}>
+          {ORDER_STATUS_LABEL[order.status]}
+        </StatusBadge>
       </div>
 
       {live && stepIndex >= 0 && (
@@ -161,12 +163,20 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
 
       <div className="flex flex-wrap gap-1.5">
         {canSell && order.status === "buyer_requested" && (
-          <Button size="sm" className="h-8 rounded-lg text-[11px]" onClick={() => setConfirmOpen(true)}>
+          <Button
+            size="sm"
+            className="h-8 rounded-lg text-[11px]"
+            onClick={() => setConfirmOpen(true)}
+          >
             Konfirmasi & harga
           </Button>
         )}
         {canSell && order.status === "changes_requested" && (
-          <Button size="sm" className="h-8 rounded-lg text-[11px]" onClick={() => setConfirmOpen(true)}>
+          <Button
+            size="sm"
+            className="h-8 rounded-lg text-[11px]"
+            onClick={() => setConfirmOpen(true)}
+          >
             Kirim ulang penawaran
           </Button>
         )}
@@ -210,7 +220,9 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             variant="ghost"
             className="h-8 rounded-lg text-[11px] text-destructive"
             disabled={busy}
-            onClick={() => void run(() => cancelChatOrder(order.id, "Dibatalkan"), "Pesanan dibatalkan")}
+            onClick={() =>
+              void run(() => cancelChatOrder(order.id, "Dibatalkan"), "Pesanan dibatalkan")
+            }
           >
             Batalkan
           </Button>
@@ -379,7 +391,9 @@ function ConfirmOrderDialog({
                     inputMode="numeric"
                     value={rows[idx]!.price}
                     onChange={(e) =>
-                      setRows((r) => r.map((x, j) => (j === idx ? { ...x, price: e.target.value } : x)))
+                      setRows((r) =>
+                        r.map((x, j) => (j === idx ? { ...x, price: e.target.value } : x)),
+                      )
                     }
                   />
                 </div>
@@ -410,7 +424,11 @@ function ConfirmOrderDialog({
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-[11px]">Diskon pesanan</Label>
-              <Input inputMode="numeric" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+              <Input
+                inputMode="numeric"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+              />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Ongkos / biaya</Label>
@@ -462,10 +480,7 @@ function DispatchDialog({
   });
 
   const variantIds = useMemo(
-    () =>
-      Array.from(
-        new Set(order.items.map((i) => i.variant_id).filter((v): v is string => !!v)),
-      ),
+    () => Array.from(new Set(order.items.map((i) => i.variant_id).filter((v): v is string => !!v))),
     [order.items],
   );
 
@@ -565,7 +580,8 @@ function DispatchDialog({
             return (
               <div key={s.key} className="space-y-1.5 rounded-xl border border-border p-2.5">
                 <p className="text-xs font-semibold">
-                  {s.item.product_name} · {s.item.variant_name} — unit {s.slotNo}/{s.item.unit_count}
+                  {s.item.product_name} · {s.item.variant_name} — unit {s.slotNo}/
+                  {s.item.unit_count}
                 </p>
                 <Select
                   value={plan[s.key] ?? "new"}

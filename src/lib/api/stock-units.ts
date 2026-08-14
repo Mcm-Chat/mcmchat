@@ -25,7 +25,10 @@ export const UNIT_STATUS_LABEL: Record<StockUnitStatus, string> = {
   void: "Dibatalkan",
 };
 
-export const UNIT_STATUS_TONE: Record<StockUnitStatus, "primary" | "warning" | "danger" | "neutral"> = {
+export const UNIT_STATUS_TONE: Record<
+  StockUnitStatus,
+  "primary" | "warning" | "danger" | "neutral"
+> = {
   draft: "warning",
   available: "primary",
   reserved: "warning",
@@ -36,7 +39,12 @@ export const UNIT_STATUS_TONE: Record<StockUnitStatus, "primary" | "warning" | "
 };
 
 /** Status yang tidak boleh dihitung sebagai stok tersedia di gudang. */
-export const ALLOCATED_STATUSES: StockUnitStatus[] = ["reserved", "preparing", "ready", "delivered"];
+export const ALLOCATED_STATUSES: StockUnitStatus[] = [
+  "reserved",
+  "preparing",
+  "ready",
+  "delivered",
+];
 
 /** Daftar unit sebuah varian beserta foto masing-masing unit. */
 export async function listUnits(variantId: string): Promise<StockUnitWithPhotos[]> {

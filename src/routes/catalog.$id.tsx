@@ -3,12 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  formatDecimalId,
-  fromGrams,
-  isWeightUnit,
-  validateVariantDraft,
-} from "@/lib/mcm/decimal";
+import { formatDecimalId, fromGrams, isWeightUnit, validateVariantDraft } from "@/lib/mcm/decimal";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import {
   ConfirmDialog,
@@ -661,7 +656,9 @@ function VariantEditorDialog({
   } as const;
   const check = validateVariantDraft(draft);
   const gramPreview =
-    stockType === "weight" && check.ok ? formatDecimalId(check.value.base_quantity_grams ?? 0) : null;
+    stockType === "weight" && check.ok
+      ? formatDecimalId(check.value.base_quantity_grams ?? 0)
+      : null;
 
   const save = async () => {
     if (saving) return;

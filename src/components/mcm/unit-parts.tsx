@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { ConfirmDialog, StatusBadge } from "@/components/mcm/primitives";
 import { PhotoCard } from "@/components/mcm/catalog-parts";
-import { addProductPhotos, formatQty, toBase, type PhotoRow, type VariantRow } from "@/lib/api/catalog";
+import {
+  addProductPhotos,
+  formatQty,
+  toBase,
+  type PhotoRow,
+  type VariantRow,
+} from "@/lib/api/catalog";
 import {
   UNIT_STATUS_LABEL,
   UNIT_STATUS_TONE,
@@ -75,7 +81,9 @@ export function VariantUnitsPanel({
           <Boxes className="size-4 text-primary" />
           Unit fisik
           {open ? null : (
-            <span className="text-[11px] font-normal text-muted-foreground">(ketuk untuk buka)</span>
+            <span className="text-[11px] font-normal text-muted-foreground">
+              (ketuk untuk buka)
+            </span>
           )}
         </button>
         {open && (

@@ -173,7 +173,13 @@ async function ensureOrderMessage(input: {
 
 export async function confirmChatOrder(input: {
   orderId: string;
-  items: { id: string; unit_count?: number; price?: number; discount?: number; availability_note?: string }[];
+  items: {
+    id: string;
+    unit_count?: number;
+    price?: number;
+    discount?: number;
+    availability_note?: string;
+  }[];
   note?: string;
   discount?: number;
   extraFee?: number;
