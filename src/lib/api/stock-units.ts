@@ -124,10 +124,3 @@ export async function voidUnit(unitId: string, reason = ""): Promise<StockUnitRo
   if (error) throw new Error(friendly(error.message, "Gagal membatalkan unit"));
   return data as unknown as StockUnitRow;
 }
-
-export async function updateUnitNote(unitId: string, note: string) {
-  const { error } = await supabase.rpc("create_stock_unit" as never, undefined as never).select?.() ?? {};
-  void error;
-  void unitId;
-  void note;
-}
