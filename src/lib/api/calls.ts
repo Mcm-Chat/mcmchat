@@ -82,10 +82,16 @@ export async function answerCall(callId: string) {
 }
 
 export async function declineCall(callId: string) {
-  await endCall(callId, "declined", 0, "declined");
+  // Jalur khusus penolakan: pada grup hanya penerima ini yang keluar, panggilan
+  // baru berstatus `declined` saat penerima terakhir menolak.
+  const { error } = await supabase.rpc("decline_call", { _call: callId });
+  if (error) throw new Error(friendly(error.message, "Gagal menolak panggilan"));
 }
 
-/** Bergabung ke room (idempotent) — juga membatalkan `left_at` saat bergabung lagi. */
+/**
+ * Bergabung ke room (idempotent). Peserta yang sudah keluar/menolak tidak
+ * pernah dihidupkan kembali oleh server.
+ */
 export async function joinCall(callId: string) {
   const { data, error } = await supabase.rpc("join_call", { _call: callId });
   if (error) throw new Error(friendly(error.message, "Gagal bergabung ke panggilan"));
@@ -123,14 +129,38 @@ export async function getCall(callId: string): Promise<CallRow | null> {
 export async function listRingingCalls(userId: string): Promise<CallRow[]> {
   await expireStaleCalls().catch(() => undefined);
   const since = new Date(Date.now() - RING_TIMEOUT_MS).toISOString();
+  // Sumber kebenaran ada di server: hanya panggilan yang keanggotaan saya
+  // masih aktif (`left_at IS NULL`) yang boleh memunculkan banner lagi.
+  const { data: mine } = await supabase
+    .from("call_participants")
+    .select("call_id")
+    .eq("user_id", userId)
+    .is("left_at", null);
+  const ids = (mine ?? []).map((m) => m.call_id);
+  if (ids.length === 0) return [];
   const { data } = await supabase
     .from("calls")
     .select("*")
+    .in("id", ids)
     .eq("status", "ringing")
     .gt("created_at", since)
     .order("created_at", { ascending: false })
     .limit(5);
   return (data ?? []).filter((c) => c.initiator_id !== userId);
+}
+
+/**
+ * Apakah pengguna masih penerima aktif panggilan ini? Dipakai sebelum
+ * memunculkan banner panggilan masuk agar penolak grup tidak melihatnya lagi.
+ */
+export async function isActiveRecipient(callId: string, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("call_participants")
+    .select("left_at")
+    .eq("call_id", callId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  return Boolean(data) && data?.left_at == null;
 }
 
 /** Ikuti perubahan satu panggilan (dijawab, ditolak, berakhir) secara realtime. */
@@ -157,7 +187,11 @@ export function subscribeIncomingCalls(userId: string, onIncoming: (call: CallRo
     .channel(`incoming-calls:${userId}`)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "calls" }, (p) => {
       const row = p.new as CallRow;
-      if (row.status === "ringing" && row.initiator_id !== userId) onIncoming(row);
+      if (row.status !== "ringing" || row.initiator_id === userId) return;
+      // Verifikasi ke server, bukan sekadar state lokal.
+      void isActiveRecipient(row.id, userId).then((ok) => {
+        if (ok) onIncoming(row);
+      });
     })
     .subscribe();
   return () => {
