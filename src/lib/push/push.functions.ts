@@ -154,27 +154,14 @@ export const notifyIncomingCall = createServerFn({ method: "POST" })
     if (!call || call.initiator_id !== context.userId || call.status !== "ringing") {
       return { configured: false, sent: 0 };
     }
-    const [{ data: parts }, { data: me }] = await Promise.all([
-      context.supabase.from("call_participants").select("user_id").eq("call_id", call.id),
-      // Baca profil sendiri lewat RPC; tabel profiles tertutup untuk klien.
-      context.supabase.rpc("my_profile"),
-    ]);
-    const { dispatchEventPush } = await import("./dispatch.server");
-    let sent = 0;
-    let configured = false;
-    for (const p of parts ?? []) {
-      if (p.user_id === context.userId) continue;
-      const res = await dispatchEventPush({
-        kind: "call",
-        category: "calls",
-        userId: p.user_id,
-        title: me?.display_name ?? "Panggilan MCM",
-        body: call.kind === "video" ? "Panggilan video masuk" : "Panggilan suara masuk",
-        route: `/call/${call.id}`,
-        callId: call.id,
-      });
-      configured = configured || res.configured;
-      sent += res.sent;
-    }
-    return { configured, sent };
+    // Baca profil sendiri lewat RPC; tabel profiles tertutup untuk klien.
+    const { data: me } = await context.supabase.rpc("my_profile");
+    // Fan-out panggilan memakai token aksi sekali-pakai + TTL sependek dering.
+    const { dispatchCallPush } = await import("./dispatch.server");
+    const res = await dispatchCallPush({
+      callId: call.id,
+      callerName: me?.display_name ?? "Panggilan MCM",
+      kind: call.kind === "video" ? "video" : "audio",
+    });
+    return { configured: res.configured, sent: res.sent };
   });
