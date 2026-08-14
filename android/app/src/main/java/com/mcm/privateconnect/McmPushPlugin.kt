@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -173,7 +172,4 @@ class McmPushPlugin : Plugin() {
         val id = context.resources.getIdentifier("google_app_id", "string", context.packageName)
         id != 0 && context.getString(id).isNotBlank()
     }.getOrDefault(false)
-
-    @Suppress("unused")
-    private fun unusedUri(): Uri = Uri.EMPTY
 }
