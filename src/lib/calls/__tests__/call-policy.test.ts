@@ -6,6 +6,13 @@ import {
   isEndReason,
   resolveEndOutcome,
   resolveLeaveOutcome,
+  canAnswerCall,
+  canEndForEveryone,
+  canMarkTimeout,
+  canRejoinAfterLeave,
+  resolveDeclineOutcome,
+  serverDurationSec,
+  RING_TIMEOUT_SEC,
 } from "../policy";
 import { buildTokenPayload, isValidLiveKitUrl, validateLiveKitConfig } from "../livekit.server";
 import { DIAGNOSTIC_TTL_SEC } from "../diagnostics.functions";
@@ -199,5 +206,197 @@ describe("Android App Link panggilan", () => {
   it("memuat /call untuk mcmchat.id dan www.mcmchat.id", () => {
     for (const host of ["mcmchat.id", "www.mcmchat.id"])
       expect(manifest).toContain(`android:host="${host}" android:pathPrefix="/call"`);
+  });
+});
+
+describe("otorisasi mengakhiri panggilan", () => {
+  const ongoing = { status: "ongoing" as const, requested: "ended" as const, reason: null };
+
+  it("peserta grup biasa tidak bisa mengakhiri panggilan berlangsung untuk semua", () => {
+    expect(
+      canEndForEveryone({ ...ongoing, isInitiator: false, timeoutElapsed: true }),
+    ).toEqual({ allowed: false, code: "use_leave_call" });
+  });
+
+  it("host boleh mengakhiri panggilan berlangsung", () => {
+    expect(canEndForEveryone({ ...ongoing, isInitiator: true, timeoutElapsed: false }).allowed).toBe(
+      true,
+    );
+  });
+
+  it("penerima tidak boleh memakai end_call untuk menolak", () => {
+    expect(
+      canEndForEveryone({
+        status: "ringing",
+        isInitiator: false,
+        requested: "ended",
+        reason: null,
+        timeoutElapsed: false,
+      }),
+    ).toEqual({ allowed: false, code: "use_decline_call" });
+  });
+
+  it("timeout ditolak sebelum 45 detik dan diterima setelahnya", () => {
+    const t0 = 1_000_000;
+    expect(canMarkTimeout(t0, t0 + 44_000)).toBe(false);
+    expect(canMarkTimeout(t0, t0 + RING_TIMEOUT_SEC * 1000)).toBe(true);
+    const req = { status: "ringing" as const, requested: "missed" as const, reason: "timeout" as const };
+    expect(canEndForEveryone({ ...req, isInitiator: false, timeoutElapsed: false }).code).toBe(
+      "timeout_too_early",
+    );
+    expect(canEndForEveryone({ ...req, isInitiator: false, timeoutElapsed: true }).allowed).toBe(
+      true,
+    );
+  });
+});
+
+describe("peserta yang sudah keluar", () => {
+  it("tidak bisa join, menjawab, atau mendapat token", () => {
+    expect(canRejoinAfterLeave()).toBe(false);
+    expect(
+      canAnswerCall({
+        status: "ringing",
+        isInitiator: false,
+        participantExists: true,
+        participantLeft: true,
+      }),
+    ).toEqual({ allowed: false, code: "already_left" });
+    expect(
+      canIssueCallToken({
+        status: "ongoing",
+        participantExists: true,
+        participantLeft: true,
+        hasRoom: true,
+      }).code,
+    ).toBe("already_left");
+  });
+
+  it("pemanggil tidak bisa menjawab panggilannya sendiri", () => {
+    expect(
+      canAnswerCall({
+        status: "ringing",
+        isInitiator: true,
+        participantExists: true,
+        participantLeft: false,
+      }).code,
+    ).toBe("initiator_cannot_answer");
+  });
+});
+
+describe("penolakan panggilan", () => {
+  it("satu penerima grup menolak hanya mengeluarkan dirinya", () => {
+    expect(
+      resolveDeclineOutcome({
+        status: "ringing",
+        isInitiator: false,
+        totalParticipants: 4,
+        remainingRecipients: 2,
+      }),
+    ).toEqual({ allowed: true, code: "ok", endsCall: false, outcome: null });
+  });
+
+  it("penerima aktif terakhir menolak mengakhiri panggilan", () => {
+    expect(
+      resolveDeclineOutcome({
+        status: "ringing",
+        isInitiator: false,
+        totalParticipants: 4,
+        remainingRecipients: 0,
+      }),
+    ).toEqual({
+      allowed: true,
+      code: "ok",
+      endsCall: true,
+      outcome: { status: "declined", reason: "declined" },
+    });
+  });
+
+  it("panggilan 1:1 langsung declined", () => {
+    expect(
+      resolveDeclineOutcome({
+        status: "ringing",
+        isInitiator: false,
+        totalParticipants: 2,
+        remainingRecipients: 1,
+      }).endsCall,
+    ).toBe(true);
+  });
+
+  it("pemanggil tidak boleh menolak", () => {
+    expect(
+      resolveDeclineOutcome({
+        status: "ringing",
+        isInitiator: true,
+        totalParticipants: 2,
+        remainingRecipients: 1,
+      }).code,
+    ).toBe("initiator_cannot_decline");
+  });
+
+  it("tidak bisa menolak panggilan yang sudah dijawab", () => {
+    expect(
+      resolveDeclineOutcome({
+        status: "ongoing",
+        isInitiator: false,
+        totalParticipants: 2,
+        remainingRecipients: 1,
+      }).code,
+    ).toBe("call_already_answered");
+  });
+});
+
+describe("durasi panggilan", () => {
+  it("memakai answered_at, bukan angka klien", () => {
+    const now = Date.parse("2026-01-01T00:01:00.000Z");
+    expect(
+      serverDurationSec({
+        answeredAt: "2026-01-01T00:00:00.000Z",
+        startedAt: null,
+        nowMs: now,
+        clientFallbackSec: 99_999,
+      }),
+    ).toBe(60);
+  });
+
+  it("fallback klien hanya saat tidak ada timestamp server", () => {
+    expect(
+      serverDurationSec({ answeredAt: null, startedAt: null, nowMs: 0, clientFallbackSec: 12.4 }),
+    ).toBe(12);
+  });
+});
+
+describe("invarian migrasi panggilan terbaru", () => {
+  const dir = "supabase/migrations";
+  const latest = readdirSync(dir)
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .map((f) => readFileSync(`${dir}/${f}`, "utf8"))
+    .filter((sql) => sql.includes("FUNCTION public.decline_call"))
+    .at(-1);
+
+  it("migrasi decline_call ada", () => {
+    expect(latest).toBeTruthy();
+  });
+
+  it("join_call tidak lagi menghidupkan peserta yang keluar", () => {
+    expect(latest).toContain("Anda sudah keluar dari panggilan ini");
+    expect(latest).not.toContain("left_at = NULL");
+  });
+
+  it("end_call menolak peserta non-host dan timeout dini", () => {
+    expect(latest).toContain("Peserta harus memakai leave_call untuk keluar");
+    expect(latest).toContain("Gunakan decline_call untuk menolak panggilan");
+    expect(latest).toContain("Batas waktu dering belum tercapai");
+  });
+
+  it("durasi dihitung server dari answered_at/started_at", () => {
+    expect(latest).toContain("extract(epoch FROM (_now - COALESCE(_row.answered_at");
+  });
+
+  it("ACL decline_call tanpa anon/PUBLIC", () => {
+    expect(latest).toContain("REVOKE EXECUTE ON FUNCTION public.decline_call(uuid) FROM PUBLIC, anon");
+    expect(latest).toContain(
+      "GRANT EXECUTE ON FUNCTION public.decline_call(uuid) TO authenticated, service_role",
+    );
   });
 });
