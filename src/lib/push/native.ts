@@ -11,8 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { routeFromPush } from "./deeplink";
 import type { PushData } from "./payload";
 
-export const ACTION_TOKEN_KEY = "mcm_action_token";
-
 export type NativeCapabilities = {
   backgroundReceiver: boolean;
   permissionGranted: boolean;
