@@ -176,7 +176,7 @@ export function ChatListItem({
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0"
+            className="size-11 shrink-0"
             aria-label={`Opsi ${name}`}
           >
             <MoreVertical className="size-4" />
@@ -825,7 +825,7 @@ export function ChatComposer({
         <Button
           variant="ghost"
           size="icon"
-          className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+          className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Tindakan lain"
           disabled={disabled}
           onClick={() => setActionsOpen(true)}
@@ -874,7 +874,7 @@ export function ChatComposer({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-9 shrink-0 rounded-full text-muted-foreground"
+                className="size-11 shrink-0 rounded-full text-muted-foreground"
                 aria-label="Emoji"
                 disabled={disabled}
               >
@@ -913,7 +913,7 @@ export function ChatComposer({
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 shrink-0 rounded-full text-muted-foreground"
+            className="size-11 shrink-0 rounded-full text-muted-foreground"
             aria-label="Kamera"
             disabled={disabled}
             onClick={() => onAttach("camera")}
@@ -924,7 +924,7 @@ export function ChatComposer({
         {value.trim() ? (
           <Button
             size="icon"
-            className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
+            className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label="Kirim"
             disabled={disabled}
             onClick={onSend}
@@ -935,7 +935,7 @@ export function ChatComposer({
           <Button
             size="icon"
             variant={recording ? "destructive" : "default"}
-            className="size-10 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
+            className="size-11 shrink-0 rounded-full shadow-sm transition-transform active:scale-95"
             aria-label={recording ? "Hentikan rekaman" : "Rekam pesan suara"}
             disabled={disabled}
             onClick={() => (recording ? stop() : void start())}
