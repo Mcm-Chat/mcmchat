@@ -152,6 +152,27 @@ function ChatRoom() {
     enabled: !!userId && !!conv?.other?.id,
   });
 
+  /**
+   * Keadaan hubungan LANGSUNG dari server (bukan tebakan klien): arah
+   * permintaan kontak menentukan banner. Pemohon melihat "menunggu
+   * diterima", penerima melihat "Terima"/"Tolak".
+   */
+  const { data: relation, refetch: refetchRelation } = useQuery({
+    queryKey: ["relation-state", id, userId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_direct_relation_state", { _conversation: id });
+      if (error) throw new Error(error.message);
+      return (data ?? {}) as {
+        kind?: string;
+        request_id?: string | null;
+        request_status?: string | null;
+        request_direction?: "incoming" | "outgoing" | null;
+        has_incoming_messages?: boolean;
+      };
+    },
+    enabled: !!userId,
+  });
+
   const { data: reactions } = useQuery({
     queryKey: ["reactions", id],
     queryFn: async () => {
