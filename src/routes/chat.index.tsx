@@ -114,11 +114,16 @@ function ChatIndex() {
     conversationId: string,
     patch: { is_pinned?: boolean; is_muted?: boolean; is_archived?: boolean },
   ) => {
-    await supabase
-      .from("conversation_members")
-      .update(patch)
-      .eq("conversation_id", conversationId)
-      .eq("user_id", userId!);
+    try {
+      await updateMyConversationPreferences(conversationId, {
+        ...(patch.is_muted === undefined ? {} : { muted: patch.is_muted }),
+        ...(patch.is_pinned === undefined ? {} : { pinned: patch.is_pinned }),
+        ...(patch.is_archived === undefined ? {} : { archived: patch.is_archived }),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan preferensi");
+      return;
+    }
     void refresh();
   };
 
