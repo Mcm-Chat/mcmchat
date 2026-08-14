@@ -30,7 +30,8 @@ function lastBlock(startPattern: RegExp, length = 2600): string {
 const readOrder = lastBlock(/create or replace function public\.chat_order_actor_can_read/);
 const manageOrder = lastBlock(/create or replace function public\.chat_order_actor_can_manage/);
 const readUnit = lastBlock(/create or replace function public\.current_user_can_read_stock_unit/);
-const createOrder = lastBlock(/create or replace function public\.create_chat_order/, 9000);
+// Cocokkan hanya create_chat_order(jsonb), bukan create_chat_order_with_message.
+const createOrder = lastBlock(/create or replace function public\.create_chat_order\(/, 9000);
 const dispatch = lastBlock(/create or replace function public\.dispatch_chat_order/, 9000);
 const finalize = lastBlock(/create or replace function public\.finalize_chat_order_delivery/, 3000);
 const confirm = lastBlock(/create or replace function public\.confirm_chat_order/, 2000);

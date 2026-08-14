@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ import {
   dispatchChatOrder,
   finalizeChatOrderDelivery,
   getChatOrder,
+  getChatOrderCapability,
   orderTotals,
   requestChatOrderChanges,
   totalUnits,
@@ -67,27 +68,45 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   const { data: order, isLoading } = useQuery({
     queryKey: orderKey(orderId),
     queryFn: () => getChatOrder(orderId),
-    refetchInterval: 15000,
   });
 
-  const { data: me } = useQuery({
-    queryKey: ["me", "id"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
-    staleTime: 300000,
+  // Tombol tidak ditebak di klien: server memutuskan aksi apa yang sah untuk
+  // peran pemanggil pada status saat ini.
+  const { data: cap } = useQuery({
+    queryKey: ["chat-order", "capability", orderId],
+    queryFn: () => getChatOrderCapability(orderId),
   });
 
-  const { data: canSell = false } = useQuery({
-    queryKey: ["chat-order", "can-sell", order?.business_id],
-    queryFn: async () => {
-      const { data } = await supabase.rpc("current_user_can_sell_business", {
-        _business: order!.business_id,
-      });
-      return !!data;
-    },
-    enabled: !!order?.business_id,
-  });
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: orderKey(orderId) });
+    void qc.invalidateQueries({ queryKey: ["chat-order", "capability", orderId] });
+  };
 
-  const refresh = () => void qc.invalidateQueries({ queryKey: orderKey(orderId) });
+  // Realtime, bukan polling: status berubah begitu penjual/pegawai bergerak.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`chat-order:${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_orders", filter: `id=eq.${orderId}` },
+        refresh,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_order_unit_slots",
+          filter: `chat_order_id=eq.${orderId}`,
+        },
+        refresh,
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
 
   if (isLoading || !order) {
     return (
@@ -97,7 +116,19 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
     );
   }
 
-  const isBuyer = !!me && order.buyer_user_id === me;
+  const can = cap ?? {
+    read: true,
+    is_buyer: false,
+    is_manager: false,
+    confirm: false,
+    approve: false,
+    request_changes: false,
+    dispatch: false,
+    cancel: false,
+    finalize: false,
+    status: order.status,
+    reason: "",
+  };
   const { total } = orderTotals(order);
   const stepIndex = ORDER_STEPS.indexOf(order.status);
   const live = order.status !== "cancelled" && order.status !== "delivered";
@@ -162,7 +193,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       ) : null}
 
       <div className="flex flex-wrap gap-1.5">
-        {canSell && order.status === "buyer_requested" && (
+        {can.confirm && order.status === "buyer_requested" && (
           <Button
             size="sm"
             className="h-8 rounded-lg text-[11px]"
@@ -171,7 +202,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             Konfirmasi & harga
           </Button>
         )}
-        {canSell && order.status === "changes_requested" && (
+        {can.confirm && order.status === "changes_requested" && (
           <Button
             size="sm"
             className="h-8 rounded-lg text-[11px]"
@@ -180,7 +211,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             Kirim ulang penawaran
           </Button>
         )}
-        {isBuyer && order.status === "seller_confirmed" && (
+        {can.approve && (
           <>
             <Button
               size="sm"
@@ -190,17 +221,19 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             >
               Setujui
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 rounded-lg text-[11px]"
-              onClick={() => setChangeOpen(true)}
-            >
-              Minta ubah
-            </Button>
+            {can.request_changes && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 rounded-lg text-[11px]"
+                onClick={() => setChangeOpen(true)}
+              >
+                Minta ubah
+              </Button>
+            )}
           </>
         )}
-        {canSell && order.status === "buyer_approved" && (
+        {can.dispatch && (
           <Button
             size="sm"
             className="h-8 rounded-lg text-[11px]"
@@ -209,12 +242,12 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
             Lanjut ke pegawai
           </Button>
         )}
-        {canSell && order.status === "ready_for_payment" && (
+        {can.finalize && (
           <Button size="sm" className="h-8 rounded-lg text-[11px]" onClick={() => setPayOpen(true)}>
             Bayar & kirim
           </Button>
         )}
-        {live && (canSell || isBuyer) && (
+        {live && can.cancel && (
           <Button
             size="sm"
             variant="ghost"
@@ -453,7 +486,6 @@ function ConfirmOrderDialog({
   );
 }
 
-type StaffRow = { user_id: string; display_name: string; role: string };
 
 function DispatchDialog({
   order,
@@ -468,14 +500,15 @@ function DispatchDialog({
   const [plan, setPlan] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
+  // Direktori khusus pegawai penyiapan: PIN staf tidak pernah ikut terkirim.
   const { data: staff = [] } = useQuery({
-    queryKey: ["business", "staff", order.business_id],
+    queryKey: ["business", "prep-staff", order.business_id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("business_staff_directory", {
+      const { data, error } = await supabase.rpc("business_preparation_staff", {
         _business: order.business_id,
       });
       if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as StaffRow[];
+      return data ?? [];
     },
   });
 
@@ -484,15 +517,23 @@ function DispatchDialog({
     [order.items],
   );
 
+  type AvailUnit = {
+    id: string;
+    label: string;
+    photoCount: number;
+    hasLocation: boolean;
+  };
+
   const { data: unitsByVariant = {} } = useQuery({
     queryKey: ["chat-order", "avail", order.id, variantIds],
     queryFn: async () => {
-      const out: Record<string, { id: string; unit_label: string; unit_seq: number }[]> = {};
+      const out: Record<string, AvailUnit[]> = {};
       for (const vid of variantIds) {
         out[vid] = (await listAvailableUnits(vid)).map((u) => ({
           id: u.id,
-          unit_label: u.unit_label,
-          unit_seq: u.unit_seq,
+          label: u.unit_label || `Unit #${u.unit_seq}`,
+          photoCount: u.photos.length,
+          hasLocation: u.photos.some((p) => p.location_lat !== null && p.location_lng !== null),
         }));
       }
       return out;
@@ -583,6 +624,9 @@ function DispatchDialog({
                   {s.item.product_name} · {s.item.variant_name} — unit {s.slotNo}/
                   {s.item.unit_count}
                 </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {Number(s.item.per_unit_qty)} {s.item.per_unit_unit} per unit
+                </p>
                 <Select
                   value={plan[s.key] ?? "new"}
                   onValueChange={(v) => setPlan((p) => ({ ...p, [s.key]: v }))}
@@ -594,7 +638,8 @@ function DispatchDialog({
                     <SelectItem value="new">Siapkan unit baru</SelectItem>
                     {avail.map((u) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.unit_label || `Unit #${u.unit_seq}`} (siap)
+                        {u.label} · {u.photoCount} foto
+                        {u.hasLocation ? " + lokasi" : " (tanpa lokasi)"}
                       </SelectItem>
                     ))}
                   </SelectContent>

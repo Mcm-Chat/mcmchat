@@ -6,9 +6,9 @@
  * memeriksa ulang otorisasi setelah lock, dan bersifat idempoten sehingga
  * dobel-tap tidak pernah membuat pesanan/reservasi/penjualan ganda.
  */
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
-import { sendMessage } from "./chat";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ChatOrderRow = Tables<"chat_orders">;
@@ -97,78 +97,71 @@ export async function listChatOrders(conversationId: string): Promise<ChatOrderR
 export type NewOrderItem = {
   variantId: string;
   unitCount: number;
-  perUnitQty: number;
-  perUnitUnit: string;
+  /** Hanya penjual, dan hanya bila varian mengizinkan isi per unit bebas. */
+  perUnitQty?: number;
+  perUnitUnit?: string;
   price?: number;
   discount?: number;
 };
 
+const createResultSchema = z.object({ order_id: z.string(), message_id: z.string().nullable() });
+
+/**
+ * Pesanan + kartu chat dibuat dalam SATU transaksi database
+ * (`create_chat_order_with_message`). Tidak mungkin ada pesanan tanpa kartu,
+ * dan idempotency key membuat dobel-tap mengembalikan pesanan yang sama.
+ *
+ * Isi per unit tidak dikirim pembeli: server menurunkannya dari definisi varian.
+ */
 export async function createChatOrder(input: {
   businessId: string;
   conversationId: string;
   items: NewOrderItem[];
   note?: string;
-  customerName?: string;
-  buyerUserId?: string | null;
-  senderUserId: string;
   idempotencyKey: string;
-}): Promise<string> {
-  const { data, error } = await supabase.rpc("create_chat_order", {
+}): Promise<{ orderId: string; messageId: string | null }> {
+  const { data, error } = await supabase.rpc("create_chat_order_with_message", {
     _payload: {
       business_id: input.businessId,
       conversation_id: input.conversationId,
       note: input.note ?? "",
-      customer_name: input.customerName ?? "",
-      buyer_user_id: input.buyerUserId ?? null,
       idempotency_key: input.idempotencyKey,
       items: input.items.map((i) => ({
         variant_id: i.variantId,
         unit_count: i.unitCount,
-        per_unit_qty: i.perUnitQty,
-        per_unit_unit: i.perUnitUnit,
+        ...(i.perUnitQty !== undefined ? { per_unit_qty: i.perUnitQty } : {}),
+        ...(i.perUnitUnit !== undefined ? { per_unit_unit: i.perUnitUnit } : {}),
         ...(i.price !== undefined ? { price: i.price } : {}),
         ...(i.discount !== undefined ? { discount: i.discount } : {}),
       })),
-    } as never,
+    },
   });
   if (error) throw new Error(friendly(error.message, "Gagal mengajukan pesanan"));
-  const orderId = data as unknown as string;
-  await ensureOrderMessage({
-    conversationId: input.conversationId,
-    senderId: input.senderUserId,
-    orderId,
-  });
-  return orderId;
+  const parsed = createResultSchema.parse(data);
+  return { orderId: parsed.order_id, messageId: parsed.message_id };
 }
 
-/**
- * Kartu pesanan di chat adalah satu pesan saja; statusnya dibaca langsung dari
- * `chat_orders` sehingga tidak pernah ada dua kartu yang saling bertentangan.
- * client_id membuat pengiriman kartu idempoten terhadap dobel-tap.
- */
-async function ensureOrderMessage(input: {
-  conversationId: string;
-  senderId: string;
-  orderId: string;
-}) {
-  const existing = unwrap(
-    await supabase
-      .from("messages")
-      .select("id")
-      .eq("conversation_id", input.conversationId)
-      .eq("client_id", `chat-order:${input.orderId}`)
-      .limit(1),
-    "Gagal memeriksa kartu pesanan",
-  );
-  if (existing.length > 0) return;
-  await sendMessage({
-    conversationId: input.conversationId,
-    senderId: input.senderId,
-    kind: "order",
-    body: "Permintaan pesanan",
-    clientId: `chat-order:${input.orderId}`,
-    payload: { chatOrderId: input.orderId },
-  });
+/** Kapabilitas per aktor + status, dihitung server. UI tidak menebak sendiri. */
+export const capabilitySchema = z.object({
+  read: z.boolean(),
+  is_buyer: z.boolean().default(false),
+  is_manager: z.boolean().default(false),
+  confirm: z.boolean().default(false),
+  approve: z.boolean().default(false),
+  request_changes: z.boolean().default(false),
+  dispatch: z.boolean().default(false),
+  cancel: z.boolean().default(false),
+  finalize: z.boolean().default(false),
+  status: z.string().default(""),
+  reason: z.string().default(""),
+});
+
+export type ChatOrderCapability = z.infer<typeof capabilitySchema>;
+
+export async function getChatOrderCapability(orderId: string): Promise<ChatOrderCapability> {
+  const { data, error } = await supabase.rpc("my_chat_order_capability", { _order: orderId });
+  if (error) throw new Error(friendly(error.message, "Gagal memeriksa hak akses pesanan"));
+  return capabilitySchema.parse(data);
 }
 
 export async function confirmChatOrder(input: {

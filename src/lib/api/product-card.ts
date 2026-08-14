@@ -6,10 +6,10 @@
  * dan setiap foto beserta lokasinya) di `messages.payload`, sehingga penerima
  * melihat kartu yang bisa dibaca aplikasi, bukan sekadar teks.
  */
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { friendly, unwrap } from "@/lib/api/db";
+import { friendly } from "@/lib/api/db";
 import { sendMessage } from "@/lib/api/chat";
-import { formatQty, type PhotoRow, type VariantRow } from "@/lib/api/catalog";
 
 export type ProductCardPhoto = {
   id: string;
@@ -21,79 +21,59 @@ export type ProductCardPhoto = {
   location_lng: number | null;
 };
 
-export type ProductCardPayload = {
-  type: "product_card";
-  productId: string;
-  variantId: string | null;
-  businessId: string;
-  productName: string;
-  variantName: string;
-  price: number;
-  unit: string;
-  stockLabel: string;
-  description: string;
-  photos: ProductCardPhoto[];
-};
-
-const photoOf = (p: PhotoRow): ProductCardPhoto => ({
-  id: p.id,
-  image_path: p.image_path,
-  caption: p.caption ?? "",
-  location_url: p.location_url ?? "",
-  location_label: p.location_label ?? "",
-  location_lat: p.location_lat,
-  location_lng: p.location_lng,
+/**
+ * Skema tunggal untuk memvalidasi jsonb dari RPC `build_product_card`.
+ * Ini satu-satunya batas cast di modul ini; sisanya sudah bertipe.
+ */
+const photoSchema = z.object({
+  id: z.string(),
+  image_path: z.string(),
+  caption: z.string().default(""),
+  location_url: z.string().default(""),
+  location_label: z.string().default(""),
+  location_lat: z.number().nullable().default(null),
+  location_lng: z.number().nullable().default(null),
 });
 
-/** Susun snapshot kartu produk dari database (harga & stok saat dikirim). */
+const cardSchema = z.object({
+  type: z.literal("product_card"),
+  productId: z.string(),
+  variantId: z.string(),
+  businessId: z.string(),
+  productName: z.string(),
+  variantName: z.string(),
+  price: z.coerce.number(),
+  unit: z.string(),
+  description: z.string().default(""),
+  perUnitQty: z.coerce.number(),
+  perUnitQtyBase: z.coerce.number(),
+  perUnitUnit: z.string(),
+  perUnitEditable: z.boolean().default(false),
+  availableQtyBase: z.coerce.number().default(0),
+  availableQtyDisplay: z.coerce.number().default(0),
+  availableUnitCount: z.coerce.number().default(0),
+  stockLabel: z.string().default(""),
+  photos: z.array(photoSchema).default([]),
+});
+
+export type ProductCardPayload = z.infer<typeof cardSchema>;
+
+/**
+ * Snapshot kartu produk selalu disusun server (`build_product_card`):
+ * varian WAJIB valid + aktif, isi per unit persis definisi varian, dan hanya
+ * media yang boleh dipublikasikan (foto varian publik + foto unit `available`).
+ */
 export async function buildProductCard(
   productId: string,
   variantId: string | null,
 ): Promise<ProductCardPayload> {
-  const product = unwrap(
-    await supabase.from("products").select("*").eq("id", productId).single(),
-    "Produk tidak ditemukan",
-  );
-  const variants = unwrap(
-    await supabase.from("product_variants").select("*").eq("product_id", productId),
-    "Gagal memuat varian",
-  );
-  const variant: VariantRow | null =
-    variants.find((v) => v.id === variantId) ?? variants[0] ?? null;
-
-  let stockLabel = "";
-  if (variant) {
-    const { data: bal } = await supabase
-      .from("inventory_balances")
-      .select("qty_base")
-      .eq("variant_id", variant.id)
-      .maybeSingle();
-    stockLabel = formatQty(variant, Number(bal?.qty_base ?? 0));
-  }
-
-  const photos = unwrap(
-    await supabase
-      .from("product_photos")
-      .select("*")
-      .eq("product_id", productId)
-      .order("sort_order", { ascending: true }),
-    "Gagal memuat foto produk",
-  );
-  const scoped = variant ? photos.filter((p) => !p.variant_id || p.variant_id === variant.id) : photos;
-
-  return {
-    type: "product_card",
-    productId,
-    variantId: variant?.id ?? null,
-    businessId: product.business_id,
-    productName: product.name,
-    variantName: variant?.name ?? "",
-    price: Number(variant?.price ?? product.price ?? 0),
-    unit: variant?.display_unit ?? "",
-    stockLabel,
-    description: product.description ?? "",
-    photos: scoped.slice(0, 12).map(photoOf),
-  };
+  if (!variantId) throw new Error("Pilih varian produk terlebih dahulu");
+  const { data, error } = await supabase.rpc("build_product_card", {
+    _product: productId,
+    _variant: variantId,
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal menyusun kartu produk"));
+  return cardSchema.parse(data);
 }
 
 /** Kirim kartu produk terstruktur ke sebuah percakapan. */

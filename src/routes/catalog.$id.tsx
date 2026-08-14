@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
+import { Minus, MoreVertical, Package, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDecimalId, fromGrams, isWeightUnit, validateVariantDraft } from "@/lib/mcm/decimal";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -41,7 +41,6 @@ import {
   MOVEMENT_LABEL,
   WEIGHT_UNITS,
   adjustStock,
-  addProductPhotos,
   deletePhoto,
   deleteProduct,
   deleteVariant,
@@ -60,7 +59,6 @@ import {
 } from "@/lib/api/catalog";
 import { VariantUnitsPanel } from "@/components/mcm/unit-parts";
 import { useRequireAuth } from "@/lib/api/guard";
-import { compressImage } from "@/lib/mcm/geo";
 import { jam } from "@/lib/mcm/format";
 
 export const Route = createFileRoute("/catalog/$id")({
@@ -104,8 +102,6 @@ function CatalogDetail() {
   } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
-  const addPhotoRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
   if (loading || isLoading) {
     return (
@@ -167,25 +163,6 @@ function CatalogDetail() {
     }
   };
 
-  const addFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      const drafts = [];
-      for (const f of Array.from(files)) {
-        const { blob } = await compressImage(f);
-        drafts.push({ file: blob, fileName: f.name });
-      }
-      await addProductPhotos(product.business_id, product.id, drafts);
-      invalidate();
-      toast.success(`${drafts.length} foto ditambahkan`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menambah foto");
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const movePhoto = async (photoId: string, dir: -1 | 1, list: PhotoRow[]) => {
     const idx = list.findIndex((p) => p.id === photoId);
     const target = idx + dir;
@@ -203,9 +180,9 @@ function CatalogDetail() {
   };
 
   const allPhotos = product.photos;
-  // Foto unit fisik dirender di dalam kartu variannya masing-masing, bukan di galeri global,
-  // supaya foto satu barang tidak pernah tertukar dengan barang lain.
-  const genericPhotos = allPhotos.filter((p) => !p.variant_id && !p.stock_unit_id);
+  // Semua media hidup di bawah variannya. Tidak ada jalur UI untuk foto produk
+  // tanpa variant_id: foto satu barang tidak boleh tertukar dengan barang lain.
+  const orphanPhotos = allPhotos.filter((p) => !p.variant_id && !p.stock_unit_id);
 
   return (
     <AppShell
@@ -307,87 +284,39 @@ function CatalogDetail() {
           )}
         </section>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Foto umum produk</h2>
-            <span className="text-[11px] text-muted-foreground">{genericPhotos.length} foto</span>
-          </div>
-          <input
-            ref={addPhotoRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              void addFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-xl"
-            disabled={uploading}
-            onClick={() => addPhotoRef.current?.click()}
-          >
-            <ImagePlus className="size-4" /> {uploading ? "Mengunggah…" : "Tambah foto"}
-          </Button>
-          {genericPhotos.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
-              Belum ada foto umum. Foto tiap barang nyata dikelola di kartu unit fisik varian.
+        {orphanPhotos.length > 0 && (
+          <section className="space-y-3" data-testid="orphan-photos">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Foto lama tanpa varian</h2>
+              <StatusBadge tone="warning">{orphanPhotos.length} perlu ditautkan</StatusBadge>
+            </div>
+            <p className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">
+              Foto ini berasal dari versi lama dan belum menempel pada varian mana pun. Foto baru
+              hanya bisa ditambahkan dari kartu unit fisik di dalam varian.
             </p>
-          ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {genericPhotos.map((ph, i) => (
-                <div key={ph.id} className="space-y-1.5">
-                  <PhotoCard
-                    photo={ph}
-                    index={i}
-                    onEditLocation={() => setEditLocationPhoto(ph)}
-                    onDelete={() =>
-                      void (async () => {
-                        try {
-                          await deletePhoto(ph.id);
-                          invalidate();
-                          toast.success("Foto dihapus");
-                        } catch (err) {
-                          toast.error(err instanceof Error ? err.message : "Gagal menghapus foto");
-                        }
-                      })()
-                    }
-                    actions={
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 rounded-lg"
-                          aria-label="Naikkan"
-                          onClick={() => void movePhoto(ph.id, -1, genericPhotos)}
-                        >
-                          ↑
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 rounded-lg"
-                          aria-label="Turunkan"
-                          onClick={() => void movePhoto(ph.id, 1, genericPhotos)}
-                        >
-                          ↓
-                        </Button>
-                      </div>
-                    }
-                  />
-                  {ph.preparation_job_id && (
-                    <StatusBadge tone="success">Dari penyiapan</StatusBadge>
-                  )}
-                </div>
+              {orphanPhotos.map((ph, i) => (
+                <PhotoCard
+                  key={ph.id}
+                  photo={ph}
+                  index={i}
+                  onEditLocation={() => setEditLocationPhoto(ph)}
+                  onDelete={() =>
+                    void (async () => {
+                      try {
+                        await deletePhoto(ph.id);
+                        invalidate();
+                        toast.success("Foto dihapus");
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Gagal menghapus foto");
+                      }
+                    })()
+                  }
+                />
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
       </div>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
