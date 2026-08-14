@@ -178,14 +178,10 @@ class PushDeliveryService : FirebaseMessagingService() {
             .setAutoCancel(false)
             .setContentIntent(answer)
 
-        if (allowPreview) {
-            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            builder.setPublicVersion(genericCallNotification())
-        } else {
-            // Pratinjau dimatikan: layar kunci hanya melihat versi generik.
-            builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
-            builder.setPublicVersion(genericCallNotification())
-        }
+        // Layar kunci tidak pernah menampilkan nama penelepon secara default:
+        // isi lengkap PRIVATE, layar kunci melihat versi publik yang generik.
+        builder.setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        builder.setPublicVersion(genericCallNotification())
 
         // Full-screen intent hanya bila sistem benar-benar mengizinkan (API 34+).
         if (canUseFullScreenIntent()) builder.setFullScreenIntent(answer, true)
