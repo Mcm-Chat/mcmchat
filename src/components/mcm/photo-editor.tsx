@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Crop, RotateCw, Type as TypeIcon, Undo2, X, Check, MoveUpRight, Smile } from "lucide-react";
+import {
+  Crop,
+  RotateCw,
+  Type as TypeIcon,
+  Undo2,
+  X,
+  Check,
+  MoveUpRight,
+  Smile,
+  Columns2,
+  Eye,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
