@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Crop, RotateCw, Type as TypeIcon, Undo2, X, Check, MoveUpRight, Smile } from "lucide-react";
+import {
+  Crop,
+  RotateCw,
+  Type as TypeIcon,
+  Undo2,
+  X,
+  Check,
+  MoveUpRight,
+  Smile,
+  Columns2,
+  Eye,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -115,6 +126,9 @@ export function PhotoEditorDialog({
   const [text, setText] = useState("");
   const [crop, setCrop] = useState<Rect | null>(null);
   const [dragging, setDragging] = useState<{ x: number; y: number } | null>(null);
+  const [applied, setApplied] = useState(0);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [compare, setCompare] = useState<"side" | "after">("side");
 
   useEffect(() => {
     let alive = true;
@@ -215,6 +229,7 @@ export function PhotoEditorDialog({
   const applyCrop = () => {
     if (!img || !crop || crop.w < 16 || crop.h < 16) return;
     setBaseUrl(bake(img, anns, crop).toDataURL("image/jpeg", 0.9));
+    setApplied((n) => n + 1 + anns.length);
     setAnns([]);
     setCrop(null);
     setTool("arrow");
@@ -223,13 +238,21 @@ export function PhotoEditorDialog({
   const rotate = () => {
     if (!img) return;
     setBaseUrl(rotated(img, anns).toDataURL("image/jpeg", 0.9));
+    setApplied((n) => n + 1 + anns.length);
     setAnns([]);
     setCrop(null);
   };
 
-  const save = () => {
+  const cropReady = !!crop && crop.w > 16 && crop.h > 16;
+  const pending = anns.length + (cropReady ? 1 : 0);
+  const totalChanges = applied + pending;
+
+  const render = () =>
+    bake(img!, anns, cropReady ? crop : null).toDataURL("image/jpeg", 0.85);
+
+  const openPreview = () => {
     if (!img) return;
-    onDone(bake(img, anns, crop && crop.w > 16 && crop.h > 16 ? crop : null).toDataURL("image/jpeg", 0.85));
+    setPreview(render());
   };
 
   const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
@@ -246,6 +269,11 @@ export function PhotoEditorDialog({
           <X className="size-5" />
         </Button>
         <p className="flex-1 truncate text-sm font-semibold">{title}</p>
+        {totalChanges > 0 && (
+          <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
+            {pending > 0 ? `${pending} belum disimpan` : `${totalChanges} perubahan`}
+          </span>
+        )}
         <Button
           size="icon"
           variant="ghost"
@@ -351,10 +379,74 @@ export function PhotoEditorDialog({
           </div>
         )}
 
-        <Button className="h-12 w-full rounded-xl" disabled={!img} onClick={save}>
-          <Check className="size-4" /> Pakai foto ini
+        <Button className="h-12 w-full rounded-xl" disabled={!img} onClick={openPreview}>
+          <Eye className="size-4" /> Pratinjau &amp; simpan
+          {totalChanges > 0 ? ` (${totalChanges})` : ""}
         </Button>
       </div>
+
+      {preview && (
+        <div className="absolute inset-0 z-10 flex flex-col bg-background">
+          <header className="flex items-center gap-2 border-b border-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-11 rounded-xl"
+              aria-label="Tutup pratinjau"
+              onClick={() => setPreview(null)}
+            >
+              <X className="size-5" />
+            </Button>
+            <p className="flex-1 truncate text-sm font-semibold">Sebelum / sesudah</p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 rounded-xl text-xs"
+              onClick={() => setCompare((c) => (c === "side" ? "after" : "side"))}
+            >
+              <Columns2 className="size-4" />
+              {compare === "side" ? "Hasil saja" : "Bandingkan"}
+            </Button>
+          </header>
+
+          <div className="flex-1 overflow-auto bg-muted/40 p-3">
+            {compare === "side" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <figure className="space-y-1">
+                  <img src={src} alt="Foto sebelum diedit" className="w-full rounded-xl border border-border object-contain" />
+                  <figcaption className="text-center text-[11px] text-muted-foreground">Sebelum</figcaption>
+                </figure>
+                <figure className="space-y-1">
+                  <img src={preview} alt="Foto sesudah diedit" className="w-full rounded-xl border-2 border-primary object-contain" />
+                  <figcaption className="text-center text-[11px] font-medium text-primary">Sesudah</figcaption>
+                </figure>
+              </div>
+            ) : (
+              <img src={preview} alt="Hasil akhir foto" className="mx-auto max-h-full rounded-xl border border-border" />
+            )}
+          </div>
+
+          <div className="space-y-2 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <p className="text-[11px] text-muted-foreground">
+              {totalChanges === 0
+                ? "Belum ada perubahan — foto asli akan dipakai."
+                : `${totalChanges} perubahan akan disimpan${pending > 0 ? `, ${pending} di antaranya belum diterapkan ke kanvas` : ""}.`}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="h-12 flex-1 rounded-xl"
+                onClick={() => setPreview(null)}
+              >
+                Lanjut edit
+              </Button>
+              <Button className="h-12 flex-1 rounded-xl" onClick={() => onDone(preview)}>
+                <Check className="size-4" /> Simpan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
