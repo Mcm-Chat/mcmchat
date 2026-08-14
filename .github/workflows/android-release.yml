@@ -29,11 +29,14 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          # Capacitor 7 + AGP 8.9.1 dikompilasi dengan JDK 21.
+          # AGP 8.10.1 minimum JDK 17; proyek memakai 21 karena Capacitor 7 menargetkan Java 21.
           java-version: "21"
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         with:
-          packages: "platform-tools platforms;android-36 build-tools;36.0.0"
+          packages: |
+            platform-tools
+            platforms;android-36
+            build-tools;36.0.0
 
       # google-services.json tidak pernah di-commit; disuntik dari secret (base64).
       - name: Inject FCM config

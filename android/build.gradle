@@ -2,10 +2,11 @@ buildscript {
     repositories { google(); mavenCentral() }
     dependencies {
         // Pairing resmi yang dipakai proyek ini (jangan pakai versi dinamis):
-        //   AGP 8.9.1  + Gradle 8.11.1 (gradle/wrapper) + JDK 21 + compileSdk/targetSdk 36
-        // AGP 8.9.x adalah versi pertama yang mendukung compileSdk 36 (Android 16)
-        // dan mensyaratkan Gradle >= 8.11.1.
-        classpath 'com.android.tools.build:gradle:8.9.1'
+        //   AGP 8.10.1 + Gradle 8.11.1 (gradle/wrapper) + compileSdk/targetSdk 36
+        // AGP 8.9 maksimal API 35; API 36 (Android 16) butuh AGP >= 8.10, yang
+        // minimum/default Gradle 8.11.1 dan minimum JDK 17. Proyek memakai JDK 21
+        // karena capacitor.build.gradle (Capacitor 7) menargetkan Java 21.
+        classpath 'com.android.tools.build:gradle:8.10.1'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21'
         classpath 'com.google.gms:google-services:4.4.2'
     }
