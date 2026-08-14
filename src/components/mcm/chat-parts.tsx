@@ -780,7 +780,7 @@ export function ChatComposer({
     : [];
 
   return (
-    <div className="composer-raise sticky bottom-0 z-20 border-t border-border/70 bg-card/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+    <div className="composer-raise sticky bottom-0 z-20 shrink-0 border-t border-border/70 bg-card/92 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur-xl">
       {matches.length > 0 && (
         <div className="max-h-40 overflow-y-auto border-b border-border/70">
           {matches.map((q) => (
