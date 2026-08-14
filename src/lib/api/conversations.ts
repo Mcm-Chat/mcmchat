@@ -38,18 +38,22 @@ async function rpc<T>(
 }
 
 /** Buat/pakai ulang percakapan langsung kanonik untuk satu pasangan kontak. */
-export function getOrCreateDirect(otherId: string) {
-  return rpc(
+export async function getOrCreateDirect(otherId: string): Promise<string> {
+  const id = await rpc(
     () => supabase.rpc("get_or_create_direct", { _other: otherId }),
     "Gagal membuka percakapan",
   );
+  if (!id) throw new Error("Gagal membuka percakapan");
+  return id;
 }
 
-export function createGroup(title: string, memberIds: string[]) {
-  return rpc(
+export async function createGroup(title: string, memberIds: string[]): Promise<string> {
+  const id = await rpc(
     () => supabase.rpc("create_group", { _title: title, _member_ids: memberIds }),
     "Gagal membuat grup",
   );
+  if (!id) throw new Error("Gagal membuat grup");
+  return id;
 }
 
 export function addGroupMembers(conversationId: string, memberIds: string[]) {
