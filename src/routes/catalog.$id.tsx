@@ -42,17 +42,23 @@ import {
   MOVEMENT_LABEL,
   WEIGHT_UNITS,
   adjustStock,
+  adjustWarehouse,
   deletePhoto,
   deleteProduct,
   deleteVariant,
   formatQty,
+  formatWarehouseQty,
   getProduct,
   listMovements,
   reorderPhotos,
   toBase,
+  toWarehouseBase,
   updatePhotoLocation,
   upsertProduct,
   upsertVariant,
+  variantAvailableUnits,
+  warehouseUnit,
+  warehouseUnitOptions,
   type PhotoRow,
   type ProductWithVariants,
   type StockType,
@@ -94,7 +100,16 @@ function CatalogDetail() {
   const invalidate = () => void qc.invalidateQueries({ queryKey: ["catalog", "product", id] });
 
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", category: "", description: "", price: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    category: "",
+    description: "",
+    price: "",
+    stockKind: "count" as StockType,
+    buyUnit: "pcs",
+    buyFactor: "1",
+    purchasePrice: "",
+  });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [variantOpen, setVariantOpen] = useState<VariantRow | null | "new">(null);
   const [stockDialog, setStockDialog] = useState<{
@@ -102,7 +117,8 @@ function CatalogDetail() {
     mode: "add" | "correct";
   } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
-  const [purchaseFor, setPurchaseFor] = useState<VariantRow | null>(null);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [warehouseFix, setWarehouseFix] = useState(false);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
 
   if (loading || isLoading) {
@@ -138,6 +154,10 @@ function CatalogDetail() {
       category: product.category,
       description: product.description,
       price: String(product.price),
+      stockKind: product.stock_kind,
+      buyUnit: product.buy_unit || warehouseUnit(product),
+      buyFactor: String(product.buy_factor ?? 1),
+      purchasePrice: String(product.purchase_price ?? ""),
     });
     setEditOpen(true);
   };
@@ -156,6 +176,18 @@ function CatalogDetail() {
         category: editForm.category.trim() || "Umum",
         description: editForm.description.trim(),
         price,
+        stock_kind: editForm.stockKind,
+        base_unit: editForm.stockKind === "weight" ? "g" : "pcs",
+        buy_unit: editForm.buyUnit,
+        buy_factor:
+          editForm.stockKind === "weight"
+            ? toWarehouseBase(
+                { stock_kind: "weight", base_unit: "g", buy_unit: editForm.buyUnit, buy_factor: 1 },
+                1,
+                editForm.buyUnit,
+              )
+            : Number(editForm.buyFactor.replace(",", ".")) || 1,
+        purchase_price: Number(editForm.purchasePrice.replace(/[^\d]/g, "")) || 0,
       });
       setEditOpen(false);
       invalidate();
@@ -261,7 +293,9 @@ function CatalogDetail() {
                   businessId={product.business_id}
                   productId={product.id}
                   photos={allPhotos.filter((p) => p.variant_id === v.id && !p.stock_unit_id)}
-                  onAdd={() => setPurchaseFor(v)}
+                  onAdd={() => setPurchaseOpen(true)}
+                  warehouse={product.warehouse}
+                  stockKind={product.stock_kind}
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
                   onHistory={() => setMovementsFor(v)}
@@ -429,14 +463,24 @@ function CatalogDetail() {
         <MovementsSheet variant={movementsFor} onClose={() => setMovementsFor(null)} />
       )}
 
-      {purchaseFor && (
+      {purchaseOpen && (
         <PurchaseDialog
           open
-          onOpenChange={(v) => !v && setPurchaseFor(null)}
-          variants={product.variants}
-          defaultVariantId={purchaseFor.id}
+          onOpenChange={(v) => !v && setPurchaseOpen(false)}
+          product={product}
           onDone={() => {
-            setPurchaseFor(null);
+            setPurchaseOpen(false);
+            invalidate();
+          }}
+        />
+      )}
+
+      {warehouseFix && (
+        <WarehouseAdjustDialog
+          product={product}
+          onClose={() => setWarehouseFix(false)}
+          onDone={() => {
+            setWarehouseFix(false);
             invalidate();
           }}
         />
@@ -479,6 +523,8 @@ function VariantRowCard({
   onSend,
   onEditLocation,
   onDeletePhoto,
+  warehouse,
+  stockKind,
 }: {
   variant: VariantRow & { balance: number };
   businessId: string;
@@ -491,7 +537,10 @@ function VariantRowCard({
   onSend: () => void;
   onEditLocation: (p: PhotoRow) => void;
   onDeletePhoto: (p: PhotoRow) => void;
+  warehouse: number;
+  stockKind: StockType;
 }) {
+  const available = variantAvailableUnits({ stock_kind: stockKind }, variant, warehouse);
   return (
     <div className="card-soft space-y-2 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -499,10 +548,13 @@ function VariantRowCard({
           <p className="truncate text-sm font-semibold">{variant.name}</p>
           <p className="text-xs text-muted-foreground">{priceLabel(Number(variant.price))}</p>
         </div>
-        <StatusBadge tone={variant.balance <= 0 ? "danger" : "primary"}>
-          {formatQty(variant, variant.balance)}
+        <StatusBadge tone={available <= 0 ? "danger" : "primary"}>
+          {stockKind === "weight"
+            ? formatQty(variant, warehouse)
+            : `${new Intl.NumberFormat("id-ID").format(available)} ${variant.display_unit}`}
         </StatusBadge>
       </div>
+      <p className="text-[11px] text-muted-foreground">Diambil dari stok gudang bersama.</p>
       <div className="flex flex-wrap gap-1.5">
         <Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px]" onClick={onAdd}>
           <Plus className="size-3.5" /> Beli / tambah stok

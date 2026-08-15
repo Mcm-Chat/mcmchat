@@ -5,7 +5,10 @@ import type { Tables } from "@/integrations/supabase/types";
 export type PurchaseRow = Tables<"purchases">;
 
 export type PurchaseInput = {
-  variantId: string;
+  /** Pembelian selalu masuk ke gudang produk. */
+  productId: string;
+  /** Opsional: varian yang jadi acuan pembelian (boleh kosong). */
+  variantId?: string | null;
   supplierName: string;
   supplierContact: string;
   qtyBase: number;
@@ -17,10 +20,11 @@ export type PurchaseInput = {
   purchasedAt?: string | null;
 };
 
-/** Catat pembelian dari agen + tambah stok varian dalam satu transaksi RPC. */
+/** Catat pembelian dari agen + tambah stok gudang dalam satu transaksi RPC. */
 export async function recordPurchase(input: PurchaseInput): Promise<string> {
   const payload = {
-    variant_id: input.variantId,
+    product_id: input.productId,
+    variant_id: input.variantId ?? null,
     supplier_name: input.supplierName,
     supplier_contact: input.supplierContact,
     qty_base: input.qtyBase,

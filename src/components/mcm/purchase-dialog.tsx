@@ -19,38 +19,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { rupiah } from "@/lib/mcm/format";
-import { COUNT_UNITS, WEIGHT_UNITS, toBase, type VariantRow } from "@/lib/api/catalog";
+import {
+  toWarehouseBase,
+  warehouseUnit,
+  warehouseUnitOptions,
+  type ProductRow,
+} from "@/lib/api/catalog";
 import { recordPurchase } from "@/lib/api/purchases";
 
-export type PurchaseVariant = Pick<
-  VariantRow,
-  "id" | "name" | "stock_type" | "display_unit" | "conversion_factor" | "price"
+export type PurchaseProduct = Pick<
+  ProductRow,
+  "id" | "name" | "stock_kind" | "base_unit" | "buy_unit" | "buy_factor"
 >;
 
 /**
- * Dialog pembelian lengkap: agen/pemasok, jenis (varian), jumlah + satuan,
- * dan harga modal. Stok bertambah otomatis lewat RPC `record_purchase`.
+ * Dialog pembelian lengkap: agen/pemasok, jumlah + satuan beli, dan harga
+ * modal. Stok masuk ke gudang induk lewat RPC `record_purchase`; varian ecer
+ * otomatis mengambil dari stok gudang yang sama.
  */
 export function PurchaseDialog({
   open,
   onOpenChange,
-  variants,
-  defaultVariantId,
+  product,
   onDone,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  variants: PurchaseVariant[];
-  defaultVariantId?: string | undefined;
+  product: PurchaseProduct;
   onDone?: (() => void) | undefined;
 }) {
-  const [variantId, setVariantId] = useState(defaultVariantId ?? variants[0]?.id ?? "");
-  const variant = useMemo(
-    () => variants.find((v) => v.id === variantId) ?? variants[0],
-    [variants, variantId],
-  );
-  const units = variant?.stock_type === "weight" ? WEIGHT_UNITS : COUNT_UNITS;
-  const [unit, setUnit] = useState(variant?.display_unit ?? "pcs");
+  const units = useMemo(() => warehouseUnitOptions(product), [product]);
+  const [unit, setUnit] = useState(() => warehouseUnit(product));
   const [supplier, setSupplier] = useState("");
   const [contact, setContact] = useState("");
   const [qty, setQty] = useState("");
@@ -64,10 +63,6 @@ export function PurchaseDialog({
   const total = Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum * (costNum || 0) : 0;
 
   const submit = async () => {
-    if (!variant) {
-      toast.error("Pilih jenis (varian) terlebih dahulu");
-      return;
-    }
     if (supplier.trim().length < 2) {
       toast.error("Nama agen/pemasok wajib diisi");
       return;
@@ -82,13 +77,9 @@ export function PurchaseDialog({
     }
     setSaving(true);
     try {
-      const qtyBase = toBase(
-        { stock_type: variant.stock_type, conversion_factor: variant.conversion_factor },
-        qtyNum,
-        unit,
-      );
+      const qtyBase = toWarehouseBase(product, qtyNum, unit);
       await recordPurchase({
-        variantId: variant.id,
+        productId: product.id,
         supplierName: supplier.trim(),
         supplierContact: contact.trim(),
         qtyBase,
@@ -99,7 +90,7 @@ export function PurchaseDialog({
         note: note.trim(),
         purchasedAt: date ? new Date(`${date}T00:00:00`).toISOString() : null,
       });
-      toast.success("Pembelian tercatat & stok bertambah");
+      toast.success("Pembelian tercatat & stok gudang bertambah");
       setSupplier("");
       setContact("");
       setQty("");
@@ -118,10 +109,9 @@ export function PurchaseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Catat pembelian</DialogTitle>
+          <DialogTitle>Catat pembelian gudang</DialogTitle>
           <DialogDescription>
-            Isi asal agen, jenis barang, jumlah, dan harga modal. Stok dan indikator laba akan
-            langsung diperbarui.
+            Stok masuk ke gudang {product.name}. Semua varian ecer memotong dari stok ini.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -140,28 +130,6 @@ export function PurchaseDialog({
               onChange={(e) => setContact(e.target.value)}
               placeholder="No. HP / alamat"
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Jenis yang dibeli</Label>
-            <Select
-              value={variant?.id ?? ""}
-              onValueChange={(v) => {
-                setVariantId(v);
-                const found = variants.find((x) => x.id === v);
-                if (found) setUnit(found.display_unit);
-              }}
-            >
-              <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Pilih varian" />
-              </SelectTrigger>
-              <SelectContent>
-                {variants.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.name} · {rupiah(Number(v.price))}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="flex gap-2">
             <div className="flex-1 space-y-1.5">

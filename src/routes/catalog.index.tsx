@@ -37,8 +37,9 @@ import {
   WEIGHT_UNITS,
   deleteProduct,
   formatQty,
+  formatWarehouseQty,
   listCatalog,
-  toBase,
+  toWarehouseBase,
   upsertProduct,
   upsertVariant,
   type ProductWithVariants,
@@ -84,6 +85,7 @@ function CatalogIndex() {
     description: "",
     variantName: "Standar",
     unit: "pcs",
+    perBuyUnit: "1",
     qty: "",
     cost: "",
     supplier: "",
@@ -247,15 +249,23 @@ function CatalogIndex() {
     }
     setSaving(true);
     try {
+      const isWeight = (WEIGHT_UNITS as readonly string[]).includes(form.unit);
+      const buyFactor = isWeight
+        ? ({ mg: 0.001, g: 1, ons: 100, kg: 1000 }[form.unit] ?? 1)
+        : Number(form.perBuyUnit.replace(",", ".")) || 1;
       const created = await upsertProduct({
         business_id: businessId!,
         name: form.name.trim(),
         category: form.category.trim() || "Umum",
         description: form.description.trim(),
         price,
+        stock_kind: isWeight ? "weight" : "count",
+        base_unit: isWeight ? "g" : "pcs",
+        buy_unit: form.unit,
+        buy_factor: buyFactor,
+        ...(costNum > 0 ? { purchase_price: costNum } : {}),
       });
       if (wantsPurchase) {
-        const isWeight = (WEIGHT_UNITS as readonly string[]).includes(form.unit);
         const variant = await upsertVariant({
           business_id: businessId!,
           product_id: created.id,
@@ -264,11 +274,12 @@ function CatalogIndex() {
           display_unit: form.unit,
           ...(isWeight ? { base_unit: "g" } : { base_unit: "pcs" }),
           display_quantity: 1,
-          units_per_display: 1,
+          units_per_display: isWeight ? 1 : buyFactor,
           price,
         });
-        const qtyBase = toBase(variant, qtyNum, form.unit);
+        const qtyBase = toWarehouseBase(created, qtyNum, form.unit);
         await recordPurchase({
+          productId: created.id,
           variantId: variant.id,
           supplierName: form.supplier.trim(),
           supplierContact: form.supplierContact.trim(),
@@ -288,6 +299,7 @@ function CatalogIndex() {
         description: "",
         variantName: "Standar",
         unit: "pcs",
+        perBuyUnit: "1",
         qty: "",
         cost: "",
         supplier: "",
@@ -545,11 +557,11 @@ function CatalogIndex() {
         </div>
       )}
 
-      {buyFor && buyFor.variants.length > 0 && (
+      {buyFor && (
         <PurchaseDialog
           open
           onOpenChange={(v) => !v && setBuyFor(null)}
-          variants={buyFor.variants}
+          product={buyFor}
           onDone={() => {
             setBuyFor(null);
             refreshCatalog();

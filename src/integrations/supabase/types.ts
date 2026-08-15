@@ -1202,7 +1202,7 @@ export type Database = {
           ref_id: string | null
           ref_type: string
           stock_unit_id: string | null
-          variant_id: string
+          variant_id: string | null
         }
         Insert: {
           balance_after?: number
@@ -1218,7 +1218,7 @@ export type Database = {
           ref_id?: string | null
           ref_type?: string
           stock_unit_id?: string | null
-          variant_id: string
+          variant_id?: string | null
         }
         Update: {
           balance_after?: number
@@ -1234,7 +1234,7 @@ export type Database = {
           ref_id?: string | null
           ref_type?: string
           stock_unit_id?: string | null
-          variant_id?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -2287,6 +2287,45 @@ export type Database = {
           },
         ]
       }
+      product_stock_balances: {
+        Row: {
+          business_id: string
+          created_at: string
+          product_id: string
+          qty_base: number
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          product_id: string
+          qty_base?: number
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          product_id?: string
+          qty_base?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_stock_balances_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_balances_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           allow_decimal: boolean
@@ -2370,7 +2409,10 @@ export type Database = {
       }
       products: {
         Row: {
+          base_unit: string
           business_id: string
+          buy_factor: number
+          buy_unit: string
           category: string
           created_at: string
           description: string
@@ -2380,13 +2422,18 @@ export type Database = {
           is_active: boolean
           name: string
           price: number
+          purchase_price: number
           sku: string
           stock: number
+          stock_kind: Database["public"]["Enums"]["stock_type"]
           updated_at: string
           variants: Json
         }
         Insert: {
+          base_unit?: string
           business_id: string
+          buy_factor?: number
+          buy_unit?: string
           category?: string
           created_at?: string
           description?: string
@@ -2396,13 +2443,18 @@ export type Database = {
           is_active?: boolean
           name: string
           price?: number
+          purchase_price?: number
           sku?: string
           stock?: number
+          stock_kind?: Database["public"]["Enums"]["stock_type"]
           updated_at?: string
           variants?: Json
         }
         Update: {
+          base_unit?: string
           business_id?: string
+          buy_factor?: number
+          buy_unit?: string
           category?: string
           created_at?: string
           description?: string
@@ -2412,8 +2464,10 @@ export type Database = {
           is_active?: boolean
           name?: string
           price?: number
+          purchase_price?: number
           sku?: string
           stock?: number
+          stock_kind?: Database["public"]["Enums"]["stock_type"]
           updated_at?: string
           variants?: Json
         }
@@ -2489,7 +2543,7 @@ export type Database = {
           total_cost: number
           unit_cost: number
           updated_at: string
-          variant_id: string
+          variant_id: string | null
         }
         Insert: {
           business_id: string
@@ -2507,7 +2561,7 @@ export type Database = {
           total_cost?: number
           unit_cost?: number
           updated_at?: string
-          variant_id: string
+          variant_id?: string | null
         }
         Update: {
           business_id?: string
@@ -2525,7 +2579,7 @@ export type Database = {
           total_cost?: number
           unit_cost?: number
           updated_at?: string
-          variant_id?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -3275,6 +3329,15 @@ export type Database = {
           _qty_base: number
           _type?: Database["public"]["Enums"]["inventory_movement_type"]
           _variant: string
+        }
+        Returns: number
+      }
+      adjust_warehouse: {
+        Args: {
+          _note?: string
+          _product: string
+          _qty_base: number
+          _type?: Database["public"]["Enums"]["inventory_movement_type"]
         }
         Returns: number
       }
@@ -4427,6 +4490,19 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      warehouse_apply: {
+        Args: {
+          _delta: number
+          _note?: string
+          _product: string
+          _ref_id?: string
+          _ref_type?: string
+          _stock_unit?: string
+          _type: Database["public"]["Enums"]["inventory_movement_type"]
+          _variant?: string
+        }
+        Returns: number
       }
     }
     Enums: {
