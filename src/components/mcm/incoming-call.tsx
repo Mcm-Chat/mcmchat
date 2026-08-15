@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   declineCall,
   listRingingCalls,
+  ringRemainingMs,
+  subscribeCall,
   subscribeIncomingCalls,
   type CallRow,
 } from "@/lib/api/calls";
@@ -31,6 +33,10 @@ export function IncomingCallListener() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+  /** Alasan banner tertutup, diumumkan lewat aria-live setelah fokus pulih. */
+  const [closedNotice, setClosedNotice] = useState("");
+  /** Elemen pemicu terakhir sebelum banner muncul (untuk pemulihan fokus). */
+  const triggerRef = useRef<HTMLElement | null>(null);
   // Banner panggilan masuk diperlakukan sebagai modal: fokus dikunci di dalam,
   // dan saat ditutup (jawab/tolak) fokus kembali ke elemen sebelumnya.
   // Escape sengaja tidak menolak panggilan agar tidak ada penolakan tak sengaja.
@@ -38,7 +44,56 @@ export function IncomingCallListener() {
     onClose: () => undefined,
     active: Boolean(incoming),
     closeOnEscape: false,
+    fallbackFocus: () => triggerRef.current,
   });
+
+  // Simpan pemicu sebelum banner mengambil alih fokus, supaya penutupan karena
+  // timeout atau perubahan status tetap bisa mengembalikan fokus ke sana.
+  useEffect(() => {
+    if (!incoming) return;
+    const el = document.activeElement as HTMLElement | null;
+    if (el && el !== document.body && !el.closest("[data-incoming-call]")) triggerRef.current = el;
+  }, [incoming?.call.id]);
+
+  /** Tutup banner + umumkan alasannya; pemulihan fokus ditangani useModalA11y. */
+  const closeBanner = (notice: string) => {
+    setIncoming(null);
+    setClosedNotice(notice);
+  };
+
+  // Timeout dering: banner tidak boleh menggantung setelah batas dering habis.
+  const ringingCall = incoming?.call ?? null;
+  useEffect(() => {
+    if (!ringingCall) return;
+    const remaining = ringRemainingMs(ringingCall.created_at);
+    if (remaining <= 0) {
+      closeBanner("Panggilan masuk tak terjawab.");
+      return;
+    }
+    const timer = window.setTimeout(
+      () => closeBanner("Panggilan masuk tak terjawab."),
+      remaining,
+    );
+    return () => window.clearTimeout(timer);
+  }, [ringingCall?.id, ringingCall?.created_at]);
+
+  // Perubahan status dari server (dibatalkan pemanggil, dijawab di perangkat
+  // lain, gagal) juga menutup banner dengan alasan yang jelas.
+  useEffect(() => {
+    if (!ringingCall) return;
+    return subscribeCall(ringingCall.id, (row) => {
+      if (row.status === "ringing") return;
+      const notice =
+        row.status === "missed"
+          ? "Panggilan masuk tak terjawab."
+          : row.status === "declined"
+            ? "Panggilan masuk ditolak."
+            : row.status === "failed"
+              ? "Panggilan masuk gagal."
+              : "Panggilan masuk berakhir.";
+      closeBanner(notice);
+    });
+  }, [ringingCall?.id]);
 
   // Pemulihan: event INSERT bisa terlewat saat aplikasi di latar belakang atau
   // realtime sedang putus. Saat kembali ke depan / tersambung ulang kita baca
@@ -118,12 +173,19 @@ export function IncomingCallListener() {
     return () => handle.stop();
   }, [ringingId]);
 
-  if (!incoming) return null;
+  if (!incoming) {
+    return (
+      <p role="status" aria-live="polite" className="sr-only">
+        {closedNotice}
+      </p>
+    );
+  }
   const isVideo = incoming.call.kind === "video";
 
   return (
     <div
       ref={bannerRef}
+      data-incoming-call=""
       role="dialog"
       aria-modal="true"
       aria-label={`${isVideo ? "Panggilan video" : "Panggilan suara"} masuk dari ${incoming.name}`}
@@ -153,7 +215,7 @@ export function IncomingCallListener() {
           className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-white"
           onClick={() => {
             const id = incoming.call.id;
-            setIncoming(null);
+            closeBanner("");
             void navigate({ to: "/call/$id", params: { id } });
           }}
         >
@@ -165,7 +227,7 @@ export function IncomingCallListener() {
           className="order-1 size-11 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-white"
           onClick={() => {
             const id = incoming.call.id;
-            setIncoming(null);
+            closeBanner("Panggilan masuk ditolak.");
             void declineCall(id).catch(() => undefined);
           }}
         >
