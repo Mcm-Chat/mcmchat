@@ -30,12 +30,14 @@ export async function fetchContactAliases(userId: string): Promise<Map<string, s
 
 /** Bersihkan input nama: tanpa karakter kontrol, dipangkas, maksimal 40 karakter. */
 export function normalizeAlias(input: string): string {
-  return input
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, ALIAS_MAX);
+  return (
+    input
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001f\u007f]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, ALIAS_MAX)
+  );
 }
 
 /**
