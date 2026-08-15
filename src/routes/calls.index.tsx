@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { registerDismissible } from "@/lib/a11y/escape-dismiss";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDownLeft,
@@ -178,6 +179,12 @@ function CallsPage() {
   const dismissReminder = (id: string) => {
     setDismissedReminders((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
+
+  const lastDueId = visibleDue.length > 0 ? visibleDue[visibleDue.length - 1]!.id : null;
+  useEffect(() => {
+    if (!lastDueId) return;
+    return registerDismissible(() => dismissReminder(lastDueId));
+  }, [lastDueId]);
 
   const finishReminder = async (id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id));
