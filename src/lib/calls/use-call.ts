@@ -431,7 +431,17 @@ export function useCall(opts: {
       answeringRef.current = true;
       setPhase("connecting");
       setReason(null);
-      void answerCall(row.id)
+      // Izin mikrofon/kamera dipastikan lebih dulu: menjawab tanpa izin membuat
+      // pemanggil hanya mendengar sunyi lalu panggilan gagal.
+      const kind = row.kind === "video" ? "video" : "audio";
+      void requestMediaPermission(kind)
+        .then((state) => {
+          if (state !== "granted") {
+            const copy = mediaPermissionCopy(state, kind);
+            throw new Error(`${copy.title}. ${copy.help}`.trim());
+          }
+          return answerCall(row.id);
+        })
         .then(() => join({ ...row, status: "ongoing" }))
         .catch((e: unknown) => {
           // Jawaban kedua yang kalah balapan tidak boleh menimpa layar yang
