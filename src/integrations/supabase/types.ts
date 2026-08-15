@@ -2534,7 +2534,10 @@ export type Database = {
           display_qty: number
           display_unit: string
           id: string
+          location_label: string
+          location_url: string
           note: string
+          photo_path: string
           product_id: string
           purchased_at: string
           qty_base: number
@@ -2552,7 +2555,10 @@ export type Database = {
           display_qty?: number
           display_unit?: string
           id?: string
+          location_label?: string
+          location_url?: string
           note?: string
+          photo_path?: string
           product_id: string
           purchased_at?: string
           qty_base: number
@@ -2570,7 +2576,10 @@ export type Database = {
           display_qty?: number
           display_unit?: string
           id?: string
+          location_label?: string
+          location_url?: string
           note?: string
+          photo_path?: string
           product_id?: string
           purchased_at?: string
           qty_base?: number
