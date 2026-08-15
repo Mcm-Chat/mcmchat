@@ -428,6 +428,19 @@ function CatalogDetail() {
         <MovementsSheet variant={movementsFor} onClose={() => setMovementsFor(null)} />
       )}
 
+      {purchaseFor && (
+        <PurchaseDialog
+          open
+          onOpenChange={(v) => !v && setPurchaseFor(null)}
+          variants={product.variants}
+          defaultVariantId={purchaseFor.id}
+          onDone={() => {
+            setPurchaseFor(null);
+            invalidate();
+          }}
+        />
+      )}
+
       {editLocationPhoto && (
         <EditLocationDialog
           open={!!editLocationPhoto}
