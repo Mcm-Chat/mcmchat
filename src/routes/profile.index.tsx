@@ -395,7 +395,7 @@ function ProfilePage() {
     >
       <div className="space-y-4 px-4 py-4 pb-[max(6rem,env(safe-area-inset-bottom)+6rem)]">
         <div className="card-soft flex items-center gap-3 p-4">
-          <div className="relative p-4">
+          <div className="relative shrink-0 p-1.5">
             <UserAvatar
               userId={profile.id}
               path={profile.avatar_url}
@@ -417,7 +417,7 @@ function ProfilePage() {
                         e.currentTarget.querySelector("input")?.click();
                       }
                     }}
-                    className="absolute right-0 bottom-0 cursor-pointer rounded-full p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="absolute right-0 bottom-0 cursor-pointer rounded-full p-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <span className="flex size-8 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm">
                       <Camera className="size-4" aria-hidden="true" />
@@ -442,7 +442,7 @@ function ProfilePage() {
             <p className="truncate text-xs text-muted-foreground">
               {profile.bio || "Belum ada bio"}
             </p>
-            <div className="mt-1 flex gap-3 text-[11px]">
+            <div className="mt-1 flex flex-wrap gap-x-3 text-[11px]">
               <label className="inline-flex min-h-11 cursor-pointer items-center text-primary">
                 Kamera
                 <input
