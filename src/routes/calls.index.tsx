@@ -408,6 +408,7 @@ function CallsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  id={redialButtonId(c.id)}
                   aria-label={`Panggil ${other?.display_name ?? "pengguna"}`}
                   onClick={() => void redial(c)}
                 >
