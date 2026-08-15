@@ -206,3 +206,96 @@ export const completePrepareTask = createServerFn({ method: "POST" })
     }
     return { ok: true as const, already: payload.already };
   });
+
+/** Ringkasan hasil penyiapan (dipakai untuk chat pelanggan & konfirmasi penjual). */
+function buildSummary(
+  task: { code: string; customer_name: string | null; items: Array<Record<string, unknown>> },
+  note: string,
+) {
+  const lines = task.items.map((raw) => {
+    const i = raw as {
+      product_name: string;
+      variant_name: string;
+      actual_qty_base: number | null;
+      requested_qty_base: number;
+      base_unit: string;
+      photos: Array<{ maps_url: string | null }>;
+    };
+    const maps = i.photos.find((p) => p.maps_url)?.maps_url;
+    return `• ${i.product_name} — ${i.variant_name}: ${i.actual_qty_base ?? i.requested_qty_base} ${i.base_unit}${
+      maps ? ` (lokasi: ${maps})` : ""
+    }`;
+  });
+  return [
+    `Hasil penyiapan ${task.code}${task.customer_name ? ` untuk ${task.customer_name}` : ""}:`,
+    ...lines,
+    note.trim() ? `Catatan: ${note.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export const sendPrepareResult = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        token: z.string().min(20),
+        target: z.enum(["customer", "seller"]),
+        note: z.string().max(300).default(""),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { jobIdFromToken, loadTask } = await import("./prepare.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const jobId = await jobIdFromToken(data.token);
+    if (!jobId) throw new Error("Tautan tidak berlaku");
+    const task = await loadTask(jobId);
+    if (!task) throw new Error("Tugas tidak ditemukan");
+    if (task.status !== "completed") throw new Error("Selesaikan tugas dulu sebelum mengirim hasil");
+
+    const { data: job } = await supabaseAdmin
+      .from("preparation_jobs")
+      .select("conversation_id, assigned_user_id, created_by, code, customer_name")
+      .eq("id", jobId)
+      .maybeSingle();
+    if (!job) throw new Error("Tugas tidak ditemukan");
+
+    const summary = buildSummary(task, data.note);
+
+    if (data.target === "customer") {
+      if (!job.conversation_id)
+        throw new Error("Tugas ini belum terhubung ke chat pelanggan. Gunakan tombol Bagikan.");
+      const { error } = await supabaseAdmin.from("messages").insert({
+        conversation_id: job.conversation_id,
+        sender_id: job.assigned_user_id,
+        kind: "system",
+        body: summary,
+        payload: { prep_job_id: jobId, kind: "preparation_result" } as never,
+      });
+      if (error) throw new Error("Gagal mengirim ke chat pelanggan");
+      return { ok: true as const, summary };
+    }
+
+    if (!job.created_by) throw new Error("Penjual pengirim tautan tidak ditemukan");
+    const { dispatchEventPush } = await import("@/lib/push/dispatch.server");
+    await dispatchEventPush({
+      kind: "task_completed",
+      category: "tasks",
+      userId: job.created_by,
+      title: `Konfirmasi penyiapan ${job.code}`,
+      body: data.note.trim() || `${job.customer_name || "Pelanggan"} • hasil siap diperiksa`,
+      route: `/tasks/${jobId}`,
+      jobId,
+    }).catch(() => undefined);
+    if (job.conversation_id) {
+      await supabaseAdmin.from("messages").insert({
+        conversation_id: job.conversation_id,
+        sender_id: job.assigned_user_id,
+        kind: "system",
+        body: `Konfirmasi ke penjual: ${summary}`,
+        payload: { prep_job_id: jobId, kind: "preparation_confirmed" } as never,
+      });
+    }
+    return { ok: true as const, summary };
+  });
