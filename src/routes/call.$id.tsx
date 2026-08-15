@@ -645,7 +645,8 @@ function CallScreen() {
         <CallFailureRecovery
           className="mt-6"
           unconfigured
-          trapFocus={!devicesOpen && !voiceOpen}
+          trapFocus
+          suspendTrap={devicesOpen || voiceOpen}
           fallbackFocus={() => backRef.current}
           reason={session.reason ?? restored?.reason ?? CALL_PROVIDER_NOTICE}
           retrying={session.retrying}
@@ -659,7 +660,8 @@ function CallScreen() {
         !errorDismissed && (
         <CallFailureRecovery
           className="mt-6"
-          trapFocus={!devicesOpen && !voiceOpen}
+          trapFocus
+          suspendTrap={devicesOpen || voiceOpen}
           fallbackFocus={() => backRef.current}
           reason={session.reason ?? restored?.reason ?? null}
           retrying={session.retrying}
