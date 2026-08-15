@@ -1,3 +1,4 @@
+import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   Check,
@@ -109,6 +110,7 @@ export function AvatarEditor({
   const dirty = useMemo(() => isDirty(history), [history]);
 
   const close = () => (dirty ? setConfirmClose(true) : onCancel());
+  const modalRef = useModalA11y<HTMLDivElement>({ onClose: close });
 
   const apply = async () => {
     if (!img || submitting.current) return;
@@ -124,7 +126,14 @@ export function AvatarEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit foto profil"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex flex-col bg-background outline-none"
+    >
       <header className="flex items-center justify-between border-b border-border/60 px-3 py-2">
         <Button variant="ghost" size="icon" onClick={close} aria-label="Batal">
           <X className="size-5" />

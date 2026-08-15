@@ -1,3 +1,4 @@
+import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 import { useEffect, useRef, useState } from "react";
 import {
   Crop,
@@ -314,8 +315,17 @@ export function PhotoEditorDialog({
     { id: "sticker", label: "Stiker", icon: Smile },
   ];
 
+  const modalRef = useModalA11y<HTMLDivElement>({ onClose: onCancel });
+
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      tabIndex={-1}
+      className="fixed inset-0 z-[70] flex flex-col bg-background outline-none"
+    >
       <header className="flex items-center gap-2 border-b border-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <Button size="icon" variant="ghost" className="size-11 rounded-xl" onClick={onCancel} aria-label="Batal">
           <X className="size-5" />
