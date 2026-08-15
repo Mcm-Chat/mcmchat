@@ -136,13 +136,14 @@ export function StatusViewer({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") go(1);
       if (e.key === "ArrowLeft") go(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [go, onClose]);
+  }, [go]);
+
+  const modalRef = useModalA11y<HTMLDivElement>({ onClose });
 
   const { data: viewers } = useQuery({
     queryKey: statusKeys.viewers(item?.status_id ?? ""),
@@ -203,7 +204,12 @@ export function StatusViewer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black text-white select-none"
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Penampil status"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex flex-col bg-black text-white select-none outline-none"
       onTouchStart={(e) => {
         const t = e.touches[0]!;
         touchStart.current = { x: t.clientX, y: t.clientY };
