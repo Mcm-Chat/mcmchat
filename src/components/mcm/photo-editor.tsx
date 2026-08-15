@@ -472,6 +472,27 @@ export function PhotoEditorDialog({
           </div>
         )}
 
+        {tool === "arrow" && (
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-muted-foreground">
+              Geser di foto untuk menarik panah. Ketukan singkat otomatis jadi panah besar.
+            </p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {ARROW_WEIGHTS.map((w) => (
+                <Button
+                  key={w.id}
+                  type="button"
+                  variant={arrowWeight === w.id ? "default" : "outline"}
+                  className="h-11 rounded-xl text-[11px]"
+                  onClick={() => setArrowWeight(w.id)}
+                >
+                  {w.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {(tool === "arrow" || tool === "text") && (
           <div className="flex flex-wrap gap-1.5">
             {COLORS.map((c) => (
