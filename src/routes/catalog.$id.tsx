@@ -253,6 +253,39 @@ function CatalogDetail() {
             <ProductThumb path={allPhotos[0]?.image_path} className="size-16" />
           </div>
           <p className="text-lg font-bold text-primary">{priceLabel(Number(product.price))}</p>
+          <div className="rounded-xl bg-muted/60 p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground">Stok gudang (induk)</p>
+                <p className="text-base font-bold">
+                  {formatWarehouseQty(product, product.warehouse)}
+                </p>
+              </div>
+              <StatusBadge tone={product.warehouse <= 0 ? "danger" : "primary"}>
+                {product.stock_kind === "weight" ? "Timbangan" : "Hitungan"}
+              </StatusBadge>
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Harga beli: {priceLabel(Number(product.purchase_price ?? 0))} / {warehouseUnit(product)}
+            </p>
+            <div className="mt-2 flex gap-1.5">
+              <Button
+                size="sm"
+                className="h-8 flex-1 rounded-lg text-[11px]"
+                onClick={() => setPurchaseOpen(true)}
+              >
+                <Plus className="size-3.5" /> Catat pembelian
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 flex-1 rounded-lg text-[11px]"
+                onClick={() => setWarehouseFix(true)}
+              >
+                <Minus className="size-3.5" /> Koreksi gudang
+              </Button>
+            </div>
+          </div>
           <div className="flex gap-2 pt-1">
             <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={openEdit}>
               Edit produk
