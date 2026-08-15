@@ -74,17 +74,17 @@ function Splash() {
   }, [loading, session, navigate]);
 
   return (
-    <div className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-6 px-6 text-navy-foreground">
-      <img src={logo} alt="Logo MCM" width={512} height={512} className="size-28 animate-pulse" />
+    <div className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-navy-foreground">
+      <img src={logo} alt="Logo MCM" width={512} height={512} className="size-24 animate-pulse" />
       <div className="text-center">
-        <h1 className="text-3xl font-extrabold tracking-tight">
+        <h1 className="text-2xl font-extrabold tracking-tight leading-tight">
           MCM — Chat Privat, Panggilan &amp; Catatan Utang
         </h1>
-        <p className="mt-1 text-sm text-navy-foreground/75">
+        <p className="mt-0.5 text-sm text-navy-foreground/75">
           Private Chat, Calls &amp; Smart Ledger
         </p>
       </div>
-      <div className="absolute bottom-10 flex items-center gap-2 text-xs text-navy-foreground/70">
+      <div className="absolute bottom-6 flex items-center gap-1.5 text-xs text-navy-foreground/70">
         <ShieldCheck className="size-4" /> Privasi terlindungi
       </div>
     </div>
