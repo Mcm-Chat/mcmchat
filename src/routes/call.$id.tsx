@@ -499,9 +499,9 @@ function CallScreen() {
         <Button
           variant="ghost"
           className="w-full rounded-xl text-navy-foreground/80 hover:bg-white/10"
-          asChild
+          onClick={backToCalls}
         >
-          <Link to="/calls">Kembali ke riwayat</Link>
+          Kembali ke riwayat
         </Button>
       </div>
 
