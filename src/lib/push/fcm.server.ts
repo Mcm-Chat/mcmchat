@@ -319,6 +319,13 @@ export async function sendEach(messages: PushMessage[]): Promise<FcmEachResult> 
                 ...(t.collapseKey ? { collapseKey: t.collapseKey } : {}),
                 // Data-only: notifikasi dibangun receiver native (channel + actions).
               },
+              // Browser/PWA: notifikasi dibangun `firebase-messaging-sw.js`.
+              webpush: {
+                headers: {
+                  Urgency: "high",
+                  TTL: String(Math.max(1, Math.min(86400, Math.round(t.ttlSeconds ?? 86400)))),
+                },
+              },
             },
           }),
         });
