@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { fetchProfileCards } from "./profiles";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type PreparationJob = Tables<"preparation_jobs">;
@@ -95,18 +96,18 @@ export async function listBusinessEmployees(businessId: string) {
   const rows = unwrap(
     await supabase
       .from("business_members")
-      .select("user_id, role, profiles:user_id(display_name, avatar_color)")
+      .select("user_id, role")
       .eq("business_id", businessId),
     "Gagal memuat pegawai",
-  ) as unknown as Array<{
-    user_id: string;
-    role: string;
-    profiles: { display_name: string; avatar_color: string } | null;
-  }>;
+  ) as unknown as Array<{ user_id: string; role: string }>;
+  if (rows.length === 0) return [];
+
+  const byId = await fetchProfileCards(rows.map((r) => r.user_id));
+
   return rows.map((r) => ({
     id: r.user_id,
     role: r.role,
-    name: r.profiles?.display_name ?? "Pegawai",
-    color: r.profiles?.avatar_color ?? "#0ea5e9",
+    name: byId.get(r.user_id)?.display_name ?? "Pegawai",
+    color: byId.get(r.user_id)?.avatar_color ?? "#0ea5e9",
   }));
 }
