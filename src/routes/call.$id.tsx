@@ -632,13 +632,15 @@ function CallScreen() {
         </p>
       </div>
 
-      {session.phase === "unconfigured" && !errorDismissed && (
+      {(session.phase === "unconfigured" ||
+        (restoredFailure && restored?.phase === "unconfigured")) &&
+        !errorDismissed && (
         <CallFailureRecovery
           className="mt-6"
           unconfigured
           trapFocus={!devicesOpen && !voiceOpen}
           fallbackFocus={() => backRef.current}
-          reason={session.reason ?? CALL_PROVIDER_NOTICE}
+          reason={session.reason ?? restored?.reason ?? CALL_PROVIDER_NOTICE}
           retrying={session.retrying}
           onRetry={session.retry}
           onOpenProvider={() => void navigate({ to: "/settings/calls" })}
@@ -646,12 +648,13 @@ function CallScreen() {
         />
       )}
 
-      {session.phase === "error" && !errorDismissed && (
+      {(session.phase === "error" || (restoredFailure && restored?.phase === "error")) &&
+        !errorDismissed && (
         <CallFailureRecovery
           className="mt-6"
           trapFocus={!devicesOpen && !voiceOpen}
           fallbackFocus={() => backRef.current}
-          reason={session.reason}
+          reason={session.reason ?? restored?.reason ?? null}
           retrying={session.retrying}
           onRetry={session.retry}
           onOpenDevices={() => {
