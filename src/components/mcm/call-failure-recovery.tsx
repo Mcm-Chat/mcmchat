@@ -161,7 +161,11 @@ export function CallFailureRecovery({
 
   // Panel hilang (panggilan pulih / pindah halaman): jangan tinggalkan toast
   // loading yang menggantung.
-  useEffect(() => () => toast.dismiss("call-recovery"), []);
+  useEffect(() => {
+    return () => {
+      toast.dismiss("call-recovery");
+    };
+  }, []);
 
   // Aksi langsung diurutkan: yang paling relevan dengan penyebab tampil dulu.
   const order: CallFailureAction[] =
