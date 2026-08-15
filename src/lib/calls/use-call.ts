@@ -281,14 +281,24 @@ export function useCall(opts: {
 
   const join = useCallback(
     async (row: CallRow) => {
-      if (joinedRef.current) return;
+      // Panggilan yang sudah berakhir tidak boleh dibangkitkan lagi oleh
+      // proses join yang masih berjalan (mic/room bisa bocor selamanya).
+      if (joinedRef.current || endedRef.current) return;
       joinedRef.current = true;
       setPhase("connecting");
       try {
         // Daftar hadir dulu (idempotent). Peserta yang sudah keluar/menolak
         // ditolak server, sehingga token hanya terbit untuk peserta aktif.
         await joinCall(row.id);
+        if (endedRef.current) {
+          joinedRef.current = false;
+          return;
+        }
         const t = await token({ data: { callId: row.id } });
+        if (endedRef.current) {
+          joinedRef.current = false;
+          return;
+        }
         if (!t.configured) {
           setPhase("unconfigured");
           setReason(t.reason ?? "Penyedia panggilan belum terhubung");
@@ -302,6 +312,11 @@ export function useCall(opts: {
           return;
         }
         const audio = await buildOutgoingAudio();
+        if (endedRef.current) {
+          joinedRef.current = false;
+          micRef.current?.getTracks().forEach((tr) => tr.stop());
+          return;
+        }
         const provider = getCallProvider(true);
         const session = await provider.connect({
           url: t.url,
@@ -309,6 +324,9 @@ export function useCall(opts: {
           kind: row.kind,
           audioTrack: audio,
           onState: (s: ProviderState) => {
+            // Setelah panggilan berakhir, event penyedia yang terlambat tidak
+            // boleh mengubah fase layar.
+            if (endedRef.current) return;
             // Perbandingan isi: peserta yang tidak berubah tidak boleh
             // memicu render ulang layar panggilan (hemat CPU/baterai).
             setRemotes((prev) => (sameRemotes(prev, s.remotes) ? prev : s.remotes));
@@ -343,6 +361,11 @@ export function useCall(opts: {
             }
           },
         });
+        if (endedRef.current) {
+          void session.disconnect().catch(() => undefined);
+          joinedRef.current = false;
+          return;
+        }
         sessionRef.current = session;
         // Elemen video yang mount lebih dulu (fase memanggil) baru bisa
         // dipasang sekarang; tanpa ini layar video tetap hitam.
@@ -358,6 +381,7 @@ export function useCall(opts: {
       } catch (e) {
         joinedRef.current = false;
         devLog("join_failed", e instanceof Error ? e.message : "unknown");
+        if (endedRef.current) return;
         const info = describeConnectFailure(e);
         setPhase(info.outcome === "ended" ? "ended" : "error");
         setReason(`${info.message} ${info.action}`);
