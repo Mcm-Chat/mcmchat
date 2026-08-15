@@ -819,7 +819,11 @@ export function LocationShareFlow({
 
       {!geo.location && !manualOpen && (
         <div className="grid gap-2">
-          <Button className="h-12 rounded-xl" disabled={geo.status === "loading"} onClick={geo.request}>
+          <Button
+            className="h-12 rounded-xl"
+            disabled={geo.status === "loading"}
+            onClick={geo.request}
+          >
             <MapPin className="size-4" /> Gunakan lokasi saat ini
           </Button>
           <Button variant="outline" className="h-12 rounded-xl" onClick={() => setManualOpen(true)}>
@@ -831,24 +835,46 @@ export function LocationShareFlow({
       {manualOpen && (
         <div className="space-y-3 rounded-xl border border-border p-3">
           <div className="grid grid-cols-2 gap-2">
-            <Input aria-label="Latitude" inputMode="decimal" placeholder="Latitude" value={manual.lat} onChange={(e) => setManual((p) => ({ ...p, lat: e.target.value }))} />
-            <Input aria-label="Longitude" inputMode="decimal" placeholder="Longitude" value={manual.lng} onChange={(e) => setManual((p) => ({ ...p, lng: e.target.value }))} />
+            <Input
+              aria-label="Latitude"
+              inputMode="decimal"
+              placeholder="Latitude"
+              value={manual.lat}
+              onChange={(e) => setManual((p) => ({ ...p, lat: e.target.value }))}
+            />
+            <Input
+              aria-label="Longitude"
+              inputMode="decimal"
+              placeholder="Longitude"
+              value={manual.lng}
+              onChange={(e) => setManual((p) => ({ ...p, lng: e.target.value }))}
+            />
           </div>
-          <Button className="w-full" onClick={applyManual}>Gunakan koordinat</Button>
+          <Button className="w-full" onClick={applyManual}>
+            Gunakan koordinat
+          </Button>
         </div>
       )}
 
       {geo.location && (
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" className="h-12 rounded-xl" disabled={busy} onClick={geo.request}>
+          <Button
+            variant="outline"
+            className="h-12 rounded-xl"
+            disabled={busy}
+            onClick={geo.request}
+          >
             Perbarui GPS
           </Button>
           <Button className="h-12 rounded-xl" disabled={busy} onClick={() => void send()}>
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Kirim lokasi
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Kirim
+            lokasi
           </Button>
         </div>
       )}
-      <Button variant="ghost" className="w-full" disabled={busy} onClick={onCancel}>Batal</Button>
+      <Button variant="ghost" className="w-full" disabled={busy} onClick={onCancel}>
+        Batal
+      </Button>
     </div>
   );
 }

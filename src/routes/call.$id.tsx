@@ -44,12 +44,7 @@ import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-eff
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CallPermissionGate } from "@/components/mcm/call-permission-gate";
 import { useMediaPermission } from "@/lib/calls/use-media-permission";
 import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
@@ -149,7 +144,8 @@ function CallScreen() {
     const saved = loadLastCallState(id);
     if (!saved) return;
     setRestored(saved);
-    if (saved.phase === "error" || saved.phase === "unconfigured") setErrorDismissed(saved.dismissed);
+    if (saved.phase === "error" || saved.phase === "unconfigured")
+      setErrorDismissed(saved.dismissed);
   }, [id]);
 
   // Simpan status + target pemulihan setiap kali fase/alasan berubah.
@@ -328,7 +324,10 @@ function CallScreen() {
 
   if (loading || detailStatus === "loading") {
     return (
-      <div data-call-surface="" className="app-gradient flex min-h-dvh items-center justify-center px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
+      <div
+        data-call-surface=""
+        className="app-gradient flex min-h-dvh items-center justify-center px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground"
+      >
         <p className="text-sm">Memuat panggilan…</p>
       </div>
     );
@@ -336,18 +335,17 @@ function CallScreen() {
 
   if (detailStatus === "error" || !detail) {
     return (
-      <div data-call-surface="" className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-navy-foreground">
+      <div
+        data-call-surface=""
+        className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-navy-foreground"
+      >
         <ShieldAlert className="size-10" />
         <p className="text-sm">Data panggilan tidak ditemukan atau gagal dimuat.</p>
         <div className="flex flex-wrap justify-center gap-2">
           <Button variant="secondary" className="min-h-11 rounded-xl px-5" onClick={load}>
             Coba lagi
           </Button>
-          <Button
-            variant="secondary"
-            className="min-h-11 rounded-xl px-5"
-            onClick={backToCalls}
-          >
+          <Button variant="secondary" className="min-h-11 rounded-xl px-5" onClick={backToCalls}>
             Kembali
           </Button>
         </div>
@@ -405,7 +403,10 @@ function CallScreen() {
 
   if (live) {
     return (
-      <div data-call-surface="" className="app-gradient relative flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
+      <div
+        data-call-surface=""
+        className="app-gradient relative flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground"
+      >
         {isVideo && (
           <>
             <video
@@ -520,38 +521,38 @@ function CallScreen() {
               <>
                 <CallPermissionGate permission={permission} onDecline={session.decline} />
                 <div className="flex items-center justify-center gap-10">
-                {/* Jawab lebih dulu di DOM (urutan Tab), tetap di kanan secara visual. */}
-                <div className="order-2 flex flex-col items-center gap-1.5">
-                  <Button
-                    ref={answerRef}
-                    size="icon"
-                    className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
-                    aria-label="Jawab panggilan"
-                    disabled={answerBlocked}
-                    aria-describedby={answerBlocked ? "call-permission-help" : undefined}
-                    onClick={answerWithPermission}
-                  >
-                    <PhoneIcon className="size-7" />
-                  </Button>
-                  <span className="text-[10px] text-white/70" id="call-permission-help">
-                    {answerBlocked
-                      ? "Butuh izin"
-                      : permission.audioOnly
-                        ? "Jawab (suara)"
-                        : "Jawab"}
-                  </span>
-                </div>
-                <div className="order-1 flex flex-col items-center gap-1.5">
-                  <Button
-                    size="icon"
-                    className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    aria-label="Tolak panggilan"
-                    onClick={session.decline}
-                  >
-                    <PhoneOff className="size-7" />
-                  </Button>
-                  <span className="text-[10px] text-white/70">Tolak</span>
-                </div>
+                  {/* Jawab lebih dulu di DOM (urutan Tab), tetap di kanan secara visual. */}
+                  <div className="order-2 flex flex-col items-center gap-1.5">
+                    <Button
+                      ref={answerRef}
+                      size="icon"
+                      className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
+                      aria-label="Jawab panggilan"
+                      disabled={answerBlocked}
+                      aria-describedby={answerBlocked ? "call-permission-help" : undefined}
+                      onClick={answerWithPermission}
+                    >
+                      <PhoneIcon className="size-7" />
+                    </Button>
+                    <span className="text-[10px] text-white/70" id="call-permission-help">
+                      {answerBlocked
+                        ? "Butuh izin"
+                        : permission.audioOnly
+                          ? "Jawab (suara)"
+                          : "Jawab"}
+                    </span>
+                  </div>
+                  <div className="order-1 flex flex-col items-center gap-1.5">
+                    <Button
+                      size="icon"
+                      className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      aria-label="Tolak panggilan"
+                      onClick={session.decline}
+                    >
+                      <PhoneOff className="size-7" />
+                    </Button>
+                    <span className="text-[10px] text-white/70">Tolak</span>
+                  </div>
                 </div>
               </>
             ) : (
@@ -657,7 +658,10 @@ function CallScreen() {
   }
 
   return (
-    <div data-call-surface="" className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
+    <div
+      data-call-surface=""
+      className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground"
+    >
       <div className="flex items-center gap-2">
         <Button
           ref={backRef}
@@ -706,38 +710,38 @@ function CallScreen() {
       {(session.phase === "unconfigured" ||
         (restoredFailure && restored?.phase === "unconfigured")) &&
         !errorDismissed && (
-        <CallFailureRecovery
-          className="mt-6"
-          unconfigured
-          trapFocus
-          suspendTrap={devicesOpen || voiceOpen}
-          fallbackFocus={() => backRef.current}
-          reason={session.reason ?? restored?.reason ?? CALL_PROVIDER_NOTICE}
-          retrying={session.retrying}
-          onRetry={session.retry}
-          onOpenProvider={() => void navigate({ to: "/settings/calls" })}
-          onDismiss={() => setErrorDismissed(true)}
-        />
-      )}
+          <CallFailureRecovery
+            className="mt-6"
+            unconfigured
+            trapFocus
+            suspendTrap={devicesOpen || voiceOpen}
+            fallbackFocus={() => backRef.current}
+            reason={session.reason ?? restored?.reason ?? CALL_PROVIDER_NOTICE}
+            retrying={session.retrying}
+            onRetry={session.retry}
+            onOpenProvider={() => void navigate({ to: "/settings/calls" })}
+            onDismiss={() => setErrorDismissed(true)}
+          />
+        )}
 
       {(session.phase === "error" || (restoredFailure && restored?.phase === "error")) &&
         !errorDismissed && (
-        <CallFailureRecovery
-          className="mt-6"
-          trapFocus
-          suspendTrap={devicesOpen || voiceOpen}
-          fallbackFocus={() => backRef.current}
-          reason={session.reason ?? restored?.reason ?? null}
-          retrying={session.retrying}
-          onRetry={session.retry}
-          onOpenDevices={() => {
-            session.refreshDevices();
-            setDevicesOpen(true);
-          }}
-          onOpenProvider={() => void navigate({ to: "/settings/calls" })}
-          onDismiss={() => setErrorDismissed(true)}
-        />
-      )}
+          <CallFailureRecovery
+            className="mt-6"
+            trapFocus
+            suspendTrap={devicesOpen || voiceOpen}
+            fallbackFocus={() => backRef.current}
+            reason={session.reason ?? restored?.reason ?? null}
+            retrying={session.retrying}
+            onRetry={session.retry}
+            onOpenDevices={() => {
+              session.refreshDevices();
+              setDevicesOpen(true);
+            }}
+            onOpenProvider={() => void navigate({ to: "/settings/calls" })}
+            onDismiss={() => setErrorDismissed(true)}
+          />
+        )}
 
       <CallDeviceSheet
         open={devicesOpen}

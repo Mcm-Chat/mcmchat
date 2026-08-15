@@ -65,7 +65,9 @@ export function ForwardDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Teruskan {messages.length > 1 ? `${messages.length} pesan` : "pesan"}</DialogTitle>
+          <DialogTitle>
+            Teruskan {messages.length > 1 ? `${messages.length} pesan` : "pesan"}
+          </DialogTitle>
         </DialogHeader>
         {messages[0] && (
           <p className="truncate rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">

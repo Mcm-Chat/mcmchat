@@ -8,12 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import {
-  createSticker,
-  deleteSticker,
-  listStickers,
-  type StickerRow,
-} from "@/lib/api/stickers";
+import { createSticker, deleteSticker, listStickers, type StickerRow } from "@/lib/api/stickers";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import {
   defaultStickerEdit,
@@ -250,7 +245,11 @@ export function StickerEditor({
             Ganti foto
           </Button>
         )}
-        <Button className="h-11 flex-1 rounded-xl" disabled={!img || saving} onClick={() => void save()}>
+        <Button
+          className="h-11 flex-1 rounded-xl"
+          disabled={!img || saving}
+          onClick={() => void save()}
+        >
           {saving ? <Loader2 className="size-4 animate-spin" /> : "Simpan stiker"}
         </Button>
       </div>

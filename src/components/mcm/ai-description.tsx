@@ -54,7 +54,10 @@ export function AiDescriptionButton({
           name: name.trim(),
           category: category?.trim() ?? "",
           price: Number.isFinite(price) ? price : undefined,
-          specs: [specs.trim(), currentDescription?.trim()].filter(Boolean).join("\n").slice(0, 2000),
+          specs: [specs.trim(), currentDescription?.trim()]
+            .filter(Boolean)
+            .join("\n")
+            .slice(0, 2000),
           tone,
         },
       });
@@ -110,13 +113,12 @@ export function AiDescriptionButton({
                 </Button>
               ))}
             </div>
-            <Button
-              type="button"
-              className="w-full rounded-xl"
-              onClick={run}
-              disabled={busy}
-            >
-              {busy ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <Sparkles className="mr-1.5 size-4" />}
+            <Button type="button" className="w-full rounded-xl" onClick={run} disabled={busy}>
+              {busy ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1.5 size-4" />
+              )}
               {draft ? "Buat ulang" : "Buat deskripsi"}
             </Button>
             {draft ? (

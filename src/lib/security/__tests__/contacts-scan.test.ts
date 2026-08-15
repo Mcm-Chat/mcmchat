@@ -31,7 +31,8 @@ describe("kontak hasil pindai", () => {
   });
 
   it("RLS contacts hanya untuk pemilik", () => {
-    const policies = sql.match(/create policy "own contacts [^"]+" on public\.contacts[^;]+;/g) ?? [];
+    const policies =
+      sql.match(/create policy "own contacts [^"]+" on public\.contacts[^;]+;/g) ?? [];
     expect(policies.length).toBeGreaterThanOrEqual(4);
     for (const p of policies) expect(p).toContain("owner_id = auth.uid()");
   });

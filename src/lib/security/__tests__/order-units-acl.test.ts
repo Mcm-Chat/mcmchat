@@ -25,12 +25,7 @@ function lastIndex(pattern: RegExp): number {
   return idx;
 }
 
-const TABLES = [
-  "variant_stock_units",
-  "chat_orders",
-  "chat_order_items",
-  "chat_order_unit_slots",
-];
+const TABLES = ["variant_stock_units", "chat_orders", "chat_order_items", "chat_order_unit_slots"];
 
 describe("ACL tabel unit & pesanan chat", () => {
   for (const table of TABLES) {
@@ -40,7 +35,9 @@ describe("ACL tabel unit & pesanan chat", () => {
       );
       expect(revoke).toBeGreaterThan(-1);
       const looseGrant = lastIndex(
-        new RegExp(`grant [^;]*(insert|update|delete|truncate|all)[^;]*on [^;]*public\\.${table}[^;]*to [^;]*(anon|authenticated)`),
+        new RegExp(
+          `grant [^;]*(insert|update|delete|truncate|all)[^;]*on [^;]*public\\.${table}[^;]*to [^;]*(anon|authenticated)`,
+        ),
       );
       expect(looseGrant).toBeLessThan(revoke);
     });
@@ -49,13 +46,11 @@ describe("ACL tabel unit & pesanan chat", () => {
       const revoke = lastIndex(
         new RegExp(`revoke all on table public\\.${table} from anon, authenticated, public`),
       );
-      const grant = lastIndex(
-        new RegExp(`grant select on public\\.${table} to authenticated`),
-      );
+      const grant = lastIndex(new RegExp(`grant select on public\\.${table} to authenticated`));
       expect(grant).toBeGreaterThan(revoke);
-      expect(
-        lastIndex(new RegExp(`grant [^;]*on public\\.${table} to [^;]*anon`)),
-      ).toBeLessThan(revoke);
+      expect(lastIndex(new RegExp(`grant [^;]*on public\\.${table} to [^;]*anon`))).toBeLessThan(
+        revoke,
+      );
     });
   }
 });
@@ -101,9 +96,13 @@ describe("helper function ACL", () => {
     expect(def.slice(0, 1200)).toMatch(/set search_path (?:=|to) '?public'?/);
     expect(def.slice(0, 1200)).toMatch(/auth\.uid\(\)/);
     expect(
-      lastIndex(/grant execute on function public\.current_user_can_read_chat_order\(uuid\) to authenticated, service_role/),
+      lastIndex(
+        /grant execute on function public\.current_user_can_read_chat_order\(uuid\) to authenticated, service_role/,
+      ),
     ).toBeGreaterThan(
-      lastIndex(/revoke execute on function public\.current_user_can_read_chat_order\(uuid\) from public, anon/),
+      lastIndex(
+        /revoke execute on function public\.current_user_can_read_chat_order\(uuid\) from public, anon/,
+      ),
     );
   });
 
@@ -113,7 +112,9 @@ describe("helper function ACL", () => {
     );
     expect(revoke).toBeGreaterThan(-1);
     expect(
-      lastIndex(/grant execute on function public\.is_business_member\(uuid, uuid\) to [^;]*authenticated/),
+      lastIndex(
+        /grant execute on function public\.is_business_member\(uuid, uuid\) to [^;]*authenticated/,
+      ),
     ).toBeLessThan(revoke);
   });
 });

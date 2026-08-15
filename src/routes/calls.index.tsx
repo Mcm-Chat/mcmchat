@@ -334,57 +334,57 @@ function CallsPage() {
       }
     >
       <div aria-live="polite" aria-atomic="false" aria-label="Pengingat panggilan" role="status">
-      {visibleDue.length > 0 && (
-        <ul className="space-y-2 px-4 pt-3">
-          {visibleDue.map((r) => (
-            <li
-              key={r.id}
-              className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
-            >
-              <BellRing className="size-4 shrink-0 text-primary" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  Tindak lanjuti {r.peer_name ?? "panggilan tak terjawab"}
-                </p>
-                {r.note && <p className="truncate text-xs text-muted-foreground">{r.note}</p>}
-              </div>
-              {r.conversation_id && (
+        {visibleDue.length > 0 && (
+          <ul className="space-y-2 px-4 pt-3">
+            {visibleDue.map((r) => (
+              <li
+                key={r.id}
+                className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
+              >
+                <BellRing className="size-4 shrink-0 text-primary" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    Tindak lanjuti {r.peer_name ?? "panggilan tak terjawab"}
+                  </p>
+                  {r.note && <p className="truncate text-xs text-muted-foreground">{r.note}</p>}
+                </div>
+                {r.conversation_id && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Panggil sekarang"
+                    onClick={() =>
+                      void navigate({
+                        to: "/call/prepare/$conversationId",
+                        params: { conversationId: r.conversation_id! },
+                        search: { kind: "audio" },
+                      })
+                    }
+                  >
+                    <Phone className="size-5" />
+                  </Button>
+                )}
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="Panggil sekarang"
-                  onClick={() =>
-                    void navigate({
-                      to: "/call/prepare/$conversationId",
-                      params: { conversationId: r.conversation_id! },
-                      search: { kind: "audio" },
-                    })
-                  }
+                  aria-label="Tandai selesai"
+                  onClick={() => void finishReminder(r.id)}
                 >
-                  <Phone className="size-5" />
+                  <Check className="size-5" />
                 </Button>
-              )}
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label="Tandai selesai"
-                onClick={() => void finishReminder(r.id)}
-              >
-                <Check className="size-5" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                aria-label="Tutup pengingat"
-                title="Tutup pengingat (Esc)"
-                onClick={() => dismissReminder(r.id)}
-              >
-                <X className="size-5" />
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Tutup pengingat"
+                  title="Tutup pengingat (Esc)"
+                  onClick={() => dismissReminder(r.id)}
+                >
+                  <X className="size-5" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       {busy ? (
         <LoadingSkeleton rows={6} />

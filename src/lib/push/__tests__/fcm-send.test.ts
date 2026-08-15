@@ -15,7 +15,12 @@ function toPem(buf: ArrayBuffer): string {
 
 beforeAll(async () => {
   const pair = await crypto.subtle.generateKey(
-    { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: "SHA-256",
+    },
     true,
     ["sign", "verify"],
   );
@@ -74,8 +79,23 @@ describe("pengiriman FCM HTTP v1", () => {
     configure();
     const sent = mockFcm(() => ({ status: 200 }));
     const res = await sendEach([
-      { token: "tokA", sound: true, vibrate: false, data: data(), ttlSeconds: 45, collapseKey: "call-1", extra: { answerToken: "A" } },
-      { token: "tokB", sound: false, vibrate: true, data: data(), ttlSeconds: 600, extra: { answerToken: "B" } },
+      {
+        token: "tokA",
+        sound: true,
+        vibrate: false,
+        data: data(),
+        ttlSeconds: 45,
+        collapseKey: "call-1",
+        extra: { answerToken: "A" },
+      },
+      {
+        token: "tokB",
+        sound: false,
+        vibrate: true,
+        data: data(),
+        ttlSeconds: 600,
+        extra: { answerToken: "B" },
+      },
     ]);
 
     expect(res).toMatchObject({ configured: true, sent: 2, failed: 0, invalidTokens: [] });
@@ -90,9 +110,19 @@ describe("pengiriman FCM HTTP v1", () => {
     expect(msgA.token).toBe("tokA");
     expect(msgA.notification).toBeUndefined();
     expect(msgA.android).toMatchObject({ priority: "HIGH", ttl: "45s", collapseKey: "call-1" });
-    expect(msgA.data).toMatchObject({ kind: "message", channel: "mcm_messages", sound: "1", vibrate: "0", answerToken: "A" });
+    expect(msgA.data).toMatchObject({
+      kind: "message",
+      channel: "mcm_messages",
+      sound: "1",
+      vibrate: "0",
+      answerToken: "A",
+    });
 
-    const msgB = (sent[1]!.body as unknown as { message: { android: { ttl: string; collapseKey?: string }; data: Record<string, string> } }).message;
+    const msgB = (
+      sent[1]!.body as unknown as {
+        message: { android: { ttl: string; collapseKey?: string }; data: Record<string, string> };
+      }
+    ).message;
     expect(msgB.android.ttl).toBe("600s");
     expect(msgB.android.collapseKey).toBeUndefined();
     expect(msgB.data["answerToken"]).toBe("B");
@@ -107,7 +137,9 @@ describe("pengiriman FCM HTTP v1", () => {
       { token: "t2", sound: true, vibrate: true, data: data(), ttlSeconds: 999_999 },
       { token: "t3", sound: true, vibrate: true, data: data() },
     ]);
-    const ttls = sent.map((s) => (s.body as unknown as { message: { android: { ttl: string } } }).message.android.ttl);
+    const ttls = sent.map(
+      (s) => (s.body as unknown as { message: { android: { ttl: string } } }).message.android.ttl,
+    );
     expect(ttls).toEqual(["1s", "86400s", "86400s"]);
   });
 
@@ -126,14 +158,19 @@ describe("pengiriman FCM HTTP v1", () => {
     expect(res.invalidTokens).toEqual(["dead"]);
     expect(res.sent).toBe(1);
     expect(res.failed).toBe(2);
-    expect(res.outcomes.find((o) => o.token === "quota")).toMatchObject({ ok: false, deadToken: false });
+    expect(res.outcomes.find((o) => o.token === "quota")).toMatchObject({
+      ok: false,
+      deadToken: false,
+    });
   });
 
   it("kegagalan jaringan tidak pernah menandai token mati", async () => {
     configure();
     vi.spyOn(globalThis, "fetch").mockImplementation((async (input: unknown) => {
       if (String(input).includes("oauth2.googleapis.com"))
-        return new Response(JSON.stringify({ access_token: "ya29.mock", expires_in: 3600 }), { status: 200 });
+        return new Response(JSON.stringify({ access_token: "ya29.mock", expires_in: 3600 }), {
+          status: 200,
+        });
       throw new Error("network down");
     }) as typeof fetch);
     const res = await sendEach([{ token: "t1", sound: true, vibrate: true, data: data() }]);
@@ -148,8 +185,10 @@ describe("pengiriman FCM HTTP v1", () => {
       client_email: "rotasi@mcm-lain.iam.gserviceaccount.com",
       private_key: pem,
     });
-    vi.spyOn(globalThis, "fetch").mockImplementation((async () =>
-      new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 })) as typeof fetch);
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      (async () =>
+        new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 })) as typeof fetch,
+    );
     const res = await sendEach([{ token: "t1", sound: true, vibrate: true, data: data() }]);
     expect(res.configured).toBe(true);
     expect(res.invalidTokens).toEqual([]);

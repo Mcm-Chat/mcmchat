@@ -28,10 +28,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type {
-  KeyboardEvent as ReactKeyboardEvent,
-  TouchEvent as ReactTouchEvent,
-} from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent as ReactTouchEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -619,9 +616,7 @@ export function MessageBubble({
     );
   }
   const isSticker = message.kind === "sticker";
-  const swipe = useBubbleSwipe((dir) =>
-    onAction(dir === "right" ? "reply" : "forward", message),
-  );
+  const swipe = useBubbleSwipe((dir) => onAction(dir === "right" ? "reply" : "forward", message));
   return (
     <div
       className={cn(
@@ -651,19 +646,10 @@ export function MessageBubble({
             swipe.dx > 0 ? "-left-8" : "-right-8",
           )}
         >
-          {swipe.dx > 0 ? (
-            <CornerUpLeft className="size-5" />
-          ) : (
-            <Forward className="size-5" />
-          )}
+          {swipe.dx > 0 ? <CornerUpLeft className="size-5" /> : <Forward className="size-5" />}
         </span>
       )}
-      <div
-        className={cn(
-          "flex min-w-0 max-w-[80%] flex-col",
-          mine ? "items-end" : "items-start",
-        )}
-      >
+      <div className={cn("flex min-w-0 max-w-[80%] flex-col", mine ? "items-end" : "items-start")}>
         <div
           className={cn(
             "relative min-w-0 max-w-full rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45] [overflow-wrap:anywhere]",

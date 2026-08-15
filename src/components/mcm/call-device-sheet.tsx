@@ -1,4 +1,10 @@
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import type { CallDevices } from "@/lib/calls/provider";
@@ -42,11 +48,7 @@ export function CallDeviceSheet({
             {devices.mics.length === 0 ? (
               <p className="text-sm text-muted-foreground">Tidak ada mikrofon terdeteksi.</p>
             ) : (
-              <RadioGroup
-                value={micDeviceId ?? ""}
-                onValueChange={onPickMic}
-                className="gap-2"
-              >
+              <RadioGroup value={micDeviceId ?? ""} onValueChange={onPickMic} className="gap-2">
                 {devices.mics.map((d) => (
                   <div key={d.deviceId} className="flex items-center gap-3 rounded-xl border p-3">
                     <RadioGroupItem value={d.deviceId} id={`mic-${d.deviceId}`} />

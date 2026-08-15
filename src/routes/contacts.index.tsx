@@ -256,10 +256,7 @@ function ContactsPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <RenameContactButton
-                    contactId={c.contact_id}
-                    realName={c.profile.display_name}
-                  />
+                  <RenameContactButton contactId={c.contact_id} realName={c.profile.display_name} />
                   <Button
                     variant="ghost"
                     size="icon"

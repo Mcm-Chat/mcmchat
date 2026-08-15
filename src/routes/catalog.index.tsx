@@ -6,10 +6,7 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ConfirmDialog, EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-parts";
-import {
-  ProductInsightDialog,
-  type IndicatorFocus,
-} from "@/components/mcm/product-insight-dialog";
+import { ProductInsightDialog, type IndicatorFocus } from "@/components/mcm/product-insight-dialog";
 import { AiDescriptionButton } from "@/components/mcm/ai-description";
 import { PurchaseDialog } from "@/components/mcm/purchase-dialog";
 import { Button } from "@/components/ui/button";
@@ -725,8 +722,7 @@ function ProductCard({
   const [focus, setFocus] = useState<IndicatorFocus | null>(null);
   const cover = product.photos[0]?.image_path;
   const unitVariant = product.variants[0];
-  const soldLabel =
-    indicator && unitVariant ? formatQty(unitVariant, indicator.sold_base) : "0";
+  const soldLabel = indicator && unitVariant ? formatQty(unitVariant, indicator.sold_base) : "0";
   return (
     <div className="card-soft space-y-3 p-3">
       <div className="flex gap-3">

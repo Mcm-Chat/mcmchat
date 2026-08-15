@@ -252,7 +252,8 @@ export const sendPrepareResult = createServerFn({ method: "POST" })
     if (!jobId) throw new Error("Tautan tidak berlaku");
     const task = await loadTask(jobId);
     if (!task) throw new Error("Tugas tidak ditemukan");
-    if (task.status !== "completed") throw new Error("Selesaikan tugas dulu sebelum mengirim hasil");
+    if (task.status !== "completed")
+      throw new Error("Selesaikan tugas dulu sebelum mengirim hasil");
 
     const { data: job } = await supabaseAdmin
       .from("preparation_jobs")

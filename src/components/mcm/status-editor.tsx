@@ -39,15 +39,7 @@ const COLORS = ["#ffffff", "#0f172a", "#ef4444", "#f59e0b", "#22c55e", "#0ea5e9"
 const EMOJIS = ["😀", "😍", "🔥", "💯", "🎉", "📦", "🛒", "⭐", "➡️", "⬆️", "↗️", "✅"];
 
 type Tool =
-  | "none"
-  | "pen"
-  | "highlight"
-  | "pixelate"
-  | "arrow"
-  | "text"
-  | "sticker"
-  | "filter"
-  | "adjust";
+  "none" | "pen" | "highlight" | "pixelate" | "arrow" | "text" | "sticker" | "filter" | "adjust";
 
 /**
  * Editor status layar penuh: filter, penyetelan, putar/cermin, coretan (pena,
@@ -135,7 +127,8 @@ export function StatusEditor({
       .reverse()
       .find(
         (l) =>
-          (l.type === "text" || l.type === "sticker") && Math.hypot(l.x - x, l.y - y) < l.size * 1.6,
+          (l.type === "text" || l.type === "sticker") &&
+          Math.hypot(l.x - x, l.y - y) < l.size * 1.6,
       );
 
   const onDown = (e: React.PointerEvent) => {

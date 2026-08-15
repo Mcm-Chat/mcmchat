@@ -40,11 +40,7 @@ import {
   describeAnswerFailure,
   describeConnectFailure,
 } from "./failure-messages";
-import {
-  HANDSHAKE_ATTEMPTS,
-  handshakeProgressText,
-  withHandshakeRetry,
-} from "./handshake";
+import { HANDSHAKE_ATTEMPTS, handshakeProgressText, withHandshakeRetry } from "./handshake";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
@@ -262,41 +258,42 @@ export function useCall(opts: {
   }, []);
 
   /** Buka mikrofon dan (bila premium aktif) lewatkan ke VoicePipeline. */
-  const buildOutgoingAudio = useCallback(async (
-    deviceId?: string | null,
-  ): Promise<MediaStreamTrack | null> => {
-    if (typeof navigator === "undefined" || !navigator.mediaDevices) return null;
-    const base = (MIC_CONSTRAINTS.audio ?? true) as MediaTrackConstraints;
-    const mic = await navigator.mediaDevices.getUserMedia({
-      audio: deviceId ? { ...base, deviceId: { exact: deviceId } } : base,
-      video: false,
-    });
-    micRef.current = mic;
-    const raw = mic.getAudioTracks()[0] ?? null;
-    setMicDeviceId(raw?.getSettings().deviceId ?? deviceId ?? null);
-    if (!voiceApplied) return raw;
-    // Kegagalan pemrosesan suara TIDAK boleh menggagalkan panggilan: kita
-    // publikasikan mikrofon mentah dan menandai Voice Privacy tidak tersedia.
-    try {
-      const pipe = new VoicePipeline();
-      pipeRef.current = pipe;
-      pipe.onStateChange(setPipelineState);
-      const out = await pipe.attach(mic);
-      pipe.setParams(effectiveParams(prefs));
-      const processed = out.getAudioTracks()[0] ?? null;
-      if (!processed) throw new Error("Track efek suara tidak tersedia");
-      setVoiceActive(true);
-      setVoiceFallback(false);
-      return processed;
-    } catch {
-      await pipeRef.current?.dispose().catch(() => undefined);
-      pipeRef.current = null;
-      setVoiceActive(false);
-      setVoiceFallback(true);
-      setPipelineState({ status: "failed", latencyMs: 0 });
-      return raw;
-    }
-  }, [prefs, voiceApplied]);
+  const buildOutgoingAudio = useCallback(
+    async (deviceId?: string | null): Promise<MediaStreamTrack | null> => {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices) return null;
+      const base = (MIC_CONSTRAINTS.audio ?? true) as MediaTrackConstraints;
+      const mic = await navigator.mediaDevices.getUserMedia({
+        audio: deviceId ? { ...base, deviceId: { exact: deviceId } } : base,
+        video: false,
+      });
+      micRef.current = mic;
+      const raw = mic.getAudioTracks()[0] ?? null;
+      setMicDeviceId(raw?.getSettings().deviceId ?? deviceId ?? null);
+      if (!voiceApplied) return raw;
+      // Kegagalan pemrosesan suara TIDAK boleh menggagalkan panggilan: kita
+      // publikasikan mikrofon mentah dan menandai Voice Privacy tidak tersedia.
+      try {
+        const pipe = new VoicePipeline();
+        pipeRef.current = pipe;
+        pipe.onStateChange(setPipelineState);
+        const out = await pipe.attach(mic);
+        pipe.setParams(effectiveParams(prefs));
+        const processed = out.getAudioTracks()[0] ?? null;
+        if (!processed) throw new Error("Track efek suara tidak tersedia");
+        setVoiceActive(true);
+        setVoiceFallback(false);
+        return processed;
+      } catch {
+        await pipeRef.current?.dispose().catch(() => undefined);
+        pipeRef.current = null;
+        setVoiceActive(false);
+        setVoiceFallback(true);
+        setPipelineState({ status: "failed", latencyMs: 0 });
+        return raw;
+      }
+    },
+    [prefs, voiceApplied],
+  );
 
   const join = useCallback(
     async (row: CallRow, opts?: { videoDisabled?: boolean }) => {
@@ -339,41 +336,41 @@ export function useCall(opts: {
         }
         const provider = getCallProvider(true);
         const onState = (s: ProviderState) => {
-            // Setelah panggilan berakhir, event penyedia yang terlambat tidak
-            // boleh mengubah fase layar.
-            if (endedRef.current) return;
-            // Perbandingan isi: peserta yang tidak berubah tidak boleh
-            // memicu render ulang layar panggilan (hemat CPU/baterai).
-            setRemotes((prev) => (sameRemotes(prev, s.remotes) ? prev : s.remotes));
-            setAudioBlocked(Boolean(s.audioBlocked));
-            setQuality(s.quality ?? "unknown");
-            if (s.status === "failed") {
-              devLog("media_failed", s.reason);
-              // Putus tak terduga: coba sambung ulang otomatis dua kali dulu,
-              // baru menyerah ke layar gagal. Ini mencegah panggilan mati
-              // hanya karena jaringan seluler berpindah sel.
-              if (s.unexpected && !endedRef.current && rejoinRef.current < 2) {
-                rejoinRef.current += 1;
-                setReason("Sinyal terputus — menyambungkan ulang…");
-                setPhase("connecting");
-                void cleanup().then(() => {
-                  joinedRef.current = false;
-                  if (!endedRef.current) setTimeout(() => void join(row), 1200);
-                });
-                return;
-              }
-              setPhase("error");
-              setReason(connectFailureText(s.reason ?? "media"));
-            } else if (s.status === "connected") {
-              setPhase("connected");
-              startedRef.current ??= Date.now();
-              rejoinRef.current = 0;
-              // Reconnected/Connected tanpa alasan membersihkan pesan lama
-              // seperti "Menyambung ulang…" agar tidak basi di layar.
-              setReason(s.reason ?? null);
-            } else if (s.status === "reconnecting") {
-              setReason("Menyambung ulang…");
+          // Setelah panggilan berakhir, event penyedia yang terlambat tidak
+          // boleh mengubah fase layar.
+          if (endedRef.current) return;
+          // Perbandingan isi: peserta yang tidak berubah tidak boleh
+          // memicu render ulang layar panggilan (hemat CPU/baterai).
+          setRemotes((prev) => (sameRemotes(prev, s.remotes) ? prev : s.remotes));
+          setAudioBlocked(Boolean(s.audioBlocked));
+          setQuality(s.quality ?? "unknown");
+          if (s.status === "failed") {
+            devLog("media_failed", s.reason);
+            // Putus tak terduga: coba sambung ulang otomatis dua kali dulu,
+            // baru menyerah ke layar gagal. Ini mencegah panggilan mati
+            // hanya karena jaringan seluler berpindah sel.
+            if (s.unexpected && !endedRef.current && rejoinRef.current < 2) {
+              rejoinRef.current += 1;
+              setReason("Sinyal terputus — menyambungkan ulang…");
+              setPhase("connecting");
+              void cleanup().then(() => {
+                joinedRef.current = false;
+                if (!endedRef.current) setTimeout(() => void join(row), 1200);
+              });
+              return;
             }
+            setPhase("error");
+            setReason(connectFailureText(s.reason ?? "media"));
+          } else if (s.status === "connected") {
+            setPhase("connected");
+            startedRef.current ??= Date.now();
+            rejoinRef.current = 0;
+            // Reconnected/Connected tanpa alasan membersihkan pesan lama
+            // seperti "Menyambung ulang…" agar tidak basi di layar.
+            setReason(s.reason ?? null);
+          } else if (s.status === "reconnecting") {
+            setReason("Menyambung ulang…");
+          }
         };
         // Handshake pertama sering gagal di jaringan seluler; ulangi otomatis
         // dengan jeda menaik sebelum menyerah ke layar gagal.
@@ -591,9 +588,7 @@ export function useCall(opts: {
   useEffect(() => {
     if (phase !== "connected") return;
     const tick = () => {
-      const secs = startedRef.current
-        ? Math.floor((Date.now() - startedRef.current) / 1000)
-        : 0;
+      const secs = startedRef.current ? Math.floor((Date.now() - startedRef.current) / 1000) : 0;
       setDuration((prev) => (prev === secs ? prev : secs));
     };
     tick();
@@ -686,17 +681,14 @@ export function useCall(opts: {
     [buildOutgoingAudio, controls.muted, refreshDevices],
   );
 
-  const setCameraDevice = useCallback(
-    (deviceId: string) => {
-      const session = sessionRef.current;
-      if (!session) return;
-      void session.setVideoInput(deviceId).then((ok) => {
-        if (ok) setCameraDeviceId(deviceId);
-        else setReason("Kamera itu tidak bisa dipakai saat ini");
-      });
-    },
-    [],
-  );
+  const setCameraDevice = useCallback((deviceId: string) => {
+    const session = sessionRef.current;
+    if (!session) return;
+    void session.setVideoInput(deviceId).then((ok) => {
+      if (ok) setCameraDeviceId(deviceId);
+      else setReason("Kamera itu tidak bisa dipakai saat ini");
+    });
+  }, []);
 
   /**
    * Pemulihan manual dari status gagal: bongkar sesi lama, reset penghitung

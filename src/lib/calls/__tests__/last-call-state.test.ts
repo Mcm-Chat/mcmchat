@@ -32,7 +32,13 @@ describe("last-call-state", () => {
   });
 
   it("clear menghapus status", () => {
-    saveLastCallState({ callId: "c1", phase: "ended", reason: null, dismissed: false, recovery: "back" });
+    saveLastCallState({
+      callId: "c1",
+      phase: "ended",
+      reason: null,
+      dismissed: false,
+      recovery: "back",
+    });
     clearLastCallState();
     expect(loadLastCallState("c1")).toBeNull();
   });

@@ -94,9 +94,7 @@ export function CallControls({
             size="icon"
             className={btn(state.speakerOn)}
             aria-pressed={state.speakerOn}
-            aria-label={
-              state.speakerOn ? "Matikan pengeras suara" : "Nyalakan pengeras suara"
-            }
+            aria-label={state.speakerOn ? "Matikan pengeras suara" : "Nyalakan pengeras suara"}
             onClick={() => onToggle("speakerOn")}
           >
             {state.speakerOn ? (

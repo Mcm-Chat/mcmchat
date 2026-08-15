@@ -127,9 +127,6 @@ export function renderSticker(img: HTMLImageElement, edit: StickerEdit): HTMLCan
 
 export function stickerToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("Stiker gagal dibuat"))),
-      "image/png",
-    );
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Stiker gagal dibuat"))), "image/png");
   });
 }

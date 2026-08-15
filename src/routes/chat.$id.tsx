@@ -630,9 +630,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setForwarding(messages.filter((m) => selection.includes(m.id)))
-                  }
+                  onClick={() => setForwarding(messages.filter((m) => selection.includes(m.id)))}
                 >
                   Teruskan
                 </Button>
@@ -687,11 +685,7 @@ function ChatRoom() {
                       size="sm"
                     />
                   ) : (
-                    <MCMAvatar
-                      initials={initialsOf(headerName)}
-                      color="#0ea5e9"
-                      size="sm"
-                    />
+                    <MCMAvatar initials={initialsOf(headerName)} color="#0ea5e9" size="sm" />
                   )}
                   {conv.other && onlineIds.has(conv.other.id) && (
                     <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-success" />
@@ -925,11 +919,16 @@ function ChatRoom() {
               <p className="text-sm text-muted-foreground">
                 {`Permintaan kontak sudah dikirim ke ${conv.other?.display_name ?? "kontak ini"}. Menunggu diterima.`}
               </p>
-              <Button variant="secondary" className="rounded-xl" onClick={() => void cancelOutgoing()}>
+              <Button
+                variant="secondary"
+                className="rounded-xl"
+                onClick={() => void cancelOutgoing()}
+              >
                 Batalkan permintaan
               </Button>
             </>
-          ) : relation?.request_status === "pending" && relation.request_direction === "incoming" ? (
+          ) : relation?.request_status === "pending" &&
+            relation.request_direction === "incoming" ? (
             <>
               <p className="text-sm text-muted-foreground">
                 {`${conv.other?.display_name ?? "Kontak ini"} ingin terhubung dengan Anda.`}

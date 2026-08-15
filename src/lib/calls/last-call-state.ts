@@ -9,13 +9,7 @@
 import { scopedKey } from "@/lib/session-scope";
 
 export type LastCallPhase =
-  | "connecting"
-  | "connected"
-  | "outgoing"
-  | "incoming"
-  | "ended"
-  | "error"
-  | "unconfigured";
+  "connecting" | "connected" | "outgoing" | "incoming" | "ended" | "error" | "unconfigured";
 
 /** Tindakan pemulihan yang harus difokuskan saat UI dibangun ulang. */
 export type RecoveryTarget = "retry" | "devices" | "provider" | "back";

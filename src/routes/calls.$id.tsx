@@ -169,7 +169,9 @@ function CallDetailPage() {
             <div>
               <h1 className="flex items-center justify-center gap-1 text-lg font-semibold">
                 <span className="truncate">{peerName}</span>
-                {other && <RenameContactButton contactId={other.user_id} realName={other.display_name} />}
+                {other && (
+                  <RenameContactButton contactId={other.user_id} realName={other.display_name} />
+                )}
               </h1>
               <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                 {call.status === "missed" ? (
@@ -230,7 +232,7 @@ function CallDetailPage() {
                 call.status === "ended"
                   ? durasi(call.duration_sec)
                   : isLiveCall(call.status)
-                    ? liveStatusLabel(call).split(" • ")[1] ?? "—"
+                    ? (liveStatusLabel(call).split(" • ")[1] ?? "—")
                     : "—"
               }
             />

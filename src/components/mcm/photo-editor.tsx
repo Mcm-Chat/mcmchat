@@ -185,7 +185,11 @@ export function PhotoEditorDialog({
   const [preview, setPreview] = useState<string | null>(null);
   const [compare, setCompare] = useState<"side" | "after">("side");
   const [quality, setQuality] = useState<QualityId>("balanced");
-  const [outputInfo, setOutputInfo] = useState<{ width: number; height: number; bytes: number } | null>(null);
+  const [outputInfo, setOutputInfo] = useState<{
+    width: number;
+    height: number;
+    bytes: number;
+  } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -376,7 +380,13 @@ export function PhotoEditorDialog({
       className="fixed inset-0 z-[70] flex flex-col bg-background outline-none"
     >
       <header className="flex items-center gap-2 border-b border-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <Button size="icon" variant="ghost" className="size-11 rounded-xl" onClick={onCancel} aria-label="Batal">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-11 rounded-xl"
+          onClick={onCancel}
+          aria-label="Batal"
+        >
           <X className="size-5" />
         </Button>
         <p className="flex-1 truncate text-sm font-semibold">{title}</p>
@@ -437,7 +447,12 @@ export function PhotoEditorDialog({
             <p className="flex-1 text-[11px] text-muted-foreground">
               Geser di foto untuk menandai area, lalu terapkan.
             </p>
-            <Button size="sm" className="h-10 rounded-xl text-xs" disabled={!crop} onClick={applyCrop}>
+            <Button
+              size="sm"
+              className="h-10 rounded-xl text-xs"
+              disabled={!crop}
+              onClick={applyCrop}
+            >
               Terapkan potong
             </Button>
           </div>
@@ -545,16 +560,32 @@ export function PhotoEditorDialog({
             {compare === "side" ? (
               <div className="grid grid-cols-2 gap-2">
                 <figure className="space-y-1">
-                  <img src={src} alt="Foto sebelum diedit" className="w-full rounded-xl border border-border object-contain" />
-                  <figcaption className="text-center text-[11px] text-muted-foreground">Sebelum</figcaption>
+                  <img
+                    src={src}
+                    alt="Foto sebelum diedit"
+                    className="w-full rounded-xl border border-border object-contain"
+                  />
+                  <figcaption className="text-center text-[11px] text-muted-foreground">
+                    Sebelum
+                  </figcaption>
                 </figure>
                 <figure className="space-y-1">
-                  <img src={preview} alt="Foto sesudah diedit" className="w-full rounded-xl border-2 border-primary object-contain" />
-                  <figcaption className="text-center text-[11px] font-medium text-primary">Sesudah</figcaption>
+                  <img
+                    src={preview}
+                    alt="Foto sesudah diedit"
+                    className="w-full rounded-xl border-2 border-primary object-contain"
+                  />
+                  <figcaption className="text-center text-[11px] font-medium text-primary">
+                    Sesudah
+                  </figcaption>
                 </figure>
               </div>
             ) : (
-              <img src={preview} alt="Hasil akhir foto" className="mx-auto max-h-full rounded-xl border border-border" />
+              <img
+                src={preview}
+                alt="Hasil akhir foto"
+                className="mx-auto max-h-full rounded-xl border border-border"
+              />
             )}
           </div>
 
@@ -569,7 +600,9 @@ export function PhotoEditorDialog({
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground">Estimasi ukuran</p>
-                  <p className="text-sm font-semibold tabular-nums">± {formatBytes(outputInfo.bytes)}</p>
+                  <p className="text-sm font-semibold tabular-nums">
+                    ± {formatBytes(outputInfo.bytes)}
+                  </p>
                 </div>
               </div>
             )}

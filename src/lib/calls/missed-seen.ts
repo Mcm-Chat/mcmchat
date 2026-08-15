@@ -79,9 +79,7 @@ export function markMissedCallsSeen(at: number = Date.now(), kind?: CallKind) {
   if (typeof localStorage === "undefined") return;
   const key = scopedKey(NAME);
   const current = read();
-  const next: MissedSeenMap = kind
-    ? { ...current, [kind]: at }
-    : { audio: at, video: at };
+  const next: MissedSeenMap = kind ? { ...current, [kind]: at } : { audio: at, video: at };
   localStorage.setItem(key, JSON.stringify(next));
   cache = next;
   cacheKey = key;

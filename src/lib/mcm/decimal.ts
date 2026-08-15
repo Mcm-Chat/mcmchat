@@ -169,7 +169,8 @@ export function validateVariantDraft(draft: VariantDraft): VariantValidation {
   const unit = draft.display_unit.trim().toLowerCase();
 
   if (draft.stock_kind === "weight") {
-    if (!isWeightUnit(unit)) return { ok: false, field: "display_unit", message: VARIANT_MESSAGES.unit };
+    if (!isWeightUnit(unit))
+      return { ok: false, field: "display_unit", message: VARIANT_MESSAGES.unit };
     const qty = parseDecimalId(draft.display_quantity ?? null);
     if (qty === null) {
       return { ok: false, field: "display_quantity", message: VARIANT_MESSAGES.invalidDecimal };
@@ -194,7 +195,8 @@ export function validateVariantDraft(draft: VariantDraft): VariantValidation {
     };
   }
 
-  if (!isCountUnit(unit)) return { ok: false, field: "display_unit", message: VARIANT_MESSAGES.unit };
+  if (!isCountUnit(unit))
+    return { ok: false, field: "display_unit", message: VARIANT_MESSAGES.unit };
   const per = parseDecimalId(draft.units_per_display ?? null);
   if (per === null || !Number.isInteger(per) || per <= 0) {
     return { ok: false, field: "units_per_display", message: VARIANT_MESSAGES.invalidUnits };

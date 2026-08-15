@@ -38,10 +38,7 @@ export function BottomNavigation({
   const auto: Record<string, number> = {
     "/chat": (convs ?? []).filter((c) => !c.me.is_archived).reduce((s, c) => s + c.unread, 0),
     "/calls": (calls ?? []).filter(
-      (c) =>
-        c.status === "missed" &&
-        c.initiator_id !== user?.id &&
-        isMissedUnseen(missedSeen, c),
+      (c) => c.status === "missed" && c.initiator_id !== user?.id && isMissedUnseen(missedSeen, c),
     ).length,
     "/finance": (ledgers ?? []).filter(
       (l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id,
@@ -55,64 +52,67 @@ export function BottomNavigation({
   const callLocked = useIncomingCallActive();
   return (
     <>
-    {callLocked && (
-      <p role="status" aria-live="polite" className="sr-only">
-        Navigasi dinonaktifkan sementara. Jawab atau tolak panggilan masuk lebih dulu.
-      </p>
-    )}
-    <nav
-      aria-label="Navigasi utama"
-      aria-hidden={callLocked ? "true" : undefined}
-      data-locked={callLocked ? "" : undefined}
-      className={cn(
-        "sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur",
-        callLocked && "pointer-events-none opacity-40 select-none",
+      {callLocked && (
+        <p role="status" aria-live="polite" className="sr-only">
+          Navigasi dinonaktifkan sementara. Jawab atau tolak panggilan masuk lebih dulu.
+        </p>
       )}
-    >
-      <ul className="grid grid-cols-6">
-        {NAV.map((item) => {
-          const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
-          const badge = merged[item.match];
-          const badgeText =
-            badge && badge > 0 ? `, ${badge > 99 ? "lebih dari 99" : badge} item baru` : "";
-          return (
-            <li key={item.to}>
-              <Link
-                to={item.to}
-                tabIndex={callLocked ? -1 : 0}
-                aria-disabled={callLocked ? "true" : undefined}
-                onClick={(e) => {
-                  if (callLocked) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }
-                }}
-                aria-label={`${item.label}${badgeText}${active ? " (halaman aktif)" : ""}`}
-                className={cn(
-                  "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
-                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none focus-visible:rounded-xl",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground",
-                )}
-                aria-current={active ? "page" : undefined}
-              >
-                <span className="relative">
-                  <item.icon aria-hidden="true" className={cn("size-5.5", active && "stroke-[2.4]")} />
-                  {!!badge && badge > 0 && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -top-1.5 -right-2 min-w-4 rounded-full bg-destructive px-1 text-[9px] leading-4 font-bold text-destructive-foreground"
-                    >
-                      {badge > 99 ? "99+" : badge}
-                    </span>
+      <nav
+        aria-label="Navigasi utama"
+        aria-hidden={callLocked ? "true" : undefined}
+        data-locked={callLocked ? "" : undefined}
+        className={cn(
+          "sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur",
+          callLocked && "pointer-events-none opacity-40 select-none",
+        )}
+      >
+        <ul className="grid grid-cols-6">
+          {NAV.map((item) => {
+            const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
+            const badge = merged[item.match];
+            const badgeText =
+              badge && badge > 0 ? `, ${badge > 99 ? "lebih dari 99" : badge} item baru` : "";
+            return (
+              <li key={item.to}>
+                <Link
+                  to={item.to}
+                  tabIndex={callLocked ? -1 : 0}
+                  aria-disabled={callLocked ? "true" : undefined}
+                  onClick={(e) => {
+                    if (callLocked) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                  aria-label={`${item.label}${badgeText}${active ? " (halaman aktif)" : ""}`}
+                  className={cn(
+                    "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
+                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none focus-visible:rounded-xl",
+                    active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
-                </span>
-                <span aria-hidden="true">{item.label}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+                  aria-current={active ? "page" : undefined}
+                >
+                  <span className="relative">
+                    <item.icon
+                      aria-hidden="true"
+                      className={cn("size-5.5", active && "stroke-[2.4]")}
+                    />
+                    {!!badge && badge > 0 && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -top-1.5 -right-2 min-w-4 rounded-full bg-destructive px-1 text-[9px] leading-4 font-bold text-destructive-foreground"
+                      >
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    )}
+                  </span>
+                  <span aria-hidden="true">{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
     </>
   );
 }

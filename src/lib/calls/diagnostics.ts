@@ -201,10 +201,17 @@ export async function runLiveKitConnectTest(
   try {
     await room.connect(t.url, t.token, { autoSubscribe: false });
     const ms = Date.now() - started;
-    return result("livekit", label, "pass", `Tersambung ke server panggilan dalam ${ms} ms.`, undefined, {
-      latencyMs: ms,
-      code: "ok",
-    });
+    return result(
+      "livekit",
+      label,
+      "pass",
+      `Tersambung ke server panggilan dalam ${ms} ms.`,
+      undefined,
+      {
+        latencyMs: ms,
+        code: "ok",
+      },
+    );
   } catch (e) {
     return result(
       "livekit",

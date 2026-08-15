@@ -45,11 +45,7 @@ export type FcmEachResult = FcmResult & { outcomes: PushOutcome[] };
  * blok PEM bisa dibaca Web Crypto.
  */
 function normalizePrivateKey(key: string): string {
-  return key
-    .replace(/\\r/g, "")
-    .replace(/\\n/g, "\n")
-    .replace(/\r/g, "")
-    .trim();
+  return key.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
 }
 
 function parseServiceAccount(raw: string): ServiceAccount | { error: PushConfigStatus } {
@@ -60,22 +56,36 @@ function parseServiceAccount(raw: string): ServiceAccount | { error: PushConfigS
     try {
       text = atob(trimmed.replace(/\s+/g, ""));
     } catch {
-      return { error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json } };
+      return {
+        error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json },
+      };
     }
   }
   let parsed: Partial<ServiceAccount>;
   try {
     parsed = JSON.parse(text) as Partial<ServiceAccount>;
   } catch {
-    return { error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json } };
+    return {
+      error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json },
+    };
   }
-  if (!parsed || typeof parsed !== "object" || !parsed.client_email || !parsed.private_key || !parsed.project_id) {
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !parsed.client_email ||
+    !parsed.private_key ||
+    !parsed.project_id
+  ) {
     return { error: { configured: false, code: "incomplete", reason: CONFIG_REASONS.incomplete } };
   }
   const private_key = normalizePrivateKey(String(parsed.private_key));
   if (!/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(private_key)) {
     return {
-      error: { configured: false, code: "invalid_private_key", reason: CONFIG_REASONS.invalid_private_key },
+      error: {
+        configured: false,
+        code: "invalid_private_key",
+        reason: CONFIG_REASONS.invalid_private_key,
+      },
     };
   }
   return {

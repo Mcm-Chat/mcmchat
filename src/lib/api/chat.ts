@@ -113,14 +113,16 @@ export async function listConversations(userId: string): Promise<ConversationVie
       .from("conversation_members")
       .select("conversation_id, user_id")
       .in("conversation_id", ids),
-    supabase.from("conversation_members").select("*").eq("user_id", userId).in("conversation_id", ids),
+    supabase
+      .from("conversation_members")
+      .select("*")
+      .eq("user_id", userId)
+      .in("conversation_id", ids),
   ]);
   const memberships = memberRows.data ?? [];
   const profileIds = [...new Set((allMembers.data ?? []).map((m) => m.user_id))];
   const cards = await fetchProfileCards(profileIds);
-  const pmap = new Map(
-    [...cards.values()].map((p) => [p.id, { ...p, pin: "" } as MemberProfile]),
-  );
+  const pmap = new Map([...cards.values()].map((p) => [p.id, { ...p, pin: "" } as MemberProfile]));
   const omap = new Map(overviewRows.map((o) => [o.conversation_id, o]));
 
   return (convs.data ?? [])
@@ -182,11 +184,7 @@ export async function listConversations(userId: string): Promise<ConversationVie
 }
 
 // Pembuatan percakapan langsung/grup kini atomik di server.
-export {
-  getOrCreateDirect,
-  createGroup,
-  updateMyConversationPreferences,
-} from "./conversations";
+export { getOrCreateDirect, createGroup, updateMyConversationPreferences } from "./conversations";
 
 export const MESSAGE_PAGE_SIZE = 40;
 

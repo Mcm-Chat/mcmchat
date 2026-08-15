@@ -94,10 +94,7 @@ export const taskUrl = (token: string) =>
 
 export async function listBusinessEmployees(businessId: string) {
   const rows = unwrap(
-    await supabase
-      .from("business_members")
-      .select("user_id, role")
-      .eq("business_id", businessId),
+    await supabase.from("business_members").select("user_id, role").eq("business_id", businessId),
     "Gagal memuat pegawai",
   ) as unknown as Array<{ user_id: string; role: string }>;
   if (rows.length === 0) return [];

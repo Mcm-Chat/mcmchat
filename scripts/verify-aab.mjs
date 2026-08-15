@@ -30,14 +30,18 @@ const need = [
 const forbidden = [/mcmstorage/i, /biz\.mcmstorage\.app/i, /mcm[\s_-]?storage/i];
 const leaked = forbidden.filter((re) => re.test(dump));
 if (leaked.length > 0) {
-  console.error(`FAIL verify:aab — bundle memuat branding/package MCM Storage: ${leaked.join(", ")}`);
+  console.error(
+    `FAIL verify:aab — bundle memuat branding/package MCM Storage: ${leaked.join(", ")}`,
+  );
   process.exit(1);
 }
 const otherPackages = [...dump.matchAll(/package="([^"]+)"/g)]
   .map((m) => m[1])
   .filter((pkg) => pkg !== "com.mcm.privateconnect");
 if (otherPackages.length > 0) {
-  console.error(`FAIL verify:aab — package selain com.mcm.privateconnect: ${otherPackages.join(", ")}`);
+  console.error(
+    `FAIL verify:aab — package selain com.mcm.privateconnect: ${otherPackages.join(", ")}`,
+  );
   process.exit(1);
 }
 

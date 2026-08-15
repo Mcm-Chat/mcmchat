@@ -34,10 +34,7 @@ import {
   requestMediaPermission,
   type MediaPermissionState,
 } from "@/lib/calls/media-permission";
-import {
-  readCachedPermission,
-  writeCachedPermission,
-} from "@/lib/calls/permission-cache";
+import { readCachedPermission, writeCachedPermission } from "@/lib/calls/permission-cache";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -88,10 +85,7 @@ export function IncomingCallListener() {
       closeBanner("Panggilan masuk tak terjawab.");
       return;
     }
-    const timer = window.setTimeout(
-      () => closeBanner("Panggilan masuk tak terjawab."),
-      remaining,
-    );
+    const timer = window.setTimeout(() => closeBanner("Panggilan masuk tak terjawab."), remaining);
     return () => window.clearTimeout(timer);
   }, [ringingCall?.id, ringingCall?.created_at]);
 
@@ -254,7 +248,10 @@ export function IncomingCallListener() {
         name={nameOf(incoming.call.initiator_id, incoming.name)}
       />
       <div className="flex items-center gap-3">
-        <MCMAvatar initials={nameOf(incoming.call.initiator_id, incoming.name).slice(0, 2).toUpperCase()} color={incoming.color} />
+        <MCMAvatar
+          initials={nameOf(incoming.call.initiator_id, incoming.name).slice(0, 2).toUpperCase()}
+          color={incoming.color}
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">
             {nameOf(incoming.call.initiator_id, incoming.name)}

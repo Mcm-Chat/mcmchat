@@ -30,10 +30,21 @@ export function AccessibilityGuidePanel({ onGoToCalls }: AccessibilityGuidePanel
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-medium">Uji urutan Tab</h3>
             <ol className="mt-1 list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
-              <li>Buka halaman <strong className="text-foreground">Panggilan</strong>.</li>
-              <li>Tekan tombol <kbd className="rounded border bg-background px-1 font-mono">Tab</kbd> berulang kali.</li>
-              <li>Pastikan fokus bergerak secara logis: tombol panggilan → daftar riwayat → aksi cepat → modal (bila dibuka).</li>
-              <li>Di modal <strong>Panggilan baru</strong>, fokus pertama harus langsung ke kolom pencarian kontak.</li>
+              <li>
+                Buka halaman <strong className="text-foreground">Panggilan</strong>.
+              </li>
+              <li>
+                Tekan tombol <kbd className="rounded border bg-background px-1 font-mono">Tab</kbd>{" "}
+                berulang kali.
+              </li>
+              <li>
+                Pastikan fokus bergerak secara logis: tombol panggilan → daftar riwayat → aksi cepat
+                → modal (bila dibuka).
+              </li>
+              <li>
+                Di modal <strong>Panggilan baru</strong>, fokus pertama harus langsung ke kolom
+                pencarian kontak.
+              </li>
             </ol>
           </div>
         </div>
@@ -46,7 +57,9 @@ export function AccessibilityGuidePanel({ onGoToCalls }: AccessibilityGuidePanel
             <h3 className="text-sm font-medium">Uji tombol Escape</h3>
             <ol className="mt-1 list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
               <li>Buka modal Panggilan baru atau sheet panggilan tak terjawab.</li>
-              <li>Tekan <kbd className="rounded border bg-background px-1 font-mono">Esc</kbd>.</li>
+              <li>
+                Tekan <kbd className="rounded border bg-background px-1 font-mono">Esc</kbd>.
+              </li>
               <li>Modal/sheet harus tertutup dan fokus kembali ke tombol pemicunya.</li>
               <li>Bila tidak ada modal terbuka, Escape menutup banner/notifikasi teratas.</li>
             </ol>
