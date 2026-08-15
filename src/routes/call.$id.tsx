@@ -546,7 +546,6 @@ function CallScreen() {
                       size="icon"
                       className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
                       aria-label="Jawab panggilan"
-                      disabled={answerBlocked}
                       aria-describedby={answerBlocked ? "call-permission-help" : undefined}
                       onClick={answerWithPermission}
                     >
@@ -554,7 +553,7 @@ function CallScreen() {
                     </Button>
                     <span className="text-[10px] text-white/70" id="call-permission-help">
                       {answerBlocked
-                        ? "Butuh izin"
+                        ? "Jawab (minta izin)"
                         : permission.audioOnly
                           ? "Jawab (suara)"
                           : "Jawab"}
