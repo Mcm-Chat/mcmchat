@@ -287,6 +287,7 @@ export function PurchaseDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Foto barang masuk</Label>
+          </div>
             {photoPreview ? (
               <div className="relative w-fit">
                 <img
