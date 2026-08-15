@@ -260,11 +260,22 @@ function ChatRoom() {
       bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, pending.length, atBottom, lastSenderId, userId]);
 
+  // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
+  // setState tidak pernah dipanggil per event scroll.
+  const scrollTick = useRef(false);
   const onScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setAtBottom(isNearBottom(el));
-    if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
+    if (scrollTick.current) return;
+    scrollTick.current = true;
+    requestAnimationFrame(() => {
+      scrollTick.current = false;
+      const el = scrollRef.current;
+      if (!el) return;
+      setAtBottom((prev) => {
+        const next = isNearBottom(el);
+        return next === prev ? prev : next;
+      });
+      if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
+    });
   }, [hasOlder, isFetchingOlder, fetchOlder]);
 
   // Keyboard (IME) muncul/hilang: pertahankan posisi baca. Hanya menempel ke
@@ -771,7 +782,7 @@ function ChatRoom() {
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="chat-canvas relative flex-1 overflow-y-auto px-2 py-3"
+        className="chat-canvas chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
       >
         {hasOlder && (
           <div className="mb-2 flex justify-center">
