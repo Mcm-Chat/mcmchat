@@ -704,8 +704,7 @@ export function useCall(opts: {
       if (ok) {
         setCameraDeviceId(deviceId);
         writePreferredDevice("camera", deviceId);
-      }
-      else setReason("Kamera itu tidak bisa dipakai saat ini");
+      } else setReason("Kamera itu tidak bisa dipakai saat ini");
     });
   }, []);
 
