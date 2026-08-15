@@ -619,22 +619,45 @@ export function MessageBubble({
     );
   }
   const isSticker = message.kind === "sticker";
+  const swipe = useBubbleSwipe((dir) =>
+    onAction(dir === "right" ? "reply" : "forward", message),
+  );
   return (
     <div
       className={cn(
-        "group animate-bubble-in flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        "group animate-bubble-in relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
         grouped ? "py-[1px]" : "pt-1.5 pb-[1px]",
         mine ? "justify-end" : "justify-start",
         selectable && "cursor-pointer",
         selectable && selected && "bg-primary/10",
         highlighted && "ring-2 ring-primary/60",
       )}
+      style={{
+        transform: swipe.dx ? `translateX(${swipe.dx}px)` : undefined,
+        transition: swipe.dx ? "none" : "transform 160ms ease-out",
+      }}
+      {...(selectable ? {} : swipe.handlers)}
       onClick={selectable ? () => onAction("select", message) : undefined}
       onContextMenu={(e) => {
         e.preventDefault();
         onAction("select", message);
       }}
     >
+      {swipe.dx !== 0 && (
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted-foreground",
+            swipe.dx > 0 ? "-left-8" : "-right-8",
+          )}
+        >
+          {swipe.dx > 0 ? (
+            <CornerUpLeft className="size-5" />
+          ) : (
+            <Forward className="size-5" />
+          )}
+        </span>
+      )}
       <div
         className={cn(
           "flex min-w-0 max-w-[80%] flex-col",
@@ -764,6 +787,9 @@ export function MessageBubble({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onAction("reply", message)}>
               <CornerUpLeft className="size-4" /> Balas
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction("forward", message)}>
+              <Forward className="size-4" /> Teruskan
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAction("copy", message)}>
               <Copy className="size-4" /> Salin
