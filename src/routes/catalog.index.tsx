@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package, Plus, Search } from "lucide-react";
+import { FolderCog, Package, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
+import { ConfirmDialog, EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-parts";
 import { AiDescriptionButton } from "@/components/mcm/ai-description";
+import { PurchaseDialog } from "@/components/mcm/purchase-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,15 +15,40 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useMyBusiness } from "@/lib/api/queries";
 import { createBusiness } from "@/lib/api/business";
-import { listCatalog, upsertProduct, type ProductWithVariants } from "@/lib/api/catalog";
+import {
+  COUNT_UNITS,
+  WEIGHT_UNITS,
+  deleteProduct,
+  formatQty,
+  listCatalog,
+  toBase,
+  upsertProduct,
+  upsertVariant,
+  type ProductWithVariants,
+} from "@/lib/api/catalog";
+import {
+  productIndicators,
+  recordPurchase,
+  renameCategory,
+  type ProductIndicator,
+} from "@/lib/api/purchases";
+import { rupiah } from "@/lib/mcm/format";
 import { ROLE_LABEL } from "@/lib/api/business";
 
 export const Route = createFileRoute("/catalog/")({
