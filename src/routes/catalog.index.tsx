@@ -4,7 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderCog, Package, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { ConfirmDialog, EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
+import {
+  ConfirmDialog,
+  EmptyState,
+  LoadingSkeleton,
+  StatusBadge,
+} from "@/components/mcm/primitives";
 import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-parts";
 import { ProductInsightDialog, type IndicatorFocus } from "@/components/mcm/product-insight-dialog";
 import { AiDescriptionButton } from "@/components/mcm/ai-description";
