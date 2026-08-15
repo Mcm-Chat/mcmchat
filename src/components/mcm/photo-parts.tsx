@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Camera,
+  Pencil,
   Check,
   Image as ImageIcon,
   Loader2,
@@ -20,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { MCMAvatar, StatusBadge } from "./primitives";
 import { UserAvatar } from "./user-avatar";
+import { PhotoEditorDialog } from "./photo-editor";
 import { compressImage, dataUrlToBlob, koordinat, useGeolocation } from "@/lib/mcm/geo";
 import type { MessageLocation } from "@/lib/mcm/types";
 import type { ConversationView } from "@/lib/api/chat";
@@ -98,6 +100,9 @@ export function PhotoFlow({
   const [selected, setSelected] = useState<string[]>(fixedConversationIds ?? []);
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState("");
+  // Editor foto dibuka otomatis sekali setiap foto baru dipilih (kamera/galeri),
+  // dan bisa dibuka lagi kapan pun lewat tombol "Edit foto" pada pratinjau.
+  const [editing, setEditing] = useState(false);
   const [caption, setCaption] = useState("");
   const [includeLocation, setIncludeLocation] = useState(true);
   const [manualOpen, setManualOpen] = useState(false);
@@ -128,6 +133,7 @@ export function PhotoFlow({
     try {
       const { previewUrl } = await compressImage(file);
       setPreview(previewUrl);
+      setEditing(true);
       if (includeLocation && !geo.location) geo.request();
       setStep((s) => (s === "kamera" ? "penerima" : s));
     } catch {
@@ -236,6 +242,23 @@ export function PhotoFlow({
       />
     </>
   );
+
+  // Editor tampil di atas langkah mana pun supaya foto yang baru dipilih
+  // (kamera atau galeri) langsung bisa dipotong/dianotasi sebelum dikirim.
+  if (editing && preview) {
+    return (
+      <PhotoEditorDialog
+        src={preview}
+        title="Edit foto sebelum dikirim"
+        onCancel={() => setEditing(false)}
+        onDone={(dataUrl) => {
+          setPreview(dataUrl);
+          setEditing(false);
+          toast.success("Perubahan foto disimpan");
+        }}
+      />
+    );
+  }
 
   if (step === "kamera") {
     return (
@@ -449,17 +472,37 @@ export function PhotoFlow({
         <section className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground">Foto</p>
           {preview ? (
-            <div className="relative overflow-hidden rounded-2xl border border-border">
-              <img src={preview} alt="Pratinjau foto" className="max-h-72 w-full object-cover" />
-              <Button
-                size="icon"
-                variant="secondary"
-                className="absolute top-2 right-2 size-8 rounded-full"
-                aria-label="Hapus foto"
-                onClick={() => setPreview("")}
-              >
-                <X className="size-4" />
-              </Button>
+            <div className="space-y-2">
+              <div className="relative overflow-hidden rounded-2xl border border-border">
+                <img src={preview} alt="Pratinjau foto" className="max-h-72 w-full object-cover" />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute top-2 right-2 size-11 rounded-full"
+                  aria-label="Hapus foto"
+                  onClick={() => setPreview("")}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="secondary"
+                  className="h-11 rounded-xl"
+                  aria-label="Edit foto sebelum dikirim"
+                  onClick={() => setEditing(true)}
+                >
+                  <Pencil className="size-4" /> Edit foto
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-xl"
+                  disabled={busy}
+                  onClick={() => galleryRef.current?.click()}
+                >
+                  <ImageIcon className="size-4" /> Ganti foto
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
