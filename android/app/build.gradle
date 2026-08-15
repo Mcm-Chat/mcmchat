@@ -57,6 +57,18 @@ dependencies {
 // File generated oleh `cap sync` (jangan diedit manual).
 apply from: 'capacitor.build.gradle'
 
+// Sumber kebenaran config klien Firebase ada di android/firebase/google-services.json
+// (file klien, TANPA private key/service account). Disalin ke modul app bila belum ada,
+// karena path android/app/google-services.json diabaikan oleh .gitignore repo.
+def fallbackGoogleServices = rootProject.file('firebase/google-services.json')
+if (!file('google-services.json').exists() && fallbackGoogleServices.exists()) {
+    copy {
+        from fallbackGoogleServices
+        into projectDir
+    }
+    logger.lifecycle('MCM: google-services.json disalin dari android/firebase/.')
+}
+
 // google-services.json disiapkan pemilik akun; jangan gagal build bila belum ada.
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
