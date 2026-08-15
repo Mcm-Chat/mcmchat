@@ -240,7 +240,7 @@ function PreCallScreen() {
           aria-atomic="true"
           className="text-xs text-muted-foreground"
         >
-          {mediaStatusText(mediaState, micOn, camOn)}
+          {mediaStatusText(mediaState, micOn, camOn, permission)}
         </p>
 
         {mediaError && (
@@ -251,7 +251,23 @@ function PreCallScreen() {
             dismissLabel="Tutup peringatan media"
             className="items-center rounded-xl bg-destructive/10 p-3 text-destructive"
           >
-            {mediaError}
+            <span className="flex flex-col items-start gap-2">
+              <span>{mediaError}</span>
+              <Button
+                ref={retryRef}
+                type="button"
+                size="sm"
+                variant="outline"
+                className="min-h-9"
+                onClick={() => {
+                  setMediaError(null);
+                  setMediaState("processing");
+                  setRetryToken((n) => n + 1);
+                }}
+              >
+                Coba lagi minta izin
+              </Button>
+            </span>
           </NotificationBanner>
         )}
 
