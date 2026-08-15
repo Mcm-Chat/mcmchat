@@ -26,6 +26,7 @@ import { onConnectionChange } from "@/lib/realtime/connection";
 import { playTone } from "@/lib/calls/tones";
 import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 import { useContactAliases } from "@/lib/contacts/alias";
+import { setCallReturnFocus } from "@/lib/calls/return-focus";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -220,7 +221,11 @@ export function IncomingCallListener() {
           className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-white"
           onClick={() => {
             const id = incoming.call.id;
-            closeBanner("");
+            // Simpan target fokus supaya bila panggilan yang dijawab langsung
+            // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
+            // panggil ulang percakapan ini (bukan hilang ke <body>).
+            setCallReturnFocus(id);
+            closeBanner("Panggilan dijawab. Membuka layar panggilan.");
             void navigate({ to: "/call/$id", params: { id } });
           }}
         >
