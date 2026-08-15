@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Uji aksesibilitas layar panggilan masuk & panel pemulihan.
  *
