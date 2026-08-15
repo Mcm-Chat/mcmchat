@@ -73,6 +73,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "entities-v4": "npm:entities@4.5.0",
+    "firebase": "^12.17.1",
     "input-otp": "^1.4.2",
     "jsqr": "^1.4.0",
     "livekit-client": "^2.21.0",
