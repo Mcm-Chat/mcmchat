@@ -72,6 +72,7 @@ export function IncomingCallListener() {
   const closeBanner = (notice: string) => {
     setIncoming(null);
     setClosedNotice(notice);
+    setPermState(null);
   };
 
   // Timeout dering: banner tidak boleh menggantung setelah batas dering habis.
