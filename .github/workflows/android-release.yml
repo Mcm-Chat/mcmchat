@@ -5,7 +5,16 @@ on:
     inputs:
       app_url:
         description: "URL produksi yang dibungkus Capacitor"
-        default: "https://mcmchat.id"
+        default: "https://mcmchat.lovable.app"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/android-release.yml"
+      - "public/.well-known/assetlinks.json"
+      - "android/**"
+      - "package.json"
+      - "bun.lock"
+      - "capacitor.config.ts"
 
 jobs:
   bundle:
@@ -18,10 +27,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
+      # Nilai VITE_SUPABASE_* bersifat publik dan sudah ikut repo lewat `.env`;
+      # jangan diambil dari GitHub Secrets.
       - run: bun run build:web
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       # Gate wajib: rilis dibatalkan bila fingerprint App Links masih placeholder.
       # Guard pemisahan APK: repo ini hanya membangun aplikasi chat privat.
@@ -61,7 +69,7 @@ jobs:
       - name: Sync Capacitor
         run: bunx cap sync android
         env:
-          MCM_APP_URL: ${{ github.event.inputs.app_url }}
+          MCM_APP_URL: ${{ github.event.inputs.app_url || 'https://mcmchat.lovable.app' }}
 
       # Wrapper resmi (Gradle 8.11.1) ikut ter-commit di android/gradle/wrapper.
       - name: Verifikasi Gradle wrapper
