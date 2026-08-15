@@ -748,6 +748,7 @@ function ProfilePage() {
                   />
                 }
               />
+              <AccessibilityGuidePanel onGoToCalls={() => void navigate({ to: "/calls" })} />
               <button
                 type="button"
                 onClick={() => void navigate({ to: "/settings/notifications" })}
