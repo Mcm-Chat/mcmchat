@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PinField } from "@/components/mcm/pin-picker";
 import {
   Select,
   SelectContent,
