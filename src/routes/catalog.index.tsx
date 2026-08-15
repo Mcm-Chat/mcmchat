@@ -4,7 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderCog, Package, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { ConfirmDialog, EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
+import {
+  ConfirmDialog,
+  EmptyState,
+  LoadingSkeleton,
+  StatusBadge,
+} from "@/components/mcm/primitives";
 import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-parts";
 import { ProductInsightDialog, type IndicatorFocus } from "@/components/mcm/product-insight-dialog";
 import { AiDescriptionButton } from "@/components/mcm/ai-description";
@@ -37,8 +42,9 @@ import {
   WEIGHT_UNITS,
   deleteProduct,
   formatQty,
+  formatWarehouseQty,
   listCatalog,
-  toBase,
+  toWarehouseBase,
   upsertProduct,
   upsertVariant,
   type ProductWithVariants,
@@ -84,6 +90,7 @@ function CatalogIndex() {
     description: "",
     variantName: "Standar",
     unit: "pcs",
+    perBuyUnit: "1",
     qty: "",
     cost: "",
     supplier: "",
@@ -247,15 +254,23 @@ function CatalogIndex() {
     }
     setSaving(true);
     try {
+      const isWeight = (WEIGHT_UNITS as readonly string[]).includes(form.unit);
+      const buyFactor = isWeight
+        ? ({ mg: 0.001, g: 1, ons: 100, kg: 1000 }[form.unit] ?? 1)
+        : Number(form.perBuyUnit.replace(",", ".")) || 1;
       const created = await upsertProduct({
         business_id: businessId!,
         name: form.name.trim(),
         category: form.category.trim() || "Umum",
         description: form.description.trim(),
         price,
+        stock_kind: isWeight ? "weight" : "count",
+        base_unit: isWeight ? "g" : "pcs",
+        buy_unit: form.unit,
+        buy_factor: buyFactor,
+        ...(costNum > 0 ? { purchase_price: costNum } : {}),
       });
       if (wantsPurchase) {
-        const isWeight = (WEIGHT_UNITS as readonly string[]).includes(form.unit);
         const variant = await upsertVariant({
           business_id: businessId!,
           product_id: created.id,
@@ -264,11 +279,12 @@ function CatalogIndex() {
           display_unit: form.unit,
           ...(isWeight ? { base_unit: "g" } : { base_unit: "pcs" }),
           display_quantity: 1,
-          units_per_display: 1,
+          units_per_display: isWeight ? 1 : buyFactor,
           price,
         });
-        const qtyBase = toBase(variant, qtyNum, form.unit);
+        const qtyBase = toWarehouseBase(created, qtyNum, form.unit);
         await recordPurchase({
+          productId: created.id,
           variantId: variant.id,
           supplierName: form.supplier.trim(),
           supplierContact: form.supplierContact.trim(),
@@ -288,6 +304,7 @@ function CatalogIndex() {
         description: "",
         variantName: "Standar",
         unit: "pcs",
+        perBuyUnit: "1",
         qty: "",
         cost: "",
         supplier: "",
@@ -342,7 +359,7 @@ function CatalogIndex() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Harga dasar (Rp)</Label>
+                    <Label>Harga jual dasar (Rp)</Label>
                     <Input
                       type="number"
                       min={0}
@@ -392,13 +409,24 @@ function CatalogIndex() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Jenis yang dibeli</Label>
+                      <Label>Nama varian / ecer pertama</Label>
                       <Input
                         value={form.variantName}
                         onChange={(e) => setForm((f) => ({ ...f, variantName: e.target.value }))}
                         placeholder="Contoh: Kristal"
                       />
                     </div>
+                    {!(WEIGHT_UNITS as readonly string[]).includes(form.unit) && (
+                      <div className="space-y-1.5">
+                        <Label>Isi per {form.unit} (pcs)</Label>
+                        <Input
+                          inputMode="numeric"
+                          value={form.perBuyUnit}
+                          onChange={(e) => setForm((f) => ({ ...f, perBuyUnit: e.target.value }))}
+                          placeholder="1"
+                        />
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <div className="flex-1 space-y-1.5">
                         <Label>Jumlah</Label>
@@ -545,11 +573,11 @@ function CatalogIndex() {
         </div>
       )}
 
-      {buyFor && buyFor.variants.length > 0 && (
+      {buyFor && (
         <PurchaseDialog
           open
           onOpenChange={(v) => !v && setBuyFor(null)}
-          variants={buyFor.variants}
+          product={buyFor}
           onDone={() => {
             setBuyFor(null);
             refreshCatalog();
@@ -748,6 +776,11 @@ function ProductCard({
           </Button>
         )}
       </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <StatusBadge tone={product.warehouse <= 0 ? "danger" : "primary"}>
+          Gudang: {formatWarehouseQty(product, product.warehouse)}
+        </StatusBadge>
+      </div>
       {product.variants.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {product.variants.map((v) => (
@@ -796,15 +829,9 @@ function ProductCard({
         />
       )}
       {canManage && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full rounded-xl"
-          disabled={product.variants.length === 0}
-          onClick={onBuy}
-        >
+        <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={onBuy}>
           <ShoppingCart className="size-4" />
-          {product.variants.length === 0 ? "Tambah varian dulu" : "Catat pembelian dari agen"}
+          Catat pembelian dari agen
         </Button>
       )}
       <div className="flex gap-2">

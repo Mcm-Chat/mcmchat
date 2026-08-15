@@ -9,7 +9,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSkeleton } from "@/components/mcm/primitives";
 import { listProductMovements, listPurchases, type ProductIndicator } from "@/lib/api/purchases";
-import { MOVEMENT_LABEL, formatQty, type ProductWithVariants } from "@/lib/api/catalog";
+import {
+  MOVEMENT_LABEL,
+  formatQty,
+  formatWarehouseQty,
+  type ProductWithVariants,
+} from "@/lib/api/catalog";
 import { rupiah } from "@/lib/mcm/format";
 
 export type IndicatorFocus = "cost" | "stock" | "sold" | "profit" | "supplier";
@@ -54,9 +59,11 @@ export function ProductInsightDialog({
   });
 
   const variantById = new Map(product.variants.map((v) => [v.id, v]));
-  const fmt = (variantId: string, qty: number) => {
-    const v = variantById.get(variantId);
-    return v ? formatQty(v, qty) : String(qty);
+  const fmt = (variantId: string | null, qty: number) => {
+    const v = variantId ? variantById.get(variantId) : undefined;
+    if (v) return formatQty(v, qty);
+    // Pergerakan tingkat gudang: tampilkan dalam satuan dasar gudang.
+    return formatWarehouseQty(product, qty);
   };
 
   return (

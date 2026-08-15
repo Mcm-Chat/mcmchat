@@ -34,6 +34,7 @@ const dispatch = fn("dispatch_chat_order");
 const create = fn("create_chat_order");
 const finalize = fn("finalize_chat_order_delivery");
 const balance = fn("apply_unit_balance");
+const warehouse = fn("warehouse_apply");
 const sql = raw.toLowerCase();
 
 describe("1) cancel memakai slot.mode sebagai SSOT", () => {
@@ -117,8 +118,9 @@ describe("8) movement idempoten", () => {
     expect(balance).not.toMatch(/gen_random_uuid\(\)/);
     expect(balance).toMatch(/_ref := md5\('stock_unit:'/);
     expect(balance).toMatch(/ref key wajib/);
-    expect(balance).toMatch(
-      /if exists \(select 1 from public\.inventory_movements m where m\.ref_type = _reftype and m\.ref_id = _ref\)/,
+    // Guard idempotensi kini hidup di warehouse_apply (satu pintu ke stok gudang).
+    expect(warehouse).toMatch(
+      /if _ref_id is not null and exists \([\s\S]{0,200}inventory_movements m[\s\S]{0,200}m\.ref_type = _ref_type and m\.ref_id = _ref_id/,
     );
   });
 });

@@ -73,7 +73,94 @@ export function formatQty(
 export type ProductWithVariants = ProductRow & {
   variants: (VariantRow & { balance: number })[];
   photos: PhotoRow[];
+  /** Stok induk gudang dalam satuan dasar (gram untuk timbangan, unit dasar untuk hitungan). */
+  warehouse: number;
 };
+
+export type WarehouseProduct = Pick<ProductRow, "stock_kind" | "base_unit" | "buy_unit">;
+
+/** Faktor konversi satuan beli gudang → satuan dasar. */
+export function warehouseBuyFactor(product: Pick<ProductRow, "stock_kind" | "buy_factor">): number {
+  const f = Number(product.buy_factor);
+  return Number.isFinite(f) && f > 0 ? f : 1;
+}
+
+/** Satuan tampilan stok gudang. */
+export function warehouseUnit(product: WarehouseProduct): string {
+  if (product.stock_kind === "weight") {
+    const u = (product.buy_unit || "g").toLowerCase();
+    return (WEIGHT_UNITS as readonly string[]).includes(u) ? u : "g";
+  }
+  return product.base_unit || "pcs";
+}
+
+/** Format stok gudang (qty dalam satuan dasar) menjadi teks satuan beli. */
+export function formatWarehouseQty(product: WarehouseProduct, qtyBase: number): string {
+  const unit = warehouseUnit(product);
+  if (product.stock_kind === "weight") {
+    const factor = WEIGHT_TO_BASE_G[unit as keyof typeof WEIGHT_TO_BASE_G] ?? 1;
+    return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 6 }).format(qtyBase / factor)} ${unit}`;
+  }
+  return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(qtyBase)} ${unit}`;
+}
+
+/** Ukuran satu unit varian dalam satuan dasar gudang. */
+export function warehouseUnitOptions(
+  product: Pick<ProductRow, "stock_kind" | "base_unit" | "buy_unit">,
+): string[] {
+  if (product.stock_kind === "weight") return [...WEIGHT_UNITS];
+  const base = product.base_unit || "pcs";
+  const buy = product.buy_unit || base;
+  return buy && buy !== base ? [base, buy] : [base];
+}
+
+/** Konversi jumlah + satuan pembelian gudang menjadi satuan dasar. */
+export function toWarehouseBase(
+  product: Pick<ProductRow, "stock_kind" | "base_unit" | "buy_unit" | "buy_factor">,
+  qty: number,
+  unit: string,
+): number {
+  if (product.stock_kind === "weight") {
+    const factor = WEIGHT_TO_BASE_G[unit as keyof typeof WEIGHT_TO_BASE_G];
+    if (!factor) throw new Error(VARIANT_MESSAGES.unit);
+    return decimalMultiply(qty, factor);
+  }
+  const factor = unit === (product.buy_unit || "") ? warehouseBuyFactor(product) : 1;
+  return Math.round(qty * factor);
+}
+
+export function variantUnitSize(
+  variant: Pick<VariantRow, "stock_type" | "base_quantity_grams" | "units_per_display">,
+): number {
+  const size =
+    variant.stock_type === "weight"
+      ? Number(variant.base_quantity_grams ?? 0)
+      : Number(variant.units_per_display ?? 0);
+  return size > 0 ? size : 1;
+}
+
+/** Berapa unit varian yang bisa dijual dari stok gudang saat ini. */
+export function variantAvailableUnits(
+  product: Pick<ProductRow, "stock_kind">,
+  variant: Pick<VariantRow, "stock_type" | "base_quantity_grams" | "units_per_display">,
+  warehouseBase: number,
+): number {
+  const size = variantUnitSize(variant);
+  const raw = warehouseBase / size;
+  return product.stock_kind === "weight" ? Number(raw.toFixed(6)) : Math.floor(raw);
+}
+
+async function warehouseBalances(productIds: string[]): Promise<Map<string, number>> {
+  if (productIds.length === 0) return new Map();
+  const rows = unwrap(
+    await supabase
+      .from("product_stock_balances")
+      .select("product_id, qty_base")
+      .in("product_id", productIds),
+    "Gagal memuat stok gudang",
+  );
+  return new Map(rows.map((r) => [r.product_id, Number(r.qty_base)]));
+}
 
 export async function listCatalog(businessId: string): Promise<ProductWithVariants[]> {
   const products = unwrap(
@@ -86,7 +173,7 @@ export async function listCatalog(businessId: string): Promise<ProductWithVarian
   );
   if (products.length === 0) return [];
   const productIds = products.map((p) => p.id);
-  const [variants, photos, balances] = await Promise.all([
+  const [variants, photos, warehouse] = await Promise.all([
     unwrap(
       await supabase
         .from("product_variants")
@@ -104,18 +191,18 @@ export async function listCatalog(businessId: string): Promise<ProductWithVarian
         .order("sort_order"),
       "Gagal memuat foto",
     ),
-    unwrap(
-      await supabase.from("inventory_balances").select("*").in("product_id", productIds),
-      "Gagal memuat stok",
-    ),
+    warehouseBalances(productIds),
   ]);
-  return products.map((p) => ({
-    ...p,
-    photos: photos.filter((ph) => ph.product_id === p.id),
-    variants: variants
-      .filter((v) => v.product_id === p.id)
-      .map((v) => ({ ...v, balance: balances.find((b) => b.variant_id === v.id)?.qty_base ?? 0 })),
-  }));
+  return products.map((p) => {
+    const pool = warehouse.get(p.id) ?? 0;
+    return {
+      ...p,
+      warehouse: pool,
+      photos: photos.filter((ph) => ph.product_id === p.id),
+      // Saldo varian adalah turunan dari stok gudang bersama.
+      variants: variants.filter((v) => v.product_id === p.id).map((v) => ({ ...v, balance: pool })),
+    };
+  });
 }
 
 export async function getProduct(productId: string): Promise<ProductWithVariants | null> {
@@ -124,7 +211,7 @@ export async function getProduct(productId: string): Promise<ProductWithVariants
     "Produk tidak ditemukan",
   );
   if (!product) return null;
-  const [variants, photos, balances] = await Promise.all([
+  const [variants, photos, warehouse] = await Promise.all([
     unwrap(
       await supabase
         .from("product_variants")
@@ -141,18 +228,14 @@ export async function getProduct(productId: string): Promise<ProductWithVariants
         .order("sort_order"),
       "Gagal memuat foto",
     ),
-    unwrap(
-      await supabase.from("inventory_balances").select("*").eq("product_id", productId),
-      "Gagal memuat stok",
-    ),
+    warehouseBalances([productId]),
   ]);
+  const pool = warehouse.get(productId) ?? 0;
   return {
     ...product,
     photos,
-    variants: variants.map((v) => ({
-      ...v,
-      balance: balances.find((b) => b.variant_id === v.id)?.qty_base ?? 0,
-    })),
+    warehouse: pool,
+    variants: variants.map((v) => ({ ...v, balance: pool })),
   };
 }
 
@@ -166,9 +249,26 @@ export type ProductInput = {
   sku?: string;
   emoji?: string;
   discount_percent?: number;
+  /** Jenis stok gudang: timbangan atau hitungan. */
+  stock_kind?: StockType;
+  /** Satuan dasar gudang: "g" untuk timbangan, pcs/botol untuk hitungan. */
+  base_unit?: string;
+  /** Satuan pembelian gudang (kg, ons, dus, karton, …). */
+  buy_unit?: string;
+  /** Berapa satuan dasar dalam 1 satuan beli (kg → 1000 g, dus → 24 botol). */
+  buy_factor?: number;
+  /** Harga beli per satuan beli. */
+  purchase_price?: number;
 };
 
 export async function upsertProduct(input: ProductInput): Promise<ProductRow> {
+  const warehouse = {
+    ...(input.stock_kind !== undefined ? { stock_kind: input.stock_kind } : {}),
+    ...(input.base_unit !== undefined ? { base_unit: input.base_unit } : {}),
+    ...(input.buy_unit !== undefined ? { buy_unit: input.buy_unit } : {}),
+    ...(input.buy_factor !== undefined ? { buy_factor: input.buy_factor } : {}),
+    ...(input.purchase_price !== undefined ? { purchase_price: input.purchase_price } : {}),
+  };
   if (input.id) {
     return unwrap(
       await supabase
@@ -181,6 +281,7 @@ export async function upsertProduct(input: ProductInput): Promise<ProductRow> {
           sku: input.sku ?? "",
           emoji: input.emoji ?? "📦",
           discount_percent: input.discount_percent ?? 0,
+          ...warehouse,
         })
         .eq("id", input.id)
         .select("*")
@@ -200,11 +301,29 @@ export async function upsertProduct(input: ProductInput): Promise<ProductRow> {
         sku: input.sku ?? "",
         emoji: input.emoji ?? "📦",
         discount_percent: input.discount_percent ?? 0,
+        ...warehouse,
       })
       .select("*")
       .single(),
     "Gagal membuat produk",
   );
+}
+
+/** Tambah atau koreksi stok langsung di gudang (satuan dasar). */
+export async function adjustWarehouse(
+  productId: string,
+  qtyBase: number,
+  type: MovementType,
+  note: string,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("adjust_warehouse", {
+    _product: productId,
+    _qty_base: qtyBase,
+    _type: type,
+    _note: note,
+  });
+  if (error) throw new Error(friendly(error.message, "Gagal memperbarui stok gudang"));
+  return Number(data);
 }
 
 export async function deleteProduct(productId: string) {

@@ -42,17 +42,23 @@ import {
   MOVEMENT_LABEL,
   WEIGHT_UNITS,
   adjustStock,
+  adjustWarehouse,
   deletePhoto,
   deleteProduct,
   deleteVariant,
   formatQty,
+  formatWarehouseQty,
   getProduct,
   listMovements,
   reorderPhotos,
   toBase,
+  toWarehouseBase,
   updatePhotoLocation,
   upsertProduct,
   upsertVariant,
+  variantAvailableUnits,
+  warehouseUnit,
+  warehouseUnitOptions,
   type PhotoRow,
   type ProductWithVariants,
   type StockType,
@@ -94,7 +100,16 @@ function CatalogDetail() {
   const invalidate = () => void qc.invalidateQueries({ queryKey: ["catalog", "product", id] });
 
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", category: "", description: "", price: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    category: "",
+    description: "",
+    price: "",
+    stockKind: "count" as StockType,
+    buyUnit: "pcs",
+    buyFactor: "1",
+    purchasePrice: "",
+  });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [variantOpen, setVariantOpen] = useState<VariantRow | null | "new">(null);
   const [stockDialog, setStockDialog] = useState<{
@@ -102,7 +117,8 @@ function CatalogDetail() {
     mode: "add" | "correct";
   } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
-  const [purchaseFor, setPurchaseFor] = useState<VariantRow | null>(null);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [warehouseFix, setWarehouseFix] = useState(false);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
 
   if (loading || isLoading) {
@@ -138,6 +154,10 @@ function CatalogDetail() {
       category: product.category,
       description: product.description,
       price: String(product.price),
+      stockKind: product.stock_kind,
+      buyUnit: product.buy_unit || warehouseUnit(product),
+      buyFactor: String(product.buy_factor ?? 1),
+      purchasePrice: String(product.purchase_price ?? ""),
     });
     setEditOpen(true);
   };
@@ -156,6 +176,18 @@ function CatalogDetail() {
         category: editForm.category.trim() || "Umum",
         description: editForm.description.trim(),
         price,
+        stock_kind: editForm.stockKind,
+        base_unit: editForm.stockKind === "weight" ? "g" : "pcs",
+        buy_unit: editForm.buyUnit,
+        buy_factor:
+          editForm.stockKind === "weight"
+            ? toWarehouseBase(
+                { stock_kind: "weight", base_unit: "g", buy_unit: editForm.buyUnit, buy_factor: 1 },
+                1,
+                editForm.buyUnit,
+              )
+            : Number(editForm.buyFactor.replace(",", ".")) || 1,
+        purchase_price: Number(editForm.purchasePrice.replace(/[^\d]/g, "")) || 0,
       });
       setEditOpen(false);
       invalidate();
@@ -221,6 +253,40 @@ function CatalogDetail() {
             <ProductThumb path={allPhotos[0]?.image_path} className="size-16" />
           </div>
           <p className="text-lg font-bold text-primary">{priceLabel(Number(product.price))}</p>
+          <div className="rounded-xl bg-muted/60 p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground">Stok gudang (induk)</p>
+                <p className="text-base font-bold">
+                  {formatWarehouseQty(product, product.warehouse)}
+                </p>
+              </div>
+              <StatusBadge tone={product.warehouse <= 0 ? "danger" : "primary"}>
+                {product.stock_kind === "weight" ? "Timbangan" : "Hitungan"}
+              </StatusBadge>
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Harga beli: {priceLabel(Number(product.purchase_price ?? 0))} /{" "}
+              {warehouseUnit(product)}
+            </p>
+            <div className="mt-2 flex gap-1.5">
+              <Button
+                size="sm"
+                className="h-8 flex-1 rounded-lg text-[11px]"
+                onClick={() => setPurchaseOpen(true)}
+              >
+                <Plus className="size-3.5" /> Catat pembelian
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 flex-1 rounded-lg text-[11px]"
+                onClick={() => setWarehouseFix(true)}
+              >
+                <Minus className="size-3.5" /> Koreksi gudang
+              </Button>
+            </div>
+          </div>
           <div className="flex gap-2 pt-1">
             <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={openEdit}>
               Edit produk
@@ -238,7 +304,7 @@ function CatalogDetail() {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Varian & stok</h2>
+            <h2 className="text-sm font-semibold">Varian / ecer dari gudang</h2>
             <Button
               size="sm"
               variant="outline"
@@ -261,7 +327,9 @@ function CatalogDetail() {
                   businessId={product.business_id}
                   productId={product.id}
                   photos={allPhotos.filter((p) => p.variant_id === v.id && !p.stock_unit_id)}
-                  onAdd={() => setPurchaseFor(v)}
+                  onAdd={() => setPurchaseOpen(true)}
+                  warehouse={product.warehouse}
+                  stockKind={product.stock_kind}
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
                   onHistory={() => setMovementsFor(v)}
@@ -342,13 +410,79 @@ function CatalogDetail() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Harga (Rp)</Label>
+              <Label>Harga jual dasar (Rp)</Label>
               <Input
                 type="number"
                 min={0}
                 value={editForm.price}
                 onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
               />
+            </div>
+            <div className="space-y-2 rounded-xl border border-border p-2.5">
+              <p className="text-[11px] font-semibold tracking-[0.04em] uppercase">
+                Gudang (stok induk)
+              </p>
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-xs">Jenis stok</Label>
+                  <Select
+                    value={editForm.stockKind}
+                    onValueChange={(v) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        stockKind: v as StockType,
+                        buyUnit: v === "weight" ? "kg" : "pcs",
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weight">Timbangan</SelectItem>
+                      <SelectItem value="count">Hitungan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-28 space-y-1.5">
+                  <Label className="text-xs">Satuan beli</Label>
+                  <Select
+                    value={editForm.buyUnit}
+                    onValueChange={(v) => setEditForm((f) => ({ ...f, buyUnit: v }))}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(editForm.stockKind === "weight" ? WEIGHT_UNITS : COUNT_UNITS).map((u) => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {editForm.stockKind === "count" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Isi per {editForm.buyUnit} (pcs)</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={editForm.buyFactor}
+                    onChange={(e) => setEditForm((f) => ({ ...f, buyFactor: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Harga beli per {editForm.buyUnit} (Rp)</Label>
+                <Input
+                  inputMode="numeric"
+                  value={editForm.purchasePrice}
+                  onChange={(e) => setEditForm((f) => ({ ...f, purchasePrice: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-2">
@@ -429,14 +563,24 @@ function CatalogDetail() {
         <MovementsSheet variant={movementsFor} onClose={() => setMovementsFor(null)} />
       )}
 
-      {purchaseFor && (
+      {purchaseOpen && (
         <PurchaseDialog
           open
-          onOpenChange={(v) => !v && setPurchaseFor(null)}
-          variants={product.variants}
-          defaultVariantId={purchaseFor.id}
+          onOpenChange={(v) => !v && setPurchaseOpen(false)}
+          product={product}
           onDone={() => {
-            setPurchaseFor(null);
+            setPurchaseOpen(false);
+            invalidate();
+          }}
+        />
+      )}
+
+      {warehouseFix && (
+        <WarehouseAdjustDialog
+          product={product}
+          onClose={() => setWarehouseFix(false)}
+          onDone={() => {
+            setWarehouseFix(false);
             invalidate();
           }}
         />
@@ -479,6 +623,8 @@ function VariantRowCard({
   onSend,
   onEditLocation,
   onDeletePhoto,
+  warehouse,
+  stockKind,
 }: {
   variant: VariantRow & { balance: number };
   businessId: string;
@@ -491,7 +637,10 @@ function VariantRowCard({
   onSend: () => void;
   onEditLocation: (p: PhotoRow) => void;
   onDeletePhoto: (p: PhotoRow) => void;
+  warehouse: number;
+  stockKind: StockType;
 }) {
+  const available = variantAvailableUnits({ stock_kind: stockKind }, variant, warehouse);
   return (
     <div className="card-soft space-y-2 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -499,10 +648,13 @@ function VariantRowCard({
           <p className="truncate text-sm font-semibold">{variant.name}</p>
           <p className="text-xs text-muted-foreground">{priceLabel(Number(variant.price))}</p>
         </div>
-        <StatusBadge tone={variant.balance <= 0 ? "danger" : "primary"}>
-          {formatQty(variant, variant.balance)}
+        <StatusBadge tone={available <= 0 ? "danger" : "primary"}>
+          {stockKind === "weight"
+            ? formatQty(variant, warehouse)
+            : `${new Intl.NumberFormat("id-ID").format(available)} ${variant.display_unit}`}
         </StatusBadge>
       </div>
+      <p className="text-[11px] text-muted-foreground">Diambil dari stok gudang bersama.</p>
       <div className="flex flex-wrap gap-1.5">
         <Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px]" onClick={onAdd}>
           <Plus className="size-3.5" /> Beli / tambah stok
@@ -551,6 +703,120 @@ function VariantRowCard({
         onDeletePhoto={onDeletePhoto}
       />
     </div>
+  );
+}
+
+/** Koreksi cepat stok gudang induk (tambah / kurangi) dalam satuan beli. */
+function WarehouseAdjustDialog({
+  product,
+  onClose,
+  onDone,
+}: {
+  product: ProductWithVariants;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const units = warehouseUnitOptions(product);
+  const [unit, setUnit] = useState(() => warehouseUnit(product));
+  const [qty, setQty] = useState("");
+  const [mode, setMode] = useState<"add" | "reduce">("add");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const n = Number(qty.replace(",", "."));
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Jumlah tidak valid");
+      return;
+    }
+    setSaving(true);
+    try {
+      const base = toWarehouseBase(product, n, unit);
+      await adjustWarehouse(
+        product.id,
+        mode === "add" ? base : -base,
+        mode === "add" ? "restock" : "adjustment",
+        note.trim() || "Koreksi manual gudang",
+      );
+      toast.success("Stok gudang diperbarui");
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui stok gudang");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Koreksi stok gudang</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex gap-1.5">
+            <Button
+              size="sm"
+              variant={mode === "add" ? "default" : "outline"}
+              className="h-9 flex-1 rounded-lg text-xs"
+              onClick={() => setMode("add")}
+            >
+              Tambah
+            </Button>
+            <Button
+              size="sm"
+              variant={mode === "reduce" ? "default" : "outline"}
+              className="h-9 flex-1 rounded-lg text-xs"
+              onClick={() => setMode("reduce")}
+            >
+              Kurangi
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1 space-y-1.5">
+              <Label>Jumlah</Label>
+              <Input
+                inputMode="decimal"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="w-28 space-y-1.5">
+              <Label>Satuan</Label>
+              <Select value={unit} onValueChange={setUnit}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {units.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Catatan</Label>
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Opsional: alasan koreksi"
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Stok sekarang: {formatWarehouseQty(product, product.warehouse)}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button className="w-full rounded-xl" disabled={saving} onClick={() => void submit()}>
+            {saving ? "Menyimpan…" : "Simpan koreksi"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
