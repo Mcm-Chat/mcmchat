@@ -396,17 +396,17 @@ function CallScreen() {
   const withPermission =
     (granted: boolean, hint: string, run: () => void, needCamera = false) =>
     () => {
-    if (granted) {
-      run();
-      return;
-    }
-    if (permission.requesting) return;
-    void permission.request().then((next) => {
+      if (granted) {
+        run();
+        return;
+      }
+      if (permission.requesting) return;
+      void permission.request().then((next) => {
         const ok = needCamera ? next === "granted" : next === "granted" || next === "audio_only";
         if (ok) run();
-      else toast.error(hint);
-    });
-  };
+        else toast.error(hint);
+      });
+    };
 
   const phaseLabel =
     session.phase === "connected"
