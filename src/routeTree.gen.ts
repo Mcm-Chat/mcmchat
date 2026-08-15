@@ -44,6 +44,7 @@ import { Route as StatusIndexRouteImport } from './routes/status.index'
 import { Route as StatusNewRouteImport } from './routes/status.new'
 import { Route as TasksIndexRouteImport } from './routes/tasks.index'
 import { Route as TasksIdRouteImport } from './routes/tasks.$id'
+import { Route as CallPrepareConversationIdRouteImport } from './routes/call.prepare.$conversationId'
 import { Route as ApiPublicPushActionsRouteImport } from './routes/api/public/push/actions'
 
 const IndexRoute = IndexRouteImport.update({
@@ -221,6 +222,12 @@ const TasksIdRoute = TasksIdRouteImport.update({
   path: '/tasks/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallPrepareConversationIdRoute =
+  CallPrepareConversationIdRouteImport.update({
+    id: '/call/prepare/$conversationId',
+    path: '/call/prepare/$conversationId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPushActionsRoute = ApiPublicPushActionsRouteImport.update({
   id: '/api/public/push/actions',
   path: '/api/public/push/actions',
@@ -263,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/profile/': typeof ProfileIndexRoute
   '/status/': typeof StatusIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/call/prepare/$conversationId': typeof CallPrepareConversationIdRoute
   '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
 export interface FileRoutesByTo {
@@ -301,6 +309,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileIndexRoute
   '/status': typeof StatusIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/call/prepare/$conversationId': typeof CallPrepareConversationIdRoute
   '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
 export interface FileRoutesById {
@@ -340,6 +349,7 @@ export interface FileRoutesById {
   '/profile/': typeof ProfileIndexRoute
   '/status/': typeof StatusIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/call/prepare/$conversationId': typeof CallPrepareConversationIdRoute
   '/api/public/push/actions': typeof ApiPublicPushActionsRoute
 }
 export interface FileRouteTypes {
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/status/'
     | '/tasks/'
+    | '/call/prepare/$conversationId'
     | '/api/public/push/actions'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -418,6 +429,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/status'
     | '/tasks'
+    | '/call/prepare/$conversationId'
     | '/api/public/push/actions'
   id:
     | '__root__'
@@ -456,6 +468,7 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/status/'
     | '/tasks/'
+    | '/call/prepare/$conversationId'
     | '/api/public/push/actions'
   fileRoutesById: FileRoutesById
 }
@@ -495,6 +508,7 @@ export interface RootRouteChildren {
   ProfileIndexRoute: typeof ProfileIndexRoute
   StatusIndexRoute: typeof StatusIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  CallPrepareConversationIdRoute: typeof CallPrepareConversationIdRoute
   ApiPublicPushActionsRoute: typeof ApiPublicPushActionsRoute
 }
 
@@ -745,6 +759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call/prepare/$conversationId': {
+      id: '/call/prepare/$conversationId'
+      path: '/call/prepare/$conversationId'
+      fullPath: '/call/prepare/$conversationId'
+      preLoaderRoute: typeof CallPrepareConversationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/push/actions': {
       id: '/api/public/push/actions'
       path: '/api/public/push/actions'
@@ -791,6 +812,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileIndexRoute: ProfileIndexRoute,
   StatusIndexRoute: StatusIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
+  CallPrepareConversationIdRoute: CallPrepareConversationIdRoute,
   ApiPublicPushActionsRoute: ApiPublicPushActionsRoute,
 }
 export const routeTree = rootRouteImport
