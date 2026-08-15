@@ -8,7 +8,7 @@ Berjalan otomatis pada **setiap pull request**, setiap push ke `main`/`productio
 | --- | --- | --- |
 | `db-security-regression` | `bun run test:security` — invariant PIN, izin bucket `avatars`, hapus anggota jalur admin, keanggotaan percakapan, privasi avatar & blokir | ya |
 | `quality` | typecheck (`tsgo`), lint, seluruh test (`vitest run`), build produksi | ya |
-| `dependency-audit` | `bun audit --audit-level=high` | ya |
+| `dependency-audit` | `bun audit --audit-level=high` (registri dipatok ke `https://registry.npmjs.org/`) | ya |
 | `production-gate` | hanya untuk PR yang menuju branch `production`; menunggu ketiga job di atas | ya |
 
 ## Menjadikannya blocking sebelum merge
@@ -23,3 +23,12 @@ Langkah ini hanya dapat dilakukan pemilik repositori:
 ## Secret yang dibutuhkan
 `VITE_SUPABASE_URL` dan `VITE_SUPABASE_PUBLISHABLE_KEY` (nilai publishable, bukan rahasia server).
 Job keamanan DB tidak memerlukan secret apa pun — ia menganalisis file migrasi dan kode sumber secara statis.
+
+## Audit dependensi
+`bun audit` memerlukan endpoint advisory npm resmi; bila registri diarahkan ke mirror/cache,
+perintahnya membalas `404`. Karena itu job CI memasang `BUN_CONFIG_REGISTRY` dan
+`NPM_CONFIG_REGISTRY` ke `https://registry.npmjs.org/`.
+
+## Override dependensi
+`package.json` → `overrides` memaksa versi aman untuk paket transitif yang rentan:
+`brace-expansion ^2.0.3`, `nanoid ^3.3.18`, `js-yaml ^4.3.1`.
