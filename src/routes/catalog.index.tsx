@@ -215,6 +215,8 @@ function CatalogIndex() {
     );
   }
 
+  const canManage = biz.role === "owner" || biz.role === "admin";
+
   const submitProduct = async () => {
     if (form.name.trim().length < 2) {
       toast.error("Nama produk minimal 2 karakter");
@@ -225,6 +227,24 @@ function CatalogIndex() {
       toast.error("Harga tidak valid");
       return;
     }
+    const qtyNum = Number(form.qty.replace(",", "."));
+    const costNum = Number(form.cost.replace(/[^\d]/g, ""));
+    const wantsPurchase = form.qty.trim().length > 0 || form.cost.trim().length > 0;
+    if (wantsPurchase) {
+      if (form.supplier.trim().length < 2) {
+        toast.error("Nama agen/pemasok wajib diisi untuk pembelian pertama");
+        return;
+      }
+      if (!Number.isFinite(qtyNum) || qtyNum <= 0) {
+        toast.error("Jumlah pembelian tidak valid");
+        return;
+      }
+      if (!Number.isFinite(costNum) || costNum < 0) {
+        toast.error("Harga modal tidak valid");
+        return;
+      }
+    }
+    setSaving(true);
     try {
       const created = await upsertProduct({
         business_id: businessId!,
@@ -233,13 +253,52 @@ function CatalogIndex() {
         description: form.description.trim(),
         price,
       });
+      if (wantsPurchase) {
+        const isWeight = (WEIGHT_UNITS as readonly string[]).includes(form.unit);
+        const variant = await upsertVariant({
+          business_id: businessId!,
+          product_id: created.id,
+          name: form.variantName.trim() || "Standar",
+          stock_type: isWeight ? "weight" : "count",
+          display_unit: form.unit,
+          ...(isWeight ? { base_unit: "g" } : { base_unit: "pcs" }),
+          display_quantity: 1,
+          units_per_display: 1,
+          price,
+        });
+        const qtyBase = toBase(variant, qtyNum, form.unit);
+        await recordPurchase({
+          variantId: variant.id,
+          supplierName: form.supplier.trim(),
+          supplierContact: form.supplierContact.trim(),
+          qtyBase,
+          displayQty: qtyNum,
+          displayUnit: form.unit,
+          unitCost: costNum,
+          totalCost: qtyNum * costNum,
+          note: "Pembelian awal produk",
+        });
+      }
       setAddOpen(false);
-      setForm({ name: "", price: "", category: "Umum", description: "" });
-      void qc.invalidateQueries({ queryKey: ["catalog", "products", businessId] });
-      toast.success("Produk dibuat");
+      setForm({
+        name: "",
+        price: "",
+        category: "Umum",
+        description: "",
+        variantName: "Standar",
+        unit: "pcs",
+        qty: "",
+        cost: "",
+        supplier: "",
+        supplierContact: "",
+      });
+      refreshCatalog();
+      toast.success(wantsPurchase ? "Produk & pembelian tercatat" : "Produk dibuat");
       void navigate({ to: "/catalog/$id", params: { id: created.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal membuat produk");
+    } finally {
+      setSaving(false);
     }
   };
 
