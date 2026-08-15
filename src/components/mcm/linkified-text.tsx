@@ -12,7 +12,15 @@ function hrefOf(token: string): string {
 }
 
 /** Renders plain text with clickable links/emails/phone numbers in a distinct color. */
-export function LinkifiedText({ text, className }: { text: string; className?: string }) {
+export function LinkifiedText({
+  text,
+  className,
+  onBubble,
+}: {
+  text: string;
+  className?: string;
+  onBubble?: boolean;
+}) {
   const parts: Array<string | { token: string }> = [];
   let last = 0;
   PATTERN.lastIndex = 0;
@@ -37,7 +45,10 @@ export function LinkifiedText({ text, className }: { text: string; className?: s
             rel="noreferrer noopener"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className="font-medium text-link underline decoration-link/50 underline-offset-2 active:opacity-70"
+            className={cn(
+              "font-medium underline underline-offset-2 active:opacity-70",
+              onBubble ? "text-link-on-bubble decoration-current/60" : "text-link decoration-link/50",
+            )}
           >
             {p.token}
           </a>
