@@ -367,15 +367,7 @@ function ChatIndex() {
         <AccessFallback
           error={conversationsError}
           onRetry={() => refetchConversations()}
-          extra={
-            <Button
-              variant="ghost"
-              className="rounded-xl"
-              onClick={() => void navigate({ to: "/contacts" })}
-            >
-              Buka kontak
-            </Button>
-          }
+          links={["contacts", "support"]}
         />
       ) : list.length === 0 ? (
         <EmptyState
