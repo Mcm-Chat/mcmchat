@@ -22,6 +22,8 @@ type Props = {
   className?: string;
   /** Kunci fokus di dalam panel pemulihan (dipakai pada layar panggilan gagal). */
   trapFocus?: boolean;
+  /** Sheet perangkat/efek suara sedang terbuka di atas panel. */
+  suspendTrap?: boolean;
   /** Sasaran fokus cadangan saat panel ditutup (misal tombol "Kembali"). */
   fallbackFocus?: () => HTMLElement | null;
 };
@@ -73,6 +75,7 @@ export function CallFailureRecovery({
   onDismiss,
   className,
   trapFocus,
+  suspendTrap,
   fallbackFocus,
 }: Props) {
   const retryRef = useRef<HTMLButtonElement | null>(null);
@@ -83,6 +86,7 @@ export function CallFailureRecovery({
   const panelRef = useModalA11y<HTMLDivElement>({
     onClose: () => onDismiss?.(),
     active: Boolean(trapFocus),
+    suspended: Boolean(suspendTrap),
     closeOnEscape: Boolean(onDismiss),
     fallbackFocus: fallbackFocus ?? (() => null),
   });
@@ -90,8 +94,10 @@ export function CallFailureRecovery({
   // Fokus otomatis ke tombol percobaan agar pengguna keyboard/pembaca layar
   // langsung berada di aksi pemulihan utama.
   useEffect(() => {
+    if (suspendTrap) return;
     const id = requestAnimationFrame(() => retryRef.current?.focus());
     return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
   // Aksi langsung diurutkan: yang paling relevan dengan penyebab tampil dulu.
@@ -165,7 +171,7 @@ export function CallFailureRecovery({
     <div
       ref={panelRef}
       role="alertdialog"
-      aria-modal="true"
+      aria-modal={suspendTrap ? undefined : "true"}
       aria-label="Pemulihan panggilan gagal"
       data-call-surface=""
       tabIndex={-1}
