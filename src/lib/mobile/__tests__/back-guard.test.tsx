@@ -133,3 +133,61 @@ describe("chat selection + confirm back priority", () => {
     expect(backGuardMarkerActive()).toBe(false);
   });
 });
+
+/** Overlay A ditutup dan overlay B dibuka pada tick yang sama (tile sheet). */
+function SwapOverlays() {
+  const [a, setA] = useState(true);
+  const [b, setB] = useState(false);
+  return (
+    <>
+      <Overlay open={a} onDismiss={() => setA(false)} />
+      <Overlay open={b} onDismiss={() => setB(false)} />
+      <button
+        data-testid="swap"
+        onClick={() => {
+          setA(false);
+          setB(true);
+        }}
+      />
+      <span data-testid="swap-state">{`${a ? "a" : "-"}${b ? "b" : "-"}`}</span>
+    </>
+  );
+}
+
+describe("tukar overlay pada tick yang sama", () => {
+  beforeEach(() => {
+    __resetBackGuard();
+    window.history.replaceState(null, "", "/chat/1");
+  });
+  afterEach(() => {
+    cleanup();
+    __resetBackGuard();
+  });
+
+  it("overlay baru tidak ikut tertutup oleh popstate dari pelepasan penanda", () => {
+    // Browser nyata mengirim popstate SETELAH tick berjalan; jsdom mengirimnya
+    // sinkron, jadi kita tiru perilaku asinkron itu agar bug tertangkap.
+    const realBack = window.history.back.bind(window.history);
+    const queued: (() => void)[] = [];
+    window.history.back = () => {
+      queued.push(() => window.dispatchEvent(new PopStateEvent("popstate", { state: null })));
+    };
+    const { getByTestId } = render(<SwapOverlays />);
+    act(() => {
+      getByTestId("swap").click();
+    });
+    act(() => {
+      queued.splice(0).forEach((f) => f());
+    });
+    window.history.back = realBack;
+    expect(getByTestId("swap-state").textContent).toBe("-b");
+    // Popstate susulan dari history.back() internal saat penanda dilepas tidak
+    // boleh menutup overlay baru (inilah bug tile sheet "Tindakan").
+    expect(backGuardDepth()).toBe(1);
+    expect(backGuardMarkerActive()).toBe(true);
+    // Back nyata berikutnya baru menutup overlay baru.
+    pressBack();
+    expect(getByTestId("swap-state").textContent).toBe("--");
+    expect(backGuardDepth()).toBe(0);
+  });
+});

@@ -19,6 +19,14 @@ let stack: Entry[] = [];
 let markerActive = false;
 let listening = false;
 let seq = 0;
+/**
+ * Jumlah `history.back()` yang KITA picu sendiri saat melepas penanda.
+ * Popstate hasil panggilan itu harus diabaikan; tanpa penghitung ini, overlay
+ * baru yang dibuka pada tick yang sama (mis. tile pada sheet "Tindakan" yang
+ * menutup sheet lalu membuka dialog) langsung ikut tertutup oleh popstate
+ * susulan sehingga terlihat seperti tombol mati.
+ */
+let pendingSelfPop = 0;
 
 export function isGuardState(state: unknown): boolean {
   return (
@@ -39,6 +47,11 @@ export function backGuardMarkerActive(): boolean {
 }
 
 function onPop() {
+  if (pendingSelfPop > 0) {
+    pendingSelfPop--;
+    if (stack.length === 0) stopListening();
+    return;
+  }
   if (!markerActive) return; // penanda bukan milik kita / sudah dilepas.
   markerActive = false;
   const top = stack.pop();
@@ -58,6 +71,9 @@ function startListening() {
 }
 
 function stopListening() {
+  // Tetap mendengarkan selama masih ada popstate milik kita yang mengudara,
+  // agar popstate itu tidak bocor ke overlay berikutnya.
+  if (pendingSelfPop > 0) return;
   if (!listening || typeof window === "undefined") return;
   window.removeEventListener("popstate", onPop);
   listening = false;
@@ -75,7 +91,10 @@ function armMarker() {
 function disarmMarker() {
   if (!markerActive || typeof window === "undefined") return;
   markerActive = false;
-  if (isGuardState(window.history.state)) window.history.back();
+  if (isGuardState(window.history.state)) {
+    pendingSelfPop += 1;
+    window.history.back();
+  }
 }
 
 function register(dismiss: () => void): number {
@@ -100,6 +119,7 @@ function unregister(id: number) {
 export function __resetBackGuard() {
   stack = [];
   markerActive = false;
+  pendingSelfPop = 0;
   stopListening();
 }
 

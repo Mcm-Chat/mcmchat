@@ -999,6 +999,7 @@ export function ChatComposer({
         <Button
           variant="ghost"
           size="icon"
+          type="button"
           className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Tindakan lain"
           disabled={disabled}
