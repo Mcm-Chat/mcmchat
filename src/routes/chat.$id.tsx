@@ -409,6 +409,9 @@ function ChatRoom() {
         case "reply":
           setReply(message);
           break;
+        case "forward":
+          setForwarding([message]);
+          break;
         case "copy":
           await navigator.clipboard.writeText(message.body);
           toast.success("Pesan disalin");
