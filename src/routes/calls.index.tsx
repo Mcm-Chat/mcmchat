@@ -259,6 +259,7 @@ function CallsPage() {
           ))}
         </ul>
       )}
+      </div>
       {busy ? (
         <LoadingSkeleton rows={6} />
       ) : isError ? (
