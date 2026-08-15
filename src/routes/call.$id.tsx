@@ -36,6 +36,8 @@ import { useCall } from "@/lib/calls/use-call";
 import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-effects";
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
+import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
+import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
 import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
 import { DEFAULT_VOICE_PREFS, PRESET_MAP, type VoicePrefs } from "@/lib/voice/presets";
@@ -103,6 +105,65 @@ function CallScreen() {
   const backRef = useRef<HTMLButtonElement | null>(null);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
+
+  // Pintasan keyboard kontrol panggilan (M/V/S/B/P/E/A/T dan "?" untuk bantuan).
+  const shortcutsLive =
+    session.phase === "outgoing" ||
+    session.phase === "incoming" ||
+    session.phase === "connecting" ||
+    session.phase === "connected";
+  const videoCall = detail?.kind === "video";
+  const shortcuts = useCallShortcuts({
+    enabled: shortcutsLive,
+    onAction: (action: CallShortcutAction) => {
+      const incoming = session.phase === "incoming";
+      switch (action) {
+        case "mute":
+          if (incoming) return;
+          session.toggleMute();
+          shortcuts.announce(session.controls.muted ? "Mikrofon dinyalakan" : "Mikrofon dibisukan");
+          return;
+        case "camera":
+          if (incoming || !videoCall) return;
+          session.toggleCamera();
+          shortcuts.announce(session.controls.cameraOn ? "Kamera dimatikan" : "Kamera dinyalakan");
+          return;
+        case "speaker":
+          if (incoming || !session.speakerSupported) return;
+          session.toggleSpeaker();
+          shortcuts.announce(
+            session.controls.speakerOn ? "Pengeras suara dimatikan" : "Pengeras suara dinyalakan",
+          );
+          return;
+        case "switchCamera":
+          if (incoming || !videoCall) return;
+          session.switchCamera();
+          shortcuts.announce("Kamera dibalik");
+          return;
+        case "devices":
+          if (incoming) return;
+          session.refreshDevices();
+          setDevicesOpen(true);
+          shortcuts.announce("Pemilih perangkat dibuka");
+          return;
+        case "hangup":
+          if (incoming) return;
+          session.hangup();
+          shortcuts.announce("Panggilan diakhiri");
+          return;
+        case "answer":
+          if (!incoming) return;
+          session.answer();
+          shortcuts.announce("Panggilan dijawab");
+          return;
+        case "decline":
+          if (!incoming) return;
+          session.decline();
+          shortcuts.announce("Panggilan ditolak");
+          return;
+      }
+    },
+  });
 
   // Nada tunggu (pemanggil) / nada dering (penerima) selama panggilan belum
   // dijawab, lalu nada singkat saat panggilan berakhir.
@@ -339,6 +400,12 @@ function CallScreen() {
                 Efek Suara
               </Button>
             </div>
+
+            <CallShortcutsHelp
+              open={shortcuts.helpOpen}
+              onToggle={() => shortcuts.setHelpOpen(!shortcuts.helpOpen)}
+              announcement={shortcuts.announcement}
+            />
 
             {session.phase === "incoming" ? (
               <div className="flex items-center justify-center gap-10">
