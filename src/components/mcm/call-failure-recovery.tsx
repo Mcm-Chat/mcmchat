@@ -3,6 +3,7 @@ import { AlertTriangle, RotateCcw, SlidersHorizontal, Wrench } from "lucide-reac
 
 import { Button } from "@/components/ui/button";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
+import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 import { cn } from "@/lib/utils";
 
 export type CallFailureKind = "network" | "permission" | "device" | "provider" | "unknown";
@@ -18,6 +19,10 @@ type Props = {
   onOpenProvider?: () => void;
   onDismiss?: () => void;
   className?: string;
+  /** Kunci fokus di dalam panel pemulihan (dipakai pada layar panggilan gagal). */
+  trapFocus?: boolean;
+  /** Sasaran fokus cadangan saat panel ditutup (misal tombol "Kembali"). */
+  fallbackFocus?: () => HTMLElement | null;
 };
 
 /** Terjemahkan alasan teknis jadi kategori pemulihan yang bisa ditindaklanjuti. */
@@ -66,9 +71,19 @@ export function CallFailureRecovery({
   onOpenProvider,
   onDismiss,
   className,
+  trapFocus,
+  fallbackFocus,
 }: Props) {
   const retryRef = useRef<HTMLButtonElement | null>(null);
   const kind = classifyCallFailure(reason, unconfigured);
+  // Panel kegagalan diperlakukan sebagai dialog peringatan: Tab berputar di
+  // dalam panel, Escape menutup, dan fokus kembali ke pemicu/tombol Kembali.
+  const panelRef = useModalA11y<HTMLDivElement>({
+    onClose: () => onDismiss?.(),
+    active: Boolean(trapFocus),
+    closeOnEscape: Boolean(onDismiss),
+    fallbackFocus: fallbackFocus ?? (() => null),
+  });
 
   // Fokus otomatis ke tombol percobaan agar pengguna keyboard/pembaca layar
   // langsung berada di aksi pemulihan utama.
@@ -77,13 +92,16 @@ export function CallFailureRecovery({
     return () => cancelAnimationFrame(id);
   }, [kind]);
 
-  return (
+  const banner = (
     <NotificationBanner
       role="alert"
       {...(onDismiss ? { onDismiss } : {})}
       dismissLabel="Tutup pesan gagal panggilan"
       icon={<AlertTriangle className="size-4" aria-hidden="true" />}
-      className={cn("rounded-2xl border border-destructive/40 bg-destructive/15 p-4", className)}
+      className={cn(
+        "rounded-2xl border border-destructive/40 bg-destructive/15 p-4",
+        trapFocus ? undefined : className,
+      )}
     >
       <p className="font-semibold">{TITLE[kind]}</p>
       <p className="mt-1 text-navy-foreground/85">{HINT[kind]}</p>
@@ -116,5 +134,20 @@ export function CallFailureRecovery({
         ) : null}
       </div>
     </NotificationBanner>
+  );
+
+  if (!trapFocus) return banner;
+  return (
+    <div
+      ref={panelRef}
+      role="alertdialog"
+      aria-modal="true"
+      aria-label="Pemulihan panggilan gagal"
+      data-call-surface=""
+      tabIndex={-1}
+      className={cn("outline-none", className)}
+    >
+      {banner}
+    </div>
   );
 }
