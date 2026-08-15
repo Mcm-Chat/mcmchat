@@ -32,6 +32,7 @@ import {
 } from "@/lib/prepare.functions";
 import { fileToDataUrl, koordinat, mapsUrlFor } from "@/lib/mcm/geo";
 import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
+import { PrepareSaleDialog } from "@/components/mcm/prepare-sale-dialog";
 import type { PrepItem, PrepTask } from "@/lib/prepare.server.types";
 
 export const Route = createFileRoute("/prepare/$token")({
@@ -60,6 +61,7 @@ function PreparePage() {
   const fetchTask = useServerFn(getPrepareTask);
   const open = useServerFn(openPrepareTask);
   const complete = useServerFn(completePrepareTask);
+  const [saleOpen, setSaleOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["prep-task", token],
@@ -143,6 +145,23 @@ function PreparePage() {
           )}
           {done ? "Tugas sudah selesai" : "Selesai & kirim ke katalog"}
         </Button>
+        <Button
+          variant="secondary"
+          className="h-12 w-full rounded-xl"
+          disabled={!ready}
+          onClick={() => setSaleOpen(true)}
+        >
+          <Send className="size-4" /> Kirim & catat penjualan
+        </Button>
+        {saleOpen && (
+          <PrepareSaleDialog
+            token={token}
+            task={task}
+            open={saleOpen}
+            onOpenChange={setSaleOpen}
+            onSent={() => void qc.invalidateQueries({ queryKey: ["prep-task", token] })}
+          />
+        )}
         {done && <ResultActions token={token} task={task} />}
         {!done && !ready && (
           <p className="pb-6 text-center text-xs text-muted-foreground">

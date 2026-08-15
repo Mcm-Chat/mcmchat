@@ -300,3 +300,36 @@ export const sendPrepareResult = createServerFn({ method: "POST" })
     }
     return { ok: true as const, summary };
   });
+
+/** Selesaikan penyiapan + catat penjualan/piutang + kirim satu bubble hasil. */
+export const sendPrepareSale = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        token: z.string().min(20),
+        idempotencyKey: z.string().min(8).max(80),
+        prices: z
+          .array(
+            z.object({
+              itemId: z.string().uuid(),
+              price: z.number().nonnegative().max(1_000_000_000),
+              discount: z.number().nonnegative().max(1_000_000_000).default(0),
+            }),
+          )
+          .min(1),
+        discount: z.number().nonnegative().max(1_000_000_000).default(0),
+        extraFee: z.number().nonnegative().max(1_000_000_000).default(0),
+        paymentMethod: z.enum(["cash", "transfer", "dp", "credit"]),
+        paidAmount: z.number().nonnegative().max(1_000_000_000).default(0),
+        dueDate: z.string().max(20).nullable().default(null),
+        note: z.string().max(300).default(""),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { jobIdFromToken } = await import("./prepare.server");
+    const { runPrepareSale } = await import("./prepare-sale.server");
+    const jobId = await jobIdFromToken(data.token);
+    if (!jobId) throw new Error("Tautan tidak berlaku");
+    return runPrepareSale({ ...data, jobId });
+  });
