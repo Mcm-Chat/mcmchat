@@ -44,11 +44,43 @@ export const Route = createFileRoute("/call/prepare/$conversationId")({
 });
 
 type MediaState = "idle" | "processing" | "ready" | "error";
+type PermissionKind = "denied" | "notfound" | "busy" | "unknown";
+
+/** Klasifikasi kegagalan getUserMedia agar pesan izin bisa spesifik. */
+function classifyMediaError(err: unknown): PermissionKind {
+  const name = err instanceof Error ? err.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError" || name === "PermissionDeniedError")
+    return "denied";
+  if (name === "NotFoundError" || name === "OverconstrainedError" || name === "DevicesNotFoundError")
+    return "notfound";
+  if (name === "NotReadableError" || name === "TrackStartError") return "busy";
+  return "unknown";
+}
+
+/** Pesan izin yang dibacakan pembaca layar dan ditampilkan di banner. */
+function permissionMessage(kind: PermissionKind, camOn: boolean): string {
+  const perangkat = camOn ? "kamera dan mikrofon" : "mikrofon";
+  switch (kind) {
+    case "denied":
+      return `Izin ${perangkat} ditolak. Buka pengaturan izin situs di browser atau perangkat, izinkan ${perangkat}, lalu tekan tombol Coba lagi.`;
+    case "notfound":
+      return `Perangkat ${perangkat} tidak ditemukan. Sambungkan perangkat lalu tekan Coba lagi.`;
+    case "busy":
+      return `Perangkat ${perangkat} sedang dipakai aplikasi lain. Tutup aplikasi tersebut lalu tekan Coba lagi.`;
+    default:
+      return `Tidak bisa mengakses ${perangkat}. Periksa izin perangkat lalu tekan Coba lagi.`;
+  }
+}
 
 /** Teks status media yang dibacakan pembaca layar. */
-function mediaStatusText(state: MediaState, micOn: boolean, camOn: boolean): string {
+function mediaStatusText(
+  state: MediaState,
+  micOn: boolean,
+  camOn: boolean,
+  permission: PermissionKind | null,
+): string {
   if (state === "processing") return "Memproses perangkat — meminta akses kamera dan mikrofon…";
-  if (state === "error") return "Gagal — perangkat media tidak dapat diakses.";
+  if (state === "error") return `Gagal — ${permissionMessage(permission ?? "unknown", camOn)}`;
   if (state === "idle") return "Kamera dan mikrofon dimatikan.";
   if (micOn && camOn) return "Siap — kamera dan mikrofon aktif.";
   if (camOn) return "Siap — kamera aktif.";
@@ -68,11 +100,14 @@ function PreCallScreen() {
   const [level, setLevel] = useState(0);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<MediaState>("idle");
+  const [permission, setPermission] = useState<PermissionKind | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [configured, setConfigured] = useState<boolean | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const retryRef = useRef<HTMLButtonElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -99,6 +134,8 @@ function PreCallScreen() {
     stopMedia();
     if (!micOn && !camOn) {
       setMediaState("idle");
+      setPermission(null);
+      setMediaError(null);
       return;
     }
     setMediaState("processing");
@@ -112,6 +149,7 @@ function PreCallScreen() {
         }
         streamRef.current = stream;
         setMediaError(null);
+        setPermission(null);
         setMediaState("ready");
         if (videoRef.current && camOn) videoRef.current.srcObject = stream;
         if (!micOn) return;
@@ -135,21 +173,21 @@ function PreCallScreen() {
         };
         rafRef.current = requestAnimationFrame(tick);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
+        const kind = classifyMediaError(err);
         setMediaState("error");
-        setMediaError(
-          camOn
-            ? "Tidak bisa mengakses kamera/mikrofon. Periksa izin perangkat."
-            : "Tidak bisa mengakses mikrofon. Periksa izin perangkat.",
-        );
+        setPermission(kind);
+        setMediaError(permissionMessage(kind, camOn));
+        // Fokuskan tombol coba lagi agar pengguna keyboard langsung sampai ke aksi pemulihan.
+        requestAnimationFrame(() => retryRef.current?.focus());
       });
 
     return () => {
       cancelled = true;
       stopMedia();
     };
-  }, [micOn, camOn, stopMedia]);
+  }, [micOn, camOn, stopMedia, retryToken]);
 
   // Memilih video otomatis menyalakan kamera; memilih suara mematikannya.
   const pickKind = (next: Kind) => {
@@ -202,7 +240,7 @@ function PreCallScreen() {
           aria-atomic="true"
           className="text-xs text-muted-foreground"
         >
-          {mediaStatusText(mediaState, micOn, camOn)}
+          {mediaStatusText(mediaState, micOn, camOn, permission)}
         </p>
 
         {mediaError && (
@@ -213,7 +251,23 @@ function PreCallScreen() {
             dismissLabel="Tutup peringatan media"
             className="items-center rounded-xl bg-destructive/10 p-3 text-destructive"
           >
-            {mediaError}
+            <span className="flex flex-col items-start gap-2">
+              <span>{mediaError}</span>
+              <Button
+                ref={retryRef}
+                type="button"
+                size="sm"
+                variant="outline"
+                className="min-h-9"
+                onClick={() => {
+                  setMediaError(null);
+                  setMediaState("processing");
+                  setRetryToken((n) => n + 1);
+                }}
+              >
+                Coba lagi minta izin
+              </Button>
+            </span>
           </NotificationBanner>
         )}
 
