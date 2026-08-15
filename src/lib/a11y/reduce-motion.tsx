@@ -20,9 +20,9 @@ import { getActiveUserId, onAccountSwitch, scopedKey } from "@/lib/session-scope
  */
 export type MotionPreference = "auto" | "on" | "off";
 
-const LAST_KEY = "mcm:last-reduce-motion";
+const lastMotionKey = "mcm:last-reduce-motion";
 
-export const MOTION_BOOTSTRAP_SCRIPT = `(function(){try{var p=localStorage.getItem("${LAST_KEY}")||"auto";var sys=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;var on=p==="on"||(p!=="off"&&sys);document.documentElement.classList.toggle("reduce-motion",on);}catch(e){}})();`;
+export const MOTION_BOOTSTRAP_SCRIPT = `(function(){try{var p=localStorage.getItem("${lastMotionKey}")||"auto";var sys=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;var on=p==="on"||(p!=="off"&&sys);document.documentElement.classList.toggle("reduce-motion",on);}catch(e){}})();`;
 
 type MotionContextValue = {
   preference: MotionPreference;
@@ -91,7 +91,7 @@ export function ReduceMotionProvider({ children }: { children: ReactNode }) {
     setPreferenceState(next);
     try {
       localStorage.setItem(scopedKey("reduce-motion"), next);
-      localStorage.setItem(LAST_KEY, next);
+      localStorage.setItem(lastMotionKey, next);
     } catch {
       /* storage tidak tersedia */
     }
