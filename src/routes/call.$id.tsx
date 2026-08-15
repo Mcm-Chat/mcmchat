@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
+import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import {
   ArrowLeft,
   Mic,
@@ -92,6 +93,12 @@ function CallScreen() {
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
 
+  /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
+  const backToCalls = () => {
+    setCallReturnFocus(id);
+    void navigate({ to: "/calls" });
+  };
+
   const load = () => {
     if (!userId) return;
     setDetailStatus("loading");
@@ -150,7 +157,7 @@ function CallScreen() {
           <Button
             variant="secondary"
             className="min-h-11 rounded-xl px-5"
-            onClick={() => void navigate({ to: "/calls" })}
+            onClick={backToCalls}
           >
             Kembali
           </Button>
@@ -219,7 +226,7 @@ function CallScreen() {
               size="icon"
               aria-label="Kembali"
               className="size-11 text-navy-foreground hover:bg-white/15"
-              onClick={() => void navigate({ to: "/calls" })}
+              onClick={backToCalls}
             >
               <ArrowLeft className="size-5" />
             </Button>
@@ -387,7 +394,7 @@ function CallScreen() {
           size="icon"
           aria-label="Kembali"
           className="size-11 text-navy-foreground hover:bg-white/15"
-          onClick={() => void navigate({ to: "/calls" })}
+          onClick={backToCalls}
         >
           <ArrowLeft className="size-5" />
         </Button>
@@ -492,9 +499,9 @@ function CallScreen() {
         <Button
           variant="ghost"
           className="w-full rounded-xl text-navy-foreground/80 hover:bg-white/10"
-          asChild
+          onClick={backToCalls}
         >
-          <Link to="/calls">Kembali ke riwayat</Link>
+          Kembali ke riwayat
         </Button>
       </div>
 

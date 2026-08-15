@@ -44,6 +44,12 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import {
+  CALL_RETURN_FOCUS_NEW,
+  consumeCallReturnFocus,
+  redialButtonId,
+  setCallReturnFocus,
+} from "@/lib/calls/return-focus";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import {
   MissedCallActions,
@@ -124,6 +130,24 @@ function CallsPage() {
   }, [userId]);
 
   /**
+   * Setelah panggilan berakhir/dibatalkan, kembalikan fokus keyboard ke tombol
+   * panggilan yang benar: tombol panggil ulang miliknya, atau tombol Panggilan baru.
+   */
+  useEffect(() => {
+    if (!calls) return;
+    const target = consumeCallReturnFocus();
+    if (!target) return;
+    const raf = requestAnimationFrame(() => {
+      const el =
+        target === CALL_RETURN_FOCUS_NEW
+          ? newCallRef.current
+          : document.getElementById(redialButtonId(target));
+      (el ?? newCallRef.current)?.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [calls]);
+
+  /**
    * Buka dialog "penyedia belum terhubung" sambil mengingat elemen pemicu,
    * supaya fokus kembali ke tempat semula setelah dialog ditutup.
    */
@@ -151,6 +175,7 @@ function CallsPage() {
       return;
     }
     try {
+      setCallReturnFocus(c.id);
       void navigate({
         to: "/call/prepare/$conversationId",
         params: { conversationId: c.conversation_id },
@@ -170,6 +195,7 @@ function CallsPage() {
     }
     try {
       setNewOpen(false);
+      setCallReturnFocus(CALL_RETURN_FOCUS_NEW);
       void navigate({
         to: "/call/prepare/$conversationId",
         params: { conversationId },
@@ -400,6 +426,7 @@ function CallsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  id={redialButtonId(c.id)}
                   aria-label={`Panggil ${other?.display_name ?? "pengguna"}`}
                   onClick={() => void redial(c)}
                 >
