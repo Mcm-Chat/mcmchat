@@ -254,11 +254,16 @@ export function PhotoFlow({
       <PhotoEditorDialog
         src={preview}
         title="Edit foto sebelum dikirim"
+        doneLabel="Gunakan foto"
         onCancel={() => setEditing(false)}
         onDone={(dataUrl) => {
           setPreview(dataUrl);
           setEditing(false);
-          toast.success("Perubahan foto disimpan");
+          toast.success(
+            selected.length > 0
+              ? "Foto siap. Tekan Kirim untuk mengirimnya."
+              : "Foto siap. Pilih penerima lalu tekan Kirim.",
+          );
         }}
       />
     );
