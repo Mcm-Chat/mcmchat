@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { WEB_PUSH, swUrl, webPushConfigured } from "./web-config";
 import { routeFromPush } from "./deeplink";
 import type { PushData } from "./payload";
+import { guardPushRoute } from "./route-guard";
+import { toast } from "sonner";
 
 const INSTALL_KEY = "mcm.web.installation";
 
@@ -117,7 +119,9 @@ export function attachWebPushListeners(navigateTo: (route: string) => void): () 
 
     const route = routeFromPush({ route: data.route } as Partial<PushData>);
     void (async () => {
-      const conv = /^\/chat\/([0-9a-f-]{36})/i.exec(route)?.[1];
+      const guarded = await guardPushRoute(route);
+      if (guarded.blocked && guarded.reason) toast.error(guarded.reason);
+      const conv = guarded.blocked ? null : /^\/chat\/([0-9a-f-]{36})/i.exec(guarded.route)?.[1];
       if (conv) {
         await supabase.rpc("mark_messages_delivered", { _conv: conv }).then(
           () => undefined,
@@ -127,7 +131,7 @@ export function attachWebPushListeners(navigateTo: (route: string) => void): () 
         const notes = (await reg?.getNotifications({ tag: conv }).catch(() => [])) ?? [];
         for (const n of notes) n.close();
       }
-      navigateTo(route);
+      navigateTo(guarded.route);
     })();
   };
   navigator.serviceWorker.addEventListener("message", onMessage);

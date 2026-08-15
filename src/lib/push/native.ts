@@ -291,7 +291,15 @@ export function attachPushListeners(navigateTo: (route: string) => void): () => 
     if (answered && !disposed) navigateTo(`/call/${answered.callId}`);
     const route = await consumePendingRoute();
     if (disposed || !route) return;
-    const conv = /^\/chat\/([0-9a-f-]{36})/i.exec(route)?.[1];
+    const target = routeFromPush({ route } as Partial<PushData>);
+    const { guardPushRoute } = await import("./route-guard");
+    const guarded = await guardPushRoute(target);
+    if (disposed) return;
+    if (guarded.blocked && guarded.reason) {
+      const { toast } = await import("sonner");
+      toast.error(guarded.reason);
+    }
+    const conv = guarded.blocked ? null : /^\/chat\/([0-9a-f-]{36})/i.exec(guarded.route)?.[1];
     if (conv) {
       await supabase.rpc("mark_messages_delivered", { _conv: conv }).then(
         () => undefined,
@@ -299,7 +307,7 @@ export function attachPushListeners(navigateTo: (route: string) => void): () => 
       );
       await clearConversationNotifications(conv);
     }
-    navigateTo(routeFromPush({ route } as Partial<PushData>));
+    navigateTo(guarded.route);
   };
 
   void drain();
