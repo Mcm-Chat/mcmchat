@@ -96,6 +96,8 @@ function CallsPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+  const newCallRef = useRef<HTMLButtonElement>(null);
+  const noticeReturnRef = useRef<HTMLElement | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
@@ -121,11 +123,31 @@ function CallsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  /**
+   * Buka dialog "penyedia belum terhubung" sambil mengingat elemen pemicu,
+   * supaya fokus kembali ke tempat semula setelah dialog ditutup.
+   */
+  const openNotice = (fallback?: HTMLElement | null) => {
+    const active = document.activeElement;
+    noticeReturnRef.current =
+      active instanceof HTMLElement && active !== document.body ? active : (fallback ?? null);
+    setNotice(true);
+  };
+
+  /** Kembalikan fokus ke pemicu; jika pemicu sudah hilang, pakai tombol panggilan baru. */
+  const restoreNoticeFocus = (event: Event) => {
+    const target = noticeReturnRef.current;
+    const el = target && document.body.contains(target) ? target : newCallRef.current;
+    if (!el) return;
+    event.preventDefault();
+    el.focus();
+  };
+
   /** Panggil ulang: membuat panggilan nyata baru, bukan mengulang riwayat. */
   const redial = async (c: CallHistoryItem) => {
     if (!userId || !c.conversation_id) return;
     if (configured === false) {
-      setNotice(true);
+      openNotice();
       return;
     }
     try {
@@ -135,7 +157,7 @@ function CallsPage() {
         search: { kind: c.kind === "video" ? "video" : "audio" },
       });
     } catch {
-      setNotice(true);
+      openNotice();
     }
   };
 
@@ -143,7 +165,7 @@ function CallsPage() {
   const callConversation = async (conversationId: string, kind: "audio" | "video") => {
     if (configured === false) {
       setNewOpen(false);
-      setNotice(true);
+      openNotice(newCallRef.current);
       return;
     }
     try {
@@ -155,7 +177,7 @@ function CallsPage() {
       });
     } catch {
       setNewOpen(false);
-      setNotice(true);
+      openNotice(newCallRef.current);
     }
   };
 
