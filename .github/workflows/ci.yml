@@ -89,7 +89,8 @@ jobs:
       - name: Jalankan server aplikasi
         run: |
           mkdir -p e2e-artifacts
-          bun run dev > e2e-artifacts/dev-server.log 2>&1 &
+          nohup bun run dev > e2e-artifacts/dev-server.log 2>&1 &
+          disown || true
           for i in $(seq 1 90); do
             curl -sf -o /dev/null http://localhost:8080/ && exit 0
             sleep 2
