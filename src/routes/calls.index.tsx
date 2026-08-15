@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { useContactAliases } from "@/lib/contacts/alias";
 import { EmptyState, LoadingSkeleton, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -367,7 +368,7 @@ function CallsPage() {
                       userId={other.user_id}
                       path={other.avatar_url}
                       version={other.avatar_version}
-                      name={other.display_name}
+                      name={nameOf(other.user_id, other.display_name)}
                       color={other.avatar_color}
                     />
                   ) : (
@@ -377,7 +378,7 @@ function CallsPage() {
                     <p
                       className={`truncate text-sm font-semibold ${isMissed ? "text-destructive" : ""}`}
                     >
-                      {other?.display_name ?? "Pengguna MCM"}
+                      {nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM")}
                     </p>
                     {isLiveCall(c.status) && (
                       <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
@@ -410,13 +411,13 @@ function CallsPage() {
                     variant="ghost"
                     size="icon"
                     id={missedActionTriggerId(c.id)}
-                    aria-label={`Aksi cepat panggilan tak terjawab dari ${other?.display_name ?? "pengguna"}`}
+                    aria-label={`Aksi cepat panggilan tak terjawab dari ${nameOf(other?.user_id, other?.display_name ?? "pengguna")}`}
                     onClick={() =>
                       setMissedTarget({
                         callId: c.id,
                         conversationId: c.conversation_id,
                         peerId: other?.user_id ?? null,
-                        peerName: other?.display_name ?? "Pengguna MCM",
+                        peerName: nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM"),
                       })
                     }
                   >
@@ -427,7 +428,7 @@ function CallsPage() {
                   variant="ghost"
                   size="icon"
                   id={redialButtonId(c.id)}
-                  aria-label={`Panggil ${other?.display_name ?? "pengguna"}`}
+                  aria-label={`Panggil ${nameOf(other?.user_id, other?.display_name ?? "pengguna")}`}
                   onClick={() => void redial(c)}
                 >
                   {c.kind === "video" ? <Video className="size-5" /> : <Phone className="size-5" />}
