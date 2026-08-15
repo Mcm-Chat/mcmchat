@@ -47,7 +47,9 @@ export function LinkifiedText({
             onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "font-medium underline underline-offset-2 active:opacity-70",
-              onBubble ? "text-link-on-bubble decoration-current/60" : "text-link decoration-link/50",
+              onBubble
+                ? "text-link-on-bubble decoration-current/60"
+                : "text-link decoration-link/50",
             )}
           >
             {p.token}
