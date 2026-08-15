@@ -101,6 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Cabut token push + kredensial aksi perangkat sebelum sesi dihapus.
     const { revokeNativePush } = await import("@/lib/push/native");
     await revokeNativePush().catch(() => undefined);
+    const { revokeWebPush } = await import("@/lib/push/web");
+    await revokeWebPush().catch(() => undefined);
     await supabase.auth.signOut();
     setProfile(null);
     setSettings(null);
