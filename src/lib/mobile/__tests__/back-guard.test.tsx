@@ -164,18 +164,21 @@ describe("tukar overlay pada tick yang sama", () => {
     __resetBackGuard();
   });
 
-  it("overlay baru tidak ikut tertutup oleh popstate dari pelepasan penanda", async () => {
+  it("overlay baru tidak ikut tertutup oleh popstate dari pelepasan penanda", () => {
     const { getByTestId } = render(<SwapOverlays />);
     act(() => {
       getByTestId("swap").click();
     });
     expect(getByTestId("swap-state").textContent).toBe("-b");
-    // Popstate susulan akibat history.back() internal.
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 20));
-    });
+    // Popstate susulan akibat history.back() internal saat penanda dilepas:
+    // harus diabaikan, bukan menutup overlay yang baru dibuka.
+    pressBack();
     expect(getByTestId("swap-state").textContent).toBe("-b");
     expect(backGuardDepth()).toBe(1);
     expect(backGuardMarkerActive()).toBe(true);
+    // Back nyata berikutnya baru menutup overlay baru.
+    pressBack();
+    expect(getByTestId("swap-state").textContent).toBe("--");
+    expect(backGuardDepth()).toBe(0);
   });
 });
