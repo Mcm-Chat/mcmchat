@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "304269903025",
+    "project_id": "mcm-chat-b8e94",
+    "storage_bucket": "mcm-chat-b8e94.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304269903025:android:01911e6594fad2c4d80e90",
+        "android_client_info": {
+          "package_name": "com.mcm.privateconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7FldYZZktvyNuyS8Rp7OS4FAw3JfN6rY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
