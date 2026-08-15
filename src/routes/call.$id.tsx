@@ -369,6 +369,23 @@ function CallScreen() {
     (restored?.phase === "error" || restored?.phase === "unconfigured");
   const voiceFallback = session.voiceFallback;
 
+  // Kontrol perangkat hanya aktif kalau izinnya benar-benar ada. Tooltip
+  // memakai kalimat yang sama di semua tombol supaya tidak membingungkan.
+  const micGranted = permission.state === "granted" || permission.state === "audio_only";
+  const cameraGranted = isVideo && permission.state === "granted" && !session.cameraBlocked;
+  const micHint = permission.requesting
+    ? "Sedang meminta izin mikrofon…"
+    : permission.state === "checking"
+      ? "Memeriksa izin mikrofon…"
+      : "Izin mikrofon belum diberikan. Izinkan mikrofon di pengaturan browser/perangkat.";
+  const cameraHint = !isVideo
+    ? "Panggilan suara tidak memakai kamera."
+    : session.cameraBlocked || permission.state === "audio_only"
+      ? "Izin kamera ditolak. Panggilan berjalan sebagai suara saja."
+      : permission.state === "checking"
+        ? "Memeriksa izin kamera…"
+        : "Izin kamera belum diberikan. Izinkan kamera di pengaturan browser/perangkat.";
+
   const phaseLabel =
     session.phase === "connected"
       ? durasi(session.durationSec)
