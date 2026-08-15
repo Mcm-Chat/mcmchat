@@ -247,3 +247,25 @@
     font-weight: 600;
   }
 }
+
+/*
+ * Indikator fokus keyboard panggilan.
+ * Semua tombol/tautan pada modal panggilan masuk dan layar panggilan aktif
+ * memakai cincin fokus yang sama: tebal 3px, kontras tinggi, dengan offset
+ * agar terlihat jelas di atas latar navy/video maupun kartu terang.
+ */
+[data-call-surface] :is(button, [role="button"], a[href], summary, [tabindex="0"]):focus-visible,
+[data-call-surface]:focus-visible {
+  outline: none;
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 2px var(--navy),
+    0 0 0 5px oklch(1 0 0 / 0.95);
+  transition: box-shadow 120ms ease;
+}
+
+[data-call-surface="soft"] :is(button, [role="button"], a[href], summary, [tabindex="0"]):focus-visible {
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 5px var(--ring);
+}

@@ -28,7 +28,7 @@ export function CallDeviceSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl">
+      <SheetContent data-call-surface="soft" side="bottom" className="rounded-t-3xl">
         <SheetHeader className="text-left">
           <SheetTitle>Perangkat panggilan</SheetTitle>
           <SheetDescription>

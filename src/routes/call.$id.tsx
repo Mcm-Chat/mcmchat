@@ -246,7 +246,7 @@ function CallScreen() {
 
   if (loading || detailStatus === "loading") {
     return (
-      <div className="app-gradient flex min-h-dvh items-center justify-center px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
+      <div data-call-surface="" className="app-gradient flex min-h-dvh items-center justify-center px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
         <p className="text-sm">Memuat panggilan…</p>
       </div>
     );
@@ -254,7 +254,7 @@ function CallScreen() {
 
   if (detailStatus === "error" || !detail) {
     return (
-      <div className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-navy-foreground">
+      <div data-call-surface="" className="app-gradient flex min-h-dvh flex-col items-center justify-center gap-4 px-6 py-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-navy-foreground">
         <ShieldAlert className="size-10" />
         <p className="text-sm">Data panggilan tidak ditemukan atau gagal dimuat.</p>
         <div className="flex flex-wrap justify-center gap-2">
@@ -299,7 +299,7 @@ function CallScreen() {
 
   if (live) {
     return (
-      <div className="app-gradient relative flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
+      <div data-call-surface="" className="app-gradient relative flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
         {isVideo && (
           <>
             <video
@@ -534,7 +534,7 @@ function CallScreen() {
   }
 
   return (
-    <div className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
+    <div data-call-surface="" className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
       <div className="flex items-center gap-2">
         <Button
           ref={backRef}

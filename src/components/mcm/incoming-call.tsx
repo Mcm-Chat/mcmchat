@@ -187,6 +187,7 @@ export function IncomingCallListener() {
       ref={bannerRef}
       data-incoming-call=""
       role="dialog"
+      data-call-surface=""
       aria-modal="true"
       aria-label={`${isVideo ? "Panggilan video" : "Panggilan suara"} masuk dari ${incoming.name}`}
       tabIndex={-1}
