@@ -17,16 +17,28 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
    * <body> dan pengguna keyboard kehilangan posisi.
    */
   fallbackFocus?: (() => HTMLElement | null) | undefined;
+  /**
+   * Trap dijeda sementara (misalnya sheet perangkat/efek suara sedang terbuka
+   * di atas panel). Berbeda dengan `active: false`, jeda TIDAK memindahkan
+   * fokus ke mana pun: fokus tetap milik sheet, lalu saat sheet menutup Radix
+   * mengembalikannya ke tombol pemicu di dalam panel dan trap menyala lagi
+   * tanpa melompat.
+   */
+  suspended?: boolean | undefined;
 }) {
-  const { onClose, active = true, closeOnEscape = true, fallbackFocus } = options;
+  const { onClose, active = true, closeOnEscape = true, fallbackFocus, suspended = false } = options;
   const containerRef = useRef<T | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const fallbackRef = useRef(fallbackFocus);
   fallbackRef.current = fallbackFocus;
+  // Diperbarui saat render sehingga cleanup efek membaca nilai TERBARU dan
+  // bisa membedakan "trap dijeda" dari "modal benar-benar ditutup".
+  const suspendedRef = useRef(suspended);
+  suspendedRef.current = suspended;
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || suspended) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
     const getItems = () => {
@@ -83,9 +95,11 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKeyDown, true);
+      // Jeda sementara: jangan sentuh fokus sama sekali.
+      if (suspendedRef.current) return;
       restoreFocus(previouslyFocused, containerRef.current, fallbackRef.current);
     };
-  }, [active, closeOnEscape]);
+  }, [active, suspended, closeOnEscape]);
 
   return containerRef;
 }
