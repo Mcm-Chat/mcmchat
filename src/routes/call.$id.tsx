@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
+import { CallConnectionBadge } from "@/components/mcm/call-connection-badge";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import {
@@ -493,6 +494,14 @@ function CallScreen() {
               <span>{phaseLabel}</span>
               {session.phase === "connected" && <SignalBadge quality={session.quality} />}
             </div>
+            <CallConnectionBadge
+              phase={session.phase}
+              retrying={session.retrying}
+              quality={session.quality}
+              audioBlocked={session.audioBlocked}
+              permission={permission.state}
+              className="mt-1"
+            />
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             <VoicePrivacyBadge active={voiceActive} className="mt-1" />
             {voiceFallback ? (
