@@ -401,7 +401,7 @@ export function StatusEditor({
             <Button
               type="button"
               size="sm"
-              variant={tool === "adjust" ? "default" : "ghost"}
+              variant="ghost"
               className="h-10 rounded-xl text-xs"
               onClick={() => setTool("adjust")}
             >
