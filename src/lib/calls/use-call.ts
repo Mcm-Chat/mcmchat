@@ -12,6 +12,7 @@ import { getCallConfig, issueCallToken } from "./calls.functions";
 import {
   getCallProvider,
   type CallSessionHandle,
+  type CallDevices,
   type ProviderState,
   type RemoteInfo,
 } from "./provider";
@@ -197,6 +198,9 @@ export function useCall(opts: {
   const [speakerSupported, setSpeakerSupported] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
+  const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
+  const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
+  const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
