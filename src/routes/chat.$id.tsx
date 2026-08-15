@@ -19,6 +19,7 @@ import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mc
 import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
+import { AccessFallback } from "@/components/mcm/access-fallback";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -108,8 +109,21 @@ function ChatRoom() {
   const { userId, profile, onlineIds, loading } = useRequireAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: conversations } = useConversations(userId);
-  const { messages, isLoading, hasOlder, isFetchingOlder, fetchOlder } = useMessages(id, userId);
+  const {
+    data: conversations,
+    error: conversationsError,
+    refetch: refetchConversations,
+    isLoading: convLoading,
+  } = useConversations(userId);
+  const {
+    messages,
+    isLoading,
+    error: messagesError,
+    refetch: refetchMessages,
+    hasOlder,
+    isFetchingOlder,
+    fetchOlder,
+  } = useMessages(id, userId);
   const conv = (conversations ?? []).find((c) => c.id === id);
   const connection = useConnectionState();
   const pending = useOutbox(id);
@@ -549,6 +563,29 @@ function ChatRoom() {
       toast.error(err instanceof Error ? err.message : "Panggilan gagal dimulai");
     }
   };
+
+  const accessError = conversationsError ?? messagesError;
+  if (accessError || (!loading && !convLoading && !isLoading && !conv)) {
+    return (
+      <AppShell nav={false} header={<MobileHeader title="Percakapan" back />}>
+        <AccessFallback
+          error={accessError}
+          onRetry={async () => {
+            await Promise.all([refetchConversations(), refetchMessages()]);
+          }}
+          extra={
+            <Button
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => void navigate({ to: "/chat", search: {} })}
+            >
+              Kembali ke daftar chat
+            </Button>
+          }
+        />
+      </AppShell>
+    );
+  }
 
   if (loading || isLoading || !conv) {
     return (
