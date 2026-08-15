@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
@@ -36,6 +35,7 @@ import { CALL_PROVIDER_NOTICE, type CallHistoryItem } from "@/lib/api/calls";
 import { useCall } from "@/lib/calls/use-call";
 import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-effects";
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
+import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
 import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
 import { DEFAULT_VOICE_PREFS, PRESET_MAP, type VoicePrefs } from "@/lib/voice/presets";
@@ -112,6 +112,12 @@ function CallScreen() {
   useEffect(() => {
     if (session.phase === "ended") playEndTone();
   }, [session.phase]);
+
+  // Kegagalan baru selalu memunculkan panel pemulihan lagi, walau panel
+  // sebelumnya sempat ditutup pengguna.
+  useEffect(() => {
+    if (session.phase === "error" || session.phase === "unconfigured") setErrorDismissed(false);
+  }, [session.phase, session.reason]);
 
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
@@ -479,34 +485,43 @@ function CallScreen() {
         </p>
       </div>
 
-      {session.phase === "unconfigured" && (
-        <div className="mt-6 rounded-2xl border border-amber-300/40 bg-amber-400/15 p-4 text-sm">
-          <p className="font-semibold">Belum terhubung</p>
-          <p className="mt-1 text-navy-foreground/80">
-            {CALL_PROVIDER_NOTICE} Admin perlu mengisi kredensial LiveKit (URL, API key, API secret)
-            agar media panggilan aktif.
-          </p>
-        </div>
+      {session.phase === "unconfigured" && !errorDismissed && (
+        <CallFailureRecovery
+          className="mt-6"
+          unconfigured
+          reason={session.reason ?? CALL_PROVIDER_NOTICE}
+          retrying={session.retrying}
+          onRetry={session.retry}
+          onOpenProvider={() => void navigate({ to: "/settings/calls" })}
+          onDismiss={() => setErrorDismissed(true)}
+        />
       )}
 
-      {session.phase === "error" && session.reason && !errorDismissed && (
-        <NotificationBanner
-          role="alert"
+      {session.phase === "error" && !errorDismissed && (
+        <CallFailureRecovery
+          className="mt-6"
+          reason={session.reason}
+          retrying={session.retrying}
+          onRetry={session.retry}
+          onOpenDevices={() => {
+            session.refreshDevices();
+            setDevicesOpen(true);
+          }}
+          onOpenProvider={() => void navigate({ to: "/settings/calls" })}
           onDismiss={() => setErrorDismissed(true)}
-          dismissLabel="Tutup pesan gagal panggilan"
-          className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4"
-        >
-          <p className="font-semibold">Panggilan gagal</p>
-          <p className="mt-1 text-navy-foreground/85">{session.reason}</p>
-          <Button
-            variant="secondary"
-            className="mt-3 min-h-11 rounded-xl px-4"
-            onClick={() => void navigate({ to: "/settings/calls" })}
-          >
-            Buka diagnostik panggilan
-          </Button>
-        </NotificationBanner>
+        />
       )}
+
+      <CallDeviceSheet
+        open={devicesOpen}
+        onOpenChange={setDevicesOpen}
+        devices={session.devices}
+        micDeviceId={session.micDeviceId}
+        cameraDeviceId={session.cameraDeviceId}
+        onPickMic={session.setMicDevice}
+        onPickCamera={session.setCameraDevice}
+        videoEnabled={isVideo}
+      />
 
       <div className="mt-6 space-y-3 rounded-2xl bg-white/10 p-4 text-sm">
         <Row label="Tanggal" value={tanggalPanjang(detail.created_at)} />

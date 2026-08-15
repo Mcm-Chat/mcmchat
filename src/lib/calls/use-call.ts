@@ -157,6 +157,10 @@ export type UseCallResult = {
   toggleCamera: () => void;
   toggleSpeaker: () => void;
   switchCamera: () => void;
+  /** Coba sambungkan ulang setelah status gagal, tanpa keluar dari layar. */
+  retry: () => void;
+  /** Percobaan sambung ulang manual sedang berjalan. */
+  retrying: boolean;
   /** Daftar mic/kamera yang bisa dipilih saat panggilan berlangsung. */
   devices: CallDevices;
   micDeviceId: string | null;
@@ -201,6 +205,7 @@ export function useCall(opts: {
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
@@ -555,6 +560,25 @@ export function useCall(opts: {
     [],
   );
 
+  /**
+   * Pemulihan manual dari status gagal: bongkar sesi lama, reset penghitung
+   * sambung-ulang otomatis, lalu bergabung lagi ke panggilan yang sama.
+   */
+  const retry = useCallback(() => {
+    const row = call;
+    if (!row || endedRef.current) return;
+    setRetrying(true);
+    setReason("Mencoba menyambungkan ulang…");
+    setPhase("connecting");
+    rejoinRef.current = 0;
+    void cleanup()
+      .then(() => {
+        joinedRef.current = false;
+        return join(row);
+      })
+      .finally(() => setRetrying(false));
+  }, [call, cleanup, join]);
+
   return useMemo<UseCallResult>(
     () => ({
       phase,
@@ -621,6 +645,8 @@ export function useCall(opts: {
         });
       },
       switchCamera: () => void sessionRef.current?.switchCamera(),
+      retry,
+      retrying,
       devices,
       micDeviceId,
       cameraDeviceId,
@@ -648,6 +674,8 @@ export function useCall(opts: {
       cleanup,
       finish,
       join,
+      retry,
+      retrying,
       devices,
       micDeviceId,
       cameraDeviceId,
