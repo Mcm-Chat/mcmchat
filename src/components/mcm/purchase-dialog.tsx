@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Camera, MapPin, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,10 +27,12 @@ import {
   type ProductRow,
 } from "@/lib/api/catalog";
 import { recordPurchase } from "@/lib/api/purchases";
+import { uploadProductPhoto } from "@/lib/api/storage";
+import { compressImage, mapsUrlFor, sanitizeMapsUrl } from "@/lib/mcm/geo";
 
 export type PurchaseProduct = Pick<
   ProductRow,
-  "id" | "name" | "stock_kind" | "base_unit" | "buy_unit" | "buy_factor"
+  "id" | "name" | "business_id" | "stock_kind" | "base_unit" | "buy_unit" | "buy_factor"
 >;
 
 /**
@@ -57,6 +60,43 @@ export function PurchaseDialog({
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [photoPath, setPhotoPath] = useState("");
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [locUrl, setLocUrl] = useState("");
+  const [locLabel, setLocLabel] = useState("");
+
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { blob, previewUrl } = await compressImage(file);
+      const res = await uploadProductPhoto(product.business_id, blob, file.name);
+      setPhotoPath(res.path);
+      setPhotoPreview(previewUrl);
+      toast.success("Foto barang masuk siap disimpan");
+    } catch {
+      toast.error("Gagal mengunggah foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const useCurrentLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Perangkat ini tidak mendukung GPS");
+      return;
+    }
+    toast.info("Mengambil lokasi…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocUrl(mapsUrlFor(pos.coords.latitude, pos.coords.longitude));
+        toast.success("Lokasi diambil dari GPS");
+      },
+      () => toast.error("Lokasi tidak tersedia."),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  };
 
   const qtyNum = Number(qty.replace(",", "."));
   const costNum = Number(cost.replace(/[^\d]/g, ""));
@@ -77,6 +117,12 @@ export function PurchaseDialog({
     }
     setSaving(true);
     try {
+      const safeLoc = sanitizeMapsUrl(locUrl);
+      if (safeLoc === null) {
+        toast.error("Link lokasi harus berupa alamat https yang valid.");
+        setSaving(false);
+        return;
+      }
       const qtyBase = toWarehouseBase(product, qtyNum, unit);
       await recordPurchase({
         productId: product.id,
@@ -89,6 +135,9 @@ export function PurchaseDialog({
         totalCost: total,
         note: note.trim(),
         purchasedAt: date ? new Date(`${date}T00:00:00`).toISOString() : null,
+        photoPath,
+        locationUrl: safeLoc,
+        locationLabel: locLabel.trim(),
       });
       toast.success("Pembelian tercatat & stok gudang bertambah");
       setSupplier("");
@@ -96,6 +145,10 @@ export function PurchaseDialog({
       setQty("");
       setCost("");
       setNote("");
+      setPhotoPath("");
+      setPhotoPreview("");
+      setLocUrl("");
+      setLocLabel("");
       onOpenChange(false);
       onDone?.();
     } catch (err) {
@@ -177,6 +230,66 @@ export function PurchaseDialog({
               onChange={(e) => setNote(e.target.value)}
               placeholder="Opsional: no. nota, ongkos kirim"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Foto barang masuk</Label>
+            {photoPreview ? (
+              <div className="relative w-fit">
+                <img
+                  src={photoPreview}
+                  alt="Foto barang masuk"
+                  className="size-24 rounded-xl object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label="Hapus foto"
+                  className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground"
+                  onClick={() => {
+                    setPhotoPath("");
+                    setPhotoPreview("");
+                  }}
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border text-xs text-muted-foreground">
+                <Camera className="size-4" />
+                {uploading ? "Mengunggah…" : "Ambil / pilih foto"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(e) => void pickPhoto(e.target.files?.[0])}
+                />
+              </label>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Label lokasi (opsional)</Label>
+            <Input
+              value={locLabel}
+              onChange={(e) => setLocLabel(e.target.value)}
+              placeholder="Contoh: Gudang A"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Link Maps</Label>
+            <Input
+              value={locUrl}
+              onChange={(e) => setLocUrl(e.target.value)}
+              placeholder="https://maps.google.com/…"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-lg text-xs"
+              onClick={useCurrentLocation}
+            >
+              <MapPin className="size-3.5" /> Ambil lokasi saat ini
+            </Button>
           </div>
           <div className="rounded-xl bg-muted/60 p-3">
             <p className="text-[11px] text-muted-foreground">Total modal</p>
