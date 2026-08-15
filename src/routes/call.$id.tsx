@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
+import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import { playTone, playEndTone } from "@/lib/calls/tones";
 import {
@@ -238,6 +239,10 @@ function CallScreen() {
             reason={session.reason}
             endStatus={detail.status}
             durationSec={detail.duration_sec}
+          />
+          <CallDurationLive
+            active={session.phase === "connected"}
+            durationSec={session.durationSec}
           />
           <div className="flex items-center gap-2">
             <Button
