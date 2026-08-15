@@ -221,6 +221,11 @@ function CallScreen() {
           return;
         case "answer":
           if (!incoming) return;
+          if (!permission.ready) {
+            shortcuts.announce(permission.copy.title);
+            answerWithPermission();
+            return;
+          }
           session.answer();
           shortcuts.announce("Panggilan dijawab");
           return;
