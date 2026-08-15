@@ -105,6 +105,85 @@ function pixelatedCopy(img: CanvasImageSource): HTMLCanvasElement {
   return out;
 }
 
+function shade(hex: string, amount: number) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1]!, 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) =>
+    Math.max(0, Math.min(255, Math.round(amount < 0 ? c * (1 + amount) : c + (255 - c) * amount))),
+  );
+  return `rgb(${ch[0]}, ${ch[1]}, ${ch[2]})`;
+}
+
+/** Panah modern bergaya 3D: bayangan jatuh, badan bergradien, sorotan atas. */
+function drawArrow(ctx: CanvasRenderingContext2D, layer: Extract<Layer, { type: "arrow" }>) {
+  const { x1, y1, x2, y2 } = layer;
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  if (len < 4) return;
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  const w = Math.max(8, layer.width);
+  const head = Math.min(len * 0.45, w * 3.2);
+  const body = Math.max(0, len - head);
+
+  const path = new Path2D();
+  path.moveTo(0, -w / 2);
+  path.lineTo(body, -w / 2);
+  path.lineTo(body, -w * 1.5);
+  path.lineTo(len, 0);
+  path.lineTo(body, w * 1.5);
+  path.lineTo(body, w / 2);
+  path.lineTo(0, w / 2);
+  path.closePath();
+
+  ctx.save();
+  ctx.translate(x1, y1);
+  ctx.rotate(ang);
+  ctx.lineJoin = "round";
+
+  // Bayangan jatuh memberi kesan mengambang di atas foto.
+  ctx.save();
+  ctx.translate(w * 0.28, w * 0.34);
+  ctx.fillStyle = "rgba(2,6,23,0.38)";
+  ctx.fill(path);
+  ctx.restore();
+
+  const grad = ctx.createLinearGradient(0, -w * 1.5, 0, w * 1.5);
+  grad.addColorStop(0, shade(layer.color, 0.45));
+  grad.addColorStop(0.45, layer.color);
+  grad.addColorStop(1, shade(layer.color, -0.45));
+  ctx.fillStyle = grad;
+  ctx.fill(path);
+
+  ctx.lineWidth = Math.max(2, w * 0.12);
+  ctx.strokeStyle = shade(layer.color, -0.55);
+  ctx.stroke(path);
+
+  // Sorotan tipis di sisi atas badan panah.
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = Math.max(2, w * 0.16);
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.beginPath();
+  ctx.moveTo(w * 0.2, -w * 0.22);
+  ctx.lineTo(Math.max(w * 0.2, body - w * 0.2), -w * 0.22);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function unusedPixelatedCopy(img: CanvasImageSource): HTMLCanvasElement {
+  const small = document.createElement("canvas");
+  small.width = 48;
+  small.height = 85;
+  const sctx = small.getContext("2d")!;
+  sctx.drawImage(img, 0, 0, small.width, small.height);
+  const out = document.createElement("canvas");
+  out.width = CANVAS_W;
+  out.height = CANVAS_H;
+  const octx = out.getContext("2d")!;
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(small, 0, 0, CANVAS_W, CANVAS_H);
+  return out;
+}
+
 const toBlob = (canvas: HTMLCanvasElement, quality: number) =>
   new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
@@ -179,6 +258,7 @@ export function drawScene(
   for (const layer of state.layers) {
     if (layer.type === "stroke") drawStroke(ctx, layer, pixel);
     else if (layer.type === "text") drawText(ctx, layer);
+    else if (layer.type === "arrow") drawArrow(ctx, layer);
     else {
       ctx.save();
       ctx.font = `${layer.size}px sans-serif`;
