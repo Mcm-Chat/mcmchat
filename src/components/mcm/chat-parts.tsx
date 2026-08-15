@@ -9,6 +9,7 @@ import {
   CornerUpLeft,
   Copy,
   FileText,
+  Forward,
   Image as ImageIcon,
   MapPin,
   Mic,
@@ -519,7 +520,62 @@ function VoiceBubble({ message }: { message: MessageRow }) {
 }
 
 export type MessageAction =
-  "select" | "reply" | "copy" | "edit" | "react" | "delete-me" | "delete-all";
+  "select" | "reply" | "forward" | "copy" | "edit" | "react" | "delete-me" | "delete-all";
+
+/** Ambang geser (px) sebelum aksi balas/teruskan dijalankan. */
+const SWIPE_TRIGGER_PX = 64;
+const SWIPE_MAX_PX = 96;
+
+/**
+ * Gestur geser pada bubble: geser kanan = balas, geser kiri = teruskan.
+ * Hanya aktif untuk gerakan yang jelas horizontal agar scroll vertikal daftar
+ * pesan tidak pernah tertahan.
+ */
+function useBubbleSwipe(onSwipe: (dir: "right" | "left") => void) {
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const axis = useRef<"none" | "x" | "y">("none");
+  const [dx, setDx] = useState(0);
+
+  const clamp = (v: number) => Math.max(-SWIPE_MAX_PX, Math.min(SWIPE_MAX_PX, v));
+
+  return {
+    dx,
+    handlers: {
+      onTouchStart: (e: React.TouchEvent) => {
+        const t = e.touches[0];
+        if (!t) return;
+        start.current = { x: t.clientX, y: t.clientY };
+        axis.current = "none";
+      },
+      onTouchMove: (e: React.TouchEvent) => {
+        const t = e.touches[0];
+        const s = start.current;
+        if (!t || !s) return;
+        const mx = t.clientX - s.x;
+        const my = t.clientY - s.y;
+        if (axis.current === "none") {
+          if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+          axis.current = Math.abs(mx) > Math.abs(my) * 1.4 ? "x" : "y";
+        }
+        if (axis.current !== "x") return;
+        setDx(clamp(mx * 0.6));
+      },
+      onTouchEnd: () => {
+        const moved = dx;
+        start.current = null;
+        axis.current = "none";
+        setDx(0);
+        if (moved >= SWIPE_TRIGGER_PX * 0.6) onSwipe("right");
+        else if (moved <= -SWIPE_TRIGGER_PX * 0.6) onSwipe("left");
+      },
+      onTouchCancel: () => {
+        start.current = null;
+        axis.current = "none";
+        setDx(0);
+      },
+    },
+  };
+}
 
 export function MessageBubble({
   message,
