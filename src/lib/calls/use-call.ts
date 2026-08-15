@@ -29,7 +29,11 @@ import {
 } from "@/lib/api/calls";
 import type { EndReason } from "./policy";
 import { consumeAnswerIntent } from "./answer-intent";
-import { mediaPermissionCopy, requestMediaPermission } from "./media-permission";
+import {
+  MediaPermissionError,
+  mediaPermissionCopy,
+  requestMediaPermission,
+} from "./media-permission";
 import {
   answerFailureText,
   connectFailureText,
@@ -438,7 +442,7 @@ export function useCall(opts: {
         .then((state) => {
           if (state !== "granted") {
             const copy = mediaPermissionCopy(state, kind);
-            throw new Error(`${copy.title}. ${copy.help}`.trim());
+            throw new MediaPermissionError(state, `${copy.title}. ${copy.help}`.trim());
           }
           return answerCall(row.id);
         })
@@ -447,6 +451,14 @@ export function useCall(opts: {
           // Jawaban kedua yang kalah balapan tidak boleh menimpa layar yang
           // sudah tersambung dengan pesan gagal basi.
           if (joinedRef.current || endedRef.current) return;
+          if (e instanceof MediaPermissionError) {
+            // Izin belum ada: panggilan belum dijawab sama sekali, jadi layar
+            // kembali berdering dengan penjelasan cara memberi izin.
+            devLog("answer_permission_blocked", e.state);
+            setReason(e.message);
+            setPhase("incoming");
+            return;
+          }
           const info = describeAnswerFailure(e);
           devLog("answer_failed", e instanceof Error ? e.message : "unknown");
           setReason(answerFailureText(e));
