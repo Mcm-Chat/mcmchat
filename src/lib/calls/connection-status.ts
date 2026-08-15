@@ -13,7 +13,7 @@ export type CallConnectionTone = "live" | "pending" | "warn" | "down";
 export type CallConnectionInput = {
   phase: string;
   retrying?: boolean;
-  quality?: "good" | "fair" | "poor" | "unknown" | undefined;
+  quality?: "excellent" | "good" | "fair" | "poor" | "unknown" | undefined;
   audioBlocked?: boolean;
   permission?: MediaPermissionState | undefined;
 };
