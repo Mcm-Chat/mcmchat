@@ -232,11 +232,18 @@ export function useCall(opts: {
   }, []);
 
   /** Buka mikrofon dan (bila premium aktif) lewatkan ke VoicePipeline. */
-  const buildOutgoingAudio = useCallback(async (): Promise<MediaStreamTrack | null> => {
+  const buildOutgoingAudio = useCallback(async (
+    deviceId?: string | null,
+  ): Promise<MediaStreamTrack | null> => {
     if (typeof navigator === "undefined" || !navigator.mediaDevices) return null;
-    const mic = await navigator.mediaDevices.getUserMedia(MIC_CONSTRAINTS);
+    const base = (MIC_CONSTRAINTS.audio ?? true) as MediaTrackConstraints;
+    const mic = await navigator.mediaDevices.getUserMedia({
+      audio: deviceId ? { ...base, deviceId: { exact: deviceId } } : base,
+      video: false,
+    });
     micRef.current = mic;
     const raw = mic.getAudioTracks()[0] ?? null;
+    setMicDeviceId(raw?.getSettings().deviceId ?? deviceId ?? null);
     if (!voiceApplied) return raw;
     // Kegagalan pemrosesan suara TIDAK boleh menggagalkan panggilan: kita
     // publikasikan mikrofon mentah dan menandai Voice Privacy tidak tersedia.
