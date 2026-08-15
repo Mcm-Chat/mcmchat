@@ -146,13 +146,15 @@ async def run(state):
         async def route_config(route):
             req = route.request
             if unconfigured["on"] and "getCallConfig" in req.url:
+                pass
+            if unconfigured["on"] and "getCallConfig" in req.url:
                 unconfigured["hit"] = True
                 await route.fulfill(status=200, content_type="application/json",
                                     body='{"provider":"livekit","configured":false,"code":"missing_env"}')
             else:
                 await route.continue_()
 
-        await page.route("**/_serverFn/**", route_config)
+        await page.route("**/*", route_config)
 
         await page.goto(f"{BASE}/login", wait_until="networkidle")
         await page.wait_for_selector("#email")
