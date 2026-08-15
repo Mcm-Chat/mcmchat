@@ -3,7 +3,7 @@
  * chat ke kontak, atau simpan pengingat tindak lanjut (tersimpan di database,
  * self-scoped lewat RLS).
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { BellPlus, MessageSquarePlus, Phone, Video } from "lucide-react";
@@ -46,6 +46,7 @@ export function MissedCallActions({
   const navigate = useNavigate();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const firstActionRef = useRef<HTMLButtonElement>(null);
 
   const close = () => {
     setNote("");
