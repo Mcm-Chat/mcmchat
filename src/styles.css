@@ -191,10 +191,6 @@
   will-change: scroll-position;
 }
 
-@utility bubble-elevate-legacy {
-  box-shadow: var(--shadow-bubble);
-}
-
 @utility composer-raise {
   box-shadow: var(--shadow-raise);
 }
