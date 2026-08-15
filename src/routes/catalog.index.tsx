@@ -6,6 +6,10 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ConfirmDialog, EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
 import { ProductThumb, StockChip, priceLabel } from "@/components/mcm/catalog-parts";
+import {
+  ProductInsightDialog,
+  type IndicatorFocus,
+} from "@/components/mcm/product-insight-dialog";
 import { AiDescriptionButton } from "@/components/mcm/ai-description";
 import { PurchaseDialog } from "@/components/mcm/purchase-dialog";
 import { Button } from "@/components/ui/button";
@@ -536,6 +540,7 @@ function CatalogIndex() {
               product={p}
               indicator={indicatorMap.get(p.id)}
               canManage={canManage}
+              businessId={businessId!}
               onBuy={() => setBuyFor(p)}
               onDelete={() => setRemoveFor(p)}
             />
@@ -707,14 +712,17 @@ function ProductCard({
   canManage,
   onBuy,
   onDelete,
+  businessId,
 }: {
   product: ProductWithVariants;
   indicator?: ProductIndicator | undefined;
   canManage: boolean;
   onBuy: () => void;
   onDelete: () => void;
+  businessId: string;
 }) {
   const navigate = useNavigate();
+  const [focus, setFocus] = useState<IndicatorFocus | null>(null);
   const cover = product.photos[0]?.image_path;
   const unitVariant = product.variants[0];
   const soldLabel =
@@ -752,21 +760,45 @@ function ProductCard({
         </div>
       )}
       <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/50 p-2.5 text-[11px]">
-        <Indicator label="Modal masuk" value={rupiah(indicator?.total_cost ?? 0)} />
-        <Indicator label="Nilai stok" value={rupiah(indicator?.stock_value ?? 0)} />
-        <Indicator label="Terjual" value={soldLabel} />
+        <Indicator
+          label="Modal masuk"
+          value={rupiah(indicator?.total_cost ?? 0)}
+          onClick={() => setFocus("cost")}
+        />
+        <Indicator
+          label="Nilai stok"
+          value={rupiah(indicator?.stock_value ?? 0)}
+          onClick={() => setFocus("stock")}
+        />
+        <Indicator label="Terjual" value={soldLabel} onClick={() => setFocus("sold")} />
         <Indicator
           label="Estimasi laba"
           value={rupiah(indicator?.profit ?? 0)}
           tone={(indicator?.profit ?? 0) >= 0 ? "text-success" : "text-destructive"}
+          onClick={() => setFocus("profit")}
         />
-        <div className="col-span-2 truncate text-muted-foreground">
+        <button
+          type="button"
+          onClick={() => setFocus("supplier")}
+          aria-label={`Lihat detail agen terakhir ${product.name}`}
+          className="col-span-2 truncate text-left text-muted-foreground underline-offset-2 hover:underline"
+        >
           Agen terakhir:{" "}
           <span className="font-medium text-foreground">
             {indicator?.last_supplier || "Belum ada pembelian"}
           </span>
-        </div>
+        </button>
       </div>
+      {focus && (
+        <ProductInsightDialog
+          open
+          onOpenChange={(v) => !v && setFocus(null)}
+          product={product}
+          indicator={indicator}
+          businessId={businessId}
+          focus={focus}
+        />
+      )}
       {canManage && (
         <Button
           variant="outline"
@@ -801,11 +833,28 @@ function Indicator({
   label,
   value,
   tone,
+  onClick,
 }: {
   label: string;
   value: string;
   tone?: string | undefined;
+  onClick?: (() => void) | undefined;
 }) {
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`Lihat detail ${label}`}
+        className="min-w-0 rounded-lg text-left transition-colors hover:bg-muted active:bg-muted"
+      >
+        <p className="truncate text-muted-foreground">{label}</p>
+        <p className={`truncate font-semibold underline-offset-2 hover:underline ${tone ?? ""}`}>
+          {value}
+        </p>
+      </button>
+    );
+  }
   return (
     <div className="min-w-0">
       <p className="truncate text-muted-foreground">{label}</p>

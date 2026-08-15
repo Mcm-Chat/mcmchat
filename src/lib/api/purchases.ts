@@ -52,6 +52,19 @@ export async function deletePurchase(id: string) {
   if (error) throw new Error(friendly(error.message, "Gagal menghapus pembelian"));
 }
 
+/** Riwayat mutasi stok untuk seluruh varian sebuah produk. */
+export async function listProductMovements(productId: string) {
+  return unwrap(
+    await supabase
+      .from("inventory_movements")
+      .select("*")
+      .eq("product_id", productId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    "Gagal memuat mutasi stok",
+  );
+}
+
 export type ProductIndicator = {
   product_id: string;
   total_cost: number;
