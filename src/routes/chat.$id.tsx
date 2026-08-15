@@ -127,9 +127,9 @@ function ChatRoom() {
     fetchOlder,
   } = useMessages(id, userId);
   const conv = (conversations ?? []).find((c) => c.id === id);
-  const { nameOf } = useContactAliases();
+  const { nameOf: contactNameOf } = useContactAliases();
   // Nama tampilan chat mengikuti nama kontak yang saya simpan sendiri.
-  const headerName = nameOf(conv?.other?.id, conv?.title_resolved ?? "Percakapan");
+  const headerName = contactNameOf(conv?.other?.id, conv?.title_resolved ?? "Percakapan");
   const connection = useConnectionState();
   const pending = useOutbox(id);
 
