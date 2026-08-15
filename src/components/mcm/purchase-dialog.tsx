@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Camera, MapPin, X } from "lucide-react";
+import { Camera, MapPin, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,13 @@ import {
   toWarehouseBase,
   warehouseUnit,
   warehouseUnitOptions,
+  syncVariantTemplates,
+  WEIGHT_UNITS,
+  COUNT_UNITS,
+  type VariantTemplate,
   type ProductRow,
 } from "@/lib/api/catalog";
+import { parseDecimalId, parseRupiah } from "@/lib/mcm/decimal";
 import { recordPurchase } from "@/lib/api/purchases";
 import { uploadProductPhoto } from "@/lib/api/storage";
 import { compressImage, mapsUrlFor, sanitizeMapsUrl } from "@/lib/mcm/geo";
@@ -65,6 +70,24 @@ export function PurchaseDialog({
   const [uploading, setUploading] = useState(false);
   const [locUrl, setLocUrl] = useState("");
   const [locLabel, setLocLabel] = useState("");
+  const templateUnits = useMemo(
+    () =>
+      product.stock_kind === "weight"
+        ? [...WEIGHT_UNITS]
+        : Array.from(new Set([product.base_unit || "pcs", ...COUNT_UNITS])),
+    [product],
+  );
+  type TemplateRow = { name: string; unit: string; size: string; price: string };
+  const [templates, setTemplates] = useState<TemplateRow[]>([]);
+  const addTemplate = () =>
+    setTemplates((rows) => [
+      ...rows,
+      { name: "", unit: templateUnits[0] ?? "pcs", size: "", price: "" },
+    ]);
+  const patchTemplate = (i: number, patch: Partial<TemplateRow>) =>
+    setTemplates((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const removeTemplate = (i: number) =>
+    setTemplates((rows) => rows.filter((_, idx) => idx !== i));
 
   const pickPhoto = async (file: File | undefined) => {
     if (!file) return;
@@ -117,15 +140,41 @@ export function PurchaseDialog({
     }
     setSaving(true);
     try {
+      const filled = templates.filter(
+        (t) => t.name.trim() !== "" || t.size.trim() !== "" || t.price.trim() !== "",
+      );
+      const drafts: VariantTemplate[] = [];
+      for (const t of filled) {
+        const size = parseDecimalId(t.size);
+        const price = parseRupiah(t.price);
+        if (t.name.trim().length < 2) {
+          toast.error("Judul varian/kemasan wajib diisi");
+          setSaving(false);
+          return;
+        }
+        if (size === null || size <= 0) {
+          toast.error(`Isi kemasan "${t.name.trim()}" tidak valid`);
+          setSaving(false);
+          return;
+        }
+        if (price === null || price < 0) {
+          toast.error(`Harga jual "${t.name.trim()}" tidak valid`);
+          setSaving(false);
+          return;
+        }
+        drafts.push({ name: t.name.trim(), displayUnit: t.unit, size, price });
+      }
       const safeLoc = sanitizeMapsUrl(locUrl);
       if (safeLoc === null) {
         toast.error("Link lokasi harus berupa alamat https yang valid.");
         setSaving(false);
         return;
       }
+      const synced = await syncVariantTemplates(product, drafts);
       const qtyBase = toWarehouseBase(product, qtyNum, unit);
       await recordPurchase({
         productId: product.id,
+        variantId: synced[0]?.id ?? null,
         supplierName: supplier.trim(),
         supplierContact: contact.trim(),
         qtyBase,
@@ -139,7 +188,11 @@ export function PurchaseDialog({
         locationUrl: safeLoc,
         locationLabel: locLabel.trim(),
       });
-      toast.success("Pembelian tercatat & stok gudang bertambah");
+      toast.success(
+        synced.length > 0
+          ? `Pembelian tercatat & ${synced.length} varian ecer diselaraskan`
+          : "Pembelian tercatat & stok gudang bertambah",
+      );
       setSupplier("");
       setContact("");
       setQty("");
@@ -149,6 +202,7 @@ export function PurchaseDialog({
       setPhotoPreview("");
       setLocUrl("");
       setLocLabel("");
+      setTemplates([]);
       onOpenChange(false);
       onDone?.();
     } catch (err) {
@@ -230,6 +284,75 @@ export function PurchaseDialog({
               onChange={(e) => setNote(e.target.value)}
               placeholder="Opsional: no. nota, ongkos kirim"
             />
+          </div>
+          <div className="space-y-2 rounded-xl border border-border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <Label className="text-xs">Template varian / ecer</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Judul & kemasan di sini otomatis dibuat atau diselaraskan ke varian produk.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="rounded-lg text-xs"
+                onClick={addTemplate}
+              >
+                <Plus className="size-3.5" /> Tambah
+              </Button>
+            </div>
+            {templates.map((t, i) => (
+              <div key={i} className="space-y-1.5 rounded-lg bg-muted/50 p-2">
+                <div className="flex gap-2">
+                  <Input
+                    className="h-9 flex-1 text-xs"
+                    value={t.name}
+                    onChange={(e) => patchTemplate(i, { name: e.target.value })}
+                    placeholder="Judul varian, mis. Ecer 250 g"
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Hapus template"
+                    className="size-9 shrink-0"
+                    onClick={() => removeTemplate(i)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    className="h-9 flex-1 text-xs"
+                    inputMode="decimal"
+                    value={t.size}
+                    onChange={(e) => patchTemplate(i, { size: e.target.value })}
+                    placeholder={product.stock_kind === "weight" ? "Isi (250)" : "Isi per kemasan"}
+                  />
+                  <Select value={t.unit} onValueChange={(v) => patchTemplate(i, { unit: v })}>
+                    <SelectTrigger className="h-9 w-24 rounded-lg text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templateUnits.map((u) => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    className="h-9 w-28 text-xs"
+                    inputMode="numeric"
+                    value={t.price}
+                    onChange={(e) => patchTemplate(i, { price: e.target.value })}
+                    placeholder="Harga jual"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
           <div className="space-y-1.5">
             <Label>Foto barang masuk</Label>
