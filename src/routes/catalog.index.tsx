@@ -354,7 +354,7 @@ function CatalogIndex() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Harga dasar (Rp)</Label>
+                    <Label>Harga jual dasar (Rp)</Label>
                     <Input
                       type="number"
                       min={0}
@@ -404,13 +404,24 @@ function CatalogIndex() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Jenis yang dibeli</Label>
+                      <Label>Nama varian / ecer pertama</Label>
                       <Input
                         value={form.variantName}
                         onChange={(e) => setForm((f) => ({ ...f, variantName: e.target.value }))}
                         placeholder="Contoh: Kristal"
                       />
                     </div>
+                    {!(WEIGHT_UNITS as readonly string[]).includes(form.unit) && (
+                      <div className="space-y-1.5">
+                        <Label>Isi per {form.unit} (pcs)</Label>
+                        <Input
+                          inputMode="numeric"
+                          value={form.perBuyUnit}
+                          onChange={(e) => setForm((f) => ({ ...f, perBuyUnit: e.target.value }))}
+                          placeholder="1"
+                        />
+                      </div>
+                    )}
                     <div className="flex gap-2">
                       <div className="flex-1 space-y-1.5">
                         <Label>Jumlah</Label>
@@ -760,6 +771,11 @@ function ProductCard({
           </Button>
         )}
       </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <StatusBadge tone={product.warehouse <= 0 ? "danger" : "primary"}>
+          Gudang: {formatWarehouseQty(product, product.warehouse)}
+        </StatusBadge>
+      </div>
       {product.variants.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {product.variants.map((v) => (
@@ -812,11 +828,10 @@ function ProductCard({
           variant="outline"
           size="sm"
           className="w-full rounded-xl"
-          disabled={product.variants.length === 0}
           onClick={onBuy}
         >
           <ShoppingCart className="size-4" />
-          {product.variants.length === 0 ? "Tambah varian dulu" : "Catat pembelian dari agen"}
+          Catat pembelian dari agen
         </Button>
       )}
       <div className="flex gap-2">
