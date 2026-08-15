@@ -606,6 +606,8 @@ export function MessageBubble({
   highlighted?: boolean | undefined;
   grouped?: boolean | undefined;
 }) {
+  const isSticker = message.kind === "sticker";
+  const swipe = useBubbleSwipe((dir) => onAction(dir === "right" ? "reply" : "forward", message));
   if (message.kind === "system") {
     return (
       <div className="my-2 flex justify-center">
@@ -615,8 +617,6 @@ export function MessageBubble({
       </div>
     );
   }
-  const isSticker = message.kind === "sticker";
-  const swipe = useBubbleSwipe((dir) => onAction(dir === "right" ? "reply" : "forward", message));
   return (
     <div
       className={cn(
