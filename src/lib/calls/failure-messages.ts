@@ -106,3 +106,39 @@ export function answerFailureText(raw: unknown): string {
 export function connectFailureText(raw: unknown): string {
   return join(describeConnectFailure(raw));
 }
+
+/** Aksi langsung yang paling relevan untuk sebuah kegagalan. */
+export type CallFailureAction = "retry" | "devices" | "provider" | "permission" | "back";
+
+export type CallFailureSummary = {
+  /** Ringkasan sangat singkat, mis. "Izin mikrofon ditolak". */
+  label: string;
+  /** Aksi utama yang harus ditonjolkan di layar pemulihan. */
+  primary: CallFailureAction;
+};
+
+/**
+ * Ringkas alasan mentah menjadi satu frasa pendek + aksi langsung.
+ * Dipakai di layar pemulihan agar penyebab terbaca sekilas.
+ */
+export function summarizeCallFailure(raw: unknown, unconfigured?: boolean): CallFailureSummary {
+  if (unconfigured) return { label: "Layanan panggilan belum siap", primary: "provider" };
+  const r = norm(raw);
+  if (/notallowed|izin.*(tolak|ditolak)|permission|denied/.test(r)) {
+    const cam = /kamera|camera|video/.test(r);
+    return { label: cam ? "Izin kamera ditolak" : "Izin mikrofon ditolak", primary: "permission" };
+  }
+  if (/sedang dipakai|notreadable|dipakai aplikasi lain/.test(r))
+    return { label: "Mikrofon dipakai aplikasi lain", primary: "devices" };
+  if (/notfound|overconstrained|tidak terbaca|perangkat|mikrofon|kamera|device/.test(r))
+    return { label: "Perangkat audio/video tidak terbaca", primary: "devices" };
+  if (/timeout|waktu habis|kehabisan waktu|deadline/.test(r))
+    return { label: "Waktu join habis", primary: "retry" };
+  if (/token|kredensial|livekit|unauthorized|401|403|penyedia/.test(r))
+    return { label: "Layanan panggilan menolak sambungan", primary: "provider" };
+  if (/ice|signal|sinyal|jaringan|network|koneksi|terputus|disconnect|offline/.test(r))
+    return { label: "Koneksi jaringan terputus", primary: "retry" };
+  if (/sudah berakhir|tidak tersedia|tidak ditemukan|missed|declined/.test(r))
+    return { label: "Panggilan sudah berakhir", primary: "back" };
+  return { label: "Panggilan gagal tersambung", primary: "retry" };
+}
