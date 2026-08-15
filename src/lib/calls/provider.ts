@@ -259,15 +259,23 @@ export const liveKitProvider: CallProvider = {
       });
 
     emit("connecting");
-    // Prewarm koneksi (DNS/TLS/ICE) supaya jeda "Menyambungkan…" jauh lebih
-    // pendek di jaringan seluler.
-    await room.prepareConnection(opts.url, opts.token).catch(() => undefined);
-    await room.connect(opts.url, opts.token, { autoSubscribe: true, maxRetries: 5 });
+    try {
+      // Prewarm koneksi (DNS/TLS/ICE) supaya jeda "Menyambungkan…" jauh lebih
+      // pendek di jaringan seluler.
+      await room.prepareConnection(opts.url, opts.token).catch(() => undefined);
+      await room.connect(opts.url, opts.token, { autoSubscribe: true, maxRetries: 5 });
 
-    if (opts.audioTrack) {
-      await room.localParticipant.publishTrack(opts.audioTrack, { dtx: true, red: true });
-    } else {
-      await room.localParticipant.setMicrophoneEnabled(true);
+      if (opts.audioTrack) {
+        await room.localParticipant.publishTrack(opts.audioTrack, { dtx: true, red: true });
+      } else {
+        await room.localParticipant.setMicrophoneEnabled(true);
+      }
+    } catch (e) {
+      // Handshake gagal: room setengah jadi harus dilepas agar percobaan ulang
+      // mulai bersih dan tidak meninggalkan koneksi menggantung.
+      closing = true;
+      await room.disconnect().catch(() => undefined);
+      throw e;
     }
     if (opts.kind === "video") {
       // Kamera gagal (izin ditolak/perangkat sibuk) tidak boleh menggagalkan
