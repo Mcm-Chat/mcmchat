@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
+import { fetchProfileCards } from "./profiles";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type PreparationJob = Tables<"preparation_jobs">;
