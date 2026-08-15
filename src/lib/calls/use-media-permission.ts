@@ -35,6 +35,13 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
   const [verified, setVerified] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const alive = useRef(true);
+  /**
+   * Izin yang sudah terbukti nyata pada sesi ini (hasil getUserMedia sukses).
+   * Rotasi layar / pindah tab memicu pemeriksaan ulang, dan di banyak WebView
+   * Permissions API tidak ada sehingga hasilnya "prompt"/"unsupported". Tanpa
+   * penjaga ini kontrol mikrofon & kamera mendadak mati di tengah panggilan.
+   */
+  const proven = useRef<MediaPermissionState | null>(null);
 
   useEffect(() => {
     alive.current = true;
@@ -46,14 +53,20 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
   // Ganti jenis panggilan = ingatan izin lain.
   useEffect(() => {
     setVerified(false);
+    proven.current = null;
     setState(readCachedPermission(kind) ?? "checking");
   }, [kind]);
 
   const apply = useCallback(
     (next: MediaPermissionState) => {
-      writeCachedPermission(kind, next);
+      // Jangan turunkan izin yang sudah terbukti hanya karena pemeriksaan pasif
+      // tidak bisa memastikannya (Permissions API absen di WebView Android).
+      const weak = next === "checking" || next === "prompt" || next === "unsupported";
+      const effective = weak && proven.current ? proven.current : next;
+      if (!weak) proven.current = effective === "granted" || effective === "audio_only" ? effective : null;
+      writeCachedPermission(kind, effective);
       if (!alive.current) return;
-      setState(next);
+      setState(effective);
       setVerified(true);
     },
     [kind],
@@ -72,13 +85,22 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
       if (document.visibilityState === "visible") recheck();
     };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    // Rotasi layar me-remount sebagian UI: periksa ulang agar status tetap
+    // sinkron, tapi hasil lemah tidak boleh mematikan kontrol (lihat `apply`).
+    window.addEventListener("orientationchange", recheck);
+    window.addEventListener("focus", recheck);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("orientationchange", recheck);
+      window.removeEventListener("focus", recheck);
+    };
   }, [active, recheck]);
 
   const request = useCallback(async () => {
     setRequesting(true);
     try {
       const next = await requestMediaPermission(kind);
+      if (next === "granted" || next === "audio_only") proven.current = next;
       apply(next);
       return next;
     } finally {
