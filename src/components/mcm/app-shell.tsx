@@ -43,30 +43,41 @@ export function BottomNavigation({
   const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur">
+    <nav
+      aria-label="Navigasi utama"
+      className="sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur"
+    >
       <ul className="grid grid-cols-6">
         {NAV.map((item) => {
           const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
           const badge = merged[item.match];
+          const badgeText =
+            badge && badge > 0 ? `, ${badge > 99 ? "lebih dari 99" : badge} item baru` : "";
           return (
             <li key={item.to}>
               <Link
                 to={item.to}
+                tabIndex={0}
+                aria-label={`${item.label}${badgeText}${active ? " (halaman aktif)" : ""}`}
                 className={cn(
                   "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none focus-visible:rounded-xl",
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
                 aria-current={active ? "page" : undefined}
               >
                 <span className="relative">
-                  <item.icon className={cn("size-5.5", active && "stroke-[2.4]")} />
+                  <item.icon aria-hidden="true" className={cn("size-5.5", active && "stroke-[2.4]")} />
                   {!!badge && badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-4 rounded-full bg-destructive px-1 text-[9px] leading-4 font-bold text-destructive-foreground">
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-1.5 -right-2 min-w-4 rounded-full bg-destructive px-1 text-[9px] leading-4 font-bold text-destructive-foreground"
+                    >
                       {badge > 99 ? "99+" : badge}
                     </span>
                   )}
                 </span>
-                {item.label}
+                <span aria-hidden="true">{item.label}</span>
               </Link>
             </li>
           );
