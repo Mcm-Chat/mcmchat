@@ -167,7 +167,7 @@ jobs:
           {
             echo "### MCM Chat signing key"
             echo ""
-            echo "- package: `com.mcm.privateconnect`"
+            echo '- package: com.mcm.privateconnect'
             echo "- alias: $ANDROID_KEY_ALIAS"
             echo "- upload cert SHA-256: $FP"
           } >> "$GITHUB_STEP_SUMMARY"
