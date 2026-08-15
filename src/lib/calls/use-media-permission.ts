@@ -10,6 +10,7 @@ import {
   type MediaPermissionKind,
   type MediaPermissionState,
 } from "./media-permission";
+import { readCachedPermission, writeCachedPermission } from "./permission-cache";
 
 export type UseMediaPermission = {
   state: MediaPermissionState;
@@ -18,13 +19,20 @@ export type UseMediaPermission = {
   audioOnly: boolean;
   requesting: boolean;
   copy: MediaPermissionCopy;
+  /** Status awal berasal dari ingatan izin terakhir, belum diverifikasi ulang. */
+  fromCache: boolean;
   /** Minta izin (atau periksa ulang setelah diubah di pengaturan). */
   request: () => Promise<MediaPermissionState>;
   recheck: () => void;
 };
 
 export function useMediaPermission(kind: MediaPermissionKind, active = true): UseMediaPermission {
-  const [state, setState] = useState<MediaPermissionState>("checking");
+  // Mulai dari izin terakhir yang diingat supaya tombol Jawab dan pesannya
+  // langsung benar saat layar dibuka, tanpa kedip "memeriksa izin…".
+  const [state, setState] = useState<MediaPermissionState>(
+    () => readCachedPermission(kind) ?? "checking",
+  );
+  const [verified, setVerified] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const alive = useRef(true);
 
@@ -35,11 +43,25 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
     };
   }, []);
 
-  const recheck = useCallback(() => {
-    void queryMediaPermission(kind).then((s) => {
-      if (alive.current) setState(s);
-    });
+  // Ganti jenis panggilan = ingatan izin lain.
+  useEffect(() => {
+    setVerified(false);
+    setState(readCachedPermission(kind) ?? "checking");
   }, [kind]);
+
+  const apply = useCallback(
+    (next: MediaPermissionState) => {
+      writeCachedPermission(kind, next);
+      if (!alive.current) return;
+      setState(next);
+      setVerified(true);
+    },
+    [kind],
+  );
+
+  const recheck = useCallback(() => {
+    void queryMediaPermission(kind).then(apply);
+  }, [apply, kind]);
 
   useEffect(() => {
     if (!active) return;
@@ -57,12 +79,12 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
     setRequesting(true);
     try {
       const next = await requestMediaPermission(kind);
-      if (alive.current) setState(next);
+      apply(next);
       return next;
     } finally {
       if (alive.current) setRequesting(false);
     }
-  }, [kind]);
+  }, [apply, kind]);
 
   return {
     state,
@@ -70,6 +92,7 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
     audioOnly: isAudioOnly(state),
     requesting,
     copy: mediaPermissionCopy(state, kind),
+    fromCache: !verified && state !== "checking",
     request,
     recheck,
   };

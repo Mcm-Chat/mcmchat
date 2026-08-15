@@ -34,6 +34,10 @@ import {
   requestMediaPermission,
   type MediaPermissionState,
 } from "@/lib/calls/media-permission";
+import {
+  readCachedPermission,
+  writeCachedPermission,
+} from "@/lib/calls/permission-cache";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -201,9 +205,12 @@ export function IncomingCallListener() {
   }
   const isVideo = incoming.call.kind === "video";
   const permKind = isVideo ? "video" : "audio";
-  const permCopy = permState ? mediaPermissionCopy(permState, permKind) : null;
+  // Sebelum ada hasil pemeriksaan pada dering ini, pakai izin terakhir yang
+  // diingat supaya tombol dan pesannya sudah sesuai sejak tap pertama.
+  const knownPerm = permState ?? readCachedPermission(permKind);
+  const permCopy = knownPerm ? mediaPermissionCopy(knownPerm, permKind) : null;
   // "audio_only" bukan penghalang: panggilan video dijawab sebagai suara saja.
-  const permBlocked = Boolean(permState && permState !== "granted" && permState !== "audio_only");
+  const permBlocked = Boolean(knownPerm && knownPerm !== "granted" && knownPerm !== "audio_only");
 
   /**
    * Satu tap = izin dulu, baru menjawab. Menjawab tanpa izin hanya membuat
@@ -216,6 +223,7 @@ export function IncomingCallListener() {
     void requestMediaPermission(permKind)
       .then((state) => {
         setPermState(state);
+        writeCachedPermission(permKind, state);
         if (state !== "granted" && state !== "audio_only") return;
         // Simpan target fokus supaya bila panggilan yang dijawab langsung
         // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
