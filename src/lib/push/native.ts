@@ -292,13 +292,10 @@ export function attachPushListeners(navigateTo: (route: string) => void): () => 
     const route = await consumePendingRoute();
     if (disposed || !route) return;
     const target = routeFromPush({ route } as Partial<PushData>);
-    const { guardPushRoute } = await import("./route-guard");
+    const { announceGuardResult, guardPushRoute } = await import("./route-guard");
     const guarded = await guardPushRoute(target);
     if (disposed) return;
-    if (guarded.blocked && guarded.reason) {
-      const { toast } = await import("sonner");
-      toast.error(guarded.reason);
-    }
+    announceGuardResult(guarded);
     const conv = guarded.blocked ? null : /^\/chat\/([0-9a-f-]{36})/i.exec(guarded.route)?.[1];
     if (conv) {
       await supabase.rpc("mark_messages_delivered", { _conv: conv }).then(

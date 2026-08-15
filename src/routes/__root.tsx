@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { usePushSession } from "@/lib/push/use-push";
+import { PushDeniedDialog } from "@/components/mcm/push-denied-dialog";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
 import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
@@ -206,6 +207,7 @@ function RootComponent() {
             <Outlet />
             <PushSession />
             <IncomingCallListener />
+            <PushDeniedDialog />
             <ScreenPrivacyGuard />
             <Toaster position="top-center" richColors closeButton />
           </AuthProvider>

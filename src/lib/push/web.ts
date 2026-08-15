@@ -9,8 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { WEB_PUSH, swUrl, webPushConfigured } from "./web-config";
 import { routeFromPush } from "./deeplink";
 import type { PushData } from "./payload";
-import { guardPushRoute } from "./route-guard";
-import { toast } from "sonner";
+import { announceGuardResult, guardPushRoute } from "./route-guard";
 
 const INSTALL_KEY = "mcm.web.installation";
 
@@ -120,7 +119,7 @@ export function attachWebPushListeners(navigateTo: (route: string) => void): () 
     const route = routeFromPush({ route: data.route } as Partial<PushData>);
     void (async () => {
       const guarded = await guardPushRoute(route);
-      if (guarded.blocked && guarded.reason) toast.error(guarded.reason);
+      announceGuardResult(guarded);
       const conv = guarded.blocked ? null : /^\/chat\/([0-9a-f-]{36})/i.exec(guarded.route)?.[1];
       if (conv) {
         await supabase.rpc("mark_messages_delivered", { _conv: conv }).then(
