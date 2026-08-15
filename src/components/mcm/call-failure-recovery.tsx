@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw, SlidersHorizontal, Wrench } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -129,7 +129,7 @@ export function CallFailureRecovery({
     </Button>
   ) : null;
 
-  const buttons: Record<string, JSX.Element | null> = {
+  const buttons: Record<string, ReactNode> = {
     retry: retryButton,
     devices: deviceButton,
     provider: providerButton,
