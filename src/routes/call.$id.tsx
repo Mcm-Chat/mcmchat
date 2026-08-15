@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
+import { playTone, playEndTone } from "@/lib/calls/tones";
 import {
   ArrowLeft,
   Mic,
@@ -12,6 +13,9 @@ import {
   PhoneOff,
   RefreshCcw,
   ShieldAlert,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
   Sparkles,
   Video,
   VideoOff,
@@ -92,6 +96,18 @@ function CallScreen() {
   const [errorDismissed, setErrorDismissed] = useState(false);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
+
+  // Nada tunggu (pemanggil) / nada dering (penerima) selama panggilan belum
+  // dijawab, lalu nada singkat saat panggilan berakhir.
+  useEffect(() => {
+    if (session.phase !== "outgoing" && session.phase !== "incoming") return;
+    const handle = playTone(session.phase === "outgoing" ? "ringback" : "ringtone");
+    return () => handle.stop();
+  }, [session.phase]);
+
+  useEffect(() => {
+    if (session.phase === "ended") playEndTone();
+  }, [session.phase]);
 
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
