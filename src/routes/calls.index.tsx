@@ -113,6 +113,13 @@ function CallsPage() {
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
+  // Membuka halaman Panggilan = semua panggilan tak terjawab dianggap dilihat,
+  // sehingga badge di navigasi bawah hilang dan hanya muncul untuk yang baru.
+  useEffect(() => {
+    if (!userId || isLoading) return;
+    markMissedCallsSeen();
+  }, [userId, isLoading, calls]);
+
   useEffect(() => {
     void loadConfig()
       .then((c) => setConfigured(c.configured))
