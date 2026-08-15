@@ -118,8 +118,6 @@ export function AvatarEditor({
     try {
       const blob = await renderFinalBlob(img, state);
       await onApply(blob);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal memasang foto profil");
     } finally {
       submitting.current = false;
       setBusy(false);
