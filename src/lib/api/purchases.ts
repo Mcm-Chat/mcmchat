@@ -18,6 +18,11 @@ export type PurchaseInput = {
   totalCost: number;
   note: string;
   purchasedAt?: string | null;
+  /** Bukti foto barang masuk di storage `product-photos`. */
+  photoPath?: string;
+  /** Link maps lokasi barang masuk (https). */
+  locationUrl?: string;
+  locationLabel?: string;
 };
 
 /** Catat pembelian dari agen + tambah stok gudang dalam satu transaksi RPC. */
@@ -34,6 +39,9 @@ export async function recordPurchase(input: PurchaseInput): Promise<string> {
     total_cost: input.totalCost,
     note: input.note,
     purchased_at: input.purchasedAt ?? null,
+    photo_path: input.photoPath ?? "",
+    location_url: input.locationUrl ?? "",
+    location_label: input.locationLabel ?? "",
   };
   const { data, error } = await supabase.rpc("record_purchase", { _payload: payload as never });
   if (error) throw new Error(friendly(error.message, "Gagal mencatat pembelian"));
