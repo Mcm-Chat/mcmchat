@@ -109,7 +109,13 @@ function restoreFocus(
   if (focusOutside) return;
 
   const usable = (el: HTMLElement | null | undefined): el is HTMLElement =>
-    Boolean(el && document.contains(el) && !(el as HTMLButtonElement).disabled);
+    Boolean(
+      el &&
+        el !== document.body &&
+        el !== document.documentElement &&
+        document.contains(el) &&
+        !(el as HTMLButtonElement).disabled,
+    );
 
   if (usable(previous)) {
     previous.focus?.();
