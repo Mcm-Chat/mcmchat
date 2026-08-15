@@ -10,6 +10,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Phone, PhoneOff, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MCMAvatar } from "@/components/mcm/primitives";
+import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { useAuth } from "@/lib/auth";
 import { fetchProfileCard } from "@/lib/api/profiles";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,6 +105,12 @@ export function IncomingCallListener() {
 
   return (
     <div className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 rounded-2xl border border-white/15 bg-navy/95 p-4 text-navy-foreground shadow-xl backdrop-blur">
+      <CallStatusLive
+        assertive
+        phase="incoming"
+        kind={isVideo ? "video" : "audio"}
+        name={incoming.name}
+      />
       <div className="flex items-center gap-3">
         <MCMAvatar initials={incoming.name.slice(0, 2).toUpperCase()} color={incoming.color} />
         <div className="min-w-0 flex-1">
