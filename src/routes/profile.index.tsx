@@ -394,8 +394,8 @@ function ProfilePage() {
               color={profile.avatar_color}
               size="lg"
             />
-            <label className="absolute -right-1 -bottom-1 flex size-11 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
-              <Camera className="size-5" />
+            <label className="absolute right-0 bottom-0 flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm">
+              <Camera className="size-4" />
               <span className="sr-only">Ubah foto profil</span>
               <input
                 type="file"
