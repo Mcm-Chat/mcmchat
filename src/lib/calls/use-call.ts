@@ -620,9 +620,9 @@ export function useCall(opts: {
               endedRef.current = true;
               setPhase("ended");
               void cleanup();
-            } else {
-              setPhase("error");
             }
+            // Selain itu layar tetap di fase "berdering" agar tombol Jawab
+            // bisa ditekan ulang sesuai instruksi pesan.
           });
       },
       decline: () => {
