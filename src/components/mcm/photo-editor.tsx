@@ -78,7 +78,7 @@ function limitCanvas(source: HTMLCanvasElement, max: number) {
 }
 
 function drawArrow(ctx: CanvasRenderingContext2D, a: Extract<Ann, { kind: "arrow" }>, w: number) {
-  const width = Math.max(3, w / 180);
+  const width = Math.max(6, (w / 110) * (a.weight || 1));
   ctx.strokeStyle = a.color;
   ctx.fillStyle = a.color;
   ctx.lineWidth = width;
@@ -88,7 +88,7 @@ function drawArrow(ctx: CanvasRenderingContext2D, a: Extract<Ann, { kind: "arrow
   ctx.lineTo(a.x2, a.y2);
   ctx.stroke();
   const ang = Math.atan2(a.y2 - a.y1, a.x2 - a.x1);
-  const head = width * 4;
+  const head = width * 3.6;
   ctx.beginPath();
   ctx.moveTo(a.x2, a.y2);
   ctx.lineTo(a.x2 - head * Math.cos(ang - Math.PI / 7), a.y2 - head * Math.sin(ang - Math.PI / 7));
