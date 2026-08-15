@@ -505,7 +505,7 @@ function VariantRowCard({
       </div>
       <div className="flex flex-wrap gap-1.5">
         <Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px]" onClick={onAdd}>
-          <Plus className="size-3.5" /> Tambah stok
+          <Plus className="size-3.5" /> Beli / tambah stok
         </Button>
         <Button
           size="sm"
