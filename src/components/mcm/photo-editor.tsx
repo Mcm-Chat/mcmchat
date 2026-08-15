@@ -17,7 +17,15 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type Ann =
-  | { kind: "arrow"; x1: number; y1: number; x2: number; y2: number; color: string }
+  | {
+      kind: "arrow";
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      color: string;
+      weight: number;
+    }
   | { kind: "text"; x: number; y: number; text: string; color: string; size: number }
   | { kind: "sticker"; x: number; y: number; emoji: string; size: number };
 
@@ -25,6 +33,14 @@ type Rect = { x: number; y: number; w: number; h: number };
 
 const COLORS = ["#ef4444", "#facc15", "#22c55e", "#3b82f6", "#ffffff", "#111827"];
 const STICKERS = ["✅", "⚠️", "📍", "🔥", "⭐", "❌", "👍", "📦"];
+
+/** Ketebalan panah relatif lebar foto agar tetap terbaca di layar HP. */
+const ARROW_WEIGHTS = [
+  { id: "m", label: "Sedang", factor: 1 },
+  { id: "l", label: "Tebal", factor: 1.6 },
+  { id: "xl", label: "Sangat tebal", factor: 2.4 },
+] as const;
+type ArrowWeightId = (typeof ARROW_WEIGHTS)[number]["id"];
 
 const QUALITIES = [
   { id: "high", label: "Tinggi", q: 0.92, max: 2400, hint: "Detail maksimal" },
