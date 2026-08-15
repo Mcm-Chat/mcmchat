@@ -75,6 +75,8 @@ export function useMessages(cid: string, uid?: string) {
   return {
     messages,
     isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
     hasOlder: query.hasNextPage,
     isFetchingOlder: query.isFetchingNextPage,
     fetchOlder: query.fetchNextPage,
