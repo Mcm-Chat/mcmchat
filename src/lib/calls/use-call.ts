@@ -156,6 +156,13 @@ export type UseCallResult = {
   toggleCamera: () => void;
   toggleSpeaker: () => void;
   switchCamera: () => void;
+  /** Daftar mic/kamera yang bisa dipilih saat panggilan berlangsung. */
+  devices: CallDevices;
+  micDeviceId: string | null;
+  cameraDeviceId: string | null;
+  refreshDevices: () => void;
+  setMicDevice: (deviceId: string) => void;
+  setCameraDevice: (deviceId: string) => void;
   attachLocalVideo: (el: HTMLVideoElement | null) => void;
   attachRemoteVideo: (el: HTMLVideoElement | null) => void;
 };
