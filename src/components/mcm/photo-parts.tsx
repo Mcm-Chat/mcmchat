@@ -243,6 +243,23 @@ export function PhotoFlow({
     </>
   );
 
+  // Editor tampil di atas langkah mana pun supaya foto yang baru dipilih
+  // (kamera atau galeri) langsung bisa dipotong/dianotasi sebelum dikirim.
+  if (editing && preview) {
+    return (
+      <PhotoEditorDialog
+        src={preview}
+        title="Edit foto sebelum dikirim"
+        onCancel={() => setEditing(false)}
+        onDone={(dataUrl) => {
+          setPreview(dataUrl);
+          setEditing(false);
+          toast.success("Perubahan foto disimpan");
+        }}
+      />
+    );
+  }
+
   if (step === "kamera") {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 py-10 text-center">
@@ -413,18 +430,6 @@ export function PhotoFlow({
 
   return (
     <div className="flex min-h-0 flex-col">
-      {editing && preview && (
-        <PhotoEditorDialog
-          src={preview}
-          title="Edit foto sebelum dikirim"
-          onCancel={() => setEditing(false)}
-          onDone={(dataUrl) => {
-            setPreview(dataUrl);
-            setEditing(false);
-            toast.success("Perubahan foto disimpan");
-          }}
-        />
-      )}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
         <section className="rounded-2xl border border-border p-3">
           <div className="flex items-center justify-between gap-2">
