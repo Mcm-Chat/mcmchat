@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
+import { playTone, playEndTone } from "@/lib/calls/tones";
 import {
   ArrowLeft,
   Mic,
@@ -12,6 +13,9 @@ import {
   PhoneOff,
   RefreshCcw,
   ShieldAlert,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
   Sparkles,
   Video,
   VideoOff,
@@ -92,6 +96,18 @@ function CallScreen() {
   const [errorDismissed, setErrorDismissed] = useState(false);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
+
+  // Nada tunggu (pemanggil) / nada dering (penerima) selama panggilan belum
+  // dijawab, lalu nada singkat saat panggilan berakhir.
+  useEffect(() => {
+    if (session.phase !== "outgoing" && session.phase !== "incoming") return;
+    const handle = playTone(session.phase === "outgoing" ? "ringback" : "ringtone");
+    return () => handle.stop();
+  }, [session.phase]);
+
+  useEffect(() => {
+    if (session.phase === "ended") playEndTone();
+  }, [session.phase]);
 
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
@@ -250,7 +266,10 @@ function CallScreen() {
               <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />
             )}
             <h2 className="text-2xl font-semibold">{name}</h2>
-            <p className="text-sm text-navy-foreground/75">{phaseLabel}</p>
+            <div className="flex items-center gap-2 text-sm text-navy-foreground/75">
+              <span>{phaseLabel}</span>
+              {session.phase === "connected" && <SignalBadge quality={session.quality} />}
+            </div>
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             <VoicePrivacyBadge active={voiceActive} className="mt-1" />
             {voiceFallback ? (
@@ -514,6 +533,23 @@ function CallScreen() {
         saving={savingVoice}
       />
     </div>
+  );
+}
+
+/** Indikator sinyal jaringan panggilan — jujur mengikuti laporan SFU. */
+function SignalBadge({ quality }: { quality: "excellent" | "good" | "poor" | "unknown" }) {
+  if (quality === "unknown") return null;
+  const map = {
+    excellent: { Icon: SignalHigh, text: "Sinyal bagus", tone: "text-success" },
+    good: { Icon: SignalMedium, text: "Sinyal sedang", tone: "text-navy-foreground/80" },
+    poor: { Icon: SignalLow, text: "Sinyal lemah", tone: "text-destructive" },
+  } as const;
+  const { Icon, text, tone } = map[quality];
+  return (
+    <span className={cn("flex items-center gap-1 text-xs", tone)} role="status" aria-label={text}>
+      <Icon className="size-4" aria-hidden="true" />
+      <span className="sr-only sm:not-sr-only">{text}</span>
+    </span>
   );
 }
 
