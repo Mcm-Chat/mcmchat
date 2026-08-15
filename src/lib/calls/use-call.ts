@@ -517,6 +517,8 @@ export function useCall(opts: {
         setPhase("outgoing");
       } else {
         setPhase("incoming");
+        // Datang dari tap "Jawab" di banner/notifikasi: langsung jawab.
+        if (consumeAnswerIntent(callId)) runAnswer(row);
       }
     })();
     return () => {
