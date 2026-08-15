@@ -23,6 +23,8 @@ export type ProviderState = {
   status: ProviderStatus;
   reason?: string;
   remotes: RemoteInfo[];
+  /** Kualitas jaringan lokal (dari SFU), untuk indikator sinyal di layar. */
+  quality?: "excellent" | "good" | "poor" | "unknown";
   /** Autoplay audio diblokir browser — UI menampilkan tombol "Aktifkan suara". */
   audioBlocked?: boolean;
   /** Terputus tak terduga (bukan hangup normal) — dapat dipulihkan. */
@@ -94,6 +96,14 @@ export const liveKitProvider: CallProvider = {
       dynacast: true,
       disconnectOnPageLeave: true,
       stopLocalTrackOnUnpublish: true,
+      // Pemrosesan bawaan browser tetap menyala: tanpa ini panggilan di ponsel
+      // terdengar bergema dan berisik saat memakai speaker.
+      audioCaptureDefaults: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
       videoCaptureDefaults: {
         resolution: opts.kind === "video" ? VideoPresets.h360.resolution : VideoPresets.h180.resolution,
         facingMode: "user",
@@ -104,6 +114,9 @@ export const liveKitProvider: CallProvider = {
         dtx: true,
         red: true,
         videoEncoding: VideoPresets.h360.encoding,
+        // Layer bawah 180p supaya SFU punya ruang turun saat sinyal jelek,
+        // bukan langsung membekukan gambar.
+        videoSimulcastLayers: [VideoPresets.h180],
         degradationPreference: "maintain-framerate",
       },
     });
@@ -115,6 +128,7 @@ export const liveKitProvider: CallProvider = {
     let audioBlocked = false;
     const audioEls = new Map<string, HTMLAudioElement>();
     let speakerSinkId: string | null = null;
+    let quality: NonNullable<ProviderState["quality"]> = "unknown";
     /** Sidik state terakhir — mencegah render ulang UI untuk state identik. */
     let lastEmit = "";
 
@@ -147,6 +161,7 @@ export const liveKitProvider: CallProvider = {
         status,
         remotes: remotes(),
         audioBlocked,
+        quality,
         ...(reason ? { reason } : {}),
         ...(unexpected ? { unexpected: true } : {}),
       };
@@ -205,6 +220,12 @@ export const liveKitProvider: CallProvider = {
       .on(RoomEvent.ParticipantConnected, sync)
       .on(RoomEvent.ParticipantDisconnected, sync)
       .on(RoomEvent.ActiveSpeakersChanged, sync)
+      .on(RoomEvent.ConnectionQualityChanged, (q, p) => {
+        if (p?.identity !== room.localParticipant.identity) return;
+        quality =
+          q === "excellent" ? "excellent" : q === "good" ? "good" : q === "poor" ? "poor" : "unknown";
+        sync();
+      })
       .on(RoomEvent.TrackMuted, sync)
       .on(RoomEvent.TrackUnmuted, sync)
       .on(RoomEvent.TrackSubscribed, (track) => {
@@ -232,7 +253,10 @@ export const liveKitProvider: CallProvider = {
       });
 
     emit("connecting");
-    await room.connect(opts.url, opts.token);
+    // Prewarm koneksi (DNS/TLS/ICE) supaya jeda "Menyambungkan…" jauh lebih
+    // pendek di jaringan seluler.
+    await room.prepareConnection(opts.url, opts.token).catch(() => undefined);
+    await room.connect(opts.url, opts.token, { autoSubscribe: true, maxRetries: 5 });
 
     if (opts.audioTrack) {
       await room.localParticipant.publishTrack(opts.audioTrack, { dtx: true, red: true });
