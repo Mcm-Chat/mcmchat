@@ -118,6 +118,23 @@ function CallScreen() {
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
 
+  // Izin mikrofon (dan kamera untuk panggilan video) diperiksa selama panggilan
+  // masuk berdering; tombol "Jawab" baru aktif setelah izin benar-benar ada.
+  const permission = useMediaPermission(
+    detail?.kind === "video" ? "video" : "audio",
+    session.phase === "incoming",
+  );
+  const answerBlocked = session.phase === "incoming" && !permission.ready;
+  const answerWithPermission = () => {
+    if (permission.ready) {
+      session.answer();
+      return;
+    }
+    void permission.request().then((next) => {
+      if (next === "granted") session.answer();
+    });
+  };
+
   // Pulihkan status terakhir supaya UI tidak kembali ke state yang salah
   // (mis. panel gagal hilang) setelah refresh atau pindah halaman.
   useEffect(() => {
