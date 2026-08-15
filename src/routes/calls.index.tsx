@@ -130,6 +130,24 @@ function CallsPage() {
   }, [userId]);
 
   /**
+   * Setelah panggilan berakhir/dibatalkan, kembalikan fokus keyboard ke tombol
+   * panggilan yang benar: tombol panggil ulang miliknya, atau tombol Panggilan baru.
+   */
+  useEffect(() => {
+    if (!calls) return;
+    const target = consumeCallReturnFocus();
+    if (!target) return;
+    const raf = requestAnimationFrame(() => {
+      const el =
+        target === CALL_RETURN_FOCUS_NEW
+          ? newCallRef.current
+          : document.getElementById(redialButtonId(target));
+      (el ?? newCallRef.current)?.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [calls]);
+
+  /**
    * Buka dialog "penyedia belum terhubung" sambil mengingat elemen pemicu,
    * supaya fokus kembali ke tempat semula setelah dialog ditutup.
    */
