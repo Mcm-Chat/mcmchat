@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw, SlidersHorizontal, Wrench } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
@@ -81,10 +82,52 @@ export function CallFailureRecovery({
   const retryRef = useRef<HTMLButtonElement | null>(null);
   const kind = classifyCallFailure(reason, unconfigured);
   const summary = summarizeCallFailure(reason, unconfigured);
+
+  // Setiap aksi pemulihan memberi umpan balik ringkas + langkah berikutnya,
+  // supaya jelas apa yang sedang terjadi dan apa yang harus dilakukan.
+  const handleRetry = () => {
+    if (kind === "permission") {
+      toast.loading("Meminta izin mikrofon/kamera…", {
+        id: "call-recovery",
+        description: "Pilih “Izinkan” pada permintaan sistem, lalu panggilan disambungkan otomatis.",
+      });
+    } else {
+      toast.loading("Menyambungkan ulang panggilan…", {
+        id: "call-recovery",
+        description: "Tunggu beberapa detik. Bila gagal lagi, coba ganti perangkat atau penyedia.",
+      });
+    }
+    onRetry?.();
+  };
+
+  const handleDevices = () => {
+    toast.info("Pilih mikrofon/kamera", {
+      id: "call-recovery",
+      description: "Setelah memilih perangkat, tutup sheet lalu tekan “Coba sambungkan lagi”.",
+    });
+    onOpenDevices?.();
+  };
+
+  const handleProvider = () => {
+    toast.info("Membuka pengaturan penyedia panggilan", {
+      id: "call-recovery",
+      description: "Lengkapi kredensial layanan panggilan, lalu kembali dan coba sambungkan lagi.",
+    });
+    onOpenProvider?.();
+  };
+
+  const handleDismiss = () => {
+    toast("Pesan gagal ditutup", {
+      id: "call-recovery",
+      description: "Anda bisa memanggil ulang kapan saja dari tombol panggil di riwayat panggilan.",
+    });
+    onDismiss?.();
+  };
+
   // Panel kegagalan diperlakukan sebagai dialog peringatan: Tab berputar di
   // dalam panel, Escape menutup, dan fokus kembali ke pemicu/tombol Kembali.
   const panelRef = useModalA11y<HTMLDivElement>({
-    onClose: () => onDismiss?.(),
+    onClose: () => (onDismiss ? handleDismiss() : undefined),
     active: Boolean(trapFocus),
     suspended: Boolean(suspendTrap),
     closeOnEscape: Boolean(onDismiss),
@@ -114,7 +157,7 @@ export function CallFailureRecovery({
       ref={retryRef}
       className="min-h-11 rounded-xl px-4"
       disabled={retrying}
-      onClick={onRetry}
+      onClick={handleRetry}
     >
       <RotateCcw className="mr-1.5 size-4" aria-hidden="true" />
       {retrying ? "Menyambungkan…" : summary.primary === "permission" ? "Minta izin lagi" : "Coba sambungkan lagi"}
@@ -122,14 +165,14 @@ export function CallFailureRecovery({
   ) : null;
 
   const deviceButton = onOpenDevices ? (
-    <Button key="devices" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={onOpenDevices}>
+    <Button key="devices" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={handleDevices}>
       <SlidersHorizontal className="mr-1.5 size-4" aria-hidden="true" />
       Ganti perangkat
     </Button>
   ) : null;
 
   const providerButton = onOpenProvider ? (
-    <Button key="provider" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={onOpenProvider}>
+    <Button key="provider" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={handleProvider}>
       <Wrench className="mr-1.5 size-4" aria-hidden="true" />
       Ganti penyedia
     </Button>
