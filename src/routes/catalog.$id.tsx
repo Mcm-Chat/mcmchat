@@ -17,6 +17,7 @@ import {
   ProductThumb,
   priceLabel,
 } from "@/components/mcm/catalog-parts";
+import { PurchaseDialog } from "@/components/mcm/purchase-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
