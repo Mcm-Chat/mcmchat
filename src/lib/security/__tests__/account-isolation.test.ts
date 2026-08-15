@@ -93,8 +93,6 @@ describe("audit statis media & penyimpanan", () => {
   });
 
   it("tidak ada key localStorage sensitif tanpa namespace akun", () => {
-
-    // tanpa namespace akun: tidak memuat data pengguna apa pun.
     const allowed = /"(mcm-theme|mcm-onboarded)"/;
     const bad: string[] = [];
     for (const f of files) {
