@@ -101,6 +101,7 @@ function CatalogDetail() {
     mode: "add" | "correct";
   } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
+  const [purchaseFor, setPurchaseFor] = useState<VariantRow | null>(null);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
 
   if (loading || isLoading) {
