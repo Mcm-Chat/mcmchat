@@ -573,15 +573,7 @@ function ChatRoom() {
           onRetry={async () => {
             await Promise.all([refetchConversations(), refetchMessages()]);
           }}
-          extra={
-            <Button
-              variant="ghost"
-              className="rounded-xl"
-              onClick={() => void navigate({ to: "/chat", search: {} })}
-            >
-              Kembali ke daftar chat
-            </Button>
-          }
+          links={["chat", "contacts", "support"]}
         />
       </AppShell>
     );
