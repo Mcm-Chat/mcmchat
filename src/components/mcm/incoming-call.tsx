@@ -29,6 +29,11 @@ import { useContactAliases } from "@/lib/contacts/alias";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import { markAnswerIntent } from "@/lib/calls/answer-intent";
 import { setIncomingCallActive } from "@/lib/calls/incoming-lock";
+import {
+  mediaPermissionCopy,
+  requestMediaPermission,
+  type MediaPermissionState,
+} from "@/lib/calls/media-permission";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -38,6 +43,9 @@ export function IncomingCallListener() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { nameOf } = useContactAliases();
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+  /** Status izin media saat pengguna menekan "Jawab" di banner. */
+  const [permState, setPermState] = useState<MediaPermissionState | null>(null);
+  const [asking, setAsking] = useState(false);
   /** Alasan banner tertutup, diumumkan lewat aria-live setelah fokus pulih. */
   const [closedNotice, setClosedNotice] = useState("");
   /** Elemen pemicu terakhir sebelum banner muncul (untuk pemulihan fokus). */
