@@ -93,7 +93,9 @@ describe("audit statis media & penyimpanan", () => {
   });
 
   it("tidak ada key localStorage sensitif tanpa namespace akun", () => {
-    const allowed = /"(mcm-theme|mcm-onboarded)"/;
+    // Kunci perangkat non-sensitif (tema, onboarding, preferensi animasi) boleh
+    // tanpa namespace akun: tidak memuat data pengguna apa pun.
+    const allowed = /"(mcm-theme|mcm-onboarded|mcm:last-reduce-motion)"/;
     const bad: string[] = [];
     for (const f of files) {
       // theme.tsx hanya menyimpan preferensi tema perangkat (non-sensitif).
