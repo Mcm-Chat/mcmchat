@@ -43,6 +43,18 @@ export const Route = createFileRoute("/call/prepare/$conversationId")({
   component: PreCallScreen,
 });
 
+type MediaState = "idle" | "processing" | "ready" | "error";
+
+/** Teks status media yang dibacakan pembaca layar. */
+function mediaStatusText(state: MediaState, micOn: boolean, camOn: boolean): string {
+  if (state === "processing") return "Memproses perangkat — meminta akses kamera dan mikrofon…";
+  if (state === "error") return "Gagal — perangkat media tidak dapat diakses.";
+  if (state === "idle") return "Kamera dan mikrofon dimatikan.";
+  if (micOn && camOn) return "Siap — kamera dan mikrofon aktif.";
+  if (camOn) return "Siap — kamera aktif.";
+  return "Siap — mikrofon aktif.";
+}
+
 function PreCallScreen() {
   const { conversationId } = Route.useParams();
   const { kind: initialKind } = Route.useSearch();
@@ -55,6 +67,7 @@ function PreCallScreen() {
   const [camOn, setCamOn] = useState(initialKind === "video");
   const [level, setLevel] = useState(0);
   const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaState, setMediaState] = useState<MediaState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [configured, setConfigured] = useState<boolean | null>(null);
@@ -84,7 +97,11 @@ function PreCallScreen() {
   useEffect(() => {
     let cancelled = false;
     stopMedia();
-    if (!micOn && !camOn) return;
+    if (!micOn && !camOn) {
+      setMediaState("idle");
+      return;
+    }
+    setMediaState("processing");
 
     void navigator.mediaDevices
       .getUserMedia({ audio: micOn, video: camOn ? { facingMode: "user" } : false })
@@ -95,6 +112,7 @@ function PreCallScreen() {
         }
         streamRef.current = stream;
         setMediaError(null);
+        setMediaState("ready");
         if (videoRef.current && camOn) videoRef.current.srcObject = stream;
         if (!micOn) return;
         const Ctx =
@@ -119,6 +137,7 @@ function PreCallScreen() {
       })
       .catch(() => {
         if (cancelled) return;
+        setMediaState("error");
         setMediaError(
           camOn
             ? "Tidak bisa mengakses kamera/mikrofon. Periksa izin perangkat."
@@ -176,6 +195,15 @@ function PreCallScreen() {
             </div>
           )}
         </section>
+
+        <p
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="text-xs text-muted-foreground"
+        >
+          {mediaStatusText(mediaState, micOn, camOn)}
+        </p>
 
         {mediaError && (
           <NotificationBanner
@@ -255,7 +283,14 @@ function PreCallScreen() {
             {CALL_PROVIDER_NOTICE}
           </p>
         )}
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+          {starting ? "Memulai panggilan…" : ""}
+        </p>
+        {error && (
+          <p role="alert" aria-live="assertive" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
 
         <Button
           className="min-h-12 w-full rounded-xl"
