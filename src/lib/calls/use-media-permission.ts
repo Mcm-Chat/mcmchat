@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   canAnswer,
+  isAudioOnly,
   mediaPermissionCopy,
   queryMediaPermission,
   requestMediaPermission,
@@ -13,6 +14,8 @@ import {
 export type UseMediaPermission = {
   state: MediaPermissionState;
   ready: boolean;
+  /** Panggilan hanya bisa berjalan tanpa kamera (izin kamera tidak ada). */
+  audioOnly: boolean;
   requesting: boolean;
   copy: MediaPermissionCopy;
   /** Minta izin (atau periksa ulang setelah diubah di pengaturan). */
@@ -64,6 +67,7 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
   return {
     state,
     ready: canAnswer(state),
+    audioOnly: isAudioOnly(state),
     requesting,
     copy: mediaPermissionCopy(state, kind),
     request,
