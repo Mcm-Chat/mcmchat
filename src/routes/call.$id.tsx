@@ -579,19 +579,17 @@ function CallScreen() {
                   <ControlButton
                     label={session.controls.muted ? "Suara mati" : "Mikrofon"}
                     active={session.controls.muted}
-                    disabled={!micGranted}
                     hint={micGranted ? undefined : micHint}
                     ariaLabel="Bisukan mikrofon"
-                    onClick={session.toggleMute}
+                    onClick={withPermission(micGranted, micHint, session.toggleMute)}
                     icon={session.controls.muted ? MicOff : Mic}
                   />
                   <ControlButton
                     label="Kamera"
                     active={!session.controls.cameraOn}
-                    disabled={!cameraGranted}
                     hint={cameraGranted ? undefined : cameraHint}
                     ariaLabel="Nyalakan kamera"
-                    onClick={session.toggleCamera}
+                    onClick={withPermission(cameraGranted, cameraHint, session.toggleCamera, true)}
                     icon={session.controls.cameraOn ? Video : VideoOff}
                   />
                   {/* Tombol speaker hanya muncul bila rute keluaran memang bisa
@@ -617,22 +615,20 @@ function CallScreen() {
                   <ControlButton
                     label="Balik kamera"
                     active={false}
-                    disabled={!cameraGranted}
                     hint={cameraGranted ? undefined : cameraHint}
                     ariaLabel="Balik kamera"
-                    onClick={session.switchCamera}
+                    onClick={withPermission(cameraGranted, cameraHint, session.switchCamera, true)}
                     icon={RefreshCcw}
                   />
                   <ControlButton
                     label="Perangkat"
                     active={devicesOpen}
-                    disabled={!micGranted}
                     hint={micGranted ? undefined : micHint}
                     ariaLabel="Pilih mikrofon dan kamera"
-                    onClick={() => {
+                    onClick={withPermission(micGranted, micHint, () => {
                       session.refreshDevices();
                       setDevicesOpen(true);
-                    }}
+                    })}
                     icon={SlidersHorizontal}
                   />
                 </div>
