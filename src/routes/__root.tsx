@@ -21,6 +21,7 @@ import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { installViewportMetrics } from "@/lib/mobile/viewport";
 import { initOutboxFlush } from "@/lib/api/outbox";
 import { installImportantToastFocus } from "@/lib/a11y/toast-focus";
+import { installEscapeDismiss } from "@/lib/a11y/escape-dismiss";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import { ReduceMotionProvider, MOTION_BOOTSTRAP_SCRIPT } from "@/lib/a11y/reduce-motion";
 
@@ -185,11 +186,13 @@ function RootComponent() {
     const offOutbox = initOutboxFlush();
     const offViewport = installViewportMetrics();
     const offToastFocus = installImportantToastFocus();
+    const offEscape = installEscapeDismiss();
     return () => {
       offConn();
       offOutbox();
       offViewport();
       offToastFocus();
+      offEscape();
     };
   }, []);
 
@@ -204,7 +207,12 @@ function RootComponent() {
             <PushSession />
             <IncomingCallListener />
             <ScreenPrivacyGuard />
-            <Toaster position="top-center" richColors closeButton />
+            <Toaster
+              position="top-center"
+              richColors
+              closeButton
+              closeButtonAriaLabel="Tutup notifikasi"
+            />
           </AuthProvider>
         </ReduceMotionProvider>
       </ThemeProvider>
