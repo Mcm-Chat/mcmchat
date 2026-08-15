@@ -18,6 +18,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
+import { ForwardDialog } from "@/components/mcm/forward-dialog";
 import { LocationShareFlow, PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
