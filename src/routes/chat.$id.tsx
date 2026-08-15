@@ -619,6 +619,15 @@ function ChatRoom() {
                   variant="ghost"
                   size="sm"
                   onClick={() =>
+                    setForwarding(messages.filter((m) => selection.includes(m.id)))
+                  }
+                >
+                  Teruskan
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
                     void deleteForMe(selection, userId!).then(() => {
                       setSelection([]);
                       refresh();
