@@ -340,7 +340,13 @@ function PreCallScreen() {
         )}
         <CallStatusLive
           phase={
-            error ? "error" : configured === false ? "unconfigured" : starting ? "connecting" : "idle"
+            error
+              ? "error"
+              : configured === false
+                ? "unconfigured"
+                : starting
+                  ? "connecting"
+                  : "loading"
           }
           kind={kind}
           name="kontak"
