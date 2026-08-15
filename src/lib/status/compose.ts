@@ -169,21 +169,6 @@ function drawArrow(ctx: CanvasRenderingContext2D, layer: Extract<Layer, { type: 
   ctx.restore();
 }
 
-function unusedPixelatedCopy(img: CanvasImageSource): HTMLCanvasElement {
-  const small = document.createElement("canvas");
-  small.width = 48;
-  small.height = 85;
-  const sctx = small.getContext("2d")!;
-  sctx.drawImage(img, 0, 0, small.width, small.height);
-  const out = document.createElement("canvas");
-  out.width = CANVAS_W;
-  out.height = CANVAS_H;
-  const octx = out.getContext("2d")!;
-  octx.imageSmoothingEnabled = false;
-  octx.drawImage(small, 0, 0, CANVAS_W, CANVAS_H);
-  return out;
-}
-
 const toBlob = (canvas: HTMLCanvasElement, quality: number) =>
   new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
