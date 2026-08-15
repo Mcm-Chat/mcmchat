@@ -264,3 +264,33 @@ describe("Panel pemulihan panggilan gagal", () => {
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
   });
 });
+
+describe("panel pemulihan — sheet perangkat/efek suara", () => {
+  it("tidak memindahkan fokus saat trap dijeda dan saat kembali dari sheet", async () => {
+    const outside = document.createElement("button");
+    outside.textContent = "Atur";
+    document.body.appendChild(outside);
+
+    const view = render(
+      <CallFailureRecovery trapFocus reason="NotAllowedError" onRetry={() => {}} onOpenDevices={() => {}} />,
+    );
+    await new Promise((r) => setTimeout(r, 30));
+
+    // Sheet terbuka: fokus milik sheet (disimulasikan elemen di luar panel).
+    view.rerender(
+      <CallFailureRecovery trapFocus suspendTrap reason="NotAllowedError" onRetry={() => {}} onOpenDevices={() => {}} />,
+    );
+    outside.focus();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(document.activeElement).toBe(outside);
+
+    // Sheet tertutup: trap menyala lagi tanpa merebut fokus.
+    view.rerender(
+      <CallFailureRecovery trapFocus reason="NotAllowedError" onRetry={() => {}} onOpenDevices={() => {}} />,
+    );
+    await new Promise((r) => setTimeout(r, 30));
+    expect(document.activeElement).toBe(outside);
+
+    outside.remove();
+  });
+});
