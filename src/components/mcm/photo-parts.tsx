@@ -482,27 +482,7 @@ export function PhotoFlow({
               </Button>
             </div>
           )}
-          <input
-            ref={galleryRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              void pick(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
-          <input
-            ref={cameraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            onChange={(e) => {
-              void pick(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
+          {fileInputs}
         </section>
 
         <section className="space-y-2 rounded-2xl border border-border p-3">
