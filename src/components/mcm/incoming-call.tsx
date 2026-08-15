@@ -5,7 +5,7 @@
  * Sumbernya adalah Realtime pada tabel `calls` (RLS memastikan hanya peserta
  * yang menerima), bukan simulasi lokal.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Phone, PhoneOff, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
