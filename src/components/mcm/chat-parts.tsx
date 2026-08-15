@@ -1027,17 +1027,18 @@ export function ChatComposer({
                   : []),
                 { icon: Paperclip, label: "Dokumen", fn: () => onAttach("document") },
               ].map(({ icon: Icon, label, fn }) => (
-                <button
+                <Button
                   key={label}
                   type="button"
+                  variant="ghost"
                   onClick={() => runAction(fn)}
-                  className="flex flex-col items-center gap-1.5 rounded-2xl border border-border p-3 text-center hover:bg-muted"
+                  className="h-auto min-h-28 whitespace-normal flex-col gap-1.5 rounded-2xl border border-border p-3 text-center hover:bg-muted"
                 >
                   <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Icon className="size-5" />
                   </span>
                   <span className="text-[11px] leading-tight font-medium">{label}</span>
-                </button>
+                </Button>
               ))}
             </div>
           </SheetContent>

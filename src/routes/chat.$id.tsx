@@ -18,7 +18,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
-import { PhotoFlow } from "@/components/mcm/photo-parts";
+import { LocationShareFlow, PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { AccessFallback } from "@/components/mcm/access-fallback";
@@ -139,6 +139,8 @@ function ChatRoom() {
   const [selection, setSelection] = useState<string[]>([]);
   const [confirmAll, setConfirmAll] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoMode, setPhotoMode] = useState<"camera" | "gallery">("camera");
+  const [locationOpen, setLocationOpen] = useState(false);
   const [stickerOpen, setStickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
@@ -153,6 +155,7 @@ function ChatRoom() {
   // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
   // mode pilih), bukan langsung meninggalkan percakapan.
   useBackDismiss(photoOpen, () => setPhotoOpen(false));
+  useBackDismiss(locationOpen, () => setLocationOpen(false));
   useBackDismiss(stickerOpen, () => setStickerOpen(false));
   useBackDismiss(detailOpen, () => setDetailOpen(false));
   useBackDismiss(ledgerOpen, () => setLedgerOpen(false));
@@ -974,12 +977,19 @@ function ChatRoom() {
             if (v) notifyTyping();
           }}
           onSend={doSend}
-          onAttach={(kind) => (kind === "document" ? docRef.current?.click() : setPhotoOpen(true))}
+          onAttach={(kind) => {
+            if (kind === "document") {
+              docRef.current?.click();
+              return;
+            }
+            setPhotoMode(kind === "camera" ? "camera" : "gallery");
+            setPhotoOpen(true);
+          }}
           onVoice={(blob, sec) => void sendVoice(blob, sec)}
           onNewLedger={() => setLedgerOpen(true)}
           onNewSale={business ? () => setSaleOpen(true) : undefined}
           onNewPreparation={business ? () => setPrepOpen(true) : undefined}
-          onLocation={() => setPhotoOpen(true)}
+          onLocation={() => setLocationOpen(true)}
           onSticker={() => setStickerOpen(true)}
           editing={!!editingId}
           onCancelEdit={() => {
@@ -995,6 +1005,7 @@ function ChatRoom() {
       <input
         ref={docRef}
         type="file"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,application/pdf,text/plain,text/csv,application/zip"
         hidden
         onChange={(e) => {
           void sendDocument(e.target.files?.[0]);
@@ -1014,16 +1025,37 @@ function ChatRoom() {
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="h-[92dvh] rounded-t-3xl p-0">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle>Kirim foto ke {headerName}</SheetTitle>
+            <SheetTitle>{photoMode === "camera" ? "Ambil foto" : "Foto & lokasi"}</SheetTitle>
           </SheetHeader>
           {userId && (
             <PhotoFlow
               userId={userId}
               conversations={conversations ?? []}
               fixedConversationIds={[id]}
+              sourceMode={photoMode}
+              locationDefault={photoMode === "gallery"}
               onCancel={() => setPhotoOpen(false)}
               onDone={() => {
                 setPhotoOpen(false);
+                refresh();
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={locationOpen} onOpenChange={setLocationOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl p-0">
+          <SheetHeader className="px-4 pt-4 pb-3">
+            <SheetTitle>Kirim lokasi ke {headerName}</SheetTitle>
+          </SheetHeader>
+          {userId && (
+            <LocationShareFlow
+              userId={userId}
+              conversationId={id}
+              onCancel={() => setLocationOpen(false)}
+              onDone={() => {
+                setLocationOpen(false);
                 refresh();
               }}
             />
