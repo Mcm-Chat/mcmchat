@@ -357,6 +357,13 @@ function CallsPage() {
         </div>
       )}
 
+      <MissedCallActions
+        userId={userId}
+        target={missedTarget}
+        onOpenChange={(o) => (o ? undefined : setMissedTarget(null))}
+        onReminderSaved={reloadReminders}
+      />
+
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
         <DialogTrigger asChild>
           <Button
