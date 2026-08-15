@@ -576,10 +576,15 @@ export function MessageBubble({
         onAction("select", message);
       }}
     >
-      <div className={cn("flex max-w-[80%] flex-col", mine ? "items-end" : "items-start")}>
+      <div
+        className={cn(
+          "flex min-w-0 max-w-[80%] flex-col",
+          mine ? "items-end" : "items-start",
+        )}
+      >
         <div
           className={cn(
-            "relative rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45]",
+            "relative min-w-0 max-w-full rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45] [overflow-wrap:anywhere]",
             isSticker
               ? "bg-transparent px-0 py-0 shadow-none"
               : mine
