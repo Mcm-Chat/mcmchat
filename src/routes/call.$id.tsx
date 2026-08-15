@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
@@ -98,6 +98,9 @@ function CallScreen() {
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
   const [errorDismissed, setErrorDismissed] = useState(false);
+  const answerRef = useRef<HTMLButtonElement | null>(null);
+  const hangupRef = useRef<HTMLButtonElement | null>(null);
+  const backRef = useRef<HTMLButtonElement | null>(null);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
 
@@ -118,6 +121,23 @@ function CallScreen() {
   useEffect(() => {
     if (session.phase === "error" || session.phase === "unconfigured") setErrorDismissed(false);
   }, [session.phase, session.reason]);
+
+  // Fokus keyboard mengikuti fase panggilan: saat panggilan masuk fokus ke
+  // "Jawab", setelah diterima ke "Akhiri panggilan", dan setelah ditolak/
+  // berakhir ke tombol "Kembali" agar fokus tidak pernah hilang ke <body>.
+  useEffect(() => {
+    const target =
+      session.phase === "incoming"
+        ? answerRef
+        : session.phase === "connected" || session.phase === "connecting"
+          ? hangupRef
+          : session.phase === "ended"
+            ? backRef
+            : null; // fase "error"/"unconfigured" difokuskan panel pemulihan
+    if (!target) return;
+    const raf = requestAnimationFrame(() => target.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [session.phase]);
 
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
@@ -322,7 +342,20 @@ function CallScreen() {
 
             {session.phase === "incoming" ? (
               <div className="flex items-center justify-center gap-10">
-                <div className="flex flex-col items-center gap-1.5">
+                {/* Jawab lebih dulu di DOM (urutan Tab), tetap di kanan secara visual. */}
+                <div className="order-2 flex flex-col items-center gap-1.5">
+                  <Button
+                    ref={answerRef}
+                    size="icon"
+                    className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
+                    aria-label="Jawab panggilan"
+                    onClick={session.answer}
+                  >
+                    <PhoneIcon className="size-7" />
+                  </Button>
+                  <span className="text-[10px] text-white/70">Jawab</span>
+                </div>
+                <div className="order-1 flex flex-col items-center gap-1.5">
                   <Button
                     size="icon"
                     className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -332,17 +365,6 @@ function CallScreen() {
                     <PhoneOff className="size-7" />
                   </Button>
                   <span className="text-[10px] text-white/70">Tolak</span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <Button
-                    size="icon"
-                    className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
-                    aria-label="Jawab panggilan"
-                    onClick={session.answer}
-                  >
-                    <PhoneIcon className="size-7" />
-                  </Button>
-                  <span className="text-[10px] text-white/70">Jawab</span>
                 </div>
               </div>
             ) : (
@@ -404,6 +426,7 @@ function CallScreen() {
                 </div>
                 <div className="flex justify-center">
                   <Button
+                    ref={hangupRef}
                     size="icon"
                     className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     aria-label="Akhiri panggilan"
@@ -444,6 +467,7 @@ function CallScreen() {
     <div className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
       <div className="flex items-center gap-2">
         <Button
+          ref={backRef}
           variant="ghost"
           size="icon"
           aria-label="Kembali"

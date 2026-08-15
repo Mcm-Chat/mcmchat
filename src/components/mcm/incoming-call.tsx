@@ -22,6 +22,7 @@ import {
 } from "@/lib/api/calls";
 import { onConnectionChange } from "@/lib/realtime/connection";
 import { playTone } from "@/lib/calls/tones";
+import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -30,6 +31,14 @@ export function IncomingCallListener() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+  // Banner panggilan masuk diperlakukan sebagai modal: fokus dikunci di dalam,
+  // dan saat ditutup (jawab/tolak) fokus kembali ke elemen sebelumnya.
+  // Escape sengaja tidak menolak panggilan agar tidak ada penolakan tak sengaja.
+  const bannerRef = useModalA11y<HTMLDivElement>({
+    onClose: () => undefined,
+    active: Boolean(incoming),
+    closeOnEscape: false,
+  });
 
   // Pemulihan: event INSERT bisa terlewat saat aplikasi di latar belakang atau
   // realtime sedang putus. Saat kembali ke depan / tersambung ulang kita baca
@@ -113,7 +122,14 @@ export function IncomingCallListener() {
   const isVideo = incoming.call.kind === "video";
 
   return (
-    <div className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 rounded-2xl border border-white/15 bg-navy/95 p-4 text-navy-foreground shadow-xl backdrop-blur">
+    <div
+      ref={bannerRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${isVideo ? "Panggilan video" : "Panggilan suara"} masuk dari ${incoming.name}`}
+      tabIndex={-1}
+      className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 rounded-2xl border border-white/15 bg-navy/95 p-4 text-navy-foreground shadow-xl outline-none backdrop-blur"
+    >
       <CallStatusLive
         assertive
         phase="incoming"
@@ -129,29 +145,31 @@ export function IncomingCallListener() {
             {isVideo ? "Panggilan video masuk" : "Panggilan suara masuk"}
           </p>
         </div>
-        <Button
-          size="icon"
-          aria-label="Tolak panggilan"
-          className="size-11 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          onClick={() => {
-            const id = incoming.call.id;
-            setIncoming(null);
-            void declineCall(id).catch(() => undefined);
-          }}
-        >
-          <PhoneOff className="size-5" />
-        </Button>
+        {/* Urutan Tab: Jawab lebih dulu (aksi utama), Tolak berikutnya —
+            tata letak visual tetap Tolak di kiri lewat utilitas order. */}
         <Button
           size="icon"
           aria-label="Jawab panggilan"
-          className="size-11 rounded-full bg-success text-success-foreground hover:bg-success/90"
+          className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-white"
           onClick={() => {
             const id = incoming.call.id;
             setIncoming(null);
             void navigate({ to: "/call/$id", params: { id } });
           }}
         >
-          <Phone className="size-5" />
+          <Phone className="size-5" aria-hidden="true" />
+        </Button>
+        <Button
+          size="icon"
+          aria-label="Tolak panggilan"
+          className="order-1 size-11 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-white"
+          onClick={() => {
+            const id = incoming.call.id;
+            setIncoming(null);
+            void declineCall(id).catch(() => undefined);
+          }}
+        >
+          <PhoneOff className="size-5" aria-hidden="true" />
         </Button>
       </div>
     </div>
