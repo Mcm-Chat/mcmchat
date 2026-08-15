@@ -48,6 +48,7 @@ import { useMyBusiness } from "@/lib/api/queries";
 import { AvatarEditor } from "@/components/mcm/avatar-editor";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { AvatarAudienceDialog } from "@/components/mcm/avatar-audience-dialog";
+import { AccessibilityGuidePanel } from "@/components/mcm/accessibility-guide-panel";
 import {
   AVATAR_PRIVACY_LABEL,
   commitAvatar,
