@@ -300,3 +300,102 @@ export const sendPrepareResult = createServerFn({ method: "POST" })
     }
     return { ok: true as const, summary };
   });
+
+/** Selesaikan penyiapan + catat penjualan/piutang + kirim satu bubble hasil. */
+export const sendPrepareSale = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        token: z.string().min(20),
+        idempotencyKey: z.string().min(8).max(80),
+        prices: z
+          .array(
+            z.object({
+              itemId: z.string().uuid(),
+              price: z.number().nonnegative().max(1_000_000_000),
+              discount: z.number().nonnegative().max(1_000_000_000).default(0),
+            }),
+          )
+          .min(1),
+        discount: z.number().nonnegative().max(1_000_000_000).default(0),
+        extraFee: z.number().nonnegative().max(1_000_000_000).default(0),
+        paymentMethod: z.enum(["cash", "transfer", "dp", "credit"]),
+        paidAmount: z.number().nonnegative().max(1_000_000_000).default(0),
+        dueDate: z.string().max(20).nullable().default(null),
+        note: z.string().max(300).default(""),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { jobIdFromToken } = await import("./prepare.server");
+    const { runPrepareSale } = await import("./prepare-sale.server");
+    const jobId = await jobIdFromToken(data.token);
+    if (!jobId) throw new Error("Tautan tidak berlaku");
+    return runPrepareSale({ ...data, jobId });
+  });
+
+const _unusedSendPrepareResult = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        token: z.string().min(20),
+        target: z.enum(["customer", "seller"]),
+        note: z.string().max(300).default(""),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { jobIdFromToken, loadTask } = await import("./prepare.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const jobId = await jobIdFromToken(data.token);
+    if (!jobId) throw new Error("Tautan tidak berlaku");
+    const task = await loadTask(jobId);
+    if (!task) throw new Error("Tugas tidak ditemukan");
+    if (task.status !== "completed")
+      throw new Error("Selesaikan tugas dulu sebelum mengirim hasil");
+
+    const { data: job } = await supabaseAdmin
+      .from("preparation_jobs")
+      .select("conversation_id, assigned_user_id, created_by, code, customer_name")
+      .eq("id", jobId)
+      .maybeSingle();
+    if (!job) throw new Error("Tugas tidak ditemukan");
+
+    const summary = buildSummary(task, data.note);
+
+    if (data.target === "customer") {
+      if (!job.conversation_id)
+        throw new Error("Tugas ini belum terhubung ke chat pelanggan. Gunakan tombol Bagikan.");
+      const { error } = await supabaseAdmin.from("messages").insert({
+        conversation_id: job.conversation_id,
+        sender_id: job.assigned_user_id,
+        kind: "system",
+        body: summary,
+        payload: { prep_job_id: jobId, kind: "preparation_result" } as never,
+      });
+      if (error) throw new Error("Gagal mengirim ke chat pelanggan");
+      return { ok: true as const, summary };
+    }
+
+    if (!job.created_by) throw new Error("Penjual pengirim tautan tidak ditemukan");
+    const { dispatchEventPush } = await import("@/lib/push/dispatch.server");
+    await dispatchEventPush({
+      kind: "task_completed",
+      category: "tasks",
+      userId: job.created_by,
+      title: `Konfirmasi penyiapan ${job.code}`,
+      body: data.note.trim() || `${job.customer_name || "Pelanggan"} • hasil siap diperiksa`,
+      route: `/tasks/${jobId}`,
+      jobId,
+    }).catch(() => undefined);
+    if (job.conversation_id) {
+      await supabaseAdmin.from("messages").insert({
+        conversation_id: job.conversation_id,
+        sender_id: job.assigned_user_id,
+        kind: "system",
+        body: `Konfirmasi ke penjual: ${summary}`,
+        payload: { prep_job_id: jobId, kind: "preparation_confirmed" } as never,
+      });
+    }
+    return { ok: true as const, summary };
+  });
