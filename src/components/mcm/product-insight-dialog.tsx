@@ -182,3 +182,43 @@ function Cell({ label, value, tone }: { label: string; value: string; tone?: str
     </div>
   );
 }
+
+function PurchaseEvidence({
+  photoPath,
+  locationUrl,
+  locationLabel,
+}: {
+  photoPath: string;
+  locationUrl: string;
+  locationLabel: string;
+}) {
+  const url = useSignedUrl("product-photos", photoPath || null);
+  if (!photoPath && !locationUrl) return null;
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      {url && (
+        <img src={url} alt="Foto barang masuk" className="size-14 rounded-lg object-cover" />
+      )}
+      {locationUrl && (
+        <a
+          href={locationUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-8 min-w-0 items-center gap-1 rounded-lg bg-primary px-2.5 text-[11px] font-medium text-primary-foreground"
+        >
+          <MapPin className="size-3.5 shrink-0" />
+          <span className="truncate">{locationLabel || "Buka Lokasi"}</span>
+        </a>
+      )}
+    </div>
+  );
+}
+
+function CellUnused({ label, value, tone }: { label: string; value: string; tone?: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-muted-foreground">{label}</p>
+      <p className={`truncate font-semibold ${tone ?? ""}`}>{value}</p>
+    </div>
+  );
+}
