@@ -22,7 +22,12 @@ export const COUNT_UNIT_LIST = ["pcs", "botol", "karton", "koli", "dus", "sak"] 
 export type CountUnit = (typeof COUNT_UNIT_LIST)[number];
 export const COUNT_BASE_UNITS = ["pcs", "botol"] as const;
 
-export const MIN_WEIGHT_GRAM = 0.01;
+/**
+ * Berat terkecil yang boleh disimpan: 0,0001 g (0,1 mg).
+ * Satuan tampilan `mg` didukung, jadi batas lama 0,01 g memblokir varian
+ * berskala miligram (mis. 0,2 mg) padahal presisi NUMERIC mencukupi.
+ */
+export const MIN_WEIGHT_GRAM = 0.0001;
 const DECIMAL_SCALE = 6;
 
 export function isWeightUnit(u: string): u is WeightUnit {
