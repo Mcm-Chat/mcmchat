@@ -3,11 +3,21 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Camera,
+  CheckCheck,
+  CheckSquare,
   CircleDashed,
+  Archive,
+  ArchiveRestore,
+  BellOff,
+  Bell,
+  Pin,
+  PinOff,
   MessageCirclePlus,
   MessagesSquare,
   Search,
+  Trash2,
   Users,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -17,6 +27,16 @@ import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primiti
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { createGroup, getOrCreateDirect } from "@/lib/api/chat";
+import { clearConversationForMe, createGroup, getOrCreateDirect, markRead } from "@/lib/api/chat";
 import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import { sendProductCard } from "@/lib/api/product-card";
 import { useRequireAuth } from "@/lib/api/guard";
@@ -84,6 +104,10 @@ function ChatIndex() {
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
   const { send: sendProductId, variant: sendVariantId } = Route.useSearch();
   const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const list = useMemo(() => {
     const all = conversations ?? [];
@@ -96,6 +120,45 @@ function ChatIndex() {
   }, [conversations, q, tab]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+
+  const selectedConvs = useMemo(
+    () => list.filter((c) => selected.includes(c.id)),
+    [list, selected],
+  );
+  const allSelected = list.length > 0 && selected.length === list.length;
+
+  const exitSelect = () => {
+    setSelectMode(false);
+    setSelected([]);
+  };
+
+  const toggleSelect = (id: string) =>
+    setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
+  const toggleSelectAll = () => setSelected(allSelected ? [] : list.map((c) => c.id));
+
+  /** Jalankan aksi massal berurutan agar error satu percakapan tidak menutup sisanya. */
+  const runBulk = async (label: string, fn: (conversationId: string) => Promise<unknown>) => {
+    if (selected.length === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    const toastId = toast.loading(`${label}…`);
+    let ok = 0;
+    let failed = 0;
+    for (const id of selected) {
+      try {
+        await fn(id);
+        ok += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setBulkBusy(false);
+    if (failed === 0) toast.success(`${label}: ${ok} percakapan`, { id: toastId });
+    else toast.error(`${label}: ${ok} berhasil, ${failed} gagal`, { id: toastId });
+    void refresh();
+    void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "messages" });
+    exitSelect();
+  };
 
   // Daftar percakapan tampil = perangkat ini menerima pesan → catat delivery
   // receipt untuk semua pesan masuk yang belum punya `delivered_at`.
@@ -206,10 +269,45 @@ function ChatIndex() {
   return (
     <AppShell
       header={
+        selectMode ? (
+          <MobileHeader
+            title={`${selected.length} dipilih`}
+            actions={
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-11 rounded-xl"
+                  onClick={toggleSelectAll}
+                >
+                  {allSelected ? "Kosongkan" : "Tandai semua"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Keluar mode pilih"
+                  className="size-11"
+                  onClick={exitSelect}
+                >
+                  <X className="size-5" />
+                </Button>
+              </>
+            }
+          />
+        ) : (
         <MobileHeader
           title="Chat"
           actions={
             <>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Pilih percakapan"
+                className="size-11"
+                onClick={() => setSelectMode(true)}
+              >
+                <CheckSquare className="size-5" />
+              </Button>
               <Button
                 asChild
                 variant="ghost"
@@ -355,6 +453,7 @@ function ChatIndex() {
             </div>
           </div>
         </MobileHeader>
+        )
       }
     >
       {sendProductId && (
@@ -401,8 +500,26 @@ function ChatIndex() {
       ) : (
         <ul className="divide-y divide-border/70">
           {list.map((c) => (
-            <li key={c.id} className="relative">
-              {sendProductId && (
+            <li key={c.id} className="relative flex items-center">
+              {selectMode && (
+                <label className="flex min-h-14 shrink-0 items-center py-2 pl-3">
+                  <Checkbox
+                    checked={selected.includes(c.id)}
+                    onCheckedChange={() => toggleSelect(c.id)}
+                    aria-label={`Pilih percakapan ${c.title_resolved}`}
+                  />
+                </label>
+              )}
+              <div className="min-w-0 flex-1">
+              {selectMode && (
+                <button
+                  type="button"
+                  onClick={() => toggleSelect(c.id)}
+                  aria-label={`Pilih percakapan ${c.title_resolved}`}
+                  className="absolute inset-0 z-10"
+                />
+              )}
+              {!selectMode && sendProductId && (
                 <button
                   type="button"
                   disabled={!!sendingTo}
@@ -426,19 +543,123 @@ function ChatIndex() {
                 onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
                 onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}
               />
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <Button
-        size="icon"
-        aria-label="Buka kamera"
-        className="fixed right-4 bottom-20 z-40 size-13 rounded-full shadow-lg sm:right-[max(1rem,calc(50%-13rem))]"
-        onClick={() => void navigate({ to: "/photo/new" })}
-      >
-        <Camera className="size-5.5" />
-      </Button>
+      {selectMode ? (
+        <div className="fixed inset-x-0 bottom-16 z-40 mx-auto max-w-md border-t border-border bg-background/95 px-2 py-2 backdrop-blur">
+          <div className="grid grid-cols-5 gap-1">
+            <BulkAction
+              icon={CheckCheck}
+              label="Dibaca"
+              disabled={bulkBusy || selected.length === 0}
+              onClick={() => void runBulk("Tandai dibaca", (id) => markRead(id))}
+            />
+            <BulkAction
+              icon={selectedConvs.every((c) => c.me.is_pinned) ? PinOff : Pin}
+              label={selectedConvs.every((c) => c.me.is_pinned) ? "Lepas" : "Sematkan"}
+              disabled={bulkBusy || selected.length === 0}
+              onClick={() => {
+                const pin = !selectedConvs.every((c) => c.me.is_pinned);
+                void runBulk(pin ? "Sematkan" : "Lepas sematan", (id) =>
+                  updateMyConversationPreferences(id, { pinned: pin }),
+                );
+              }}
+            />
+            <BulkAction
+              icon={selectedConvs.every((c) => c.me.is_muted) ? Bell : BellOff}
+              label={selectedConvs.every((c) => c.me.is_muted) ? "Bunyikan" : "Bisukan"}
+              disabled={bulkBusy || selected.length === 0}
+              onClick={() => {
+                const mute = !selectedConvs.every((c) => c.me.is_muted);
+                void runBulk(mute ? "Bisukan" : "Bunyikan", (id) =>
+                  updateMyConversationPreferences(id, { muted: mute }),
+                );
+              }}
+            />
+            <BulkAction
+              icon={selectedConvs.every((c) => c.me.is_archived) ? ArchiveRestore : Archive}
+              label={selectedConvs.every((c) => c.me.is_archived) ? "Buka" : "Arsip"}
+              disabled={bulkBusy || selected.length === 0}
+              onClick={() => {
+                const arch = !selectedConvs.every((c) => c.me.is_archived);
+                void runBulk(arch ? "Arsipkan" : "Keluarkan dari arsip", (id) =>
+                  updateMyConversationPreferences(id, { archived: arch }),
+                );
+              }}
+            />
+            <BulkAction
+              icon={Trash2}
+              label="Hapus"
+              destructive
+              disabled={bulkBusy || selected.length === 0}
+              onClick={() => setConfirmClear(true)}
+            />
+          </div>
+        </div>
+      ) : (
+        <Button
+          size="icon"
+          aria-label="Buka kamera"
+          className="fixed right-4 bottom-20 z-40 size-13 rounded-full shadow-lg sm:right-[max(1rem,calc(50%-13rem))]"
+          onClick={() => void navigate({ to: "/photo/new" })}
+        >
+          <Camera className="size-5.5" />
+        </Button>
+      )}
+
+      <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus pesan {selected.length} percakapan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Seluruh isi percakapan yang dipilih akan hilang dari perangkat dan akun Anda. Salinan
+              milik lawan bicara tidak ikut terhapus.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() =>
+                void runBulk("Hapus pesan", (id) => clearConversationForMe(id, userId!))
+              }
+            >
+              Hapus pesan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
+  );
+}
+
+function BulkAction({
+  icon: Icon,
+  label,
+  onClick,
+  disabled,
+  destructive,
+}: {
+  icon: typeof Trash2;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      disabled={disabled}
+      onClick={onClick}
+      className={`h-auto flex-col gap-1 rounded-xl py-2 text-[11px] ${destructive ? "text-destructive hover:text-destructive" : ""}`}
+    >
+      <Icon className="size-5" />
+      {label}
+    </Button>
   );
 }
