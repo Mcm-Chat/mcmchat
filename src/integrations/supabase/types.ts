@@ -272,6 +272,60 @@ export type Database = {
           },
         ]
       }
+      call_reminders: {
+        Row: {
+          call_id: string | null
+          conversation_id: string | null
+          created_at: string
+          done_at: string | null
+          id: string
+          note: string | null
+          peer_id: string | null
+          peer_name: string | null
+          remind_at: string
+          user_id: string
+        }
+        Insert: {
+          call_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          peer_id?: string | null
+          peer_name?: string | null
+          remind_at: string
+          user_id: string
+        }
+        Update: {
+          call_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          peer_id?: string | null
+          peer_name?: string | null
+          remind_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_reminders_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_reminders_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calls: {
         Row: {
           answered_at: string | null

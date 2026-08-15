@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  BellRing,
+  Check,
+  MoreHorizontal,
   Phone,
   PhoneCall,
   PhoneMissed,
@@ -38,6 +41,16 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
+import {
+  MissedCallActions,
+  type MissedCallTarget,
+} from "@/components/mcm/missed-call-actions";
+import {
+  completeCallReminder,
+  dueReminders,
+  listCallReminders,
+  type CallReminder,
+} from "@/lib/api/call-reminders";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -78,6 +91,8 @@ function CallsPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
+  const [reminders, setReminders] = useState<CallReminder[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
@@ -86,6 +101,18 @@ function CallsPage() {
       .then((c) => setConfigured(c.configured))
       .catch(() => setConfigured(false));
   }, [loadConfig]);
+
+  const reloadReminders = () => {
+    if (!userId) return;
+    void listCallReminders(userId)
+      .then(setReminders)
+      .catch(() => undefined);
+  };
+
+  useEffect(() => {
+    reloadReminders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   /** Panggil ulang: membuat panggilan nyata baru, bukan mengulang riwayat. */
   const redial = async (c: CallHistoryItem) => {
@@ -140,6 +167,12 @@ function CallsPage() {
 
   const missedCount = (calls ?? []).filter((c) => c.status === "missed").length;
   const busy = loading || isLoading;
+  const due = dueReminders(reminders);
+
+  const finishReminder = async (id: string) => {
+    setReminders((prev) => prev.filter((r) => r.id !== id));
+    await completeCallReminder(id).catch(() => reloadReminders());
+  };
 
   return (
     <AppShell
@@ -180,6 +213,48 @@ function CallsPage() {
         </MobileHeader>
       }
     >
+      {due.length > 0 && (
+        <ul className="space-y-2 px-4 pt-3">
+          {due.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
+            >
+              <BellRing className="size-4 shrink-0 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">
+                  Tindak lanjuti {r.peer_name ?? "panggilan tak terjawab"}
+                </p>
+                {r.note && <p className="truncate text-xs text-muted-foreground">{r.note}</p>}
+              </div>
+              {r.conversation_id && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Panggil sekarang"
+                  onClick={() =>
+                    void navigate({
+                      to: "/call/prepare/$conversationId",
+                      params: { conversationId: r.conversation_id! },
+                      search: { kind: "audio" },
+                    })
+                  }
+                >
+                  <Phone className="size-5" />
+                </Button>
+              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Tandai selesai"
+                onClick={() => void finishReminder(r.id)}
+              >
+                <Check className="size-5" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
       {busy ? (
         <LoadingSkeleton rows={6} />
       ) : isError ? (
@@ -243,6 +318,23 @@ function CallsPage() {
                     </p>
                   </div>
                 </button>
+                {isMissed && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Aksi cepat panggilan tak terjawab dari ${other?.display_name ?? "pengguna"}`}
+                    onClick={() =>
+                      setMissedTarget({
+                        callId: c.id,
+                        conversationId: c.conversation_id,
+                        peerId: other?.user_id ?? null,
+                        peerName: other?.display_name ?? "Pengguna MCM",
+                      })
+                    }
+                  >
+                    <MoreHorizontal className="size-5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -264,6 +356,13 @@ function CallsPage() {
           </ProtoNote>
         </div>
       )}
+
+      <MissedCallActions
+        userId={userId}
+        target={missedTarget}
+        onOpenChange={(o) => (o ? undefined : setMissedTarget(null))}
+        onReminderSaved={reloadReminders}
+      />
 
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
         <DialogTrigger asChild>

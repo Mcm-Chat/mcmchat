@@ -9,6 +9,7 @@ import {
   PhoneMissed,
   User,
   Video,
+  Zap,
 } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
@@ -19,6 +20,7 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
+import { MissedCallActions, type MissedCallTarget } from "@/components/mcm/missed-call-actions";
 
 export const Route = createFileRoute("/calls/$id")({
   head: () => ({
@@ -63,6 +65,7 @@ function CallDetailPage() {
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
@@ -156,6 +159,22 @@ function CallDetailPage() {
               </Button>
             </div>
             {error && <p className="text-xs text-destructive">{error}</p>}
+            {call.status === "missed" && (
+              <Button
+                variant="secondary"
+                className="h-11 w-full rounded-xl"
+                onClick={() =>
+                  setMissedTarget({
+                    callId: call.id,
+                    conversationId: call.conversation_id,
+                    peerId: other?.user_id ?? null,
+                    peerName: other?.display_name ?? "Pengguna MCM",
+                  })
+                }
+              >
+                <Zap className="size-4" /> Aksi cepat tak terjawab
+              </Button>
+            )}
           </section>
 
           <section className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
@@ -215,6 +234,11 @@ function CallDetailPage() {
           </section>
         </div>
       )}
+      <MissedCallActions
+        userId={userId}
+        target={missedTarget}
+        onOpenChange={(o) => (o ? undefined : setMissedTarget(null))}
+      />
     </AppShell>
   );
 }
