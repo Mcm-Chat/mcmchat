@@ -645,6 +645,8 @@ export function useCall(opts: {
         });
       },
       switchCamera: () => void sessionRef.current?.switchCamera(),
+      retry,
+      retrying,
       devices,
       micDeviceId,
       cameraDeviceId,
@@ -672,6 +674,8 @@ export function useCall(opts: {
       cleanup,
       finish,
       join,
+      retry,
+      retrying,
       devices,
       micDeviceId,
       cameraDeviceId,
