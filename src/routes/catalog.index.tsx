@@ -76,7 +76,22 @@ function CatalogIndex() {
   const [bizOpen, setBizOpen] = useState(false);
   const [bizForm, setBizForm] = useState({ name: "", category: "Umum" });
   const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", price: "", category: "Umum", description: "" });
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    category: "Umum",
+    description: "",
+    variantName: "Standar",
+    unit: "pcs",
+    qty: "",
+    cost: "",
+    supplier: "",
+    supplierContact: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
+  const [buyFor, setBuyFor] = useState<ProductWithVariants | null>(null);
+  const [removeFor, setRemoveFor] = useState<ProductWithVariants | null>(null);
 
   const businessId = biz?.business.id;
   const {
@@ -89,6 +104,22 @@ function CatalogIndex() {
     queryFn: () => listCatalog(businessId!),
     enabled: !!businessId,
   });
+
+  const { data: indicators } = useQuery({
+    queryKey: ["catalog", "indicators", businessId ?? ""],
+    queryFn: () => productIndicators(businessId!),
+    enabled: !!businessId,
+  });
+  const indicatorMap = useMemo(() => {
+    const m = new Map<string, ProductIndicator>();
+    for (const row of indicators ?? []) m.set(row.product_id, row);
+    return m;
+  }, [indicators]);
+
+  const refreshCatalog = () => {
+    void qc.invalidateQueries({ queryKey: ["catalog", "products", businessId ?? ""] });
+    void qc.invalidateQueries({ queryKey: ["catalog", "indicators", businessId ?? ""] });
+  };
 
   const categories = useMemo(
     () => ["Semua", ...Array.from(new Set((products ?? []).map((p) => p.category)))],
