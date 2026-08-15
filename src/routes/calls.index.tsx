@@ -430,6 +430,7 @@ function CallsPage() {
         <DialogTrigger asChild>
           <Button
             size="icon"
+            ref={newCallRef}
             aria-label="Panggilan baru"
             className="fixed right-4 bottom-20 z-40 size-13 rounded-full shadow-lg sm:right-[max(1rem,calc(50%-13rem))]"
           >
