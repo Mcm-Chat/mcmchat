@@ -137,6 +137,7 @@ function ChatRoom() {
   const [reply, setReply] = useState<MessageRow | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
+  const [forwarding, setForwarding] = useState<MessageRow[]>([]);
   const [confirmAll, setConfirmAll] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [photoMode, setPhotoMode] = useState<"camera" | "gallery">("camera");
