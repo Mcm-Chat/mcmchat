@@ -101,17 +101,7 @@ export async function listBusinessEmployees(businessId: string) {
   ) as unknown as Array<{ user_id: string; role: string }>;
   if (rows.length === 0) return [];
 
-  const profiles = unwrap(
-    await supabase
-      .from("profiles")
-      .select("id, display_name, avatar_color")
-      .in(
-        "id",
-        rows.map((r) => r.user_id),
-      ),
-    "Gagal memuat profil pegawai",
-  ) as unknown as Array<{ id: string; display_name: string | null; avatar_color: string | null }>;
-  const byId = new Map(profiles.map((p) => [p.id, p]));
+  const byId = await fetchProfileCards(rows.map((r) => r.user_id));
 
   return rows.map((r) => ({
     id: r.user_id,
