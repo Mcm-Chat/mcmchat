@@ -157,7 +157,7 @@ function CallScreen() {
           <Button
             variant="secondary"
             className="min-h-11 rounded-xl px-5"
-            onClick={() => void navigate({ to: "/calls" })}
+            onClick={backToCalls}
           >
             Kembali
           </Button>
@@ -226,7 +226,7 @@ function CallScreen() {
               size="icon"
               aria-label="Kembali"
               className="size-11 text-navy-foreground hover:bg-white/15"
-              onClick={() => void navigate({ to: "/calls" })}
+              onClick={backToCalls}
             >
               <ArrowLeft className="size-5" />
             </Button>
@@ -394,7 +394,7 @@ function CallScreen() {
           size="icon"
           aria-label="Kembali"
           className="size-11 text-navy-foreground hover:bg-white/15"
-          onClick={() => void navigate({ to: "/calls" })}
+          onClick={backToCalls}
         >
           <ArrowLeft className="size-5" />
         </Button>
