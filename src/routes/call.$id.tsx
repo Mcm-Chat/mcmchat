@@ -336,6 +336,13 @@ function CallScreen() {
     session.phase === "connecting" ||
     session.phase === "connected";
   const voiceActive = session.voiceApplied;
+  // Setelah refresh, sesi tidak lagi tahu panggilan sempat gagal. Status
+  // tersimpan dipakai agar panel pemulihan tetap muncul (bukan layar netral).
+  const restoredFailure =
+    !live &&
+    session.phase !== "error" &&
+    session.phase !== "unconfigured" &&
+    (restored?.phase === "error" || restored?.phase === "unconfigured");
   const voiceFallback = session.voiceFallback;
 
   const phaseLabel =
