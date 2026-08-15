@@ -200,6 +200,32 @@ export function IncomingCallListener() {
     );
   }
   const isVideo = incoming.call.kind === "video";
+  const permKind = isVideo ? "video" : "audio";
+  const permCopy = permState ? mediaPermissionCopy(permState, permKind) : null;
+  const permBlocked = Boolean(permState && permState !== "granted");
+
+  /**
+   * Satu tap = izin dulu, baru menjawab. Menjawab tanpa izin hanya membuat
+   * pemanggil mendengar sunyi lalu panggilan gagal, jadi kalau izin ditolak
+   * banner tetap terbuka dengan penjelasan dan pilihan menolak.
+   */
+  const answerFromBanner = () => {
+    const id = incoming.call.id;
+    setAsking(true);
+    void requestMediaPermission(permKind)
+      .then((state) => {
+        setPermState(state);
+        if (state !== "granted") return;
+        // Simpan target fokus supaya bila panggilan yang dijawab langsung
+        // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
+        // panggil ulang percakapan ini (bukan hilang ke <body>).
+        setCallReturnFocus(id);
+        markAnswerIntent(id);
+        closeBanner("Panggilan dijawab. Membuka layar panggilan.");
+        void navigate({ to: "/call/$id", params: { id } });
+      })
+      .finally(() => setAsking(false));
+  };
 
   return (
     <div
