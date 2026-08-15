@@ -259,13 +259,13 @@
   outline: none;
   border-radius: inherit;
   box-shadow:
-    0 0 0 2px hsl(var(--navy)),
-    0 0 0 5px hsl(0 0% 100% / 0.95);
+    0 0 0 2px var(--navy),
+    0 0 0 5px oklch(1 0 0 / 0.95);
   transition: box-shadow 120ms ease;
 }
 
 [data-call-surface="soft"] :is(button, [role="button"], a[href], summary, [tabindex="0"]):focus-visible {
   box-shadow:
-    0 0 0 2px hsl(var(--background)),
-    0 0 0 5px hsl(var(--ring));
+    0 0 0 2px var(--background),
+    0 0 0 5px var(--ring);
 }
