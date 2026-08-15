@@ -10,6 +10,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Mic, MicOff, Phone, ShieldAlert, Video, VideoOff } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -337,9 +338,14 @@ function PreCallScreen() {
             {CALL_PROVIDER_NOTICE}
           </p>
         )}
-        <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-          {starting ? "Memulai panggilan…" : ""}
-        </p>
+        <CallStatusLive
+          phase={
+            error ? "error" : configured === false ? "unconfigured" : starting ? "connecting" : "idle"
+          }
+          kind={kind}
+          name="kontak"
+          reason={error ?? undefined}
+        />
         {error && (
           <p role="alert" aria-live="assertive" className="text-sm text-destructive">
             {error}
