@@ -5,7 +5,7 @@
  * Shift+Tab, focus trap, Escape, live region, dan pemulihan fokus ke pemicu.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, act, cleanup, screen, waitFor } from "@testing-library/react";
+import { render, act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 
 const navigate = vi.fn();
@@ -119,7 +119,7 @@ describe("Banner panggilan masuk — state berdering", () => {
 
   it("Tab/Shift+Tab terkunci di antara Jawab dan Tolak (tidak lolos ke halaman)", async () => {
     await openIncoming();
-    const items = screen.getAllByRole("button");
+    const items = within(screen.getByRole("dialog")).getAllByRole("button");
     expect(items.map((b) => b.getAttribute("aria-label"))).toEqual([
       "Jawab panggilan",
       "Tolak panggilan",
@@ -212,7 +212,7 @@ describe("Panel pemulihan panggilan gagal", () => {
 
   it("state perangkat: aksi Ganti perangkat tampil lebih dulu", async () => {
     renderPanel({ reason: "NotReadableError: mikrofon sedang dipakai aplikasi lain" });
-    const names = screen.getAllByRole("button").map((b) => b.textContent ?? "");
+    const names = within(screen.getByRole("alertdialog")).getAllByRole("button").map((b) => b.textContent ?? "");
     expect(names.join("|")).toMatch(/ganti perangkat.*coba sambungkan lagi/i);
     expect(screen.getByText(/penyebab: mikrofon dipakai aplikasi lain/i)).toBeInTheDocument();
   });
@@ -220,7 +220,7 @@ describe("Panel pemulihan panggilan gagal", () => {
   it("state penyedia belum siap: penyebab dan urutan aksi sesuai", async () => {
     renderPanel({ reason: null, unconfigured: true });
     expect(screen.getByText(/penyebab: layanan panggilan belum siap/i)).toBeInTheDocument();
-    const names = screen.getAllByRole("button").map((b) => b.textContent ?? "");
+    const names = within(screen.getByRole("alertdialog")).getAllByRole("button").map((b) => b.textContent ?? "");
     expect(names.join("|")).toMatch(/ganti penyedia.*coba sambungkan lagi/i);
   });
 
@@ -232,7 +232,7 @@ describe("Panel pemulihan panggilan gagal", () => {
   it("Tab berputar di dalam panel (focus trap)", async () => {
     renderPanel();
     await raf();
-    const buttons = screen.getAllByRole("button");
+    const buttons = within(screen.getByRole("alertdialog")).getAllByRole("button");
     const first = buttons[0]!;
     const last = buttons[buttons.length - 1]!;
     last.focus();
