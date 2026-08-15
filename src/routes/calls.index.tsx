@@ -216,6 +216,7 @@ function CallsPage() {
         </MobileHeader>
       }
     >
+      <div aria-live="polite" aria-atomic="false" aria-label="Pengingat panggilan" role="status">
       {due.length > 0 && (
         <ul className="space-y-2 px-4 pt-3">
           {due.map((r) => (
@@ -258,6 +259,7 @@ function CallsPage() {
           ))}
         </ul>
       )}
+      </div>
       {busy ? (
         <LoadingSkeleton rows={6} />
       ) : isError ? (

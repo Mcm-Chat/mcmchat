@@ -43,6 +43,7 @@ export function AccessFallback({
     }
   };
   return (
+    <div role="alert" aria-live="assertive">
     <EmptyState
       icon={ShieldAlert}
       title={title}
@@ -69,5 +70,6 @@ export function AccessFallback({
         </div>
       }
     />
+    </div>
   );
 }

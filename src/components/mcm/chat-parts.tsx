@@ -970,7 +970,11 @@ export function ChatComposer({
         </div>
       )}
       {editing && (
-        <div className="flex items-center gap-2 border-b border-border/70 bg-warning/15 px-3 py-2 text-xs">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 border-b border-border/70 bg-warning/15 px-3 py-2 text-xs"
+        >
           <Pencil className="size-4" /> Mengedit pesan
           <Button
             variant="ghost"
@@ -983,7 +987,11 @@ export function ChatComposer({
         </div>
       )}
       {recording && (
-        <div className="flex items-center gap-2 border-b border-border/70 bg-destructive/10 px-3 py-2 text-xs font-medium">
+        <div
+          role="status"
+          aria-live="assertive"
+          className="flex items-center gap-2 border-b border-border/70 bg-destructive/10 px-3 py-2 text-xs font-medium"
+        >
           <span className="size-2 animate-pulse rounded-full bg-destructive" /> Merekam… {seconds}s
         </div>
       )}
