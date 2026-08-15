@@ -266,7 +266,10 @@ function CallScreen() {
               <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />
             )}
             <h2 className="text-2xl font-semibold">{name}</h2>
-            <p className="text-sm text-navy-foreground/75">{phaseLabel}</p>
+            <div className="flex items-center gap-2 text-sm text-navy-foreground/75">
+              <span>{phaseLabel}</span>
+              {session.phase === "connected" && <SignalBadge quality={session.quality} />}
+            </div>
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             <VoicePrivacyBadge active={voiceActive} className="mt-1" />
             {voiceFallback ? (
