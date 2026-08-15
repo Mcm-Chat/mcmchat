@@ -13,6 +13,7 @@ import {
   PhoneOff,
   RefreshCcw,
   ShieldAlert,
+  SlidersHorizontal,
   SignalHigh,
   SignalLow,
   SignalMedium,
@@ -33,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CALL_PROVIDER_NOTICE, type CallHistoryItem } from "@/lib/api/calls";
 import { useCall } from "@/lib/calls/use-call";
 import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-effects";
+import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
 import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
 import { DEFAULT_VOICE_PREFS, PRESET_MAP, type VoicePrefs } from "@/lib/voice/presets";
@@ -90,6 +92,7 @@ function CallScreen() {
   const [detail, setDetail] = useState<CallHistoryItem | null>(null);
   const [detailStatus, setDetailStatus] = useState<"loading" | "ready" | "error">("loading");
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [devicesOpen, setDevicesOpen] = useState(false);
   const [, setSettingsRow] = useState<UserSettingsRow | null>(null);
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
@@ -377,6 +380,16 @@ function CallScreen() {
                     onClick={session.switchCamera}
                     icon={RefreshCcw}
                   />
+                  <ControlButton
+                    label="Perangkat"
+                    active={devicesOpen}
+                    ariaLabel="Pilih mikrofon dan kamera"
+                    onClick={() => {
+                      session.refreshDevices();
+                      setDevicesOpen(true);
+                    }}
+                    icon={SlidersHorizontal}
+                  />
                 </div>
                 <div className="flex justify-center">
                   <Button
@@ -400,6 +413,17 @@ function CallScreen() {
           onChange={saveVoice}
           entitlement={entitlement}
           saving={savingVoice}
+        />
+
+        <CallDeviceSheet
+          open={devicesOpen}
+          onOpenChange={setDevicesOpen}
+          devices={session.devices}
+          micDeviceId={session.micDeviceId}
+          cameraDeviceId={session.cameraDeviceId}
+          onPickMic={session.setMicDevice}
+          onPickCamera={session.setCameraDevice}
+          videoEnabled={isVideo}
         />
       </div>
     );
