@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { cn } from "@/lib/utils";
+import { useLinkOpener } from "@/lib/mcm/use-link-opener";
 
 const PATTERN =
   /((?:https?:\/\/|www\.)[^\s<>"']+[^\s<>"'.,!?)：:;]|[\w.+-]+@[\w-]+\.[\w.-]+|(?:\+62|0)\d{8,14})/gi;
@@ -21,6 +22,7 @@ export function LinkifiedText({
   className?: string;
   onBubble?: boolean;
 }) {
+  const openLink = useLinkOpener();
   const parts: Array<string | { token: string }> = [];
   let last = 0;
   PATTERN.lastIndex = 0;
@@ -43,7 +45,10 @@ export function LinkifiedText({
             href={hrefOf(p.token)}
             target={hrefOf(p.token).startsWith("http") ? "_blank" : undefined}
             rel="noreferrer noopener"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              openLink(hrefOf(p.token), e);
+            }}
             onPointerDown={(e) => e.stopPropagation()}
             className={cn(
               "font-medium underline underline-offset-2 active:opacity-70",
