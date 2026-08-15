@@ -55,6 +55,7 @@ import { createChatOrder } from "@/lib/api/chat-orders";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { ChatOrderCard } from "@/components/mcm/chat-order-card";
 import { cn } from "@/lib/utils";
+import { LinkifiedText } from "@/components/mcm/linkified-text";
 import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import type { ConversationView, MessageRow } from "@/lib/api/chat";
@@ -690,7 +691,11 @@ export function MessageBubble({
             <div className="space-y-1">
               <ImageBubble message={message} />
               {message.body && (
-                <span className="block w-52 max-w-full break-words">{message.body}</span>
+                <LinkifiedText
+                  text={message.body}
+                  onBubble={mine}
+                  className="block w-52 max-w-full break-words"
+                />
               )}
               <div className="w-52 max-w-full">
                 <MessageLocationCard message={message} compact />
@@ -716,7 +721,9 @@ export function MessageBubble({
           ) : (
             <>
               <StatusReplyQuote message={message} />
-              <p className="break-words whitespace-pre-wrap">{message.body}</p>
+              <p className="break-words whitespace-pre-wrap">
+                <LinkifiedText text={message.body} onBubble={mine} />
+              </p>
             </>
           )}
           <div
