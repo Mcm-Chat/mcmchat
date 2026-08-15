@@ -4,15 +4,14 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * Konfigurasi Capacitor MCM.
  *
  * URL produksi dibaca dari environment (`MCM_APP_URL`). Default
- * `https://mcmchat.id`; selama domain itu belum Live, set
- * `MCM_APP_URL=https://mcmchat.lovable.app` saat build.
+ * `https://mcmchat.lovable.app` selama domain kustom belum Live.
  */
 const config: CapacitorConfig = {
   appId: "com.mcm.privateconnect",
   appName: "MCM",
   webDir: "capacitor/www",
   server: {
-    url: process.env["MCM_APP_URL"] ?? "https://mcmchat.id",
+    url: process.env["MCM_APP_URL"] ?? "https://mcmchat.lovable.app",
     cleartext: false,
   },
   android: { backgroundColor: "#0f1b2a" },
