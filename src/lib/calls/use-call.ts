@@ -710,6 +710,20 @@ export function useCall(opts: {
   }, []);
 
   /**
+   * Pulihkan kamera pilihan terakhir sekali saja setelah daftar perangkat
+   * terbaca — hanya bila kameranya memang masih ada di perangkat ini.
+   */
+  useEffect(() => {
+    if (cameraRestoredRef.current) return;
+    if (phase !== "connected" || !controls.cameraOn) return;
+    if (devices.cameras.length === 0) return;
+    const want = resolvePreferredDevice("camera", devices.cameras);
+    cameraRestoredRef.current = true;
+    if (!want || want === cameraDeviceId) return;
+    setCameraDevice(want);
+  }, [phase, controls.cameraOn, devices.cameras, cameraDeviceId, setCameraDevice]);
+
+  /**
    * Pemulihan manual dari status gagal: bongkar sesi lama, reset penghitung
    * sambung-ulang otomatis, lalu bergabung lagi ke panggilan yang sama.
    */
