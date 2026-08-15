@@ -1,7 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowDownLeft, ArrowUpRight, Phone, PhoneCall, PhoneMissed, Video } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Phone,
+  PhoneCall,
+  PhoneMissed,
+  Search,
+  Settings2,
+  Video,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,10 +24,18 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
-import { useCalls } from "@/lib/api/queries";
+import { useCalls, useConversations } from "@/lib/api/queries";
 import { startCall, type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 
@@ -55,8 +72,11 @@ function counterpartOf(call: CallHistoryItem, userId?: string) {
 function CallsPage() {
   const { userId, loading } = useRequireAuth();
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
+  const { data: conversations } = useConversations(userId);
   const [tab, setTab] = useState("semua");
   const [notice, setNotice] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
+  const [q, setQ] = useState("");
   const [configured, setConfigured] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
@@ -82,9 +102,35 @@ function CallsPage() {
     }
   };
 
+  /** Mulai panggilan baru dari daftar percakapan langsung. */
+  const callConversation = async (conversationId: string, kind: "audio" | "video") => {
+    if (configured === false) {
+      setNewOpen(false);
+      setNotice(true);
+      return;
+    }
+    try {
+      const created = await startCall(conversationId, kind);
+      setNewOpen(false);
+      void navigate({ to: "/call/$id", params: { id: created.id } });
+    } catch {
+      setNewOpen(false);
+      setNotice(true);
+    }
+  };
+
   const list = (calls ?? [])
-    .filter((c) => (tab === "takterjawab" ? c.status === "missed" : true))
+    .filter((c) => {
+      if (tab === "takterjawab") return c.status === "missed";
+      if (tab === "masuk") return c.initiator_id !== userId;
+      if (tab === "keluar") return c.initiator_id === userId;
+      return true;
+    })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const dialTargets = (conversations ?? []).filter(
+    (c) => !c.me.is_archived && c.title_resolved.toLowerCase().includes(q.trim().toLowerCase()),
+  );
 
   const missedCount = (calls ?? []).filter((c) => c.status === "missed").length;
   const busy = loading || isLoading;
@@ -92,15 +138,35 @@ function CallsPage() {
   return (
     <AppShell
       header={
-        <MobileHeader title="Panggilan" subtitle={`${missedCount} panggilan tak terjawab`}>
+        <MobileHeader
+          title="Panggilan"
+          subtitle={`${missedCount} panggilan tak terjawab`}
+          actions={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Pengaturan panggilan"
+              className="size-11"
+              onClick={() => void navigate({ to: "/settings/calls" })}
+            >
+              <Settings2 className="size-5" />
+            </Button>
+          }
+        >
           <div className="px-3 pb-3">
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="w-full rounded-xl">
                 <TabsTrigger value="semua" className="flex-1 rounded-lg">
                   Semua
                 </TabsTrigger>
+                <TabsTrigger value="masuk" className="flex-1 rounded-lg">
+                  Masuk
+                </TabsTrigger>
+                <TabsTrigger value="keluar" className="flex-1 rounded-lg">
+                  Keluar
+                </TabsTrigger>
                 <TabsTrigger value="takterjawab" className="flex-1 rounded-lg">
-                  Tak terjawab
+                  Tak dijawab
                 </TabsTrigger>
               </TabsList>
             </Tabs>
