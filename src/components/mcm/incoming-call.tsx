@@ -21,6 +21,7 @@ import {
   type CallRow,
 } from "@/lib/api/calls";
 import { onConnectionChange } from "@/lib/realtime/connection";
+import { playTone } from "@/lib/calls/tones";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -99,6 +100,14 @@ export function IncomingCallListener() {
   useEffect(() => {
     if (incoming && pathname.startsWith(`/call/${incoming.call.id}`)) setIncoming(null);
   }, [pathname, incoming]);
+
+  // Dering + getar selama banner panggilan masuk tampil.
+  const ringingId = incoming?.call.id ?? null;
+  useEffect(() => {
+    if (!ringingId) return;
+    const handle = playTone("ringtone");
+    return () => handle.stop();
+  }, [ringingId]);
 
   if (!incoming) return null;
   const isVideo = incoming.call.kind === "video";
