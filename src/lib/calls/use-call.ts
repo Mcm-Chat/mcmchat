@@ -157,6 +157,10 @@ export type UseCallResult = {
   toggleCamera: () => void;
   toggleSpeaker: () => void;
   switchCamera: () => void;
+  /** Coba sambungkan ulang setelah status gagal, tanpa keluar dari layar. */
+  retry: () => void;
+  /** Percobaan sambung ulang manual sedang berjalan. */
+  retrying: boolean;
   /** Daftar mic/kamera yang bisa dipilih saat panggilan berlangsung. */
   devices: CallDevices;
   micDeviceId: string | null;
@@ -201,6 +205,7 @@ export function useCall(opts: {
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
