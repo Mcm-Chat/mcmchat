@@ -80,7 +80,7 @@ export function CallFailureRecovery({
   return (
     <NotificationBanner
       role="alert"
-      onDismiss={onDismiss}
+      {...(onDismiss ? { onDismiss } : {})}
       dismissLabel="Tutup pesan gagal panggilan"
       icon={<AlertTriangle className="size-4" aria-hidden="true" />}
       className={cn("rounded-2xl border border-destructive/40 bg-destructive/15 p-4", className)}
