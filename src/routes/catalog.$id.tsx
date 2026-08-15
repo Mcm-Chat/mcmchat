@@ -17,6 +17,7 @@ import {
   ProductThumb,
   priceLabel,
 } from "@/components/mcm/catalog-parts";
+import { PurchaseDialog } from "@/components/mcm/purchase-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,6 +102,7 @@ function CatalogDetail() {
     mode: "add" | "correct";
   } | null>(null);
   const [movementsFor, setMovementsFor] = useState<VariantRow | null>(null);
+  const [purchaseFor, setPurchaseFor] = useState<VariantRow | null>(null);
   const [editLocationPhoto, setEditLocationPhoto] = useState<PhotoRow | null>(null);
 
   if (loading || isLoading) {
@@ -259,7 +261,7 @@ function CatalogDetail() {
                   businessId={product.business_id}
                   productId={product.id}
                   photos={allPhotos.filter((p) => p.variant_id === v.id && !p.stock_unit_id)}
-                  onAdd={() => setStockDialog({ variant: v, mode: "add" })}
+                  onAdd={() => setPurchaseFor(v)}
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
                   onHistory={() => setMovementsFor(v)}
@@ -427,6 +429,19 @@ function CatalogDetail() {
         <MovementsSheet variant={movementsFor} onClose={() => setMovementsFor(null)} />
       )}
 
+      {purchaseFor && (
+        <PurchaseDialog
+          open
+          onOpenChange={(v) => !v && setPurchaseFor(null)}
+          variants={product.variants}
+          defaultVariantId={purchaseFor.id}
+          onDone={() => {
+            setPurchaseFor(null);
+            invalidate();
+          }}
+        />
+      )}
+
       {editLocationPhoto && (
         <EditLocationDialog
           open={!!editLocationPhoto}
@@ -490,7 +505,7 @@ function VariantRowCard({
       </div>
       <div className="flex flex-wrap gap-1.5">
         <Button size="sm" variant="outline" className="h-8 rounded-lg text-[11px]" onClick={onAdd}>
-          <Plus className="size-3.5" /> Tambah stok
+          <Plus className="size-3.5" /> Beli / tambah stok
         </Button>
         <Button
           size="sm"
