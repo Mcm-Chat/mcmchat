@@ -100,11 +100,14 @@ function PreCallScreen() {
   const [level, setLevel] = useState(0);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<MediaState>("idle");
+  const [permission, setPermission] = useState<PermissionKind | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [configured, setConfigured] = useState<boolean | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const retryRef = useRef<HTMLButtonElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -131,6 +134,8 @@ function PreCallScreen() {
     stopMedia();
     if (!micOn && !camOn) {
       setMediaState("idle");
+      setPermission(null);
+      setMediaError(null);
       return;
     }
     setMediaState("processing");
@@ -144,6 +149,7 @@ function PreCallScreen() {
         }
         streamRef.current = stream;
         setMediaError(null);
+        setPermission(null);
         setMediaState("ready");
         if (videoRef.current && camOn) videoRef.current.srcObject = stream;
         if (!micOn) return;
@@ -167,21 +173,21 @@ function PreCallScreen() {
         };
         rafRef.current = requestAnimationFrame(tick);
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
+        const kind = classifyMediaError(err);
         setMediaState("error");
-        setMediaError(
-          camOn
-            ? "Tidak bisa mengakses kamera/mikrofon. Periksa izin perangkat."
-            : "Tidak bisa mengakses mikrofon. Periksa izin perangkat.",
-        );
+        setPermission(kind);
+        setMediaError(permissionMessage(kind, camOn));
+        // Fokuskan tombol coba lagi agar pengguna keyboard langsung sampai ke aksi pemulihan.
+        requestAnimationFrame(() => retryRef.current?.focus());
       });
 
     return () => {
       cancelled = true;
       stopMedia();
     };
-  }, [micOn, camOn, stopMedia]);
+  }, [micOn, camOn, stopMedia, retryToken]);
 
   // Memilih video otomatis menyalakan kamera; memilih suara mematikannya.
   const pickKind = (next: Kind) => {
