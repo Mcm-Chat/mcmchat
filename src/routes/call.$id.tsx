@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   Mic,
@@ -87,9 +87,6 @@ function CallScreen() {
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
-  const localVideo = useRef<HTMLVideoElement | null>(null);
-  const remoteVideo = useRef<HTMLVideoElement | null>(null);
-
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
 
   const load = () => {
@@ -103,10 +100,12 @@ function CallScreen() {
       .catch(() => setDetailStatus("error"));
   };
 
+  // Detail (peserta, durasi tersimpan) hanya perlu dimuat ulang saat panggilan
+  // benar-benar berakhir — bukan setiap perubahan fase/render.
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, userId, session.phase]);
+  }, [id, userId, session.phase === "ended"]);
 
   useEffect(() => {
     if (!userId) return;
@@ -117,11 +116,6 @@ function CallScreen() {
       })
       .catch(() => undefined);
   }, [userId]);
-
-  useEffect(() => {
-    session.attachLocalVideo(localVideo.current);
-    session.attachRemoteVideo(remoteVideo.current);
-  }, [session, session.remotes.length, session.controls.cameraOn]);
 
   const saveVoice = (next: VoicePrefs) => {
     setVoicePrefs(next);
@@ -192,13 +186,13 @@ function CallScreen() {
         {isVideo && (
           <>
             <video
-              ref={remoteVideo}
+              ref={session.attachRemoteVideo}
               autoPlay
               playsInline
               className="absolute inset-0 size-full object-cover opacity-90"
             />
             <video
-              ref={localVideo}
+              ref={session.attachLocalVideo}
               autoPlay
               playsInline
               muted

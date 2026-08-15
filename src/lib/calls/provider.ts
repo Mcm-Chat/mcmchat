@@ -85,8 +85,28 @@ export const liveKitProvider: CallProvider = {
   isConfigured: () => true,
   async connect(opts: ConnectOptions): Promise<CallSessionHandle> {
     const lk = await import("livekit-client");
-    const { Room, RoomEvent, Track } = lk;
-    const room = new Room({ adaptiveStream: true, dynacast: true });
+    const { Room, RoomEvent, Track, VideoPresets } = lk;
+    // Profil hemat untuk ponsel kelas menengah Indonesia: kamera 360p 24fps,
+    // simulcast agar SFU bisa menurunkan layer saat jaringan jelek, dan
+    // dynacast/adaptiveStream supaya track yang tidak terlihat berhenti dikirim.
+    const room = new Room({
+      adaptiveStream: true,
+      dynacast: true,
+      disconnectOnPageLeave: true,
+      stopLocalTrackOnUnpublish: true,
+      videoCaptureDefaults: {
+        resolution: opts.kind === "video" ? VideoPresets.h360.resolution : VideoPresets.h180.resolution,
+        facingMode: "user",
+      },
+      publishDefaults: {
+        simulcast: true,
+        videoCodec: "vp8",
+        dtx: true,
+        red: true,
+        videoEncoding: VideoPresets.h360.encoding,
+        degradationPreference: "maintain-framerate",
+      },
+    });
 
     let facingUser = true;
     let remoteVideoEl: HTMLVideoElement | null = null;
@@ -95,6 +115,8 @@ export const liveKitProvider: CallProvider = {
     let audioBlocked = false;
     const audioEls = new Map<string, HTMLAudioElement>();
     let speakerSinkId: string | null = null;
+    /** Sidik state terakhir — mencegah render ulang UI untuk state identik. */
+    let lastEmit = "";
 
     const canSetSink =
       typeof window !== "undefined" &&
@@ -120,30 +142,53 @@ export const liveKitProvider: CallProvider = {
         micEnabled: p.isMicrophoneEnabled,
         cameraEnabled: p.isCameraEnabled,
       }));
-    const emit = (status: ProviderStatus, reason?: string, unexpected?: boolean) =>
-      opts.onState({
+    const emit = (status: ProviderStatus, reason?: string, unexpected?: boolean) => {
+      const state: ProviderState = {
         status,
         remotes: remotes(),
         audioBlocked,
         ...(reason ? { reason } : {}),
         ...(unexpected ? { unexpected: true } : {}),
-      });
+      };
+      const key = JSON.stringify(state);
+      if (key === lastEmit) return;
+      lastEmit = key;
+      opts.onState(state);
+    };
 
+    /** Attach idempotent: elemen yang sudah terpasang tidak dipasang ulang. */
+    const attachOnce = (
+      track: { attach: (el: HTMLVideoElement) => unknown; attachedElements?: HTMLMediaElement[] },
+      el: HTMLVideoElement,
+    ) => {
+      if (track.attachedElements?.includes(el)) return;
+      track.attach(el);
+    };
     /** Pasang track kamera lokal ke elemen yang sudah/baru saja mount. */
     const attachLocal = () => {
       const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
-      if (localVideoEl && pub?.track) pub.track.attach(localVideoEl);
+      if (localVideoEl && pub?.track) attachOnce(pub.track, localVideoEl);
     };
     const attachRemote = () => {
       if (!remoteVideoEl) return;
       for (const p of room.remoteParticipants.values()) {
         const pub = p.getTrackPublication(Track.Source.Camera);
         if (pub?.track) {
-          pub.track.attach(remoteVideoEl);
+          attachOnce(pub.track, remoteVideoEl);
           return;
         }
       }
     };
+    /** Status nyata room dipakai apa adanya, bukan selalu "connected". */
+    const liveStatus = (): ProviderStatus =>
+      room.state === "connected"
+        ? "connected"
+        : room.state === "reconnecting"
+          ? "reconnecting"
+          : room.state === "connecting"
+            ? "connecting"
+            : "disconnected";
+    const sync = () => emit(liveStatus());
 
     room
       .on(RoomEvent.Connected, () => emit("connected"))
@@ -155,13 +200,13 @@ export const liveKitProvider: CallProvider = {
       )
       .on(RoomEvent.LocalTrackPublished, () => {
         attachLocal();
-        emit("connected");
+        sync();
       })
-      .on(RoomEvent.ParticipantConnected, () => emit("connected"))
-      .on(RoomEvent.ParticipantDisconnected, () => emit("connected"))
-      .on(RoomEvent.ActiveSpeakersChanged, () => emit("connected"))
-      .on(RoomEvent.TrackMuted, () => emit("connected"))
-      .on(RoomEvent.TrackUnmuted, () => emit("connected"))
+      .on(RoomEvent.ParticipantConnected, sync)
+      .on(RoomEvent.ParticipantDisconnected, sync)
+      .on(RoomEvent.ActiveSpeakersChanged, sync)
+      .on(RoomEvent.TrackMuted, sync)
+      .on(RoomEvent.TrackUnmuted, sync)
       .on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) {
           // Audio lawan bicara diputar apa adanya; tidak pernah diproses efek.
@@ -174,16 +219,16 @@ export const liveKitProvider: CallProvider = {
             emit("connected", "Suara diblokir browser — ketuk \u201cAktifkan suara\u201d");
           });
         }
-        if (track.kind === Track.Kind.Video && remoteVideoEl) track.attach(remoteVideoEl);
+        if (track.kind === Track.Kind.Video && remoteVideoEl) attachOnce(track, remoteVideoEl);
         else if (track.kind === Track.Kind.Video) attachRemote();
-        emit("connected");
+        sync();
       })
       .on(RoomEvent.TrackUnsubscribed, (track) => {
         for (const el of track.detach()) el.remove();
         if (track.kind === Track.Kind.Audio) {
           for (const [k, v] of audioEls) if (!v.isConnected) audioEls.delete(k);
         }
-        emit("connected");
+        sync();
       });
 
     emit("connecting");
@@ -195,8 +240,14 @@ export const liveKitProvider: CallProvider = {
       await room.localParticipant.setMicrophoneEnabled(true);
     }
     if (opts.kind === "video") {
-      await room.localParticipant.setCameraEnabled(true);
-      attachLocal();
+      // Kamera gagal (izin ditolak/perangkat sibuk) tidak boleh menggagalkan
+      // panggilan — audio tetap jalan dan pengguna bisa mencoba lagi.
+      try {
+        await room.localParticipant.setCameraEnabled(true);
+        attachLocal();
+      } catch {
+        emit("connected", "Kamera tidak dapat dinyalakan — panggilan lanjut tanpa video");
+      }
     }
     if (!room.canPlaybackAudio) audioBlocked = true;
     emit("connected");
@@ -208,7 +259,7 @@ export const liveKitProvider: CallProvider = {
           await room.startAudio();
           for (const el of audioEls.values()) await el.play().catch(() => undefined);
           audioBlocked = !room.canPlaybackAudio;
-          emit("connected");
+          sync();
           return !audioBlocked;
         } catch {
           emit("connected", "Browser masih memblokir suara");
@@ -220,21 +271,37 @@ export const liveKitProvider: CallProvider = {
           if (enabled) await pub.unmute();
           else await pub.mute();
         }
-        emit("connected");
+        sync();
       },
       async setCameraEnabled(enabled) {
-        await room.localParticipant.setCameraEnabled(enabled);
-        if (enabled) attachLocal();
-        emit("connected");
+        try {
+          await room.localParticipant.setCameraEnabled(enabled);
+          if (enabled) attachLocal();
+          sync();
+        } catch {
+          emit(liveStatus(), "Kamera tidak dapat dinyalakan");
+        }
       },
       async switchCamera() {
         facingUser = !facingUser;
-        await room.localParticipant.setCameraEnabled(false);
-        await room.localParticipant.setCameraEnabled(true, {
-          facingMode: facingUser ? "user" : "environment",
-        });
-        attachLocal();
-        emit("connected");
+        const facingMode = facingUser ? "user" : "environment";
+        const pub = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        const local = pub?.track as { restartTrack?: (o: unknown) => Promise<void> } | undefined;
+        try {
+          // Restart track jauh lebih ringan daripada unpublish+publish ulang:
+          // tidak ada renegosiasi, video tidak hitam berkedip.
+          if (local?.restartTrack) await local.restartTrack({ facingMode });
+          else {
+            await room.localParticipant.setCameraEnabled(false);
+            await room.localParticipant.setCameraEnabled(true, { facingMode });
+          }
+          attachLocal();
+        } catch {
+          facingUser = !facingUser;
+          emit(liveStatus(), "Kamera tidak bisa dibalik di perangkat ini");
+          return;
+        }
+        sync();
       },
       async replaceAudioTrack(track) {
         for (const pub of room.localParticipant.audioTrackPublications.values()) {
