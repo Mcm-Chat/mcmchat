@@ -63,7 +63,7 @@ export function useMediaPermission(kind: MediaPermissionKind, active = true): Us
       // tidak bisa memastikannya (Permissions API absen di WebView Android).
       const weak = next === "checking" || next === "prompt" || next === "unsupported";
       const effective = weak && proven.current ? proven.current : next;
-      if (!weak) proven.current = null;
+      if (!weak) proven.current = effective === "granted" || effective === "audio_only" ? effective : null;
       writeCachedPermission(kind, effective);
       if (!alive.current) return;
       setState(effective);
