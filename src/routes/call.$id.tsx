@@ -393,14 +393,17 @@ function CallScreen() {
 
   // Tombol tidak pernah dimatikan total: kalau izin belum ada, sentuhan
   // pertama memicu permintaan izin, lalu aksinya langsung dijalankan.
-  const withPermission = (granted: boolean, hint: string, run: () => void) => () => {
+  const withPermission =
+    (granted: boolean, hint: string, run: () => void, needCamera = false) =>
+    () => {
     if (granted) {
       run();
       return;
     }
     if (permission.requesting) return;
     void permission.request().then((next) => {
-      if (next === "granted" || next === "audio_only") run();
+        const ok = needCamera ? next === "granted" : next === "granted" || next === "audio_only";
+        if (ok) run();
       else toast.error(hint);
     });
   };
