@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useCalls, useConversations, useLedgers } from "@/lib/api/queries";
+import { useIncomingCallActive } from "@/lib/calls/incoming-lock";
 
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
@@ -42,10 +43,25 @@ export function BottomNavigation({
   };
   const merged = { ...auto, ...(badges ?? {}) };
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Saat panggilan masuk berdering, navigasi bawah dinonaktifkan total:
+  // tidak bisa ditekan, tidak bisa di-Tab, dan disembunyikan dari pembaca
+  // layar — agar fokus tetap pada tombol Jawab/Tolak.
+  const callLocked = useIncomingCallActive();
   return (
+    <>
+    {callLocked && (
+      <p role="status" aria-live="polite" className="sr-only">
+        Navigasi dinonaktifkan sementara. Jawab atau tolak panggilan masuk lebih dulu.
+      </p>
+    )}
     <nav
       aria-label="Navigasi utama"
-      className="sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur"
+      aria-hidden={callLocked ? "true" : undefined}
+      data-locked={callLocked ? "" : undefined}
+      className={cn(
+        "sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur",
+        callLocked && "pointer-events-none opacity-40 select-none",
+      )}
     >
       <ul className="grid grid-cols-6">
         {NAV.map((item) => {
@@ -57,7 +73,14 @@ export function BottomNavigation({
             <li key={item.to}>
               <Link
                 to={item.to}
-                tabIndex={0}
+                tabIndex={callLocked ? -1 : 0}
+                aria-disabled={callLocked ? "true" : undefined}
+                onClick={(e) => {
+                  if (callLocked) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
                 aria-label={`${item.label}${badgeText}${active ? " (halaman aktif)" : ""}`}
                 className={cn(
                   "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
@@ -84,6 +107,7 @@ export function BottomNavigation({
         })}
       </ul>
     </nav>
+    </>
   );
 }
 
