@@ -79,7 +79,12 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
           <p className="line-clamp-2 text-[12.5px] leading-snug font-semibold">{data.title}</p>
         )}
         {data.description && (
-          <p className={cn("line-clamp-2 text-[11.5px] leading-snug", onBubble ? "opacity-85" : "text-muted-foreground")}>
+          <p
+            className={cn(
+              "line-clamp-2 text-[11.5px] leading-snug",
+              onBubble ? "opacity-85" : "text-muted-foreground",
+            )}
+          >
             {data.description}
           </p>
         )}

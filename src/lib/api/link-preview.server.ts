@@ -35,10 +35,7 @@ const decode = (s: string) =>
 
 function metaOf(html: string, keys: string[]): string | null {
   for (const key of keys) {
-    const re = new RegExp(
-      `<meta[^>]+(?:property|name)\\s*=\\s*["']${key}["'][^>]*>`,
-      "i",
-    );
+    const re = new RegExp(`<meta[^>]+(?:property|name)\\s*=\\s*["']${key}["'][^>]*>`, "i");
     const tag = html.match(re)?.[0];
     if (!tag) continue;
     const content = tag.match(/content\s*=\s*["']([^"']*)["']/i)?.[1];
