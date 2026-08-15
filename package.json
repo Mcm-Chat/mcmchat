@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:security": "vitest run src/lib/security/__tests__",
+    "test:e2e:calls-a11y": "python3 e2e/calls_focus_a11y.py",
     "typecheck": "tsgo --noEmit",
     "verify:assetlinks": "node scripts/verify-assetlinks.mjs",
     "verify:aab": "node scripts/verify-aab.mjs",

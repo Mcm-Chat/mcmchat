@@ -47,6 +47,7 @@ import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-sta
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import {
   MissedCallActions,
+  missedActionTriggerId,
   type MissedCallTarget,
 } from "@/components/mcm/missed-call-actions";
 import {
@@ -360,6 +361,7 @@ function CallsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    id={missedActionTriggerId(c.id)}
                     aria-label={`Aksi cepat panggilan tak terjawab dari ${other?.display_name ?? "pengguna"}`}
                     onClick={() =>
                       setMissedTarget({
