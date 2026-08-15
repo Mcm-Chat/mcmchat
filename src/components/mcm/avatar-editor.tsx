@@ -109,6 +109,7 @@ export function AvatarEditor({
   const dirty = useMemo(() => isDirty(history), [history]);
 
   const close = () => (dirty ? setConfirmClose(true) : onCancel());
+  const modalRef = useModalA11y<HTMLDivElement>({ onClose: close });
 
   const apply = async () => {
     if (!img || submitting.current) return;
