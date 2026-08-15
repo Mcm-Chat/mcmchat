@@ -424,7 +424,6 @@ export function useCall(opts: {
    * berakhir: 1:1 dan pemanggil grup mengakhiri, peserta grup biasa hanya keluar.
    */
   const finish = useCallback(
-
     (status: CallRow["status"], why?: string, code?: EndReason) => {
       if (endedRef.current) return;
       endedRef.current = true;
