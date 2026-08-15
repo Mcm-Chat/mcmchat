@@ -4,8 +4,13 @@ import { z } from "zod";
 
 /** Status koneksi push — dipakai UI untuk menampilkan "belum terhubung". */
 export const getPushStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { pushConfigured } = await import("./fcm.server");
-  return { configured: pushConfigured() };
+  const { pushConfigStatus } = await import("./fcm.server");
+  const status = pushConfigStatus();
+  // Alasan bersifat diagnostik (kode + kalimat tetap), tidak pernah memuat
+  // potongan secret apa pun.
+  return status.configured
+    ? { configured: true as const }
+    : { configured: false as const, code: status.code, reason: status.reason };
 });
 
 /** Dipanggil pengirim setelah pesan tersimpan; fan-out ke perangkat penerima. */

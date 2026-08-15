@@ -60,4 +60,7 @@ apply from: 'capacitor.build.gradle'
 // google-services.json disiapkan pemilik akun; jangan gagal build bila belum ada.
 if (file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
+    logger.lifecycle('MCM: google-services.json ditemukan — push FCM aktif pada build ini.')
+} else {
+    logger.warn('MCM: google-services.json TIDAK ada — build tetap jalan, tetapi APK/AAB ini tidak menerima push FCM.')
 }

@@ -8,6 +8,25 @@ import type { PushData } from "./payload";
 
 type ServiceAccount = { client_email: string; private_key: string; project_id: string };
 
+/** Alasan konfigurasi yang aman ditampilkan ke UI (tidak pernah memuat secret). */
+export type PushConfigStatus =
+  | { configured: true }
+  | {
+      configured: false;
+      code: "missing" | "invalid_json" | "incomplete" | "invalid_private_key";
+      reason: string;
+    };
+
+const CONFIG_REASONS: Record<
+  Exclude<Extract<PushConfigStatus, { configured: false }>["code"], never>,
+  string
+> = {
+  missing: "FCM_SERVICE_ACCOUNT_JSON belum diatur",
+  invalid_json: "FCM_SERVICE_ACCOUNT_JSON bukan JSON service account yang valid",
+  incomplete: "Service account tidak lengkap (butuh project_id, client_email, private_key)",
+  invalid_private_key: "private_key service account bukan blok PEM yang valid",
+};
+
 export type FcmResult = {
   configured: boolean;
   sent: number;
@@ -20,20 +39,82 @@ export type FcmResult = {
 export type PushOutcome = { token: string; ok: boolean; deadToken: boolean };
 export type FcmEachResult = FcmResult & { outcomes: PushOutcome[] };
 
+/**
+ * Normalisasi private key: secret sering disimpan dengan `\n` literal (hasil
+ * copy dari JSON) atau dengan CRLF. Keduanya harus menjadi newline asli supaya
+ * blok PEM bisa dibaca Web Crypto.
+ */
+function normalizePrivateKey(key: string): string {
+  return key
+    .replace(/\\r/g, "")
+    .replace(/\\n/g, "\n")
+    .replace(/\r/g, "")
+    .trim();
+}
+
+function parseServiceAccount(raw: string): ServiceAccount | { error: PushConfigStatus } {
+  const trimmed = raw.trim();
+  // Secret boleh disimpan sebagai JSON mentah atau base64 dari JSON itu.
+  let text = trimmed;
+  if (!trimmed.startsWith("{")) {
+    try {
+      text = atob(trimmed.replace(/\s+/g, ""));
+    } catch {
+      return { error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json } };
+    }
+  }
+  let parsed: Partial<ServiceAccount>;
+  try {
+    parsed = JSON.parse(text) as Partial<ServiceAccount>;
+  } catch {
+    return { error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json } };
+  }
+  if (!parsed || typeof parsed !== "object" || !parsed.client_email || !parsed.private_key || !parsed.project_id) {
+    return { error: { configured: false, code: "incomplete", reason: CONFIG_REASONS.incomplete } };
+  }
+  const private_key = normalizePrivateKey(String(parsed.private_key));
+  if (!/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(private_key)) {
+    return {
+      error: { configured: false, code: "invalid_private_key", reason: CONFIG_REASONS.invalid_private_key },
+    };
+  }
+  return {
+    client_email: String(parsed.client_email).trim(),
+    project_id: String(parsed.project_id).trim(),
+    private_key,
+  };
+}
+
 function readServiceAccount(): ServiceAccount | null {
   const raw = process.env["FCM_SERVICE_ACCOUNT_JSON"];
   if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as ServiceAccount;
-    if (!parsed.client_email || !parsed.private_key || !parsed.project_id) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
+  const parsed = parseServiceAccount(raw);
+  return "error" in parsed ? null : parsed;
+}
+
+/** Diagnosa konfigurasi push tanpa pernah membocorkan isi secret. */
+export function pushConfigStatus(): PushConfigStatus {
+  const raw = process.env["FCM_SERVICE_ACCOUNT_JSON"];
+  if (!raw || !raw.trim())
+    return { configured: false, code: "missing", reason: CONFIG_REASONS.missing };
+  const parsed = parseServiceAccount(raw);
+  return "error" in parsed ? parsed.error : { configured: true };
 }
 
 export function pushConfigured(): boolean {
-  return readServiceAccount() !== null;
+  return pushConfigStatus().configured;
+}
+
+/** Batas waktu setiap panggilan jaringan ke Google (OAuth + FCM). */
+const FETCH_TIMEOUT_MS = 10_000;
+
+function timeoutSignal(ms = FETCH_TIMEOUT_MS): AbortSignal {
+  // AbortSignal.timeout tersedia di Worker; fallback manual untuk runtime lama.
+  const anyAbort = AbortSignal as unknown as { timeout?: (ms: number) => AbortSignal };
+  if (typeof anyAbort.timeout === "function") return anyAbort.timeout(ms);
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
 }
 
 function b64url(input: ArrayBuffer | string): string {
@@ -51,11 +132,15 @@ function pemToPkcs8(pem: string): ArrayBuffer {
   return buf.buffer;
 }
 
-let cachedToken: { token: string; exp: number } | null = null;
+let cachedToken: { token: string; exp: number; owner: string } | null = null;
 
 async function accessToken(sa: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  if (cachedToken && now < cachedToken.exp - 60) return cachedToken.token;
+  const owner = `${sa.project_id}:${sa.client_email}`;
+  // Cache harus terikat service account; rotasi kredensial tidak boleh memakai
+  // access token lama.
+  if (cachedToken && cachedToken.owner === owner && now < cachedToken.exp - 60)
+    return cachedToken.token;
 
   const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claim = b64url(
@@ -84,6 +169,7 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
+    signal: timeoutSignal(),
     body: new URLSearchParams({
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
       assertion,
@@ -91,7 +177,7 @@ async function accessToken(sa: ServiceAccount): Promise<string> {
   });
   if (!res.ok) throw new Error(`fcm_oauth_failed_${res.status}`);
   const json = (await res.json()) as { access_token: string; expires_in: number };
-  cachedToken = { token: json.access_token, exp: now + json.expires_in };
+  cachedToken = { token: json.access_token, exp: now + json.expires_in, owner };
   return json.access_token;
 }
 
@@ -165,21 +251,35 @@ export async function sendPush(
  * pernah ikut terkirim ke perangkat B.
  */
 export async function sendEach(messages: PushMessage[]): Promise<FcmEachResult> {
+  const status = pushConfigStatus();
   const sa = readServiceAccount();
-  if (!sa) {
+  if (!sa || !status.configured) {
     return {
       configured: false,
       sent: 0,
       failed: 0,
       invalidTokens: [],
       outcomes: [],
-      reason: "FCM_SERVICE_ACCOUNT_JSON belum diatur",
+      reason: status.configured ? CONFIG_REASONS.missing : status.reason,
     };
   }
   if (messages.length === 0)
     return { configured: true, sent: 0, failed: 0, invalidTokens: [], outcomes: [] };
 
-  const bearer = await accessToken(sa);
+  let bearer: string;
+  try {
+    bearer = await accessToken(sa);
+  } catch (err) {
+    // Gagal ambil access token = tidak ada satu pun token perangkat yang salah.
+    return {
+      configured: true,
+      sent: 0,
+      failed: messages.length,
+      invalidTokens: [],
+      outcomes: messages.map((m) => ({ token: m.token, ok: false, deadToken: false })),
+      reason: err instanceof Error ? err.message : "fcm_oauth_failed",
+    };
+  }
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
   const invalidTokens: string[] = [];
   const outcomes: PushOutcome[] = [];
@@ -193,22 +293,31 @@ export async function sendEach(messages: PushMessage[]): Promise<FcmEachResult> 
       for (const [k, v] of Object.entries(t.extra ?? {})) payload[k] = v;
       payload["sound"] = t.sound ? "1" : "0";
       payload["vibrate"] = t.vibrate ? "1" : "0";
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          message: {
-            token: t.token,
-            data: payload,
-            android: {
-              priority: "HIGH",
-              ttl,
-              ...(t.collapseKey ? { collapseKey: t.collapseKey } : {}),
-              // Data-only: notifikasi dibangun receiver native (channel + actions).
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
+          signal: timeoutSignal(),
+          body: JSON.stringify({
+            message: {
+              token: t.token,
+              data: payload,
+              android: {
+                priority: "HIGH",
+                ttl,
+                ...(t.collapseKey ? { collapseKey: t.collapseKey } : {}),
+                // Data-only: notifikasi dibangun receiver native (channel + actions).
+              },
             },
-          },
-        }),
-      });
+          }),
+        });
+      } catch {
+        // Timeout / gangguan jaringan: gagal kirim, TAPI token tetap valid.
+        failed += 1;
+        outcomes.push({ token: t.token, ok: false, deadToken: false });
+        return;
+      }
       if (res.ok) {
         sent += 1;
         outcomes.push({ token: t.token, ok: true, deadToken: false });
