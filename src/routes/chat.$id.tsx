@@ -18,6 +18,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
+import { ForwardDialog } from "@/components/mcm/forward-dialog";
 import { LocationShareFlow, PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
@@ -137,6 +138,7 @@ function ChatRoom() {
   const [reply, setReply] = useState<MessageRow | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
+  const [forwarding, setForwarding] = useState<MessageRow[]>([]);
   const [confirmAll, setConfirmAll] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [photoMode, setPhotoMode] = useState<"camera" | "gallery">("camera");
@@ -258,11 +260,22 @@ function ChatRoom() {
       bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length, pending.length, atBottom, lastSenderId, userId]);
 
+  // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
+  // setState tidak pernah dipanggil per event scroll.
+  const scrollTick = useRef(false);
   const onScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setAtBottom(isNearBottom(el));
-    if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
+    if (scrollTick.current) return;
+    scrollTick.current = true;
+    requestAnimationFrame(() => {
+      scrollTick.current = false;
+      const el = scrollRef.current;
+      if (!el) return;
+      setAtBottom((prev) => {
+        const next = isNearBottom(el);
+        return next === prev ? prev : next;
+      });
+      if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
+    });
   }, [hasOlder, isFetchingOlder, fetchOlder]);
 
   // Keyboard (IME) muncul/hilang: pertahankan posisi baca. Hanya menempel ke
@@ -408,6 +421,9 @@ function ChatRoom() {
           break;
         case "reply":
           setReply(message);
+          break;
+        case "forward":
+          setForwarding([message]);
           break;
         case "copy":
           await navigator.clipboard.writeText(message.body);
@@ -615,6 +631,15 @@ function ChatRoom() {
                   variant="ghost"
                   size="sm"
                   onClick={() =>
+                    setForwarding(messages.filter((m) => selection.includes(m.id)))
+                  }
+                >
+                  Teruskan
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
                     void deleteForMe(selection, userId!).then(() => {
                       setSelection([]);
                       refresh();
@@ -757,7 +782,7 @@ function ChatRoom() {
       <div
         ref={scrollRef}
         onScroll={onScroll}
-        className="chat-canvas relative flex-1 overflow-y-auto px-2 py-3"
+        className="chat-canvas chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
       >
         {hasOlder && (
           <div className="mb-2 flex justify-center">
@@ -1025,6 +1050,18 @@ function ChatRoom() {
           onPick={(s) => void sendSticker(s)}
         />
       )}
+
+      <ForwardDialog
+        open={forwarding.length > 0}
+        onOpenChange={(v) => !v && setForwarding([])}
+        messages={forwarding}
+        userId={userId}
+        onDone={() => {
+          setForwarding([]);
+          setSelection([]);
+          refresh();
+        }}
+      />
 
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="h-[92dvh] rounded-t-3xl p-0">

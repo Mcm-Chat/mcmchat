@@ -183,6 +183,14 @@
   box-shadow: var(--shadow-bubble);
 }
 
+/* Gulir daftar pesan: momentum halus, tanpa rantai scroll ke halaman. */
+@utility chat-scroll {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  will-change: scroll-position;
+}
+
 @utility composer-raise {
   box-shadow: var(--shadow-raise);
 }

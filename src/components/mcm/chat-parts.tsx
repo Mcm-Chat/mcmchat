@@ -9,6 +9,7 @@ import {
   CornerUpLeft,
   Copy,
   FileText,
+  Forward,
   Image as ImageIcon,
   MapPin,
   Mic,
@@ -27,7 +28,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  TouchEvent as ReactTouchEvent,
+} from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -519,7 +523,62 @@ function VoiceBubble({ message }: { message: MessageRow }) {
 }
 
 export type MessageAction =
-  "select" | "reply" | "copy" | "edit" | "react" | "delete-me" | "delete-all";
+  "select" | "reply" | "forward" | "copy" | "edit" | "react" | "delete-me" | "delete-all";
+
+/** Ambang geser (px) sebelum aksi balas/teruskan dijalankan. */
+const SWIPE_TRIGGER_PX = 64;
+const SWIPE_MAX_PX = 96;
+
+/**
+ * Gestur geser pada bubble: geser kanan = balas, geser kiri = teruskan.
+ * Hanya aktif untuk gerakan yang jelas horizontal agar scroll vertikal daftar
+ * pesan tidak pernah tertahan.
+ */
+function useBubbleSwipe(onSwipe: (dir: "right" | "left") => void) {
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const axis = useRef<"none" | "x" | "y">("none");
+  const [dx, setDx] = useState(0);
+
+  const clamp = (v: number) => Math.max(-SWIPE_MAX_PX, Math.min(SWIPE_MAX_PX, v));
+
+  return {
+    dx,
+    handlers: {
+      onTouchStart: (e: ReactTouchEvent) => {
+        const t = e.touches[0];
+        if (!t) return;
+        start.current = { x: t.clientX, y: t.clientY };
+        axis.current = "none";
+      },
+      onTouchMove: (e: ReactTouchEvent) => {
+        const t = e.touches[0];
+        const s = start.current;
+        if (!t || !s) return;
+        const mx = t.clientX - s.x;
+        const my = t.clientY - s.y;
+        if (axis.current === "none") {
+          if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+          axis.current = Math.abs(mx) > Math.abs(my) * 1.4 ? "x" : "y";
+        }
+        if (axis.current !== "x") return;
+        setDx(clamp(mx * 0.6));
+      },
+      onTouchEnd: () => {
+        const moved = dx;
+        start.current = null;
+        axis.current = "none";
+        setDx(0);
+        if (moved >= SWIPE_TRIGGER_PX * 0.6) onSwipe("right");
+        else if (moved <= -SWIPE_TRIGGER_PX * 0.6) onSwipe("left");
+      },
+      onTouchCancel: () => {
+        start.current = null;
+        axis.current = "none";
+        setDx(0);
+      },
+    },
+  };
+}
 
 export function MessageBubble({
   message,
@@ -560,22 +619,45 @@ export function MessageBubble({
     );
   }
   const isSticker = message.kind === "sticker";
+  const swipe = useBubbleSwipe((dir) =>
+    onAction(dir === "right" ? "reply" : "forward", message),
+  );
   return (
     <div
       className={cn(
-        "group animate-bubble-in flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        "group animate-bubble-in relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
         grouped ? "py-[1px]" : "pt-1.5 pb-[1px]",
         mine ? "justify-end" : "justify-start",
         selectable && "cursor-pointer",
         selectable && selected && "bg-primary/10",
         highlighted && "ring-2 ring-primary/60",
       )}
+      style={{
+        transform: swipe.dx ? `translateX(${swipe.dx}px)` : undefined,
+        transition: swipe.dx ? "none" : "transform 160ms ease-out",
+      }}
+      {...(selectable ? {} : swipe.handlers)}
       onClick={selectable ? () => onAction("select", message) : undefined}
       onContextMenu={(e) => {
         e.preventDefault();
         onAction("select", message);
       }}
     >
+      {swipe.dx !== 0 && (
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted-foreground",
+            swipe.dx > 0 ? "-left-8" : "-right-8",
+          )}
+        >
+          {swipe.dx > 0 ? (
+            <CornerUpLeft className="size-5" />
+          ) : (
+            <Forward className="size-5" />
+          )}
+        </span>
+      )}
       <div
         className={cn(
           "flex min-w-0 max-w-[80%] flex-col",
@@ -705,6 +787,9 @@ export function MessageBubble({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onAction("reply", message)}>
               <CornerUpLeft className="size-4" /> Balas
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onAction("forward", message)}>
+              <Forward className="size-4" /> Teruskan
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAction("copy", message)}>
               <Copy className="size-4" /> Salin
