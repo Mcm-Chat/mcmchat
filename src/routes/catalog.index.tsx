@@ -531,35 +531,221 @@ function CatalogIndex() {
       ) : (
         <div className="space-y-3 p-4">
           {visible.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard
+              key={p.id}
+              product={p}
+              indicator={indicatorMap.get(p.id)}
+              canManage={canManage}
+              onBuy={() => setBuyFor(p)}
+              onDelete={() => setRemoveFor(p)}
+            />
           ))}
         </div>
       )}
+
+      {buyFor && buyFor.variants.length > 0 && (
+        <PurchaseDialog
+          open
+          onOpenChange={(v) => !v && setBuyFor(null)}
+          variants={buyFor.variants}
+          onDone={() => {
+            setBuyFor(null);
+            refreshCatalog();
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!removeFor}
+        onOpenChange={(v) => !v && setRemoveFor(null)}
+        title="Hapus produk?"
+        description={`Produk "${removeFor?.name ?? ""}" beserta varian, foto, dan riwayat stoknya akan dihapus permanen.`}
+        destructive
+        confirmLabel="Hapus"
+        onConfirm={() =>
+          void (async () => {
+            if (!removeFor) return;
+            try {
+              await deleteProduct(removeFor.id);
+              toast.success("Produk dihapus");
+              setRemoveFor(null);
+              refreshCatalog();
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Gagal menghapus produk");
+            }
+          })()
+        }
+      />
+
+      <CategoryManagerDialog
+        open={catOpen}
+        onOpenChange={setCatOpen}
+        businessId={businessId!}
+        categories={categories.filter((c) => c !== "Semua")}
+        onDone={() => {
+          setCat("Semua");
+          refreshCatalog();
+        }}
+      />
     </AppShell>
   );
 }
 
-function ProductCard({ product }: { product: ProductWithVariants }) {
+function CategoryManagerDialog({
+  open,
+  onOpenChange,
+  businessId,
+  categories,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  businessId: string;
+  categories: string[];
+  onDone: () => void;
+}) {
+  const [busy, setBusy] = useState("");
+  const [rename, setRename] = useState<Record<string, string>>({});
+
+  const run = async (from: string, to: string, message: string) => {
+    setBusy(from);
+    try {
+      await renameCategory(businessId, from, to);
+      toast.success(message);
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengubah folder");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[80vh] overflow-y-auto rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Kelola folder kategori</DialogTitle>
+          <DialogDescription>
+            Ganti nama folder atau hapus folder. Produk di dalamnya tidak ikut terhapus, hanya
+            dipindah ke folder “Umum”.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          {categories.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">Belum ada folder.</p>
+          )}
+          {categories.map((c) => (
+            <div key={c} className="space-y-2 rounded-xl border border-border p-3">
+              <p className="text-sm font-semibold">{c}</p>
+              <Input
+                value={rename[c] ?? c}
+                onChange={(e) => setRename((r) => ({ ...r, [c]: e.target.value }))}
+                placeholder="Nama folder"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 rounded-xl"
+                  disabled={busy === c || (rename[c] ?? c).trim() === c}
+                  onClick={() => void run(c, (rename[c] ?? c).trim(), "Nama folder diperbarui")}
+                >
+                  Simpan nama
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 rounded-xl text-destructive"
+                  disabled={busy === c || c === "Umum"}
+                  onClick={() => void run(c, "Umum", "Folder dihapus")}
+                >
+                  <Trash2 className="size-3.5" /> Hapus folder
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ProductCard({
+  product,
+  indicator,
+  canManage,
+  onBuy,
+  onDelete,
+}: {
+  product: ProductWithVariants;
+  indicator?: ProductIndicator | undefined;
+  canManage: boolean;
+  onBuy: () => void;
+  onDelete: () => void;
+}) {
   const navigate = useNavigate();
   const cover = product.photos[0]?.image_path;
+  const unitVariant = product.variants[0];
+  const soldLabel =
+    indicator && unitVariant ? formatQty(unitVariant, indicator.sold_base) : "0";
   return (
     <div className="card-soft space-y-3 p-3">
-      <Link to="/catalog/$id" params={{ id: product.id }} className="flex gap-3">
-        <ProductThumb path={cover} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{product.name}</p>
-          <p className="text-xs text-muted-foreground">{product.category}</p>
-          <p className="mt-1 text-sm font-semibold text-primary">
-            {priceLabel(Number(product.price))}
-          </p>
-        </div>
-      </Link>
+      <div className="flex gap-3">
+        <Link to="/catalog/$id" params={{ id: product.id }} className="flex min-w-0 flex-1 gap-3">
+          <ProductThumb path={cover} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold">{product.name}</p>
+            <p className="text-xs text-muted-foreground">{product.category}</p>
+            <p className="mt-1 text-sm font-semibold text-primary">
+              {priceLabel(Number(product.price))}
+            </p>
+          </div>
+        </Link>
+        {canManage && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Hapus produk ${product.name}`}
+            className="size-9 shrink-0 text-destructive"
+            onClick={onDelete}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        )}
+      </div>
       {product.variants.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {product.variants.map((v) => (
             <StockChip key={v.id} variant={v} balance={v.balance} />
           ))}
         </div>
+      )}
+      <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/50 p-2.5 text-[11px]">
+        <Indicator label="Modal masuk" value={rupiah(indicator?.total_cost ?? 0)} />
+        <Indicator label="Nilai stok" value={rupiah(indicator?.stock_value ?? 0)} />
+        <Indicator label="Terjual" value={soldLabel} />
+        <Indicator
+          label="Estimasi laba"
+          value={rupiah(indicator?.profit ?? 0)}
+          tone={(indicator?.profit ?? 0) >= 0 ? "text-success" : "text-destructive"}
+        />
+        <div className="col-span-2 truncate text-muted-foreground">
+          Agen terakhir:{" "}
+          <span className="font-medium text-foreground">
+            {indicator?.last_supplier || "Belum ada pembelian"}
+          </span>
+        </div>
+      </div>
+      {canManage && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full rounded-xl"
+          disabled={product.variants.length === 0}
+          onClick={onBuy}
+        >
+          <ShoppingCart className="size-4" />
+          {product.variants.length === 0 ? "Tambah varian dulu" : "Catat pembelian dari agen"}
+        </Button>
       )}
       <div className="flex gap-2">
         <Button variant="outline" size="sm" className="flex-1 rounded-xl" asChild>
@@ -575,6 +761,23 @@ function ProductCard({ product }: { product: ProductWithVariants }) {
           Kirim ke Pelanggan
         </Button>
       </div>
+    </div>
+  );
+}
+
+function Indicator({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: string | undefined;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-muted-foreground">{label}</p>
+      <p className={`truncate font-semibold ${tone ?? ""}`}>{value}</p>
     </div>
   );
 }
