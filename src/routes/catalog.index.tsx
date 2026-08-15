@@ -471,21 +471,34 @@ function CatalogIndex() {
                 className="h-11 rounded-xl pl-9"
               />
             </div>
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-              {categories.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCat(c)}
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    cat === c
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+            <div className="flex items-center gap-1.5">
+              <div className="flex flex-1 gap-1.5 overflow-x-auto pb-0.5">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCat(c)}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      cat === c
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+              {canManage && categories.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Kelola folder kategori"
+                  className="size-9 shrink-0"
+                  onClick={() => setCatOpen(true)}
                 >
-                  {c}
-                </button>
-              ))}
+                  <FolderCog className="size-4" />
+                </Button>
+              )}
             </div>
           </div>
         </MobileHeader>
