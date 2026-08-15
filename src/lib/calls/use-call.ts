@@ -28,6 +28,12 @@ import {
   type CallRow,
 } from "@/lib/api/calls";
 import type { EndReason } from "./policy";
+import {
+  answerFailureText,
+  connectFailureText,
+  describeAnswerFailure,
+  describeConnectFailure,
+} from "./failure-messages";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
@@ -324,7 +330,7 @@ export function useCall(opts: {
                 return;
               }
               setPhase("error");
-              setReason(s.reason ?? "Koneksi media gagal");
+              setReason(connectFailureText(s.reason ?? "media"));
             } else if (s.status === "connected") {
               setPhase("connected");
               startedRef.current ??= Date.now();
@@ -352,8 +358,9 @@ export function useCall(opts: {
       } catch (e) {
         joinedRef.current = false;
         devLog("join_failed", e instanceof Error ? e.message : "unknown");
-        setPhase("error");
-        setReason(e instanceof Error ? e.message : "Gagal menyambungkan panggilan");
+        const info = describeConnectFailure(e);
+        setPhase(info.outcome === "ended" ? "ended" : "error");
+        setReason(`${info.message} ${info.action}`);
       }
     },
     [buildOutgoingAudio, cleanup, token],
@@ -603,7 +610,20 @@ export function useCall(opts: {
         if (!userId || !call) return;
         void answerCall(call.id)
           .then(() => join({ ...call, status: "ongoing" }))
-          .catch((e: unknown) => setReason(e instanceof Error ? e.message : "Gagal menjawab"));
+          .catch((e: unknown) => {
+            // Gagal mengangkat: sampaikan penyebab + langkah berikutnya, dan
+            // jangan biarkan layar menggantung di fase "berdering".
+            const info = describeAnswerFailure(e);
+            devLog("answer_failed", e instanceof Error ? e.message : "unknown");
+            setReason(answerFailureText(e));
+            if (info.outcome === "ended") {
+              endedRef.current = true;
+              setPhase("ended");
+              void cleanup();
+            } else {
+              setPhase("error");
+            }
+          });
       },
       decline: () => {
         if (endedRef.current) return;
