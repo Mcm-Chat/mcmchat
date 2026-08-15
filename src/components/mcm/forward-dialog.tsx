@@ -90,15 +90,23 @@ export function ForwardDialog({
             </p>
           )}
           {list.map((c) => (
-            <button
+            <div
               key={c.id}
-              type="button"
+              role="checkbox"
+              aria-checked={picked.includes(c.id)}
+              tabIndex={0}
               onClick={() => toggle(c.id)}
-              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left hover:bg-muted"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggle(c.id);
+                }
+              }}
+              className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-left outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Checkbox checked={picked.includes(c.id)} tabIndex={-1} />
+              <Checkbox checked={picked.includes(c.id)} tabIndex={-1} aria-hidden />
               <span className="truncate text-sm font-medium">{c.title_resolved}</span>
-            </button>
+            </div>
           ))}
         </div>
         <DialogFooter>

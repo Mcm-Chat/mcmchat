@@ -1034,7 +1034,10 @@ export function ChatComposer({
         </div>
       )}
       {replyPreview && (
-        <div className="flex items-center gap-2 border-b border-border/70 bg-muted/50 px-3 py-2">
+        <div
+          data-testid="reply-preview"
+          className="flex items-center gap-2 border-b border-border/70 bg-muted/50 px-3 py-2"
+        >
           <CornerUpLeft className="size-4 text-primary" />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold text-primary">{replySenderName ?? "Pesan"}</p>
