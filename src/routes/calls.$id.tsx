@@ -82,6 +82,8 @@ function CallDetailPage() {
 
   const call: CallHistoryItem | undefined = (calls ?? []).find((c) => c.id === id);
   const other = call?.participants.find((p) => p.user_id !== userId) ?? null;
+  const { nameOf } = useContactAliases();
+  const peerName = nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM");
   const incoming = !!call && call.initiator_id !== userId;
 
   const redial = async (kind: "audio" | "video") => {

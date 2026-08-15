@@ -96,6 +96,7 @@ function counterpartOf(call: CallHistoryItem, userId?: string) {
 
 function CallsPage() {
   const { userId, loading } = useRequireAuth();
+  const { nameOf } = useContactAliases();
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
   const { data: conversations } = useConversations(userId);
   const [tab, setTab] = useState("semua");
