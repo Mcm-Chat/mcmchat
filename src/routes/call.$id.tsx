@@ -342,6 +342,19 @@ function CallScreen() {
 
             {session.phase === "incoming" ? (
               <div className="flex items-center justify-center gap-10">
+                {/* Jawab lebih dulu di DOM (urutan Tab), tetap di kanan secara visual. */}
+                <div className="order-2 flex flex-col items-center gap-1.5">
+                  <Button
+                    ref={answerRef}
+                    size="icon"
+                    className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
+                    aria-label="Jawab panggilan"
+                    onClick={session.answer}
+                  >
+                    <PhoneIcon className="size-7" />
+                  </Button>
+                  <span className="text-[10px] text-white/70">Jawab</span>
+                </div>
                 <div className="order-1 flex flex-col items-center gap-1.5">
                   <Button
                     size="icon"
@@ -353,16 +366,6 @@ function CallScreen() {
                   </Button>
                   <span className="text-[10px] text-white/70">Tolak</span>
                 </div>
-                <div className="order-2 flex flex-col items-center gap-1.5">
-                  <Button
-                    ref={answerRef}
-                    size="icon"
-                    className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
-                    aria-label="Jawab panggilan"
-                    onClick={session.answer}
-                  >
-                    <PhoneIcon className="size-7" />
-                  </Button>
                   <span className="text-[10px] text-white/70">Jawab</span>
                 </div>
               </div>
