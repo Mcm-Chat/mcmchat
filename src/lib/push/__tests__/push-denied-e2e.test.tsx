@@ -6,7 +6,7 @@
  * termasuk jalur web listener agar delivered-mark tidak jalan saat ditolak.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, cleanup, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, cleanup, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 const getSession = vi.fn();
@@ -31,7 +31,7 @@ const CONV = "11111111-2222-4333-8444-555555555555";
 async function runPushClick(route: string) {
   render(<PushDeniedDialog />);
   const guarded = await guardPushRoute(route);
-  announceGuardResult(guarded);
+  act(() => announceGuardResult(guarded));
   return guarded;
 }
 
@@ -133,9 +133,7 @@ describe("regresi guard izin push (end-to-end)", () => {
       expect(screen.getByText(guarded.reason!)).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole("button", { name: /mengerti/i }));
-      await waitFor(() =>
-        expect(navigate).toHaveBeenCalledWith({ to: c.fallback, replace: true }),
-      );
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: c.fallback, replace: true }));
       await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     });
   }
@@ -196,7 +194,10 @@ describe("jalur web listener saat guard menolak", () => {
     expect(listener).toBeTypeOf("function");
 
     const ack = vi.fn();
-    listener!({ data: { type: "mcm-push-route", route: `/chat/${CONV}` }, ports: [{ postMessage: ack }] });
+    listener!({
+      data: { type: "mcm-push-route", route: `/chat/${CONV}` },
+      ports: [{ postMessage: ack }],
+    });
 
     await waitFor(() => expect(navigateTo).toHaveBeenCalledWith("/chat"));
     expect(ack).toHaveBeenCalledWith({ type: "mcm-push-route-ack" });
@@ -210,7 +211,10 @@ describe("jalur web listener saat guard menolak", () => {
     const { attachWebPushListeners } = await import("../web");
     const navigateTo = vi.fn();
     const detach = attachWebPushListeners(navigateTo);
-    listener!({ data: { type: "mcm-push-route", route: `/chat/${CONV}` }, ports: [{ postMessage: vi.fn() }] });
+    listener!({
+      data: { type: "mcm-push-route", route: `/chat/${CONV}` },
+      ports: [{ postMessage: vi.fn() }],
+    });
 
     await waitFor(() => expect(navigateTo).toHaveBeenCalledWith(`/chat/${CONV}`));
     expect(rpc).toHaveBeenCalledWith("mark_messages_delivered", { _conv: CONV });
