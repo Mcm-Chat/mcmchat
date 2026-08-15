@@ -150,7 +150,7 @@ export type VariantValidation =
 export const VARIANT_MESSAGES = {
   name: "Nama varian wajib diisi.",
   invalidDecimal: "Jumlah berat harus berupa angka desimal yang valid.",
-  minWeight: "Berat minimum adalah 0,01 gram.",
+  minWeight: "Berat minimum adalah 0,0001 gram (0,1 mg).",
   invalidUnits: "Isi per satuan harus bilangan bulat lebih dari nol.",
   price: "Harga varian wajib diisi.",
   unit: "Satuan tidak sesuai dengan jenis stok.",
