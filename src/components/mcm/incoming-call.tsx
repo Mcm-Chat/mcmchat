@@ -260,20 +260,9 @@ export function IncomingCallListener() {
         <Button
           size="icon"
           aria-label="Jawab panggilan"
+          disabled={asking}
           className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-white"
-          onClick={() => {
-            const id = incoming.call.id;
-            // Simpan target fokus supaya bila panggilan yang dijawab langsung
-            // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
-            // panggil ulang percakapan ini (bukan hilang ke <body>).
-            setCallReturnFocus(id);
-            // Satu tap = benar-benar menjawab. Layar panggilan membaca niat ini
-            // dan langsung memanggil `answer_call`, tanpa tap kedua yang sering
-            // kehabisan batas dering 45 detik.
-            markAnswerIntent(id);
-            closeBanner("Panggilan dijawab. Membuka layar panggilan.");
-            void navigate({ to: "/call/$id", params: { id } });
-          }}
+          onClick={answerFromBanner}
         >
           <Phone className="size-5" aria-hidden="true" />
         </Button>
@@ -290,6 +279,23 @@ export function IncomingCallListener() {
           <PhoneOff className="size-5" aria-hidden="true" />
         </Button>
       </div>
+      {permBlocked && permCopy ? (
+        <div role="alert" className="mt-3 rounded-xl bg-white/10 p-2.5">
+          <p className="text-xs font-semibold">{permCopy.title}</p>
+          <p className="mt-0.5 text-[11px] text-navy-foreground/75">{permCopy.help}</p>
+          {permCopy.action ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-2 h-8 rounded-lg text-xs"
+              disabled={asking}
+              onClick={answerFromBanner}
+            >
+              {asking ? "Meminta izin…" : permCopy.action}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
