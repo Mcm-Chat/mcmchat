@@ -5,6 +5,7 @@ import { Camera, MessageCirclePlus, MessagesSquare, Search, Users } from "lucide
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatListItem } from "@/components/mcm/chat-parts";
+import { AccessFallback } from "@/components/mcm/access-fallback";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,12 @@ function ChatIndex() {
   const { userId, loading } = useRequireAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: conversations, isLoading } = useConversations(userId);
+  const {
+    data: conversations,
+    isLoading,
+    error: conversationsError,
+    refetch: refetchConversations,
+  } = useConversations(userId);
   const { data: contacts } = useContacts(userId);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState("semua");
@@ -357,6 +363,20 @@ function ChatIndex() {
 
       {loading || isLoading ? (
         <LoadingSkeleton rows={6} />
+      ) : conversationsError ? (
+        <AccessFallback
+          error={conversationsError}
+          onRetry={() => refetchConversations()}
+          extra={
+            <Button
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => void navigate({ to: "/contacts" })}
+            >
+              Buka kontak
+            </Button>
+          }
+        />
       ) : list.length === 0 ? (
         <EmptyState
           icon={MessagesSquare}
