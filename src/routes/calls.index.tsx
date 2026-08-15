@@ -43,6 +43,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
+import { markMissedCallsSeen } from "@/lib/calls/missed-seen";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 import {
@@ -112,6 +113,13 @@ function CallsPage() {
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
+
+  // Membuka halaman Panggilan = semua panggilan tak terjawab dianggap dilihat,
+  // sehingga badge di navigasi bawah hilang dan hanya muncul untuk yang baru.
+  useEffect(() => {
+    if (!userId || isLoading) return;
+    markMissedCallsSeen();
+  }, [userId, isLoading, calls]);
 
   useEffect(() => {
     void loadConfig()

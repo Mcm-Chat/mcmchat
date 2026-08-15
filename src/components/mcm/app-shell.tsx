@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useCalls, useConversations, useLedgers } from "@/lib/api/queries";
 import { useIncomingCallActive } from "@/lib/calls/incoming-lock";
+import { useMissedCallsSeenAt } from "@/lib/calls/missed-seen";
 
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
@@ -33,10 +34,15 @@ export function BottomNavigation({
   const { data: convs } = useConversations(user?.id);
   const { data: ledgers } = useLedgers(user?.id);
   const { data: calls } = useCalls(user?.id);
+  const missedSeenAt = useMissedCallsSeenAt();
   const auto: Record<string, number> = {
     "/chat": (convs ?? []).filter((c) => !c.me.is_archived).reduce((s, c) => s + c.unread, 0),
-    "/calls": (calls ?? []).filter((c) => c.status === "missed" && c.initiator_id !== user?.id)
-      .length,
+    "/calls": (calls ?? []).filter(
+      (c) =>
+        c.status === "missed" &&
+        c.initiator_id !== user?.id &&
+        new Date(c.created_at).getTime() > missedSeenAt,
+    ).length,
     "/finance": (ledgers ?? []).filter(
       (l) => l.status === "pending_approval" && l.counterpart_user_id === user?.id,
     ).length,
