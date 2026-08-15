@@ -489,6 +489,72 @@ export function useCall(opts: {
 
   useEffect(() => () => void cleanup(), [cleanup]);
 
+  /** Enumerasi perangkat input; label hanya terisi bila izin sudah diberikan. */
+  const refreshDevices = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.enumerateDevices) return;
+    void navigator.mediaDevices
+      .enumerateDevices()
+      .then((list) => {
+        const map = (kind: MediaDeviceKind, fallback: string) =>
+          list
+            .filter((d) => d.kind === kind && d.deviceId)
+            .map((d, i) => ({ deviceId: d.deviceId, label: d.label || `${fallback} ${i + 1}` }));
+        setDevices({
+          mics: map("audioinput", "Mikrofon"),
+          cameras: map("videoinput", "Kamera"),
+        });
+      })
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "connected" && phase !== "connecting") return;
+    refreshDevices();
+    const md = typeof navigator !== "undefined" ? navigator.mediaDevices : undefined;
+    if (!md?.addEventListener) return;
+    const onChange = () => refreshDevices();
+    md.addEventListener("devicechange", onChange);
+    return () => md.removeEventListener("devicechange", onChange);
+  }, [phase, refreshDevices]);
+
+  /** Ganti mikrofon tanpa memutus panggilan: bangun ulang track lalu replace. */
+  const setMicDevice = useCallback(
+    (deviceId: string) => {
+      const session = sessionRef.current;
+      if (!session) return;
+      const prevMic = micRef.current;
+      const prevPipe = pipeRef.current;
+      pipeRef.current = null;
+      void buildOutgoingAudio(deviceId)
+        .then(async (track) => {
+          if (!track) throw new Error("Mikrofon tidak tersedia");
+          await session.replaceAudioTrack(track);
+          track.enabled = !controls.muted;
+          await prevPipe?.dispose().catch(() => undefined);
+          prevMic?.getTracks().forEach((t) => t.stop());
+          refreshDevices();
+        })
+        .catch(() => {
+          pipeRef.current = prevPipe;
+          micRef.current = prevMic;
+          setReason("Mikrofon itu tidak bisa dipakai saat ini");
+        });
+    },
+    [buildOutgoingAudio, controls.muted, refreshDevices],
+  );
+
+  const setCameraDevice = useCallback(
+    (deviceId: string) => {
+      const session = sessionRef.current;
+      if (!session) return;
+      void session.setVideoInput(deviceId).then((ok) => {
+        if (ok) setCameraDeviceId(deviceId);
+        else setReason("Kamera itu tidak bisa dipakai saat ini");
+      });
+    },
+    [],
+  );
+
   return useMemo<UseCallResult>(
     () => ({
       phase,
