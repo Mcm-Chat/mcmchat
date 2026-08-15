@@ -70,10 +70,31 @@ jobs:
       - name: Audit (gagal pada high/critical)
         run: bun audit --audit-level=high
 
+  sbom:
+    name: SBOM (CycloneDX + SPDX)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Buat SBOM
+        run: bun run sbom
+      - name: Ringkasan SBOM
+        run: |
+          node -e "const b=require('./sbom/sbom.cyclonedx.json');console.log('CycloneDX',b.specVersion,'komponen:',b.components.length)"
+          node -e "const s=require('./sbom/sbom.spdx.json');console.log('SPDX',s.spdxVersion,'paket:',s.packages.length)"
+      - name: Unggah artefak SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom/
+          if-no-files-found: error
+          retention-days: 90
+
   production-gate:
     name: Gate sebelum merge ke production
     if: github.event_name == 'pull_request' && github.base_ref == 'production'
-    needs: [db-security-regression, quality, dependency-audit]
+    needs: [db-security-regression, quality, dependency-audit, sbom]
     runs-on: ubuntu-latest
     steps:
       - name: Semua gate keamanan lolos
