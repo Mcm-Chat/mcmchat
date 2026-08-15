@@ -698,30 +698,13 @@ export function useCall(opts: {
         });
       },
       answer: () => {
-        if (!userId || !call || answeringRef.current || endedRef.current) return;
-        answeringRef.current = true;
-        void answerCall(call.id)
-          .then(() => join({ ...call, status: "ongoing" }))
-          .catch((e: unknown) => {
-            // Jawaban kedua yang kalah balapan tidak boleh menimpa layar yang
-            // sudah tersambung dengan pesan gagal basi.
-            if (joinedRef.current || endedRef.current) return;
-            // Gagal mengangkat: sampaikan penyebab + langkah berikutnya, dan
-            // jangan biarkan layar menggantung di fase "berdering".
-            const info = describeAnswerFailure(e);
-            devLog("answer_failed", e instanceof Error ? e.message : "unknown");
-            setReason(answerFailureText(e));
-            if (info.outcome === "ended") {
-              endedRef.current = true;
-              setPhase("ended");
-              void cleanup();
-            }
-            // Selain itu layar tetap di fase "berdering" agar tombol Jawab
-            // bisa ditekan ulang sesuai instruksi pesan.
-          })
-          .finally(() => {
-            answeringRef.current = false;
-          });
+        if (!userId || !call) {
+          // Baris panggilan belum termuat: catat niatnya supaya efek pemuatan
+          // menjawab begitu data siap (jangan diam tanpa reaksi).
+          setReason("Menyiapkan panggilan…");
+          return;
+        }
+        runAnswer(call);
       },
       decline: () => {
         if (endedRef.current) return;
