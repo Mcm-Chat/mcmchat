@@ -582,6 +582,7 @@ function CatalogIndex() {
         onOpenChange={setCatOpen}
         businessId={businessId!}
         categories={categories.filter((c) => c !== "Semua")}
+        products={products ?? []}
         onDone={() => {
           setCat("Semua");
           refreshCatalog();
@@ -596,16 +597,20 @@ function CategoryManagerDialog({
   onOpenChange,
   businessId,
   categories,
+  products,
   onDone,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   businessId: string;
   categories: string[];
+  products: ProductWithVariants[];
   onDone: () => void;
 }) {
   const [busy, setBusy] = useState("");
   const [rename, setRename] = useState<Record<string, string>>({});
+  const [deleteFor, setDeleteFor] = useState<string | null>(null);
+  const affected = deleteFor ? products.filter((p) => p.category === deleteFor) : [];
 
   const run = async (from: string, to: string, message: string) => {
     setBusy(from);
@@ -656,7 +661,7 @@ function CategoryManagerDialog({
                   variant="outline"
                   className="flex-1 rounded-xl text-destructive"
                   disabled={busy === c || c === "Umum"}
-                  onClick={() => void run(c, "Umum", "Folder dihapus")}
+                  onClick={() => setDeleteFor(c)}
                 >
                   <Trash2 className="size-3.5" /> Hapus folder
                 </Button>
@@ -664,6 +669,33 @@ function CategoryManagerDialog({
             </div>
           ))}
         </div>
+        <ConfirmDialog
+          open={deleteFor !== null}
+          onOpenChange={(v) => !v && setDeleteFor(null)}
+          title={`Hapus folder “${deleteFor ?? ""}”?`}
+          description={
+            affected.length === 0
+              ? "Folder ini kosong. Tidak ada produk yang terdampak."
+              : `${affected.length} produk akan dipindahkan ke folder “Umum” (tidak dihapus): ${affected
+                  .slice(0, 8)
+                  .map((p) => p.name)
+                  .join(", ")}${affected.length > 8 ? `, dan ${affected.length - 8} lainnya` : ""}.`
+          }
+          confirmLabel="Hapus folder"
+          destructive
+          onConfirm={() => {
+            const target = deleteFor;
+            setDeleteFor(null);
+            if (target)
+              void run(
+                target,
+                "Umum",
+                affected.length > 0
+                  ? `Folder dihapus, ${affected.length} produk dipindah ke Umum`
+                  : "Folder dihapus",
+              );
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
