@@ -22,6 +22,7 @@ import { installViewportMetrics } from "@/lib/mobile/viewport";
 import { initOutboxFlush } from "@/lib/api/outbox";
 import { installImportantToastFocus } from "@/lib/a11y/toast-focus";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
+import { ReduceMotionProvider, MOTION_BOOTSTRAP_SCRIPT } from "@/lib/a11y/reduce-motion";
 
 function NotFoundComponent() {
   return (
@@ -151,6 +152,7 @@ function RootShell({ children }: { children: ReactNode }) {
           content="fOepNPCGHSh_nuODqnInyJzsRPhcMRFfSecl5EsrJzE"
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background text-foreground">
         {children}
@@ -194,15 +196,17 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthProvider>
-          <AccountCacheGuard />
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <PushSession />
-          <IncomingCallListener />
-          <ScreenPrivacyGuard />
-          <Toaster position="top-center" richColors closeButton />
-        </AuthProvider>
+        <ReduceMotionProvider>
+          <AuthProvider>
+            <AccountCacheGuard />
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <PushSession />
+            <IncomingCallListener />
+            <ScreenPrivacyGuard />
+            <Toaster position="top-center" richColors closeButton />
+          </AuthProvider>
+        </ReduceMotionProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

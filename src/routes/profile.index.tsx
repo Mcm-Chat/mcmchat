@@ -32,15 +32,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
+import { useReduceMotion } from "@/lib/a11y/reduce-motion";
 import { useRequireAuth } from "@/lib/api/guard";
 import {
   canManage,
@@ -98,6 +94,11 @@ function ProfilePage() {
   const { userId, profile, loading } = useRequireAuth();
   const { refresh, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const {
+    preference: motionPreference,
+    reduced: motionReduced,
+    setPreference: setMotion,
+  } = useReduceMotion();
   const navigate = useNavigate();
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");
@@ -723,6 +724,25 @@ function ProfilePage() {
                     onCheckedChange={(v) => {
                       setTheme(v ? "dark" : "light");
                       void patchSettings({ theme: v ? "dark" : "light" });
+                    }}
+                  />
+                }
+              />
+              <SettingRow
+                icon={Sparkles}
+                label="Kurangi animasi"
+                description={
+                  motionPreference === "auto"
+                    ? `Mengikuti setelan perangkat (saat ini ${motionReduced ? "aktif" : "nonaktif"})`
+                    : "Mematikan animasi non-kritis seperti transisi dan efek gelembung pesan"
+                }
+                right={
+                  <Switch
+                    aria-label="Kurangi animasi"
+                    checked={motionReduced}
+                    onCheckedChange={(v) => {
+                      setMotion(v ? "on" : "off");
+                      toast.success(v ? "Animasi dikurangi" : "Animasi diaktifkan");
                     }}
                   />
                 }
