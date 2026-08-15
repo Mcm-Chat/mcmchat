@@ -25,6 +25,12 @@ export type MediaPermissionState =
   | "checking"
   /** Izin ada; panggilan boleh dijawab. */
   | "granted"
+  /**
+   * Mikrofon ada, kamera tidak (ditolak/tidak ada/dipakai aplikasi lain).
+   * Panggilan video tetap boleh dijawab sebagai panggilan suara saja dan
+   * kamera dibiarkan nonaktif.
+   */
+  | "audio_only"
   /** Belum diberikan; perlu satu tap "Izinkan". */
   | "prompt"
   /** Ditolak pengguna/OS; harus diubah lewat pengaturan. */
@@ -71,16 +77,35 @@ export async function queryMediaPermission(
   if (!perms?.query) return "prompt";
   const names = requiredPermissions(kind);
   const states: PermissionState[] = [];
+  const byName: Partial<Record<"microphone" | "camera", PermissionState>> = {};
   for (const name of names) {
     try {
       const status = await perms.query({ name: name as PermissionName });
       states.push(status.state);
+      byName[name] = status.state;
     } catch {
       return "prompt";
     }
   }
+  // Panggilan video dengan kamera ditolak tetapi mikrofon siap tetap bisa
+  // dijawab sebagai panggilan suara saja.
+  if (kind === "video" && byName.camera === "denied" && byName.microphone === "granted")
+    return "audio_only";
   if (states.includes("denied")) return "denied";
   return states.every((s) => s === "granted") ? "granted" : "prompt";
+}
+
+/** Cek cepat apakah mikrofon saja bisa dibuka (tanpa menyalakan kamera). */
+async function micUsable(): Promise<boolean> {
+  const md = mediaDevices();
+  if (!md?.getUserMedia) return false;
+  try {
+    const stream = await md.getUserMedia({ audio: true, video: false });
+    stream.getTracks().forEach((t) => t.stop());
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -99,16 +124,9 @@ export async function requestMediaPermission(
   } catch (e) {
     const state = classifyMediaError(e);
     // Kamera bermasalah pada panggilan video tidak boleh mematikan panggilan
-    // suaranya: bila mic saja masih bisa, izin dianggap cukup untuk menjawab.
-    if (kind === "video" && state !== "denied") {
-      try {
-        const audioOnly = await md.getUserMedia({ audio: true, video: false });
-        audioOnly.getTracks().forEach((t) => t.stop());
-        return "granted";
-      } catch {
-        /* jatuh ke status hasil klasifikasi pertama */
-      }
-    }
+    // suaranya: bila mikrofon saja masih bisa dibuka, panggilan dijawab
+    // sebagai suara dan kamera tetap nonaktif.
+    if (kind === "video" && (await micUsable())) return "audio_only";
     return state;
   }
 }
@@ -131,6 +149,12 @@ export function mediaPermissionCopy(
   switch (state) {
     case "granted":
       return { title: `Izin ${what} aktif`, help: "", action: null };
+    case "audio_only":
+      return {
+        title: "Kamera nonaktif — panggilan suara saja",
+        help: "Izin kamera tidak tersedia. Panggilan bisa dijawab memakai mikrofon saja; kamera tetap mati. Aktifkan izin kamera di pengaturan lalu ketuk Periksa lagi bila ingin video.",
+        action: "Periksa lagi",
+      };
     case "checking":
       return { title: "Memeriksa izin…", help: "", action: null };
     case "prompt":
@@ -167,7 +191,12 @@ export function mediaPermissionCopy(
   }
 }
 
-/** Hanya status ini yang boleh mengaktifkan tombol Jawab. */
+/** Status yang boleh mengaktifkan tombol Jawab (termasuk mode suara saja). */
 export function canAnswer(state: MediaPermissionState): boolean {
-  return state === "granted";
+  return state === "granted" || state === "audio_only";
+}
+
+/** True bila panggilan hanya boleh berjalan tanpa kamera. */
+export function isAudioOnly(state: MediaPermissionState): boolean {
+  return state === "audio_only";
 }

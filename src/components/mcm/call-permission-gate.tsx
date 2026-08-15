@@ -5,7 +5,7 @@
  * jadi panel ini wajib memberi jalan keluar: minta izin, periksa ulang setelah
  * diubah lewat pengaturan, atau tolak panggilan tanpa menggantung.
  */
-import { Mic, ShieldAlert } from "lucide-react";
+import { Mic, ShieldAlert, VideoOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { UseMediaPermission } from "@/lib/calls/use-media-permission";
 
@@ -16,7 +16,10 @@ export function CallPermissionGate({
   permission: UseMediaPermission;
   onDecline?: () => void;
 }) {
-  if (permission.ready || permission.state === "checking") return null;
+  // Mode suara saja tetap ditampilkan (informatif): panggilan bisa dijawab,
+  // tetapi pengguna harus tahu kameranya mati.
+  if (permission.state === "checking") return null;
+  if (permission.ready && !permission.audioOnly) return null;
   const { copy } = permission;
   const blocked = permission.state === "denied" || permission.state === "unsupported";
 
@@ -28,6 +31,8 @@ export function CallPermissionGate({
       <p className="flex items-center gap-2 text-sm font-semibold">
         {blocked ? (
           <ShieldAlert className="size-4 shrink-0" aria-hidden="true" />
+        ) : permission.audioOnly ? (
+          <VideoOff className="size-4 shrink-0" aria-hidden="true" />
         ) : (
           <Mic className="size-4 shrink-0" aria-hidden="true" />
         )}

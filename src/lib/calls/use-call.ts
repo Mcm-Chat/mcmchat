@@ -166,6 +166,11 @@ export type UseCallResult = {
   speakerSupported: boolean;
   /** Autoplay audio diblokir; UI wajib menampilkan tombol "Aktifkan suara". */
   audioBlocked: boolean;
+  /**
+   * Panggilan video berjalan tanpa kamera karena izin kamera tidak tersedia;
+   * audio tetap normal dan tombol kamera dinonaktifkan.
+   */
+  cameraBlocked: boolean;
   enableAudio: () => void;
   answer: () => void;
   decline: () => void;
@@ -218,6 +223,7 @@ export function useCall(opts: {
   const [voiceActive, setVoiceActive] = useState(false);
   const [speakerSupported, setSpeakerSupported] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
   const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
@@ -293,7 +299,8 @@ export function useCall(opts: {
   }, [prefs, voiceApplied]);
 
   const join = useCallback(
-    async (row: CallRow) => {
+    async (row: CallRow, opts?: { videoDisabled?: boolean }) => {
+      const videoDisabled = opts?.videoDisabled === true;
       // Panggilan yang sudah berakhir tidak boleh dibangkitkan lagi oleh
       // proses join yang masih berjalan (mic/room bisa bocor selamanya).
       if (joinedRef.current || endedRef.current) return;
@@ -375,7 +382,9 @@ export function useCall(opts: {
             provider.connect({
               url: t.url,
               token: t.token,
-              kind: row.kind,
+              // Tanpa izin kamera, sesi dibuka sebagai panggilan suara supaya
+              // penyedia tidak pernah mencoba menerbitkan track video.
+              kind: videoDisabled ? "audio" : row.kind,
               audioTrack: audio,
               onState,
             }),
@@ -406,10 +415,13 @@ export function useCall(opts: {
         session.attachLocalVideo(localElRef.current);
         session.attachRemoteMedia(remoteElRef.current);
         setSpeakerSupported(session.speakerCapability === "sinkId");
-        if (row.kind === "video") {
+        if (row.kind === "video" && !videoDisabled) {
           // Panggilan video selalu dimulai dengan kamera aktif dan speaker
           // menyala, sama seperti aplikasi panggilan populer.
           setControls((c) => ({ ...c, cameraOn: true, speakerOn: true }));
+          void session.setSpeaker(true).catch(() => undefined);
+        } else if (row.kind === "video" && videoDisabled) {
+          setControls((c) => ({ ...c, cameraOn: false, speakerOn: true }));
           void session.setSpeaker(true).catch(() => undefined);
         }
       } catch (e) {
@@ -440,13 +452,18 @@ export function useCall(opts: {
       const kind = row.kind === "video" ? "video" : "audio";
       void requestMediaPermission(kind)
         .then((state) => {
-          if (state !== "granted") {
+          if (state !== "granted" && state !== "audio_only") {
             const copy = mediaPermissionCopy(state, kind);
             throw new MediaPermissionError(state, `${copy.title}. ${copy.help}`.trim());
           }
-          return answerCall(row.id);
+          const audioOnly = state === "audio_only";
+          setCameraBlocked(audioOnly);
+          if (audioOnly) {
+            setReason("Kamera nonaktif — panggilan berlanjut sebagai suara saja.");
+          }
+          return answerCall(row.id).then(() => audioOnly);
         })
-        .then(() => join({ ...row, status: "ongoing" }))
+        .then((audioOnly) => join({ ...row, status: "ongoing" }, { videoDisabled: audioOnly }))
         .catch((e: unknown) => {
           // Jawaban kedua yang kalah balapan tidak boleh menimpa layar yang
           // sudah tersambung dengan pesan gagal basi.
@@ -714,6 +731,7 @@ export function useCall(opts: {
       voiceFallback,
       speakerSupported,
       audioBlocked,
+      cameraBlocked,
       enableAudio: () => {
         void sessionRef.current?.startAudio().then((ok) => {
           setAudioBlocked(!ok);
@@ -750,6 +768,12 @@ export function useCall(opts: {
         });
       },
       toggleCamera: () => {
+        // Tanpa izin kamera tidak ada yang bisa dinyalakan: jangan tampilkan
+        // toggle palsu yang seolah-olah aktif.
+        if (cameraBlocked) {
+          setReason("Izin kamera tidak tersedia. Aktifkan di pengaturan lalu mulai video lagi.");
+          return;
+        }
         setControls((c) => {
           const cameraOn = !c.cameraOn;
           void sessionRef.current?.setCameraEnabled(cameraOn);
@@ -793,6 +817,7 @@ export function useCall(opts: {
       voiceFallback,
       speakerSupported,
       audioBlocked,
+      cameraBlocked,
       userId,
       callId,
       cleanup,

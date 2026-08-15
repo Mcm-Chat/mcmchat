@@ -131,7 +131,7 @@ function CallScreen() {
       return;
     }
     void permission.request().then((next) => {
-      if (next === "granted") session.answer();
+      if (next === "granted" || next === "audio_only") session.answer();
     });
   };
 
@@ -511,7 +511,11 @@ function CallScreen() {
                     <PhoneIcon className="size-7" />
                   </Button>
                   <span className="text-[10px] text-white/70" id="call-permission-help">
-                    {answerBlocked ? "Butuh izin" : "Jawab"}
+                    {answerBlocked
+                      ? "Butuh izin"
+                      : permission.audioOnly
+                        ? "Jawab (suara)"
+                        : "Jawab"}
                   </span>
                 </div>
                 <div className="order-1 flex flex-col items-center gap-1.5">
@@ -540,7 +544,7 @@ function CallScreen() {
                   <ControlButton
                     label="Kamera"
                     active={!session.controls.cameraOn}
-                    disabled={!isVideo}
+                    disabled={!isVideo || session.cameraBlocked}
                     ariaLabel="Nyalakan kamera"
                     onClick={session.toggleCamera}
                     icon={session.controls.cameraOn ? Video : VideoOff}
