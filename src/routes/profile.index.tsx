@@ -32,6 +32,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -394,18 +400,36 @@ function ProfilePage() {
               color={profile.avatar_color}
               size="lg"
             />
-            <label className="absolute right-0 bottom-0 flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm">
-              <Camera className="size-4" />
-              <span className="sr-only">Ubah foto profil</span>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                aria-label="Unggah foto profil"
-                onChange={onAvatarPick}
-                disabled={uploading}
-              />
-            </label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <label
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Ubah foto profil"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.currentTarget.querySelector("input")?.click();
+                      }
+                    }}
+                    className="absolute right-0 bottom-0 flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <Camera className="size-4" aria-hidden="true" />
+                    <span className="sr-only">Ubah foto profil</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      aria-label="Unggah foto profil"
+                      onChange={onAvatarPick}
+                      disabled={uploading}
+                    />
+                  </label>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Ubah foto profil</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold">{profile.display_name}</p>
