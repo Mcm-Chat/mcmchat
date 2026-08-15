@@ -111,7 +111,14 @@ export function MissedCallActions({
 
   return (
     <Sheet open={!!target} onOpenChange={(o) => (o ? undefined : close())}>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          firstActionRef.current?.focus();
+        }}
+      >
         <SheetHeader className="text-left">
           <SheetTitle>Tindak lanjut {target?.peerName ?? "panggilan"}</SheetTitle>
           <SheetDescription>Balas panggilan, minta chat, atau ingatkan nanti.</SheetDescription>
@@ -120,6 +127,7 @@ export function MissedCallActions({
         <div className="space-y-4 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-3">
             <Button
+              ref={firstActionRef}
               variant="secondary"
               className="min-h-12 rounded-xl"
               disabled={busy}
