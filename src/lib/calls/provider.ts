@@ -259,7 +259,7 @@ export const liveKitProvider: CallProvider = {
           await room.startAudio();
           for (const el of audioEls.values()) await el.play().catch(() => undefined);
           audioBlocked = !room.canPlaybackAudio;
-          emit("connected");
+          sync();
           return !audioBlocked;
         } catch {
           emit("connected", "Browser masih memblokir suara");
@@ -271,7 +271,7 @@ export const liveKitProvider: CallProvider = {
           if (enabled) await pub.unmute();
           else await pub.mute();
         }
-        emit("connected");
+        sync();
       },
       async setCameraEnabled(enabled) {
         try {
