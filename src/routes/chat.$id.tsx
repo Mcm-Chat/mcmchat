@@ -557,8 +557,11 @@ function ChatRoom() {
         toast.error("Penyedia panggilan belum terhubung. Hubungi admin untuk mengaktifkan.");
         return;
       }
-      const created = await startCall(id, kind);
-      void navigate({ to: "/call/$id", params: { id: created.id } });
+      void navigate({
+        to: "/call/prepare/$conversationId",
+        params: { conversationId: id },
+        search: { kind },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Panggilan gagal dimulai");
     }
