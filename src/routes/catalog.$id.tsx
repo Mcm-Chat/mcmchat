@@ -640,6 +640,10 @@ function VariantRowCard({
 }
 
 function VariantEditorDialog({
+  ...(undefined as never),
+}) {
+  return null;
+}
   businessId,
   productId,
   variant,
