@@ -639,11 +639,121 @@ function VariantRowCard({
   );
 }
 
-function VariantEditorDialog({
-  ...(undefined as never),
+/** Koreksi cepat stok gudang induk (tambah / kurangi) dalam satuan beli. */
+function WarehouseAdjustDialog({
+  product,
+  onClose,
+  onDone,
+}: {
+  product: ProductWithVariants;
+  onClose: () => void;
+  onDone: () => void;
 }) {
-  return null;
+  const units = warehouseUnitOptions(product);
+  const [unit, setUnit] = useState(() => warehouseUnit(product));
+  const [qty, setQty] = useState("");
+  const [mode, setMode] = useState<"add" | "reduce">("add");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const n = Number(qty.replace(",", "."));
+    if (!Number.isFinite(n) || n <= 0) {
+      toast.error("Jumlah tidak valid");
+      return;
+    }
+    setSaving(true);
+    try {
+      const base = toWarehouseBase(product, n, unit);
+      await adjustWarehouse(
+        product.id,
+        mode === "add" ? base : -base,
+        mode === "add" ? "restock" : "adjustment",
+        note.trim() || "Koreksi manual gudang",
+      );
+      toast.success("Stok gudang diperbarui");
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui stok gudang");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Koreksi stok gudang</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex gap-1.5">
+            <Button
+              size="sm"
+              variant={mode === "add" ? "default" : "outline"}
+              className="h-9 flex-1 rounded-lg text-xs"
+              onClick={() => setMode("add")}
+            >
+              Tambah
+            </Button>
+            <Button
+              size="sm"
+              variant={mode === "reduce" ? "default" : "outline"}
+              className="h-9 flex-1 rounded-lg text-xs"
+              onClick={() => setMode("reduce")}
+            >
+              Kurangi
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1 space-y-1.5">
+              <Label>Jumlah</Label>
+              <Input
+                inputMode="decimal"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="w-28 space-y-1.5">
+              <Label>Satuan</Label>
+              <Select value={unit} onValueChange={setUnit}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {units.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Catatan</Label>
+            <Input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Opsional: alasan koreksi"
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Stok sekarang: {formatWarehouseQty(product, product.warehouse)}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button className="w-full rounded-xl" disabled={saving} onClick={() => void submit()}>
+            {saving ? "Menyimpan…" : "Simpan koreksi"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
+
+function VariantEditorDialog({
   businessId,
   productId,
   variant,
