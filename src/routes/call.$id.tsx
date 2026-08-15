@@ -415,10 +415,12 @@ function CallScreen() {
         </div>
       )}
 
-      {session.phase === "error" && session.reason && (
-        <div
+      {session.phase === "error" && session.reason && !errorDismissed && (
+        <NotificationBanner
           role="alert"
-          className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4 text-sm"
+          onDismiss={() => setErrorDismissed(true)}
+          dismissLabel="Tutup pesan gagal panggilan"
+          className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/15 p-4"
         >
           <p className="font-semibold">Panggilan gagal</p>
           <p className="mt-1 text-navy-foreground/85">{session.reason}</p>
@@ -429,7 +431,7 @@ function CallScreen() {
           >
             Buka diagnostik panggilan
           </Button>
-        </div>
+        </NotificationBanner>
       )}
 
       <div className="mt-6 space-y-3 rounded-2xl bg-white/10 p-4 text-sm">
