@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { registerDismissible } from "@/lib/a11y/escape-dismiss";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -94,6 +94,7 @@ function CallsPage() {
   const [notice, setNotice] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
