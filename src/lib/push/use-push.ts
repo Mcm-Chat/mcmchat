@@ -21,12 +21,15 @@ import {
   syncRotatedToken,
 } from "./native";
 import { checkPermission, requestPermission } from "./permissions";
+import { attachWebPushListeners, registerWebPush, webPushReady } from "./web";
 
 export type PushState = {
   /** Berjalan di wadah Android/Capacitor, bukan tab browser. */
   native: boolean;
   /** Receiver latar native terpasang (syarat pengiriman saat aplikasi ditutup). */
   receiverInstalled: boolean;
+  /** Push web (service worker FCM) tersedia & terkonfigurasi di browser ini. */
+  webPush: boolean;
   permission: "granted" | "prompt" | "denied" | "restricted" | "unsupported";
   registered: boolean;
   reason?: string | undefined;
@@ -35,6 +38,7 @@ export type PushState = {
 let state: PushState = {
   native: false,
   receiverInstalled: false,
+  webPush: false,
   permission: "unsupported",
   registered: false,
 };
@@ -56,6 +60,7 @@ const snapshot = () => state;
 const serverSnapshot = (): PushState => ({
   native: false,
   receiverInstalled: false,
+  webPush: false,
   permission: "unsupported",
   registered: false,
 });
@@ -65,9 +70,9 @@ async function registerOnce(userId: string) {
   if (registeredForUser === userId) return drainRotatedToken();
   if (inFlight) return inFlight;
   inFlight = (async () => {
-    const res = await registerNativePush(
-      typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 60) : "Android",
-    );
+    const name = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 60) : "Android";
+    // Native memakai plugin FCM di APK; browser/PWA memakai service worker web push.
+    const res = isNative() ? await registerNativePush(name) : await registerWebPush(name);
     if (res.registered) registeredForUser = userId;
     emit({
       registered: res.registered,
@@ -93,6 +98,13 @@ async function drainRotatedToken() {
 
 /** Opt-in kontekstual: HANYA dipanggil dari gestur pengguna (tombol di pengaturan). */
 export async function enablePush(userId: string): Promise<PushState> {
+  if (!isNative()) {
+    const ready = webPushReady();
+    if (!ready.ok) {
+      emit({ registered: false, ...(ready.reason ? { reason: ready.reason } : {}) });
+      return state;
+    }
+  }
   const perm = await requestPermission("notifications");
   emit({ permission: perm });
   if (perm === "granted") await registerOnce(userId);
@@ -115,12 +127,21 @@ export function usePushSession(userId?: string) {
     void (async () => {
       const perm = await checkPermission("notifications");
       if (!alive) return;
-      emit({ native: isNative(), receiverInstalled: nativeReceiverInstalled(), permission: perm });
+      emit({
+        native: isNative(),
+        receiverInstalled: nativeReceiverInstalled(),
+        webPush: !isNative() && webPushReady().ok,
+        permission: perm,
+      });
       // Registrasi otomatis hanya bila izin sudah diberikan sebelumnya.
       if (userId && isNative() && perm === "granted") {
         await registerOnce(userId);
         // Rotasi tertunda selalu dikuras, walau registrasi sudah pernah terjadi.
         await drainRotatedToken();
+      }
+      // Browser/PWA: token web hanya didaftarkan bila izin sudah diberikan.
+      if (userId && !isNative() && perm === "granted" && webPushReady().ok) {
+        await registerOnce(userId);
       }
     })();
     return () => {
@@ -129,8 +150,10 @@ export function usePushSession(userId?: string) {
   }, [userId]);
 
   useEffect(() => {
-    if (!userId || !isNative()) return;
-    const detach = attachPushListeners((route) => void navigate({ to: route }));
+    if (!userId) return;
+    const detach = isNative()
+      ? attachPushListeners((route) => void navigate({ to: route }))
+      : attachWebPushListeners((route) => void navigate({ to: route }));
     return detach;
   }, [userId, navigate]);
 
