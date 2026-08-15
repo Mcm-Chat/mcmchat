@@ -32,12 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -99,8 +94,11 @@ function ProfilePage() {
   const { userId, profile, loading } = useRequireAuth();
   const { refresh, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { preference: motionPreference, reduced: motionReduced, setPreference: setMotion } =
-    useReduceMotion();
+  const {
+    preference: motionPreference,
+    reduced: motionReduced,
+    setPreference: setMotion,
+  } = useReduceMotion();
   const navigate = useNavigate();
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");

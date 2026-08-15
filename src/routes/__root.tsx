@@ -198,13 +198,13 @@ function RootComponent() {
       <ThemeProvider>
         <ReduceMotionProvider>
           <AuthProvider>
-          <AccountCacheGuard />
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <PushSession />
-          <IncomingCallListener />
-          <ScreenPrivacyGuard />
-          <Toaster position="top-center" richColors closeButton />
+            <AccountCacheGuard />
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <PushSession />
+            <IncomingCallListener />
+            <ScreenPrivacyGuard />
+            <Toaster position="top-center" richColors closeButton />
           </AuthProvider>
         </ReduceMotionProvider>
       </ThemeProvider>
