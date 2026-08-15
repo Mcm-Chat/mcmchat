@@ -17,7 +17,15 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 type Ann =
-  | { kind: "arrow"; x1: number; y1: number; x2: number; y2: number; color: string }
+  | {
+      kind: "arrow";
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      color: string;
+      weight: number;
+    }
   | { kind: "text"; x: number; y: number; text: string; color: string; size: number }
   | { kind: "sticker"; x: number; y: number; emoji: string; size: number };
 
@@ -25,6 +33,14 @@ type Rect = { x: number; y: number; w: number; h: number };
 
 const COLORS = ["#ef4444", "#facc15", "#22c55e", "#3b82f6", "#ffffff", "#111827"];
 const STICKERS = ["✅", "⚠️", "📍", "🔥", "⭐", "❌", "👍", "📦"];
+
+/** Ketebalan panah relatif lebar foto agar tetap terbaca di layar HP. */
+const ARROW_WEIGHTS = [
+  { id: "m", label: "Sedang", factor: 1 },
+  { id: "l", label: "Tebal", factor: 1.6 },
+  { id: "xl", label: "Sangat tebal", factor: 2.4 },
+] as const;
+type ArrowWeightId = (typeof ARROW_WEIGHTS)[number]["id"];
 
 const QUALITIES = [
   { id: "high", label: "Tinggi", q: 0.92, max: 2400, hint: "Detail maksimal" },
@@ -62,7 +78,7 @@ function limitCanvas(source: HTMLCanvasElement, max: number) {
 }
 
 function drawArrow(ctx: CanvasRenderingContext2D, a: Extract<Ann, { kind: "arrow" }>, w: number) {
-  const width = Math.max(3, w / 180);
+  const width = Math.max(6, (w / 110) * (a.weight || 1));
   ctx.strokeStyle = a.color;
   ctx.fillStyle = a.color;
   ctx.lineWidth = width;
@@ -72,7 +88,7 @@ function drawArrow(ctx: CanvasRenderingContext2D, a: Extract<Ann, { kind: "arrow
   ctx.lineTo(a.x2, a.y2);
   ctx.stroke();
   const ang = Math.atan2(a.y2 - a.y1, a.x2 - a.x1);
-  const head = width * 4;
+  const head = width * 3.6;
   ctx.beginPath();
   ctx.moveTo(a.x2, a.y2);
   ctx.lineTo(a.x2 - head * Math.cos(ang - Math.PI / 7), a.y2 - head * Math.sin(ang - Math.PI / 7));
@@ -160,6 +176,7 @@ export function PhotoEditorDialog({
   const [anns, setAnns] = useState<Ann[]>([]);
   const [tool, setTool] = useState<Tool>("arrow");
   const [color, setColor] = useState(COLORS[0]!);
+  const [arrowWeight, setArrowWeight] = useState<ArrowWeightId>("l");
   const [emoji, setEmoji] = useState(STICKERS[0]!);
   const [text, setText] = useState("");
   const [crop, setCrop] = useState<Rect | null>(null);
@@ -242,7 +259,19 @@ export function PhotoEditorDialog({
     e.currentTarget.setPointerCapture(e.pointerId);
     setDragging(p);
     if (tool === "crop") setCrop({ x: p.x, y: p.y, w: 0, h: 0 });
-    else setAnns((a) => [...a, { kind: "arrow", x1: p.x, y1: p.y, x2: p.x, y2: p.y, color }]);
+    else
+      setAnns((a) => [
+        ...a,
+        {
+          kind: "arrow",
+          x1: p.x,
+          y1: p.y,
+          x2: p.x,
+          y2: p.y,
+          color,
+          weight: ARROW_WEIGHTS.find((w) => w.id === arrowWeight)?.factor ?? 1,
+        },
+      ]);
   };
 
   const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -264,7 +293,25 @@ export function PhotoEditorDialog({
     });
   };
 
-  const onUp = () => setDragging(null);
+  const onUp = () => {
+    setDragging(null);
+    if (!img || tool !== "arrow") return;
+    // Ketukan singkat tetap menghasilkan panah yang cukup besar untuk terlihat & diedit.
+    const min = img.width * 0.18;
+    setAnns((a) => {
+      const last = a[a.length - 1];
+      if (!last || last.kind !== "arrow") return a;
+      const dx = last.x2 - last.x1;
+      const dy = last.y2 - last.y1;
+      const len = Math.hypot(dx, dy);
+      if (len >= min) return a;
+      const ang = len < 1 ? -Math.PI / 4 : Math.atan2(dy, dx);
+      return [
+        ...a.slice(0, -1),
+        { ...last, x2: last.x1 + Math.cos(ang) * min, y2: last.y1 + Math.sin(ang) * min },
+      ];
+    });
+  };
 
   const applyCrop = () => {
     if (!img || !crop || crop.w < 16 || crop.h < 16) return;
@@ -422,6 +469,27 @@ export function PhotoEditorDialog({
                 {s}
               </button>
             ))}
+          </div>
+        )}
+
+        {tool === "arrow" && (
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-muted-foreground">
+              Geser di foto untuk menarik panah. Ketukan singkat otomatis jadi panah besar.
+            </p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {ARROW_WEIGHTS.map((w) => (
+                <Button
+                  key={w.id}
+                  type="button"
+                  variant={arrowWeight === w.id ? "default" : "outline"}
+                  className="h-11 rounded-xl text-[11px]"
+                  onClick={() => setArrowWeight(w.id)}
+                >
+                  {w.label}
+                </Button>
+              ))}
+            </div>
           </div>
         )}
 

@@ -9,7 +9,10 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
+  Send,
+  Share2,
   ShieldAlert,
+  Store,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +28,7 @@ import {
   openPrepareTask,
   removePreparePhoto,
   savePrepareItem,
+  sendPrepareResult,
 } from "@/lib/prepare.functions";
 import { fileToDataUrl, koordinat, mapsUrlFor } from "@/lib/mcm/geo";
 import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
@@ -139,6 +143,7 @@ function PreparePage() {
           )}
           {done ? "Tugas sudah selesai" : "Selesai & kirim ke katalog"}
         </Button>
+        {done && <ResultActions token={token} task={task} />}
         {!done && !ready && (
           <p className="pb-6 text-center text-xs text-muted-foreground">
             Lengkapi foto, lokasi, dan jumlah aktual pada setiap item wajib untuk mengaktifkan
@@ -161,6 +166,87 @@ function Center({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-col items-center justify-center gap-2 px-6 text-center">
       {children}
     </div>
+  );
+}
+
+/** Setelah tugas selesai: kirim hasil ke chat pelanggan atau konfirmasi ke penjual pengirim link. */
+function ResultActions({ token, task }: { token: string; task: PrepTask }) {
+  const send = useServerFn(sendPrepareResult);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState<"customer" | "seller" | null>(null);
+  const [sent, setSent] = useState<{ customer?: boolean; seller?: boolean }>({});
+
+  const summary = [
+    `Hasil penyiapan ${task.code}${task.customer_name ? ` untuk ${task.customer_name}` : ""}:`,
+    ...task.items.map((i) => {
+      const maps = i.photos.find((p) => p.maps_url)?.maps_url;
+      return `• ${i.product_name} — ${i.variant_name}: ${i.actual_qty_base ?? i.requested_qty_base} ${i.base_unit}${maps ? ` (lokasi: ${maps})` : ""}`;
+    }),
+    note.trim() ? `Catatan: ${note.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const run = async (target: "customer" | "seller") => {
+    setBusy(target);
+    try {
+      await send({ data: { token, target, note } });
+      setSent((s) => ({ ...s, [target]: true }));
+      toast.success(target === "customer" ? "Hasil terkirim ke pelanggan" : "Konfirmasi terkirim ke penjual");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengirim hasil");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const share = async () => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: `Penyiapan ${task.code}`, text: summary });
+        return;
+      }
+      await navigator.clipboard.writeText(summary);
+      toast.success("Ringkasan disalin");
+    } catch {
+      /* dibatalkan pengguna */
+    }
+  };
+
+  return (
+    <section className="card-soft space-y-2 p-4">
+      <h2 className="text-sm font-semibold">Kirim hasil</h2>
+      <p className="text-xs text-muted-foreground">
+        Kirim ringkasan foto & lokasi langsung ke chat pelanggan, atau konfirmasi ke penjual yang
+        mengirim tautan ini.
+      </p>
+      <Textarea
+        value={note}
+        maxLength={300}
+        placeholder="Catatan untuk pelanggan/penjual (opsional)"
+        onChange={(e) => setNote(e.target.value)}
+      />
+      <Button
+        className="h-12 w-full rounded-xl"
+        disabled={busy !== null}
+        onClick={() => void run("customer")}
+      >
+        {busy === "customer" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+        {sent.customer ? "Kirim ulang ke pelanggan" : "Kirim ke pelanggan"}
+      </Button>
+      <Button
+        variant="secondary"
+        className="h-12 w-full rounded-xl"
+        disabled={busy !== null}
+        onClick={() => void run("seller")}
+      >
+        {busy === "seller" ? <Loader2 className="size-4 animate-spin" /> : <Store className="size-4" />}
+        {sent.seller ? "Konfirmasi ulang ke penjual" : "Konfirmasi ke penjual"}
+      </Button>
+      <Button variant="ghost" className="h-11 w-full rounded-xl" onClick={() => void share()}>
+        <Share2 className="size-4" /> Bagikan ringkasan
+      </Button>
+    </section>
   );
 }
 
