@@ -44,6 +44,8 @@ import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-eff
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
+import { CallPermissionGate } from "@/components/mcm/call-permission-gate";
+import { useMediaPermission } from "@/lib/calls/use-media-permission";
 import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
 import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
@@ -115,6 +117,23 @@ function CallScreen() {
   const backRef = useRef<HTMLButtonElement | null>(null);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
+
+  // Izin mikrofon (dan kamera untuk panggilan video) diperiksa selama panggilan
+  // masuk berdering; tombol "Jawab" baru aktif setelah izin benar-benar ada.
+  const permission = useMediaPermission(
+    detail?.kind === "video" ? "video" : "audio",
+    session.phase === "incoming",
+  );
+  const answerBlocked = session.phase === "incoming" && !permission.ready;
+  const answerWithPermission = () => {
+    if (permission.ready) {
+      session.answer();
+      return;
+    }
+    void permission.request().then((next) => {
+      if (next === "granted") session.answer();
+    });
+  };
 
   // Pulihkan status terakhir supaya UI tidak kembali ke state yang salah
   // (mis. panel gagal hilang) setelah refresh atau pindah halaman.
@@ -202,6 +221,11 @@ function CallScreen() {
           return;
         case "answer":
           if (!incoming) return;
+          if (!permission.ready) {
+            shortcuts.announce(permission.copy.title);
+            answerWithPermission();
+            return;
+          }
           session.answer();
           shortcuts.announce("Panggilan dijawab");
           return;
@@ -470,7 +494,9 @@ function CallScreen() {
             />
 
             {session.phase === "incoming" ? (
-              <div className="flex items-center justify-center gap-10">
+              <>
+                <CallPermissionGate permission={permission} onDecline={session.decline} />
+                <div className="flex items-center justify-center gap-10">
                 {/* Jawab lebih dulu di DOM (urutan Tab), tetap di kanan secara visual. */}
                 <div className="order-2 flex flex-col items-center gap-1.5">
                   <Button
@@ -478,11 +504,15 @@ function CallScreen() {
                     size="icon"
                     className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
                     aria-label="Jawab panggilan"
-                    onClick={session.answer}
+                    disabled={answerBlocked}
+                    aria-describedby={answerBlocked ? "call-permission-help" : undefined}
+                    onClick={answerWithPermission}
                   >
                     <PhoneIcon className="size-7" />
                   </Button>
-                  <span className="text-[10px] text-white/70">Jawab</span>
+                  <span className="text-[10px] text-white/70" id="call-permission-help">
+                    {answerBlocked ? "Butuh izin" : "Jawab"}
+                  </span>
                 </div>
                 <div className="order-1 flex flex-col items-center gap-1.5">
                   <Button
@@ -495,7 +525,8 @@ function CallScreen() {
                   </Button>
                   <span className="text-[10px] text-white/70">Tolak</span>
                 </div>
-              </div>
+                </div>
+              </>
             ) : (
               <div className="space-y-5">
                 <div className="grid grid-cols-4 justify-items-center gap-3">

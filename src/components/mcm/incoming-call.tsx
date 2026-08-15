@@ -29,6 +29,11 @@ import { useContactAliases } from "@/lib/contacts/alias";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import { markAnswerIntent } from "@/lib/calls/answer-intent";
 import { setIncomingCallActive } from "@/lib/calls/incoming-lock";
+import {
+  mediaPermissionCopy,
+  requestMediaPermission,
+  type MediaPermissionState,
+} from "@/lib/calls/media-permission";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -38,6 +43,9 @@ export function IncomingCallListener() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { nameOf } = useContactAliases();
   const [incoming, setIncoming] = useState<Incoming | null>(null);
+  /** Status izin media saat pengguna menekan "Jawab" di banner. */
+  const [permState, setPermState] = useState<MediaPermissionState | null>(null);
+  const [asking, setAsking] = useState(false);
   /** Alasan banner tertutup, diumumkan lewat aria-live setelah fokus pulih. */
   const [closedNotice, setClosedNotice] = useState("");
   /** Elemen pemicu terakhir sebelum banner muncul (untuk pemulihan fokus). */
@@ -64,6 +72,7 @@ export function IncomingCallListener() {
   const closeBanner = (notice: string) => {
     setIncoming(null);
     setClosedNotice(notice);
+    setPermState(null);
   };
 
   // Timeout dering: banner tidak boleh menggantung setelah batas dering habis.
@@ -191,6 +200,32 @@ export function IncomingCallListener() {
     );
   }
   const isVideo = incoming.call.kind === "video";
+  const permKind = isVideo ? "video" : "audio";
+  const permCopy = permState ? mediaPermissionCopy(permState, permKind) : null;
+  const permBlocked = Boolean(permState && permState !== "granted");
+
+  /**
+   * Satu tap = izin dulu, baru menjawab. Menjawab tanpa izin hanya membuat
+   * pemanggil mendengar sunyi lalu panggilan gagal, jadi kalau izin ditolak
+   * banner tetap terbuka dengan penjelasan dan pilihan menolak.
+   */
+  const answerFromBanner = () => {
+    const id = incoming.call.id;
+    setAsking(true);
+    void requestMediaPermission(permKind)
+      .then((state) => {
+        setPermState(state);
+        if (state !== "granted") return;
+        // Simpan target fokus supaya bila panggilan yang dijawab langsung
+        // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
+        // panggil ulang percakapan ini (bukan hilang ke <body>).
+        setCallReturnFocus(id);
+        markAnswerIntent(id);
+        closeBanner("Panggilan dijawab. Membuka layar panggilan.");
+        void navigate({ to: "/call/$id", params: { id } });
+      })
+      .finally(() => setAsking(false));
+  };
 
   return (
     <div
@@ -225,20 +260,9 @@ export function IncomingCallListener() {
         <Button
           size="icon"
           aria-label="Jawab panggilan"
+          disabled={asking}
           className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-white"
-          onClick={() => {
-            const id = incoming.call.id;
-            // Simpan target fokus supaya bila panggilan yang dijawab langsung
-            // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
-            // panggil ulang percakapan ini (bukan hilang ke <body>).
-            setCallReturnFocus(id);
-            // Satu tap = benar-benar menjawab. Layar panggilan membaca niat ini
-            // dan langsung memanggil `answer_call`, tanpa tap kedua yang sering
-            // kehabisan batas dering 45 detik.
-            markAnswerIntent(id);
-            closeBanner("Panggilan dijawab. Membuka layar panggilan.");
-            void navigate({ to: "/call/$id", params: { id } });
-          }}
+          onClick={answerFromBanner}
         >
           <Phone className="size-5" aria-hidden="true" />
         </Button>
@@ -255,6 +279,23 @@ export function IncomingCallListener() {
           <PhoneOff className="size-5" aria-hidden="true" />
         </Button>
       </div>
+      {permBlocked && permCopy ? (
+        <div role="alert" className="mt-3 rounded-xl bg-white/10 p-2.5">
+          <p className="text-xs font-semibold">{permCopy.title}</p>
+          <p className="mt-0.5 text-[11px] text-navy-foreground/75">{permCopy.help}</p>
+          {permCopy.action ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-2 h-8 rounded-lg text-xs"
+              disabled={asking}
+              onClick={answerFromBanner}
+            >
+              {asking ? "Meminta izin…" : permCopy.action}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

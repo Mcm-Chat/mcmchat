@@ -30,6 +30,11 @@ import {
 import type { EndReason } from "./policy";
 import { consumeAnswerIntent } from "./answer-intent";
 import {
+  MediaPermissionError,
+  mediaPermissionCopy,
+  requestMediaPermission,
+} from "./media-permission";
+import {
   answerFailureText,
   connectFailureText,
   describeAnswerFailure,
@@ -430,12 +435,30 @@ export function useCall(opts: {
       answeringRef.current = true;
       setPhase("connecting");
       setReason(null);
-      void answerCall(row.id)
+      // Izin mikrofon/kamera dipastikan lebih dulu: menjawab tanpa izin membuat
+      // pemanggil hanya mendengar sunyi lalu panggilan gagal.
+      const kind = row.kind === "video" ? "video" : "audio";
+      void requestMediaPermission(kind)
+        .then((state) => {
+          if (state !== "granted") {
+            const copy = mediaPermissionCopy(state, kind);
+            throw new MediaPermissionError(state, `${copy.title}. ${copy.help}`.trim());
+          }
+          return answerCall(row.id);
+        })
         .then(() => join({ ...row, status: "ongoing" }))
         .catch((e: unknown) => {
           // Jawaban kedua yang kalah balapan tidak boleh menimpa layar yang
           // sudah tersambung dengan pesan gagal basi.
           if (joinedRef.current || endedRef.current) return;
+          if (e instanceof MediaPermissionError) {
+            // Izin belum ada: panggilan belum dijawab sama sekali, jadi layar
+            // kembali berdering dengan penjelasan cara memberi izin.
+            devLog("answer_permission_blocked", e.state);
+            setReason(e.message);
+            setPhase("incoming");
+            return;
+          }
           const info = describeAnswerFailure(e);
           devLog("answer_failed", e instanceof Error ? e.message : "unknown");
           setReason(answerFailureText(e));
