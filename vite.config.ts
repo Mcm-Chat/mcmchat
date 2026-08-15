@@ -12,7 +12,7 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load non-VITE_ env vars into process.env for server routes (email, webhooks).
-Object.assign(process.env, loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), ""));
+Object.assign(process.env, loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), ""));
 
 export default defineConfig({
   tanstackStart: {
