@@ -48,9 +48,7 @@ export function WarehouseIntakeLog({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <p className="truncate font-semibold">{p.supplier_name || "Agen tanpa nama"}</p>
-              <p className="shrink-0 font-semibold text-primary">
-                {rupiah(Number(p.total_cost))}
-              </p>
+              <p className="shrink-0 font-semibold text-primary">{rupiah(Number(p.total_cost))}</p>
             </div>
             <p className="text-muted-foreground">
               +{formatWarehouseQty(product, Number(p.qty_base))} · {dateLabel(p.purchased_at)}

@@ -196,9 +196,7 @@ function PurchaseEvidence({
   if (!photoPath && !locationUrl) return null;
   return (
     <div className="mt-2 flex items-center gap-2">
-      {url && (
-        <img src={url} alt="Foto barang masuk" className="size-14 rounded-lg object-cover" />
-      )}
+      {url && <img src={url} alt="Foto barang masuk" className="size-14 rounded-lg object-cover" />}
       {locationUrl && (
         <a
           href={locationUrl}
@@ -213,4 +211,3 @@ function PurchaseEvidence({
     </div>
   );
 }
-
