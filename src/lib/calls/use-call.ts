@@ -420,6 +420,42 @@ export function useCall(opts: {
   );
 
   /**
+   * Jawab panggilan (satu jalur untuk tombol layar maupun tap "Jawab" di
+   * banner). Dipisah dari `useMemo` supaya bisa dijalankan segera setelah
+   * baris panggilan dimuat, tanpa menunggu tap kedua.
+   */
+  const runAnswer = useCallback(
+    (row: CallRow) => {
+      if (answeringRef.current || endedRef.current || joinedRef.current) return;
+      answeringRef.current = true;
+      setPhase("connecting");
+      setReason(null);
+      void answerCall(row.id)
+        .then(() => join({ ...row, status: "ongoing" }))
+        .catch((e: unknown) => {
+          // Jawaban kedua yang kalah balapan tidak boleh menimpa layar yang
+          // sudah tersambung dengan pesan gagal basi.
+          if (joinedRef.current || endedRef.current) return;
+          const info = describeAnswerFailure(e);
+          devLog("answer_failed", e instanceof Error ? e.message : "unknown");
+          setReason(answerFailureText(e));
+          if (info.outcome === "ended") {
+            endedRef.current = true;
+            setPhase("ended");
+            void cleanup();
+          } else {
+            // Kembalikan ke fase berdering agar tombol Jawab bisa ditekan ulang.
+            setPhase("incoming");
+          }
+        })
+        .finally(() => {
+          answeringRef.current = false;
+        });
+    },
+    [cleanup, join],
+  );
+
+  /**
    * Akhiri sesi milik pengguna ini. Server memutuskan apakah panggilan ikut
    * berakhir: 1:1 dan pemanggil grup mengakhiri, peserta grup biasa hanya keluar.
    */
