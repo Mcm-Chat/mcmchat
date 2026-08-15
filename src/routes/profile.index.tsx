@@ -268,11 +268,15 @@ function ProfilePage() {
   const applyAvatar = async (blob: Blob) => {
     if (!userId) return;
     setUploading(true);
+    const loadingId = toast.loading("Memasang foto profil…");
     try {
       await commitAvatar(userId, blob);
       await refresh();
       setDraftFile(null);
-      toast.success("Foto profil dipasang");
+      toast.success("Foto profil dipasang", { id: loadingId });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Gagal memasang foto profil";
+      toast.error(message, { id: loadingId });
     } finally {
       setUploading(false);
     }
