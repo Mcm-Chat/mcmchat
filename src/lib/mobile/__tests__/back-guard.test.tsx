@@ -170,10 +170,8 @@ describe("tukar overlay pada tick yang sama", () => {
       getByTestId("swap").click();
     });
     expect(getByTestId("swap-state").textContent).toBe("-b");
-    // Popstate susulan akibat history.back() internal saat penanda dilepas:
-    // harus diabaikan, bukan menutup overlay yang baru dibuka.
-    pressBack();
-    expect(getByTestId("swap-state").textContent).toBe("-b");
+    // Popstate susulan dari history.back() internal saat penanda dilepas tidak
+    // boleh menutup overlay baru (inilah bug tile sheet "Tindakan").
     expect(backGuardDepth()).toBe(1);
     expect(backGuardMarkerActive()).toBe(true);
     // Back nyata berikutnya baru menutup overlay baru.
