@@ -124,7 +124,14 @@ export function AvatarEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Edit foto profil"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex flex-col bg-background outline-none"
+    >
       <header className="flex items-center justify-between border-b border-border/60 px-3 py-2">
         <Button variant="ghost" size="icon" onClick={close} aria-label="Batal">
           <X className="size-5" />
