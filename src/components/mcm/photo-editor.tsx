@@ -315,6 +315,8 @@ export function PhotoEditorDialog({
     { id: "sticker", label: "Stiker", icon: Smile },
   ];
 
+  const modalRef = useModalA11y<HTMLDivElement>({ onClose: onCancel });
+
   return (
     <div
       ref={modalRef}
