@@ -27,7 +27,7 @@ type Props = {
 };
 
 export function RenameContactDialog({ open, onOpenChange, contactId, realName }: Props) {
-  const { userId, nameOf, aliases } = useContactAliases();
+  const { userId, aliases } = useContactAliases();
   const refresh = useRefreshAliases();
   const inputId = useId();
   const current = aliases?.get(contactId) ?? "";
