@@ -131,9 +131,9 @@ function CallScreen() {
         ? answerRef
         : session.phase === "connected" || session.phase === "connecting"
           ? hangupRef
-          : session.phase === "ended" || session.phase === "error"
+          : session.phase === "ended"
             ? backRef
-            : null;
+            : null; // fase "error"/"unconfigured" difokuskan panel pemulihan
     if (!target) return;
     const raf = requestAnimationFrame(() => target.current?.focus());
     return () => cancelAnimationFrame(raf);
