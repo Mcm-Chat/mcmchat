@@ -3741,6 +3741,10 @@ export type Database = {
         Args: { _member_ids: string[]; _title: string }
         Returns: string
       }
+      create_prep_sale_tx: {
+        Args: { _job: string; _payload: Json }
+        Returns: Json
+      }
       create_preparation_job: {
         Args: {
           _assigned: string
