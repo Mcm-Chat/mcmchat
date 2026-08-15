@@ -43,7 +43,7 @@ export function CallDeviceSheet({
               <p className="text-sm text-muted-foreground">Tidak ada mikrofon terdeteksi.</p>
             ) : (
               <RadioGroup
-                value={micDeviceId ?? undefined}
+                value={micDeviceId ?? ""}
                 onValueChange={onPickMic}
                 className="gap-2"
               >
@@ -69,7 +69,7 @@ export function CallDeviceSheet({
               <p className="text-sm text-muted-foreground">Tidak ada kamera terdeteksi.</p>
             ) : (
               <RadioGroup
-                value={cameraDeviceId ?? undefined}
+                value={cameraDeviceId ?? ""}
                 onValueChange={onPickCamera}
                 className="gap-2"
               >
