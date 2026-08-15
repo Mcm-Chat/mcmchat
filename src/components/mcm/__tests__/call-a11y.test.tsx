@@ -31,6 +31,16 @@ vi.mock("@/lib/calls/tones", () => ({ playTone: () => ({ stop: () => {} }) }));
 vi.mock("@/lib/contacts/alias", () => ({
   useContactAliases: () => ({ nameOf: (_id: string, n: string) => n }),
 }));
+// Izin mikrofon/kamera: di jsdom tidak ada perangkat nyata, jadi izin
+// dianggap sudah diberikan supaya alur "jawab" bisa diuji.
+vi.mock("@/lib/calls/media-permission", () => ({
+  requestMediaPermission: async () => "granted",
+  mediaPermissionCopy: () => ({ title: "", body: "", action: "" }),
+}));
+vi.mock("@/lib/calls/permission-cache", () => ({
+  readCachedPermission: () => "granted",
+  writeCachedPermission: () => {},
+}));
 vi.mock("@/lib/calls/return-focus", () => ({
   setCallReturnFocus: vi.fn(),
   redialButtonId: (id: string) => `redial-call-${id}`,
