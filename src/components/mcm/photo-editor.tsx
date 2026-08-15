@@ -176,6 +176,7 @@ export function PhotoEditorDialog({
   const [anns, setAnns] = useState<Ann[]>([]);
   const [tool, setTool] = useState<Tool>("arrow");
   const [color, setColor] = useState(COLORS[0]!);
+  const [arrowWeight, setArrowWeight] = useState<ArrowWeightId>("l");
   const [emoji, setEmoji] = useState(STICKERS[0]!);
   const [text, setText] = useState("");
   const [crop, setCrop] = useState<Rect | null>(null);
@@ -258,7 +259,19 @@ export function PhotoEditorDialog({
     e.currentTarget.setPointerCapture(e.pointerId);
     setDragging(p);
     if (tool === "crop") setCrop({ x: p.x, y: p.y, w: 0, h: 0 });
-    else setAnns((a) => [...a, { kind: "arrow", x1: p.x, y1: p.y, x2: p.x, y2: p.y, color }]);
+    else
+      setAnns((a) => [
+        ...a,
+        {
+          kind: "arrow",
+          x1: p.x,
+          y1: p.y,
+          x2: p.x,
+          y2: p.y,
+          color,
+          weight: ARROW_WEIGHTS.find((w) => w.id === arrowWeight)?.factor ?? 1,
+        },
+      ]);
   };
 
   const onMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -280,7 +293,25 @@ export function PhotoEditorDialog({
     });
   };
 
-  const onUp = () => setDragging(null);
+  const onUp = () => {
+    setDragging(null);
+    if (!img || tool !== "arrow") return;
+    // Ketukan singkat tetap menghasilkan panah yang cukup besar untuk terlihat & diedit.
+    const min = img.width * 0.18;
+    setAnns((a) => {
+      const last = a[a.length - 1];
+      if (!last || last.kind !== "arrow") return a;
+      const dx = last.x2 - last.x1;
+      const dy = last.y2 - last.y1;
+      const len = Math.hypot(dx, dy);
+      if (len >= min) return a;
+      const ang = len < 1 ? -Math.PI / 4 : Math.atan2(dy, dx);
+      return [
+        ...a.slice(0, -1),
+        { ...last, x2: last.x1 + Math.cos(ang) * min, y2: last.y1 + Math.sin(ang) * min },
+      ];
+    });
+  };
 
   const applyCrop = () => {
     if (!img || !crop || crop.w < 16 || crop.h < 16) return;
