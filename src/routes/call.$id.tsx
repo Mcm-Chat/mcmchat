@@ -44,6 +44,12 @@ import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-eff
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CallPermissionGate } from "@/components/mcm/call-permission-gate";
 import { useMediaPermission } from "@/lib/calls/use-media-permission";
 import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
@@ -841,7 +847,7 @@ function ControlButton({
   active: boolean;
   disabled?: boolean;
   /** Penjelasan kenapa tombol nonaktif (tooltip + judul aksesibilitas). */
-  hint?: string;
+  hint?: string | undefined;
   onClick: () => void;
   icon: typeof Mic;
 }) {
