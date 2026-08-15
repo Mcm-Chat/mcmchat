@@ -409,13 +409,79 @@ function CatalogDetail() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Harga (Rp)</Label>
+              <Label>Harga jual dasar (Rp)</Label>
               <Input
                 type="number"
                 min={0}
                 value={editForm.price}
                 onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
               />
+            </div>
+            <div className="space-y-2 rounded-xl border border-border p-2.5">
+              <p className="text-[11px] font-semibold tracking-[0.04em] uppercase">
+                Gudang (stok induk)
+              </p>
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-xs">Jenis stok</Label>
+                  <Select
+                    value={editForm.stockKind}
+                    onValueChange={(v) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        stockKind: v as StockType,
+                        buyUnit: v === "weight" ? "kg" : "pcs",
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weight">Timbangan</SelectItem>
+                      <SelectItem value="count">Hitungan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-28 space-y-1.5">
+                  <Label className="text-xs">Satuan beli</Label>
+                  <Select
+                    value={editForm.buyUnit}
+                    onValueChange={(v) => setEditForm((f) => ({ ...f, buyUnit: v }))}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(editForm.stockKind === "weight" ? WEIGHT_UNITS : COUNT_UNITS).map((u) => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {editForm.stockKind === "count" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Isi per {editForm.buyUnit} (pcs)</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={editForm.buyFactor}
+                    onChange={(e) => setEditForm((f) => ({ ...f, buyFactor: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Harga beli per {editForm.buyUnit} (Rp)</Label>
+                <Input
+                  inputMode="numeric"
+                  value={editForm.purchasePrice}
+                  onChange={(e) => setEditForm((f) => ({ ...f, purchasePrice: e.target.value }))}
+                  placeholder="0"
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-2">
