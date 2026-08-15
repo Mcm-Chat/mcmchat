@@ -303,6 +303,12 @@ function CallsPage() {
                     >
                       {other?.display_name ?? "Pengguna MCM"}
                     </p>
+                    {isLiveCall(c.status) && (
+                      <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                        <span className="size-1.5 animate-pulse rounded-full bg-success" />
+                        {c.status === "ringing" ? "Sedang dipanggil" : "Berlangsung"}
+                      </span>
+                    )}
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
                       {isMissed ? (
                         <PhoneMissed className="size-3.5 text-destructive" />
