@@ -4,6 +4,7 @@ import {
   Eraser,
   FlipHorizontal,
   Highlighter,
+  MoveUpRight,
   Pencil,
   Redo2,
   RotateCw,
@@ -35,9 +36,18 @@ import {
 } from "@/lib/status/editor";
 
 const COLORS = ["#ffffff", "#0f172a", "#ef4444", "#f59e0b", "#22c55e", "#0ea5e9", "#a855f7"];
-const EMOJIS = ["😀", "😍", "🔥", "💯", "🎉", "📦", "🛒", "⭐"];
+const EMOJIS = ["😀", "😍", "🔥", "💯", "🎉", "📦", "🛒", "⭐", "➡️", "⬆️", "↗️", "✅"];
 
-type Tool = "none" | "pen" | "highlight" | "pixelate" | "text" | "sticker" | "filter" | "adjust";
+type Tool =
+  | "none"
+  | "pen"
+  | "highlight"
+  | "pixelate"
+  | "arrow"
+  | "text"
+  | "sticker"
+  | "filter"
+  | "adjust";
 
 /**
  * Editor status layar penuh: filter, penyetelan, putar/cermin, coretan (pena,
@@ -64,6 +74,7 @@ export function StatusEditor({
   const [perf] = useState<PerfMode>(() => detectPerfMode());
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingId = useRef<string | null>(null);
+  const arrowId = useRef<string | null>(null);
   const dragId = useRef<string | null>(null);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const cacheRef = useRef(createSceneCache());
@@ -92,6 +103,11 @@ export function StatusEditor({
 
   useEffect(() => {
     cacheRef.current = createSceneCache();
+    // Sebagian WebView melaporkan gambar "load" sebelum benar-benar terdekode;
+    // tanpa menunggu decode, kanvas hanya menampilkan latar gelap (layar hitam).
+    if (image.naturalWidth === 0 && typeof image.decode === "function") {
+      void image.decode().then(scheduleDraw).catch(scheduleDraw);
+    }
     scheduleDraw();
   }, [image, scheduleDraw]);
 
@@ -119,7 +135,7 @@ export function StatusEditor({
       .reverse()
       .find(
         (l) =>
-          l.type !== "stroke" && Math.hypot(l.x - x, l.y - y) < ("size" in l ? l.size * 1.6 : 60),
+          (l.type === "text" || l.type === "sticker") && Math.hypot(l.x - x, l.y - y) < l.size * 1.6,
       );
 
   const onDown = (e: React.PointerEvent) => {
@@ -138,6 +154,24 @@ export function StatusEditor({
           color,
           width: tool === "pixelate" ? width * 2 : width,
           points: [p],
+        },
+      });
+      return;
+    }
+    if (tool === "arrow") {
+      const id = crypto.randomUUID();
+      arrowId.current = id;
+      dispatch({
+        type: "add",
+        layer: {
+          id,
+          type: "arrow",
+          x1: p.x,
+          y1: p.y,
+          x2: p.x + 1,
+          y2: p.y + 1,
+          color,
+          width: Math.max(14, width * 1.6),
         },
       });
       return;
@@ -176,7 +210,13 @@ export function StatusEditor({
       if (prev && Math.hypot(p.x - prev.x, p.y - prev.y) < pointSpacing(perf)) return;
       lastPoint.current = p;
       dispatch({ type: "appendPoint", id: drawingId.current, point: p });
-    } else if (dragId.current)
+    } else if (arrowId.current)
+      dispatch({
+        type: "updateLive",
+        id: arrowId.current,
+        patch: { x2: p.x, y2: p.y } as Partial<Layer>,
+      });
+    else if (dragId.current)
       dispatch({
         type: "updateLive",
         id: dragId.current,
@@ -186,6 +226,7 @@ export function StatusEditor({
 
   const onUp = () => {
     drawingId.current = null;
+    arrowId.current = null;
     dragId.current = null;
     lastPoint.current = null;
   };
@@ -259,7 +300,8 @@ export function StatusEditor({
           ref={canvasRef}
           width={size.width}
           height={size.height}
-          className="max-h-full max-w-full touch-none rounded-xl"
+          style={{ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` }}
+          className="h-auto max-h-full w-auto max-w-full touch-none rounded-xl"
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}
@@ -268,7 +310,7 @@ export function StatusEditor({
       </div>
 
       <div className="max-h-[42vh] space-y-2 overflow-y-auto border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="grid grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-4 gap-1.5">
           <ToolButton
             active={tool === "pen"}
             onClick={() => toggle("pen")}
@@ -286,6 +328,12 @@ export function StatusEditor({
             onClick={() => toggle("pixelate")}
             icon={<SquareDashedBottom className="size-4" />}
             label="Sensor"
+          />
+          <ToolButton
+            active={tool === "arrow"}
+            onClick={() => toggle("arrow")}
+            icon={<MoveUpRight className="size-4" />}
+            label="Panah 3D"
           />
           <ToolButton
             active={tool === "text"}
@@ -351,7 +399,17 @@ export function StatusEditor({
           </div>
         )}
 
-        {(tool === "pen" || tool === "highlight" || tool === "pixelate" || tool === "text") && (
+        {tool === "arrow" && (
+          <p className="text-[11px] text-muted-foreground">
+            Tarik jari dari pangkal ke ujung untuk membuat panah 3D bergradien.
+          </p>
+        )}
+
+        {(tool === "pen" ||
+          tool === "highlight" ||
+          tool === "pixelate" ||
+          tool === "arrow" ||
+          tool === "text") && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               {COLORS.map((c) => (

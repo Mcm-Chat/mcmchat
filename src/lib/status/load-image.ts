@@ -4,8 +4,11 @@ const decodeViaUrl = (file: Blob) =>
   new Promise<HTMLImageElement>((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
+    img.decoding = "sync";
     img.onload = () => {
-      URL.revokeObjectURL(url);
+      // URL sengaja tidak segera dilepas: sebagian WebView Android mengosongkan
+      // gambar (pratinjau hitam) saat objek URL dicabut sebelum kanvas dipakai.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
       resolve(img);
     };
     img.onerror = () => {

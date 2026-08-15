@@ -32,7 +32,19 @@ export type StickerLayer = {
   size: number;
 };
 
-export type Layer = StrokeLayer | TextLayer | StickerLayer;
+/** Panah 3D: batang bergradien + kepala tebal dengan bayangan. */
+export type ArrowLayer = {
+  id: string;
+  type: "arrow";
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  width: number;
+};
+
+export type Layer = StrokeLayer | TextLayer | StickerLayer | ArrowLayer;
 
 export type Adjust = { brightness: number; contrast: number; saturation: number };
 
