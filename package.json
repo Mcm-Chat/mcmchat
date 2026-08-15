@@ -117,5 +117,10 @@
     "overrides": {
       "entities": "4.5.0"
     }
+  },
+  "overrides": {
+    "brace-expansion": "^2.0.3",
+    "nanoid": "^3.3.18",
+    "js-yaml": "^4.3.1"
   }
 }
