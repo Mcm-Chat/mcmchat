@@ -117,9 +117,9 @@ function CallsPage() {
   // Membuka halaman Panggilan = semua panggilan tak terjawab dianggap dilihat,
   // sehingga badge di navigasi bawah hilang dan hanya muncul untuk yang baru.
   useEffect(() => {
-    if (!userId || isLoading) return;
+    if (!userId) return;
     markMissedCallsSeen();
-  }, [userId, isLoading, calls]);
+  }, [userId, calls]);
 
   useEffect(() => {
     void loadConfig()
