@@ -259,7 +259,7 @@ function CatalogDetail() {
                   businessId={product.business_id}
                   productId={product.id}
                   photos={allPhotos.filter((p) => p.variant_id === v.id && !p.stock_unit_id)}
-                  onAdd={() => setStockDialog({ variant: v, mode: "add" })}
+                  onAdd={() => setPurchaseFor(v)}
                   onCorrect={() => setStockDialog({ variant: v, mode: "correct" })}
                   onEdit={() => setVariantOpen(v)}
                   onHistory={() => setMovementsFor(v)}
