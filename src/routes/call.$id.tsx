@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
@@ -98,6 +98,9 @@ function CallScreen() {
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
   const [errorDismissed, setErrorDismissed] = useState(false);
+  const answerRef = useRef<HTMLButtonElement | null>(null);
+  const hangupRef = useRef<HTMLButtonElement | null>(null);
+  const backRef = useRef<HTMLButtonElement | null>(null);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
 
@@ -118,6 +121,23 @@ function CallScreen() {
   useEffect(() => {
     if (session.phase === "error" || session.phase === "unconfigured") setErrorDismissed(false);
   }, [session.phase, session.reason]);
+
+  // Fokus keyboard mengikuti fase panggilan: saat panggilan masuk fokus ke
+  // "Jawab", setelah diterima ke "Akhiri panggilan", dan setelah ditolak/
+  // berakhir ke tombol "Kembali" agar fokus tidak pernah hilang ke <body>.
+  useEffect(() => {
+    const target =
+      session.phase === "incoming"
+        ? answerRef
+        : session.phase === "connected" || session.phase === "connecting"
+          ? hangupRef
+          : session.phase === "ended" || session.phase === "error"
+            ? backRef
+            : null;
+    if (!target) return;
+    const raf = requestAnimationFrame(() => target.current?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [session.phase]);
 
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
