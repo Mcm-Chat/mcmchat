@@ -40,6 +40,7 @@ import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
+import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import {
   MissedCallActions,
@@ -166,6 +167,8 @@ function CallsPage() {
   );
 
   const missedCount = (calls ?? []).filter((c) => c.status === "missed").length;
+  const hasLive = (calls ?? []).some((c) => isLiveCall(c.status));
+  useSecondTick(hasLive);
   const busy = loading || isLoading;
   const due = dueReminders(reminders);
 
@@ -311,9 +314,11 @@ function CallsPage() {
                       {c.kind === "video" ? "Video" : "Suara"} •{" "}
                       {isMissed
                         ? "Tak terjawab"
-                        : c.status === "ended"
-                          ? durasi(c.duration_sec)
-                          : STATUS_LABEL[c.status]}{" "}
+                        : isLiveCall(c.status)
+                          ? liveStatusLabel(c)
+                          : c.status === "ended"
+                            ? durasi(c.duration_sec)
+                            : STATUS_LABEL[c.status]}{" "}
                       • {waktuRelatif(c.created_at)}
                     </p>
                   </div>
