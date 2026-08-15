@@ -2472,6 +2472,85 @@ export type Database = {
         }
         Relationships: []
       }
+      purchases: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          display_qty: number
+          display_unit: string
+          id: string
+          note: string
+          product_id: string
+          purchased_at: string
+          qty_base: number
+          supplier_contact: string
+          supplier_name: string
+          total_cost: number
+          unit_cost: number
+          updated_at: string
+          variant_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          display_qty?: number
+          display_unit?: string
+          id?: string
+          note?: string
+          product_id: string
+          purchased_at?: string
+          qty_base: number
+          supplier_contact?: string
+          supplier_name?: string
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string
+          variant_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          display_qty?: number
+          display_unit?: string
+          id?: string
+          note?: string
+          product_id?: string
+          purchased_at?: string
+          qty_base?: number
+          supplier_contact?: string
+          supplier_name?: string
+          total_cost?: number
+          unit_cost?: number
+          updated_at?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quick_replies: {
         Row: {
           body: string
@@ -3410,6 +3489,22 @@ export type Database = {
         }
       }
       cancel_contact_request: { Args: { _target: string }; Returns: Json }
+      catalog_product_indicators: {
+        Args: { _business: string }
+        Returns: {
+          avg_cost_base: number
+          last_purchase_at: string
+          last_supplier: string
+          product_id: string
+          profit: number
+          sold_base: number
+          sold_revenue: number
+          stock_base: number
+          stock_value: number
+          total_cost: number
+          total_qty_base: number
+        }[]
+      }
       chat_order_actor_can_manage: {
         Args: { _order: string; _uid: string }
         Returns: boolean
@@ -4068,6 +4163,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      record_purchase: { Args: { _payload: Json }; Returns: string }
       register_push_device: {
         Args: {
           _app_version?: string
@@ -4088,6 +4184,10 @@ export type Database = {
       }
       remove_my_avatar: { Args: never; Returns: Json }
       remove_saved_contact: { Args: { _target: string }; Returns: Json }
+      rename_product_category: {
+        Args: { _business: string; _from: string; _to: string }
+        Returns: number
+      }
       request_chat_order_changes: {
         Args: { _note?: string; _order: string }
         Returns: {
