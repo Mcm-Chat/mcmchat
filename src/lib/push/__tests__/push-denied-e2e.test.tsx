@@ -6,8 +6,7 @@
  * termasuk jalur web listener agar delivered-mark tidak jalan saat ditolak.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, cleanup, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, cleanup, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 const getSession = vi.fn();
@@ -133,7 +132,7 @@ describe("regresi guard izin push (end-to-end)", () => {
       expect(dialog).toHaveTextContent(c.titleRe);
       expect(screen.getByText(guarded.reason!)).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole("button", { name: /mengerti/i }));
+      fireEvent.click(screen.getByRole("button", { name: /mengerti/i }));
       await waitFor(() =>
         expect(navigate).toHaveBeenCalledWith({ to: c.fallback, replace: true }),
       );
