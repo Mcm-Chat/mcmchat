@@ -20,6 +20,7 @@ import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { installViewportMetrics } from "@/lib/mobile/viewport";
 import { initOutboxFlush } from "@/lib/api/outbox";
+import { installImportantToastFocus } from "@/lib/a11y/toast-focus";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 
 function NotFoundComponent() {
@@ -181,10 +182,12 @@ function RootComponent() {
     const offConn = initConnectionWatcher();
     const offOutbox = initOutboxFlush();
     const offViewport = installViewportMetrics();
+    const offToastFocus = installImportantToastFocus();
     return () => {
       offConn();
       offOutbox();
       offViewport();
+      offToastFocus();
     };
   }, []);
 
