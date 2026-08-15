@@ -865,17 +865,90 @@ export function ChatComposer({
         q.shortcut.toLowerCase().startsWith(value.trim().toLowerCase()),
       )
     : [];
+  const [quickIdx, setQuickIdx] = useState(0);
+  const [quickDismissed, setQuickDismissed] = useState(false);
+  const quickOpen = matches.length > 0 && !quickDismissed;
+  const activeQuick = quickOpen ? matches[Math.min(quickIdx, matches.length - 1)] : undefined;
+  useEffect(() => {
+    setQuickIdx(0);
+    setQuickDismissed(false);
+  }, [value]);
+
+  const pickQuick = (text: string) => {
+    onChange(text);
+    setQuickDismissed(true);
+  };
+
+  /** Pintasan keyboard composer: kirim, pilih QuickReply, buka lampiran. */
+  const onComposerKeyDown = (e: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.shiftKey && (e.key === "a" || e.key === "A")) {
+      e.preventDefault();
+      setActionsOpen(true);
+      return;
+    }
+    if (mod && e.shiftKey && (e.key === "c" || e.key === "C")) {
+      e.preventDefault();
+      onAttach("camera");
+      return;
+    }
+    if (mod && e.shiftKey && (e.key === "d" || e.key === "D")) {
+      e.preventDefault();
+      onAttach("document");
+      return;
+    }
+    if (quickOpen) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setQuickIdx((i) => (i + 1) % matches.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setQuickIdx((i) => (i - 1 + matches.length) % matches.length);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setQuickDismissed(true);
+        return;
+      }
+      if ((e.key === "Enter" && !e.shiftKey) || e.key === "Tab") {
+        if (activeQuick) {
+          e.preventDefault();
+          pickQuick(activeQuick.text);
+          return;
+        }
+      }
+    }
+    if (e.key === "Enter" && (!e.shiftKey || mod)) {
+      e.preventDefault();
+      submit();
+    }
+  };
 
   return (
     <div className="composer-raise sticky bottom-0 z-20 shrink-0 border-t border-border/70 bg-card/92 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur-xl">
-      {matches.length > 0 && (
-        <div className="max-h-40 overflow-y-auto border-b border-border/70">
-          {matches.map((q) => (
+      {quickOpen && (
+        <div
+          id="composer-quick-replies"
+          role="listbox"
+          aria-label="Balasan cepat"
+          className="max-h-40 overflow-y-auto border-b border-border/70"
+        >
+          {matches.map((q, i) => (
             <button
               key={q.shortcut}
               type="button"
-              className="block w-full px-4 py-2 text-left transition-colors hover:bg-muted"
-              onClick={() => onChange(q.text)}
+              id={`quick-reply-${i}`}
+              role="option"
+              aria-selected={i === Math.min(quickIdx, matches.length - 1)}
+              className={cn(
+                "block w-full px-4 py-2 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                i === Math.min(quickIdx, matches.length - 1) && "bg-muted",
+              )}
+              onFocus={() => setQuickIdx(i)}
+              onClick={() => pickQuick(q.text)}
             >
               <span className="text-xs font-semibold text-primary">{q.shortcut}</span>
               <span className="block truncate text-xs text-muted-foreground">{q.text}</span>
