@@ -44,6 +44,12 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import {
+  CALL_RETURN_FOCUS_NEW,
+  consumeCallReturnFocus,
+  redialButtonId,
+  setCallReturnFocus,
+} from "@/lib/calls/return-focus";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import {
   MissedCallActions,
@@ -151,6 +157,7 @@ function CallsPage() {
       return;
     }
     try {
+      setCallReturnFocus(c.id);
       void navigate({
         to: "/call/prepare/$conversationId",
         params: { conversationId: c.conversation_id },
@@ -170,6 +177,7 @@ function CallsPage() {
     }
     try {
       setNewOpen(false);
+      setCallReturnFocus(CALL_RETURN_FOCUS_NEW);
       void navigate({
         to: "/call/prepare/$conversationId",
         params: { conversationId },
