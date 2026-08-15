@@ -101,9 +101,49 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
     };
 
     document.addEventListener("keydown", onKeyDown, true);
+
+    // Rotasi layar (portrait/landscape) sering membuat browser/WebView
+    // membuang fokus ke <body> atau ke elemen di luar modal. Setelah layout
+    // stabil, fokus dikembalikan ke elemen terakhir di dalam modal.
+    let lastInside: HTMLElement | null = null;
+    const onFocusIn = (event: FocusEvent) => {
+      const root = containerRef.current;
+      const target = event.target as HTMLElement | null;
+      if (root && target && root.contains(target)) lastInside = target;
+    };
+    document.addEventListener("focusin", onFocusIn, true);
+
+    let rotateTimer: ReturnType<typeof setTimeout> | undefined;
+    const reapplyFocus = () => {
+      if (rotateTimer) clearTimeout(rotateTimer);
+      rotateTimer = setTimeout(() => {
+        const root = containerRef.current;
+        if (!root || suspendedRef.current) return;
+        const activeEl = document.activeElement as HTMLElement | null;
+        if (activeEl && activeEl !== document.body && root.contains(activeEl)) return;
+        // Fokus sudah dipindahkan pengguna ke luar modal secara sadar? Jangan ganggu.
+        if (activeEl && activeEl !== document.body && !root.contains(activeEl)) return;
+        const items = getItems();
+        const target =
+          lastInside && document.contains(lastInside) && root.contains(lastInside)
+            ? lastInside
+            : (items[0] ?? root);
+        target.focus?.();
+      }, 120);
+    };
+    const orientation = typeof screen !== "undefined" ? screen.orientation : undefined;
+    orientation?.addEventListener?.("change", reapplyFocus);
+    window.addEventListener("orientationchange", reapplyFocus);
+    window.addEventListener("resize", reapplyFocus);
+
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("focusin", onFocusIn, true);
+      if (rotateTimer) clearTimeout(rotateTimer);
+      orientation?.removeEventListener?.("change", reapplyFocus);
+      window.removeEventListener("orientationchange", reapplyFocus);
+      window.removeEventListener("resize", reapplyFocus);
       // Jeda sementara: jangan sentuh fokus sama sekali.
       if (suspendedRef.current) return;
       restoreFocus(previouslyFocused, containerRef.current, fallbackRef.current);
