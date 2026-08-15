@@ -322,6 +322,26 @@ export async function deleteForMe(messageIds: string[], userId: string) {
 }
 
 /**
+ * Bersihkan seluruh isi percakapan hanya untuk saya (kontak lain tetap punya
+ * salinannya). Dikerjakan bertahap agar aman untuk riwayat panjang.
+ */
+export async function clearConversationForMe(
+  conversationId: string,
+  userId: string,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("id")
+    .eq("conversation_id", conversationId);
+  if (error) throw new Error(friendly(error.message, "Gagal memuat pesan"));
+  const ids = (data ?? []).map((m) => m.id);
+  for (let i = 0; i < ids.length; i += 200) {
+    await deleteForMe(ids.slice(i, i + 200), userId);
+  }
+  return ids.length;
+}
+
+/**
  * Hapus permanen untuk semua peserta: baris pesan + berkas lampiran dihapus,
  * sehingga tidak ada tombstone/placeholder yang tersisa di UI mana pun.
  * Reaksi, tanda terima, dan penanda "hapus untuk saya" ikut terhapus via cascade,
