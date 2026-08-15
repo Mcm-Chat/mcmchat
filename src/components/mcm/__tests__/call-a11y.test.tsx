@@ -78,6 +78,15 @@ async function openIncoming(kind: "audio" | "video" = "audio") {
   return trigger;
 }
 
+// happy-dom tidak menghitung layout: anggap semua elemen terlihat agar
+// filter visibilitas pada focus trap berperilaku seperti di browser nyata.
+Object.defineProperty(HTMLElement.prototype, "offsetParent", {
+  configurable: true,
+  get() {
+    return this.isConnected ? document.body : null;
+  },
+});
+
 beforeEach(() => {
   ringingRow = null;
   incomingCb = null;
