@@ -19,6 +19,9 @@ on:
 jobs:
   bundle:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     env:
       # Secret opsional harus lewat env: GitHub melarang `secrets.*` di dalam `if:`.
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -36,10 +39,10 @@ jobs:
       - name: Verifikasi identitas aplikasi
         run: bun run verify:identity
 
-      - name: Verifikasi assetlinks
-        env:
-          MCM_ASSETLINKS_SHA256: ${{ secrets.PLAY_APP_SIGNING_SHA256 }}
-        run: bun run verify:assetlinks
+      - name: Catatan App Links
+        run: |
+          echo "App Links belum digate fingerprint: keystore upload MCM Chat dibuat/dipulihkan di runner."
+          echo "Setelah AAB diunggah ke Play Console, salin SHA-256 Play App Signing ke public/.well-known/assetlinks.json."
 
       - uses: actions/setup-java@v4
         with:
@@ -101,42 +104,89 @@ jobs:
       - name: Verifikasi Gradle wrapper
         run: test -f android/gradlew && test -f android/gradle/wrapper/gradle-wrapper.jar
 
-      # Keystore juga hanya hidup di runner, tidak pernah masuk repo.
-      - name: Restore keystore
+      # Keystore hanya hidup di runner + artifact backup; tidak pernah masuk repo.
+      - name: Restore or create MCM Chat signing key
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GH_TOKEN: ${{ github.token }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          node <<'NODE'
-          const fs = require("node:fs");
-          const path = require("node:path");
+          set -euo pipefail
+          for name in ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=Secret kosong::$name belum diisi di repository secrets"
+              exit 1
+            fi
+          done
 
-          const raw = process.env.ANDROID_KEYSTORE_BASE64;
-          const runnerTemp = process.env.RUNNER_TEMP;
-          if (!raw) throw new Error("ANDROID_KEYSTORE_BASE64 belum diset");
-          if (!runnerTemp) throw new Error("RUNNER_TEMP tidak tersedia");
+          KS="$RUNNER_TEMP/mcm-chat-release.jks"
+          ART_ID="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.name=="mcm-chat-signing-key-backup" and .expired==false)] | sort_by(.created_at) | last | .id // empty')"
 
-          const cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, "");
-          const bytes = Buffer.from(cleaned, "base64");
-          if (cleaned.length < 16 || bytes.length < 1024) {
-            throw new Error("Data keystore hasil decode tidak valid atau terlalu kecil");
-          }
+          if [ -n "$ART_ID" ]; then
+            echo "Memulihkan keystore dari artifact backup #$ART_ID"
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ART_ID/zip" > "$RUNNER_TEMP/key-backup.zip"
+            unzip -o -q "$RUNNER_TEMP/key-backup.zip" -d "$RUNNER_TEMP/key-backup"
+            cp "$RUNNER_TEMP/key-backup/mcm-chat-release.jks" "$KS"
+            rm -rf "$RUNNER_TEMP/key-backup" "$RUNNER_TEMP/key-backup.zip"
+          else
+            echo "Belum ada backup — membuat keystore baru khusus MCM Chat"
+            keytool -genkeypair -v \
+              -keystore "$KS" \
+              -storetype JKS \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -alias "$ANDROID_KEY_ALIAS" \
+              -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -keypass "$ANDROID_KEY_PASSWORD" \
+              -dname "CN=MCM Private Connect, OU=Mobile, O=MCM, L=Indonesia, C=ID" > /dev/null 2>&1
+          fi
+          chmod 600 "$KS"
 
-          fs.writeFileSync(path.join(runnerTemp, "mcm-release.jks"), bytes, { mode: 0o600 });
-          NODE
-          if ! keytool -list \
-            -keystore "$RUNNER_TEMP/mcm-release.jks" \
+          if ! keytool -list -keystore "$KS" \
             -storepass "$ANDROID_KEYSTORE_PASSWORD" \
             -alias "$ANDROID_KEY_ALIAS" > /dev/null 2>&1; then
-            echo "Keystore/password/alias tidak cocok"
+            echo "::error title=Keystore tidak valid::Store password atau alias tidak cocok dengan keystore"
             exit 1
           fi
+
+          FP="$(keytool -list -v -keystore "$KS" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" 2>/dev/null \
+            | grep -m1 'SHA256:' | sed 's/.*SHA256: //' | tr -d '\r')"
+
+          {
+            echo "MCM Chat upload signing key"
+            echo "package: com.mcm.privateconnect"
+            echo "alias: $ANDROID_KEY_ALIAS"
+            echo "upload cert SHA-256: $FP"
+            echo "keystore: mcm-chat-release.jks (JKS, RSA 2048, validity 10000 hari)"
+            echo "Password TIDAK disimpan di file ini; simpan hanya di GitHub Secrets."
+          } > "$RUNNER_TEMP/SIGNING-KEY-README.txt"
+
+          {
+            echo "### MCM Chat signing key"
+            echo ""
+            echo '- package: com.mcm.privateconnect'
+            echo "- alias: $ANDROID_KEY_ALIAS"
+            echo "- upload cert SHA-256: $FP"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Backup diunggah SEBELUM Gradle agar key tetap bisa dipakai ulang bila build gagal.
+      - name: Backup signing key artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcm-chat-signing-key-backup
+          path: |
+            ${{ runner.temp }}/mcm-chat-release.jks
+            ${{ runner.temp }}/SIGNING-KEY-README.txt
+          retention-days: 90
+          compression-level: 0
 
       - name: Build signed AAB
         working-directory: android
         env:
-          MCM_KEYSTORE_PATH: ${{ runner.temp }}/mcm-release.jks
+          MCM_KEYSTORE_PATH: ${{ runner.temp }}/mcm-chat-release.jks
           MCM_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           MCM_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           MCM_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -147,7 +197,7 @@ jobs:
 
       - name: Cleanup secrets on runner
         if: always()
-        run: rm -f "$RUNNER_TEMP/mcm-release.jks" android/app/google-services.json
+        run: rm -f "$RUNNER_TEMP/mcm-chat-release.jks" "$RUNNER_TEMP/SIGNING-KEY-README.txt" android/app/google-services.json
 
       - uses: actions/upload-artifact@v4
         with:
