@@ -38,6 +38,21 @@ function devLog(code: string, detail?: unknown) {
   if (import.meta.env.DEV) console.warn(`[call:${code}]`, detail ?? "");
 }
 
+/** Bandingkan daftar peserta berdasarkan isi, bukan identitas objek. */
+function sameRemotes(a: RemoteInfo[], b: RemoteInfo[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((x, i) => {
+    const y = b[i]!;
+    return (
+      x.identity === y.identity &&
+      x.name === y.name &&
+      x.speaking === y.speaking &&
+      x.micEnabled === y.micEnabled &&
+      x.cameraEnabled === y.cameraEnabled
+    );
+  });
+}
+
 /**
  * Wake lock selama panggilan aktif. Sistem bisa melepas sentinel sendiri
  * (layar mati, tab tersembunyi); event `release` dipakai untuk mengambil ulang
