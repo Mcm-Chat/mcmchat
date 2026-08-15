@@ -18,6 +18,7 @@ import {
   priceLabel,
 } from "@/components/mcm/catalog-parts";
 import { PurchaseDialog } from "@/components/mcm/purchase-dialog";
+import { WarehouseIntakeLog } from "@/components/mcm/warehouse-intake-log";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -301,6 +302,8 @@ function CatalogDetail() {
             </Button>
           </div>
         </div>
+
+        <WarehouseIntakeLog product={product} businessId={product.business_id} />
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
