@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
   type ProductWithVariants,
 } from "@/lib/api/catalog";
 import { rupiah } from "@/lib/mcm/format";
+import { useSignedUrl } from "@/lib/api/use-signed-url";
 
 export type IndicatorFocus = "cost" | "stock" | "sold" | "profit" | "supplier";
 
@@ -128,6 +130,11 @@ export function ProductInsightDialog({
                   <p className="text-muted-foreground">Kontak: {p.supplier_contact}</p>
                 )}
                 {p.note && <p className="mt-1 italic text-muted-foreground">{p.note}</p>}
+                <PurchaseEvidence
+                  photoPath={p.photo_path}
+                  locationUrl={p.location_url}
+                  locationLabel={p.location_label}
+                />
               </div>
             ))}
           </TabsContent>
