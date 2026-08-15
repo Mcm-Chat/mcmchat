@@ -129,6 +129,7 @@ export function PhotoFlow({
       const { previewUrl } = await compressImage(file);
       setPreview(previewUrl);
       if (includeLocation && !geo.location) geo.request();
+      setStep((s) => (s === "kamera" ? "penerima" : s));
     } catch {
       toast.error("Gagal memproses foto");
     } finally {
