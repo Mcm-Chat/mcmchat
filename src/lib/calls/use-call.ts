@@ -28,6 +28,7 @@ import {
   type CallRow,
 } from "@/lib/api/calls";
 import type { EndReason } from "./policy";
+import { consumeAnswerIntent } from "./answer-intent";
 import {
   answerFailureText,
   connectFailureText,
