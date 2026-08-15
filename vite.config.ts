@@ -14,6 +14,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Load non-VITE_ env vars into process.env for server routes (email, webhooks).
 Object.assign(process.env, loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), ""));
 
+// `@react-email/render` mengimpor `entities/lib/*` (API v4), sementara paket
+// `entities` teratas sudah v7 dan tidak punya folder itu. Kita pasang salinan
+// v4 sebagai dependensi eksplisit (`entities-v4`) supaya alias ini deterministik
+// di mesin mana pun, termasuk CI dengan node_modules yang bersih.
+const entitiesV4 = path.resolve(__dirname, "node_modules/entities-v4/lib/esm");
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -23,9 +29,9 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        "entities/lib/decode.js": path.resolve(__dirname, "node_modules/htmlparser2/node_modules/entities/lib/esm/decode.js"),
-        "entities/lib/encode.js": path.resolve(__dirname, "node_modules/htmlparser2/node_modules/entities/lib/esm/encode.js"),
-        "entities/lib/escape.js": path.resolve(__dirname, "node_modules/htmlparser2/node_modules/entities/lib/esm/escape.js"),
+        "entities/lib/decode.js": path.join(entitiesV4, "decode.js"),
+        "entities/lib/encode.js": path.join(entitiesV4, "encode.js"),
+        "entities/lib/escape.js": path.join(entitiesV4, "escape.js"),
       },
     },
   },
