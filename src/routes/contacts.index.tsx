@@ -5,6 +5,7 @@ import { Ban, Check, MessageSquare, Search, UserPlus, UserX, X } from "lucide-re
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
+import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
 import {
   ConfirmDialog,
   EmptyState,
@@ -255,6 +256,10 @@ function ContactsPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
+                  <RenameContactButton
+                    contactId={c.contact_id}
+                    realName={c.profile.display_name}
+                  />
                   <Button
                     variant="ghost"
                     size="icon"
@@ -303,6 +308,7 @@ function ContactsPage() {
                     Disimpan satu arah — belum terhubung
                   </p>
                 </div>
+                <RenameContactButton contactId={c.contact_id} realName={c.profile.display_name} />
                 <Button
                   size="sm"
                   className="rounded-xl"

@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Ban, MessageSquare, Trash2, UserPlus, Unlink } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
+import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
+import { useContactAliases } from "@/lib/contacts/alias";
 import { LoadingSkeleton, StatusBadge } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "@/lib/api/guard";
@@ -44,6 +46,7 @@ function ContactDetailPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const { nameOf } = useContactAliases();
 
   const profile = useQuery({
     queryKey: ["profile-detail", userId, id],
@@ -97,12 +100,20 @@ function ContactDetailPage() {
               userId={card.id}
               path={card.avatar_url}
               version={card.avatar_version}
-              name={card.display_name}
+              name={nameOf(card.id, card.display_name)}
               color={card.avatar_color}
               size="lg"
             />
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-semibold">{card.display_name}</h1>
+              <h1 className="flex items-center gap-1 text-lg font-semibold">
+                <span className="truncate">{nameOf(card.id, card.display_name)}</span>
+                <RenameContactButton contactId={card.id} realName={card.display_name} />
+              </h1>
+              {nameOf(card.id, card.display_name) !== card.display_name && (
+                <p className="truncate text-xs text-muted-foreground">
+                  Nama asli: {card.display_name}
+                </p>
+              )}
               {full?.pin && <p className="font-mono text-xs text-muted-foreground">{full.pin}</p>}
               <div className="mt-1">
                 {rel?.connected ? (
