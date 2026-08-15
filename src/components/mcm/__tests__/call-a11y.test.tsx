@@ -117,16 +117,21 @@ describe("Banner panggilan masuk — state berdering", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: /jawab panggilan/i }));
   });
 
-  it("Tab dan Shift+Tab berputar hanya di antara Jawab dan Tolak", async () => {
+  it("Tab/Shift+Tab terkunci di antara Jawab dan Tolak (tidak lolos ke halaman)", async () => {
     await openIncoming();
-    const answer = screen.getByRole("button", { name: /jawab panggilan/i });
-    const decline = screen.getByRole("button", { name: /tolak panggilan/i });
+    const items = screen.getAllByRole("button");
+    expect(items.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Jawab panggilan",
+      "Tolak panggilan",
+    ]);
+    const first = items[0]!;
+    const last = items[items.length - 1]!;
+    last.focus();
     tab();
-    expect(document.activeElement).toBe(decline);
-    tab();
-    expect(document.activeElement).toBe(answer);
+    expect(document.activeElement).toBe(first);
+    first.focus();
     tab(true);
-    expect(document.activeElement).toBe(decline);
+    expect(document.activeElement).toBe(last);
   });
 
   it("Escape tidak menolak panggilan (cegah penolakan tak sengaja)", async () => {
@@ -233,6 +238,7 @@ describe("Panel pemulihan panggilan gagal", () => {
     last.focus();
     tab();
     expect(document.activeElement).toBe(first);
+    first.focus();
     tab(true);
     expect(document.activeElement).toBe(last);
   });
