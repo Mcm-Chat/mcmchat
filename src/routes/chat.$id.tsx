@@ -20,6 +20,7 @@ import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { AccessFallback } from "@/components/mcm/access-fallback";
+import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -142,6 +143,7 @@ function ChatRoom() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const [connBannerHidden, setConnBannerHidden] = useState(false);
 
   // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
   // mode pilih), bukan langsung meninggalkan percakapan.
@@ -721,15 +723,18 @@ function ChatRoom() {
         )
       }
     >
-      {connection !== "online" && (
-        <div
-          role="status"
-          className="sticky top-0 z-10 bg-muted/90 px-4 py-1.5 text-center text-[11px] font-medium text-muted-foreground backdrop-blur"
+      {connection !== "online" && !connBannerHidden && (
+        <NotificationBanner
+          onDismiss={() => setConnBannerHidden(true)}
+          dismissLabel="Tutup info koneksi"
+          className="sticky top-0 z-10 items-center bg-muted/90 px-4 py-1.5 text-[11px] font-medium text-muted-foreground backdrop-blur"
         >
-          {connection === "connecting"
-            ? "Menghubungkan kembali…"
-            : "Offline — pesan dikirim otomatis saat koneksi kembali"}
-        </div>
+          <span className="block text-center">
+            {connection === "connecting"
+              ? "Menghubungkan kembali…"
+              : "Offline — pesan dikirim otomatis saat koneksi kembali"}
+          </span>
+        </NotificationBanner>
       )}
       <div
         ref={scrollRef}

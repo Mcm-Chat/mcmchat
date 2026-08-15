@@ -217,9 +217,9 @@ function CallsPage() {
       }
     >
       <div aria-live="polite" aria-atomic="false" aria-label="Pengingat panggilan" role="status">
-      {due.length > 0 && (
+      {visibleDue.length > 0 && (
         <ul className="space-y-2 px-4 pt-3">
-          {due.map((r) => (
+          {visibleDue.map((r) => (
             <li
               key={r.id}
               className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
@@ -254,6 +254,15 @@ function CallsPage() {
                 onClick={() => void finishReminder(r.id)}
               >
                 <Check className="size-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Tutup pengingat"
+                title="Tutup pengingat (Esc)"
+                onClick={() => dismissReminder(r.id)}
+              >
+                <X className="size-5" />
               </Button>
             </li>
           ))}
