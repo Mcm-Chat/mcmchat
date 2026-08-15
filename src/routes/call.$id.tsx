@@ -186,13 +186,13 @@ function CallScreen() {
         {isVideo && (
           <>
             <video
-              ref={remoteVideo}
+              ref={session.attachRemoteVideo}
               autoPlay
               playsInline
               className="absolute inset-0 size-full object-cover opacity-90"
             />
             <video
-              ref={localVideo}
+              ref={session.attachLocalVideo}
               autoPlay
               playsInline
               muted
