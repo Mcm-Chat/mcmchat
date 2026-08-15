@@ -36,7 +36,7 @@ export const Route = createFileRoute("/call/prepare/$conversationId")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>): { kind?: Kind } => ({
+  validateSearch: (s: Record<string, unknown>): { kind?: Kind | undefined } => ({
     kind: s["kind"] === "video" ? "video" : s["kind"] === "audio" ? "audio" : undefined,
   }),
   component: PreCallScreen,
