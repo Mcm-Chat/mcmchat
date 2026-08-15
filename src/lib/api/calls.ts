@@ -185,6 +185,23 @@ export function subscribeCall(callId: string, onChange: (row: CallRow) => void) 
 }
 
 /**
+ * Sinkronisasi realtime seluruh riwayat panggilan milik pengguna.
+ * RLS memastikan hanya baris yang boleh dibaca yang dikirim ke klien.
+ */
+export function subscribeMyCalls(userId: string, onChange: (row: CallRow) => void) {
+  const ch = supabase
+    .channel(`calls-feed:${userId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, (p) => {
+      const row = (p.new ?? p.old) as CallRow | null;
+      if (row) onChange(row);
+    })
+    .subscribe();
+  return () => {
+    void supabase.removeChannel(ch);
+  };
+}
+
+/**
  * Panggilan masuk untuk pengguna ini. Filter dilakukan berdasarkan baris
  * `calls` baru berstatus `ringing`; RLS memastikan hanya peserta yang menerima.
  */
