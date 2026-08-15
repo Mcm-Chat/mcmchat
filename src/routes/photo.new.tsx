@@ -30,7 +30,7 @@ function PhotoNew() {
   return (
     <AppShell
       nav={false}
-      header={<MobileHeader title="Kirim foto" subtitle="Pilih penerima, foto, lalu lokasi" back />}
+      header={<MobileHeader title="Kirim foto" subtitle="Ambil foto, pilih penerima, lalu kirim" back />}
       className="flex flex-col"
     >
       {loading || isLoading || !userId ? (
@@ -39,6 +39,7 @@ function PhotoNew() {
         <PhotoFlow
           userId={userId}
           conversations={conversations ?? []}
+          startWithCamera
           onCancel={() => void navigate({ to: "/chat" })}
           onDone={(ids, messageId) => {
             void qc.invalidateQueries({ queryKey: qk.conversations(userId) });
