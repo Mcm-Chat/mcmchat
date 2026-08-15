@@ -202,7 +202,8 @@ export function IncomingCallListener() {
   const isVideo = incoming.call.kind === "video";
   const permKind = isVideo ? "video" : "audio";
   const permCopy = permState ? mediaPermissionCopy(permState, permKind) : null;
-  const permBlocked = Boolean(permState && permState !== "granted");
+  // "audio_only" bukan penghalang: panggilan video dijawab sebagai suara saja.
+  const permBlocked = Boolean(permState && permState !== "granted" && permState !== "audio_only");
 
   /**
    * Satu tap = izin dulu, baru menjawab. Menjawab tanpa izin hanya membuat
@@ -215,7 +216,7 @@ export function IncomingCallListener() {
     void requestMediaPermission(permKind)
       .then((state) => {
         setPermState(state);
-        if (state !== "granted") return;
+        if (state !== "granted" && state !== "audio_only") return;
         // Simpan target fokus supaya bila panggilan yang dijawab langsung
         // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
         // panggil ulang percakapan ini (bukan hilang ke <body>).
