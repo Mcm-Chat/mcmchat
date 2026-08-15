@@ -467,6 +467,7 @@ function CallScreen() {
     <div className="app-gradient flex min-h-dvh flex-col px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-navy-foreground">
       <div className="flex items-center gap-2">
         <Button
+          ref={backRef}
           variant="ghost"
           size="icon"
           aria-label="Kembali"
