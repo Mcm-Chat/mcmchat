@@ -30,6 +30,11 @@ import {
 import type { EndReason } from "./policy";
 import { consumeAnswerIntent } from "./answer-intent";
 import {
+  readPreferredDevice,
+  resolvePreferredDevice,
+  writePreferredDevice,
+} from "./device-preference";
+import {
   MediaPermissionError,
   mediaPermissionCopy,
   requestMediaPermission,
@@ -224,6 +229,8 @@ export function useCall(opts: {
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
+  /** Preferensi kamera tersimpan hanya dipulihkan sekali per sesi panggilan. */
+  const cameraRestoredRef = useRef(false);
   const [retrying, setRetrying] = useState(false);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
@@ -262,13 +269,20 @@ export function useCall(opts: {
     async (deviceId?: string | null): Promise<MediaStreamTrack | null> => {
       if (typeof navigator === "undefined" || !navigator.mediaDevices) return null;
       const base = (MIC_CONSTRAINTS.audio ?? true) as MediaTrackConstraints;
+      // Tanpa pilihan eksplisit, pakai mikrofon terakhir yang dipilih pengguna.
+      // `ideal` (bukan `exact`) agar panggilan tetap jalan bila alatnya dicabut.
+      const wanted = deviceId ?? readPreferredDevice("mic");
       const mic = await navigator.mediaDevices.getUserMedia({
-        audio: deviceId ? { ...base, deviceId: { exact: deviceId } } : base,
+        audio: wanted
+          ? { ...base, deviceId: deviceId ? { exact: deviceId } : { ideal: wanted } }
+          : base,
         video: false,
       });
       micRef.current = mic;
       const raw = mic.getAudioTracks()[0] ?? null;
-      setMicDeviceId(raw?.getSettings().deviceId ?? deviceId ?? null);
+      const active = raw?.getSettings().deviceId ?? deviceId ?? null;
+      setMicDeviceId(active);
+      if (active) writePreferredDevice("mic", active);
       if (!voiceApplied) return raw;
       // Kegagalan pemrosesan suara TIDAK boleh menggagalkan panggilan: kita
       // publikasikan mikrofon mentah dan menandai Voice Privacy tidak tersedia.
@@ -660,6 +674,7 @@ export function useCall(opts: {
     (deviceId: string) => {
       const session = sessionRef.current;
       if (!session) return;
+      writePreferredDevice("mic", deviceId);
       const prevMic = micRef.current;
       const prevPipe = pipeRef.current;
       pipeRef.current = null;
@@ -684,11 +699,28 @@ export function useCall(opts: {
   const setCameraDevice = useCallback((deviceId: string) => {
     const session = sessionRef.current;
     if (!session) return;
+    cameraRestoredRef.current = true;
     void session.setVideoInput(deviceId).then((ok) => {
-      if (ok) setCameraDeviceId(deviceId);
-      else setReason("Kamera itu tidak bisa dipakai saat ini");
+      if (ok) {
+        setCameraDeviceId(deviceId);
+        writePreferredDevice("camera", deviceId);
+      } else setReason("Kamera itu tidak bisa dipakai saat ini");
     });
   }, []);
+
+  /**
+   * Pulihkan kamera pilihan terakhir sekali saja setelah daftar perangkat
+   * terbaca — hanya bila kameranya memang masih ada di perangkat ini.
+   */
+  useEffect(() => {
+    if (cameraRestoredRef.current) return;
+    if (phase !== "connected" || !controls.cameraOn) return;
+    if (devices.cameras.length === 0) return;
+    const want = resolvePreferredDevice("camera", devices.cameras);
+    cameraRestoredRef.current = true;
+    if (!want || want === cameraDeviceId) return;
+    setCameraDevice(want);
+  }, [phase, controls.cameraOn, devices.cameras, cameraDeviceId, setCameraDevice]);
 
   /**
    * Pemulihan manual dari status gagal: bongkar sesi lama, reset penghitung
