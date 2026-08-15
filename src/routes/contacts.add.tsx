@@ -7,9 +7,9 @@ import { UserAvatar } from "@/components/mcm/user-avatar";
 import { PinCard } from "@/components/mcm/pin-card";
 import { QrScannerDialog } from "@/components/mcm/qr-scanner";
 import { ScanResultSheet } from "@/components/mcm/scan-result-sheet";
+import { PinField } from "@/components/mcm/pin-picker";
 import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -124,23 +124,24 @@ function AddContactPage() {
         <div className="card-soft space-y-3 p-4">
           <div className="space-y-1.5">
             <Label htmlFor="pin">PIN MCM</Label>
-            <div className="flex gap-2">
-              <Input
-                id="pin"
-                value={pin}
-                onChange={(e) => setPin(normalizePin(e.target.value))}
-                placeholder="A2B3-C4D5"
-                maxLength={9}
-                className="h-11 rounded-xl font-mono tracking-widest uppercase"
-              />
-              <Button
-                className="h-11 rounded-xl"
-                onClick={() => void search()}
-                disabled={searching || !pin}
-              >
-                <Search className="size-4" /> {searching ? "Mencari…" : "Cari"}
-              </Button>
-            </div>
+            <PinField
+              id="pin"
+              value={pin}
+              onChange={(v) => setPin(normalizePin(v))}
+              onPickContact={(c) => void search(c.pin)}
+              placeholder="A2B3-C4D5"
+              maxLength={9}
+              inputClassName="font-mono tracking-widest uppercase"
+              action={
+                <Button
+                  className="h-11 rounded-xl"
+                  onClick={() => void search()}
+                  disabled={searching || !pin}
+                >
+                  <Search className="size-4" /> {searching ? "Mencari…" : "Cari"}
+                </Button>
+              }
+            />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <Button
