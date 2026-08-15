@@ -829,12 +829,7 @@ function ProductCard({
         />
       )}
       {canManage && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full rounded-xl"
-          onClick={onBuy}
-        >
+        <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={onBuy}>
           <ShoppingCart className="size-4" />
           Catat pembelian dari agen
         </Button>

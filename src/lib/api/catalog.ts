@@ -80,9 +80,7 @@ export type ProductWithVariants = ProductRow & {
 export type WarehouseProduct = Pick<ProductRow, "stock_kind" | "base_unit" | "buy_unit">;
 
 /** Faktor konversi satuan beli gudang → satuan dasar. */
-export function warehouseBuyFactor(
-  product: Pick<ProductRow, "stock_kind" | "buy_factor">,
-): number {
+export function warehouseBuyFactor(product: Pick<ProductRow, "stock_kind" | "buy_factor">): number {
   const f = Number(product.buy_factor);
   return Number.isFinite(f) && f > 0 ? f : 1;
 }

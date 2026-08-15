@@ -266,7 +266,8 @@ function CatalogDetail() {
               </StatusBadge>
             </div>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Harga beli: {priceLabel(Number(product.purchase_price ?? 0))} / {warehouseUnit(product)}
+              Harga beli: {priceLabel(Number(product.purchase_price ?? 0))} /{" "}
+              {warehouseUnit(product)}
             </p>
             <div className="mt-2 flex gap-1.5">
               <Button
