@@ -259,6 +259,75 @@ function CallsPage() {
         </div>
       )}
 
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogTrigger asChild>
+          <Button
+            size="icon"
+            aria-label="Panggilan baru"
+            className="fixed right-4 bottom-20 z-40 size-13 rounded-full shadow-lg sm:right-[max(1rem,calc(50%-13rem))]"
+          >
+            <PhoneCall className="size-5.5" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Panggilan baru</DialogTitle>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              maxLength={60}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Cari kontak atau grup"
+              className="h-10 rounded-xl pl-9"
+            />
+          </div>
+          <ul className="max-h-72 divide-y divide-border/70 overflow-y-auto">
+            {dialTargets.map((c) => (
+              <li key={c.id} className="flex items-center gap-3 py-2">
+                {c.other ? (
+                  <UserAvatar
+                    userId={c.other.id}
+                    path={c.other.avatar_url}
+                    version={c.other.avatar_version}
+                    name={c.title_resolved}
+                    color={c.other.avatar_color}
+                    size="sm"
+                  />
+                ) : (
+                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" size="sm" />
+                )}
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  {c.title_resolved}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Panggilan suara ke ${c.title_resolved}`}
+                  onClick={() => void callConversation(c.id, "audio")}
+                >
+                  <Phone className="size-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Panggilan video ke ${c.title_resolved}`}
+                  onClick={() => void callConversation(c.id, "video")}
+                >
+                  <Video className="size-5" />
+                </Button>
+              </li>
+            ))}
+            {dialTargets.length === 0 && (
+              <li className="py-8 text-center text-sm text-muted-foreground">
+                Tidak ada percakapan untuk dipanggil.
+              </li>
+            )}
+          </ul>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={notice} onOpenChange={setNotice}>
         <AlertDialogContent className="max-w-[340px] rounded-2xl">
           <AlertDialogHeader>
