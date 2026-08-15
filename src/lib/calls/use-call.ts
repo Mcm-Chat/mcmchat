@@ -189,6 +189,7 @@ export function useCall(opts: {
   const [voiceActive, setVoiceActive] = useState(false);
   const [speakerSupported, setSpeakerSupported] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
@@ -196,6 +197,8 @@ export function useCall(opts: {
   const startedRef = useRef<number | null>(null);
   const joinedRef = useRef(false);
   const endedRef = useRef(false);
+  /** Percobaan sambung ulang otomatis setelah putus tak terduga. */
+  const rejoinRef = useRef(0);
   /** Elemen video yang sudah mount sebelum sesi siap — dipasang saat sesi ada. */
   const localElRef = useRef<HTMLVideoElement | null>(null);
   const remoteElRef = useRef<HTMLVideoElement | null>(null);
@@ -281,13 +284,28 @@ export function useCall(opts: {
             // memicu render ulang layar panggilan (hemat CPU/baterai).
             setRemotes((prev) => (sameRemotes(prev, s.remotes) ? prev : s.remotes));
             setAudioBlocked(Boolean(s.audioBlocked));
+            setQuality(s.quality ?? "unknown");
             if (s.status === "failed") {
               devLog("media_failed", s.reason);
+              // Putus tak terduga: coba sambung ulang otomatis dua kali dulu,
+              // baru menyerah ke layar gagal. Ini mencegah panggilan mati
+              // hanya karena jaringan seluler berpindah sel.
+              if (s.unexpected && !endedRef.current && rejoinRef.current < 2) {
+                rejoinRef.current += 1;
+                setReason("Sinyal terputus — menyambungkan ulang…");
+                setPhase("connecting");
+                void cleanup().then(() => {
+                  joinedRef.current = false;
+                  if (!endedRef.current) setTimeout(() => void join(row), 1200);
+                });
+                return;
+              }
               setPhase("error");
               setReason(s.reason ?? "Koneksi media gagal");
             } else if (s.status === "connected") {
               setPhase("connected");
               startedRef.current ??= Date.now();
+              rejoinRef.current = 0;
               // Reconnected/Connected tanpa alasan membersihkan pesan lama
               // seperti "Menyambung ulang…" agar tidak basi di layar.
               setReason(s.reason ?? null);
@@ -302,7 +320,12 @@ export function useCall(opts: {
         session.attachLocalVideo(localElRef.current);
         session.attachRemoteMedia(remoteElRef.current);
         setSpeakerSupported(session.speakerCapability === "sinkId");
-        if (row.kind === "video") setControls((c) => ({ ...c, cameraOn: true }));
+        if (row.kind === "video") {
+          // Panggilan video selalu dimulai dengan kamera aktif dan speaker
+          // menyala, sama seperti aplikasi panggilan populer.
+          setControls((c) => ({ ...c, cameraOn: true, speakerOn: true }));
+          void session.setSpeaker(true).catch(() => undefined);
+        }
       } catch (e) {
         joinedRef.current = false;
         devLog("join_failed", e instanceof Error ? e.message : "unknown");
@@ -310,7 +333,7 @@ export function useCall(opts: {
         setReason(e instanceof Error ? e.message : "Gagal menyambungkan panggilan");
       }
     },
-    [buildOutgoingAudio, token],
+    [buildOutgoingAudio, cleanup, token],
   );
 
   /**
@@ -457,6 +480,7 @@ export function useCall(opts: {
       durationSec,
       controls,
       pipelineState,
+      quality,
       voiceApplied: voiceActive,
       voiceFallback,
       speakerSupported,
@@ -524,6 +548,7 @@ export function useCall(opts: {
       durationSec,
       controls,
       pipelineState,
+      quality,
       voiceActive,
       voiceFallback,
       speakerSupported,
