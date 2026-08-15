@@ -326,6 +326,9 @@ function CallScreen() {
             reason={session.reason}
             endStatus={detail.status}
             durationSec={detail.duration_sec}
+            retrying={session.retrying}
+            quality={session.quality}
+            audioBlocked={session.audioBlocked}
           />
           <CallDurationLive
             active={session.phase === "connected"}
@@ -554,6 +557,7 @@ function CallScreen() {
           reason={session.reason}
           endStatus={detail.status}
           durationSec={detail.duration_sec}
+          retrying={session.retrying}
         />
         {other ? (
           <UserAvatar
