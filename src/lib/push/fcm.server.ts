@@ -251,21 +251,35 @@ export async function sendPush(
  * pernah ikut terkirim ke perangkat B.
  */
 export async function sendEach(messages: PushMessage[]): Promise<FcmEachResult> {
+  const status = pushConfigStatus();
   const sa = readServiceAccount();
-  if (!sa) {
+  if (!sa || !status.configured) {
     return {
       configured: false,
       sent: 0,
       failed: 0,
       invalidTokens: [],
       outcomes: [],
-      reason: "FCM_SERVICE_ACCOUNT_JSON belum diatur",
+      reason: status.configured ? CONFIG_REASONS.missing : status.reason,
     };
   }
   if (messages.length === 0)
     return { configured: true, sent: 0, failed: 0, invalidTokens: [], outcomes: [] };
 
-  const bearer = await accessToken(sa);
+  let bearer: string;
+  try {
+    bearer = await accessToken(sa);
+  } catch (err) {
+    // Gagal ambil access token = tidak ada satu pun token perangkat yang salah.
+    return {
+      configured: true,
+      sent: 0,
+      failed: messages.length,
+      invalidTokens: [],
+      outcomes: messages.map((m) => ({ token: m.token, ok: false, deadToken: false })),
+      reason: err instanceof Error ? err.message : "fcm_oauth_failed",
+    };
+  }
   const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
   const invalidTokens: string[] = [];
   const outcomes: PushOutcome[] = [];
@@ -279,22 +293,31 @@ export async function sendEach(messages: PushMessage[]): Promise<FcmEachResult> 
       for (const [k, v] of Object.entries(t.extra ?? {})) payload[k] = v;
       payload["sound"] = t.sound ? "1" : "0";
       payload["vibrate"] = t.vibrate ? "1" : "0";
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          message: {
-            token: t.token,
-            data: payload,
-            android: {
-              priority: "HIGH",
-              ttl,
-              ...(t.collapseKey ? { collapseKey: t.collapseKey } : {}),
-              // Data-only: notifikasi dibangun receiver native (channel + actions).
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { authorization: `Bearer ${bearer}`, "content-type": "application/json" },
+          signal: timeoutSignal(),
+          body: JSON.stringify({
+            message: {
+              token: t.token,
+              data: payload,
+              android: {
+                priority: "HIGH",
+                ttl,
+                ...(t.collapseKey ? { collapseKey: t.collapseKey } : {}),
+                // Data-only: notifikasi dibangun receiver native (channel + actions).
+              },
             },
-          },
-        }),
-      });
+          }),
+        });
+      } catch {
+        // Timeout / gangguan jaringan: gagal kirim, TAPI token tetap valid.
+        failed += 1;
+        outcomes.push({ token: t.token, ok: false, deadToken: false });
+        return;
+      }
       if (res.ok) {
         sent += 1;
         outcomes.push({ token: t.token, ok: true, deadToken: false });
