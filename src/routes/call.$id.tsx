@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
+import { CallStatusLive } from "@/components/mcm/call-status-live";
 import {
   ArrowLeft,
   Mic,
@@ -204,6 +205,14 @@ function CallScreen() {
         )}
 
         <div className="relative z-10 flex flex-1 flex-col">
+          <CallStatusLive
+            phase={session.phase}
+            kind={isVideo ? "video" : "audio"}
+            name={name}
+            reason={session.reason}
+            endStatus={detail.status}
+            durationSec={detail.duration_sec}
+          />
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -386,6 +395,14 @@ function CallScreen() {
       </div>
 
       <div className="mt-8 flex flex-col items-center gap-3">
+        <CallStatusLive
+          phase={session.phase === "loading" ? "ended" : session.phase}
+          kind={isVideo ? "video" : "audio"}
+          name={name}
+          reason={session.reason}
+          endStatus={detail.status}
+          durationSec={detail.duration_sec}
+        />
         {other ? (
           <UserAvatar
             userId={other.user_id}
