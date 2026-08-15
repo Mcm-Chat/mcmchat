@@ -219,6 +219,8 @@ export function useCall(opts: {
   const startedRef = useRef<number | null>(null);
   const joinedRef = useRef(false);
   const endedRef = useRef(false);
+  /** Cegah tap ganda pada tombol "Jawab" mengirim dua RPC jawab. */
+  const answeringRef = useRef(false);
   /** Percobaan sambung ulang otomatis setelah putus tak terduga. */
   const rejoinRef = useRef(0);
   /** Elemen video yang sudah mount sebelum sesi siap — dipasang saat sesi ada. */
