@@ -555,6 +555,17 @@ export function PhotoFlow({
                   <ImageIcon className="size-4" /> Ganti foto
                 </Button>
               </div>
+              <Button
+                variant="ghost"
+                className="h-10 w-full rounded-xl text-xs"
+                onClick={() => void saveToDevice()}
+              >
+                <Download className="size-4" /> Simpan salinan ke perangkat
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                Hasil edit disimpan sementara di aplikasi. Foto baru tersimpan permanen di dalam
+                chat setelah tombol Kirim ditekan.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
