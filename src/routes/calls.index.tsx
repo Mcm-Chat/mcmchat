@@ -504,7 +504,10 @@ function CallsPage() {
       </Dialog>
 
       <AlertDialog open={notice} onOpenChange={setNotice}>
-        <AlertDialogContent className="max-w-[340px] rounded-2xl">
+        <AlertDialogContent
+          className="max-w-[340px] rounded-2xl"
+          onCloseAutoFocus={restoreNoticeFocus}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Penyedia panggilan belum terhubung</AlertDialogTitle>
             <AlertDialogDescription>
