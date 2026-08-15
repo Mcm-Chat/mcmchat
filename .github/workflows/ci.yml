@@ -88,12 +88,13 @@ jobs:
       # `vite preview`, jadi smoke test dijalankan terhadap server dev.
       - name: Jalankan server aplikasi
         run: |
-          bun run dev > /tmp/dev-server.log 2>&1 &
+          mkdir -p e2e-artifacts
+          bun run dev > e2e-artifacts/dev-server.log 2>&1 &
           for i in $(seq 1 90); do
             curl -sf -o /dev/null http://localhost:8080/ && exit 0
             sleep 2
           done
-          echo "Server tidak siap dalam 180 detik"; tail -50 /tmp/dev-server.log; exit 1
+          echo "Server tidak siap dalam 180 detik"; tail -50 e2e-artifacts/dev-server.log; exit 1
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
@@ -107,9 +108,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pwa-smoke-${{ github.sha }}
-          path: |
-            e2e-artifacts/
-            /tmp/dev-server.log
+          path: e2e-artifacts/
           if-no-files-found: warn
           retention-days: 14
 
