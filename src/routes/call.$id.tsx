@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { NotificationBanner } from "@/components/mcm/notification-banner";
 import {
   ArrowLeft,
   Mic,
@@ -86,6 +87,7 @@ function CallScreen() {
   const [, setSettingsRow] = useState<UserSettingsRow | null>(null);
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
+  const [errorDismissed, setErrorDismissed] = useState(false);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
 
