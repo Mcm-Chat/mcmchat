@@ -12,6 +12,8 @@ import {
   Zap,
 } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
+import { useContactAliases } from "@/lib/contacts/alias";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -80,6 +82,8 @@ function CallDetailPage() {
 
   const call: CallHistoryItem | undefined = (calls ?? []).find((c) => c.id === id);
   const other = call?.participants.find((p) => p.user_id !== userId) ?? null;
+  const { nameOf } = useContactAliases();
+  const peerName = nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM");
   const incoming = !!call && call.initiator_id !== userId;
 
   const redial = async (kind: "audio" | "video") => {
@@ -128,7 +132,7 @@ function CallDetailPage() {
                 userId={other.user_id}
                 path={other.avatar_url}
                 version={other.avatar_version}
-                name={other.display_name}
+                name={peerName}
                 color={other.avatar_color}
                 size="lg"
               />
@@ -136,7 +140,10 @@ function CallDetailPage() {
               <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" size="lg" />
             )}
             <div>
-              <h1 className="text-lg font-semibold">{other?.display_name ?? "Pengguna MCM"}</h1>
+              <h1 className="flex items-center justify-center gap-1 text-lg font-semibold">
+                <span className="truncate">{peerName}</span>
+                {other && <RenameContactButton contactId={other.user_id} realName={other.display_name} />}
+              </h1>
               <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                 {call.status === "missed" ? (
                   <PhoneMissed className="size-4 text-destructive" />
@@ -171,7 +178,7 @@ function CallDetailPage() {
                     callId: call.id,
                     conversationId: call.conversation_id,
                     peerId: other?.user_id ?? null,
-                    peerName: other?.display_name ?? "Pengguna MCM",
+                    peerName,
                   })
                 }
               >

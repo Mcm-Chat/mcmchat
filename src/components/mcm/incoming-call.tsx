@@ -25,6 +25,7 @@ import {
 import { onConnectionChange } from "@/lib/realtime/connection";
 import { playTone } from "@/lib/calls/tones";
 import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
+import { useContactAliases } from "@/lib/contacts/alias";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -32,6 +33,7 @@ export function IncomingCallListener() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { nameOf } = useContactAliases();
   const [incoming, setIncoming] = useState<Incoming | null>(null);
   /** Alasan banner tertutup, diumumkan lewat aria-live setelah fokus pulih. */
   const [closedNotice, setClosedNotice] = useState("");
@@ -189,7 +191,7 @@ export function IncomingCallListener() {
       role="dialog"
       data-call-surface=""
       aria-modal="true"
-      aria-label={`${isVideo ? "Panggilan video" : "Panggilan suara"} masuk dari ${incoming.name}`}
+      aria-label={`${isVideo ? "Panggilan video" : "Panggilan suara"} masuk dari ${nameOf(incoming.call.initiator_id, incoming.name)}`}
       tabIndex={-1}
       className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 rounded-2xl border border-white/15 bg-navy/95 p-4 text-navy-foreground shadow-xl outline-none backdrop-blur"
     >
@@ -197,12 +199,14 @@ export function IncomingCallListener() {
         assertive
         phase="incoming"
         kind={isVideo ? "video" : "audio"}
-        name={incoming.name}
+        name={nameOf(incoming.call.initiator_id, incoming.name)}
       />
       <div className="flex items-center gap-3">
-        <MCMAvatar initials={incoming.name.slice(0, 2).toUpperCase()} color={incoming.color} />
+        <MCMAvatar initials={nameOf(incoming.call.initiator_id, incoming.name).slice(0, 2).toUpperCase()} color={incoming.color} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold">{incoming.name}</p>
+          <p className="truncate text-sm font-semibold">
+            {nameOf(incoming.call.initiator_id, incoming.name)}
+          </p>
           <p className="flex items-center gap-1 text-xs text-navy-foreground/70">
             {isVideo ? <Video className="size-3.5" /> : <Phone className="size-3.5" />}
             {isVideo ? "Panggilan video masuk" : "Panggilan suara masuk"}
