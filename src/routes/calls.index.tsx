@@ -13,6 +13,7 @@ import {
   Search,
   Settings2,
   Video,
+  X,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -94,6 +95,7 @@ function CallsPage() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
+  const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
@@ -171,6 +173,11 @@ function CallsPage() {
   useSecondTick(hasLive);
   const busy = loading || isLoading;
   const due = dueReminders(reminders);
+  const visibleDue = due.filter((r) => !dismissedReminders.includes(r.id));
+
+  const dismissReminder = (id: string) => {
+    setDismissedReminders((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
 
   const finishReminder = async (id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id));
