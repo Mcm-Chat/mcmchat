@@ -187,7 +187,7 @@ export function CallFailureRecovery({
   const banner = (
     <NotificationBanner
       role="alert"
-      {...(onDismiss ? { onDismiss } : {})}
+      {...(onDismiss ? { onDismiss: handleDismiss } : {})}
       dismissLabel="Tutup pesan gagal panggilan"
       icon={<AlertTriangle className="size-4" aria-hidden="true" />}
       className={cn(
