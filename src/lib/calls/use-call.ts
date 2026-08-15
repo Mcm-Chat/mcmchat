@@ -179,6 +179,9 @@ export function useCall(opts: {
   const startedRef = useRef<number | null>(null);
   const joinedRef = useRef(false);
   const endedRef = useRef(false);
+  /** Elemen video yang sudah mount sebelum sesi siap — dipasang saat sesi ada. */
+  const localElRef = useRef<HTMLVideoElement | null>(null);
+  const remoteElRef = useRef<HTMLVideoElement | null>(null);
 
   useWakeLock(phase === "connected" || phase === "connecting");
 
@@ -275,6 +278,10 @@ export function useCall(opts: {
           },
         });
         sessionRef.current = session;
+        // Elemen video yang mount lebih dulu (fase memanggil) baru bisa
+        // dipasang sekarang; tanpa ini layar video tetap hitam.
+        session.attachLocalVideo(localElRef.current);
+        session.attachRemoteMedia(remoteElRef.current);
         setSpeakerSupported(session.speakerCapability === "sinkId");
         if (row.kind === "video") setControls((c) => ({ ...c, cameraOn: true }));
       } catch (e) {
@@ -377,16 +384,29 @@ export function useCall(opts: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callId, userId]);
 
-  // Timer durasi.
+  // Timer durasi — satu render per detik dan hanya bila detiknya berubah.
   useEffect(() => {
     if (phase !== "connected") return;
-    const t = setInterval(
-      () =>
-        setDuration(startedRef.current ? Math.floor((Date.now() - startedRef.current) / 1000) : 0),
-      500,
-    );
+    const tick = () => {
+      const secs = startedRef.current
+        ? Math.floor((Date.now() - startedRef.current) / 1000)
+        : 0;
+      setDuration((prev) => (prev === secs ? prev : secs));
+    };
+    tick();
+    const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, [phase]);
+
+  /** Ref callback stabil: tidak memicu attach berulang tiap render. */
+  const attachLocalVideo = useCallback((el: HTMLVideoElement | null) => {
+    localElRef.current = el;
+    sessionRef.current?.attachLocalVideo(el);
+  }, []);
+  const attachRemoteVideo = useCallback((el: HTMLVideoElement | null) => {
+    remoteElRef.current = el;
+    sessionRef.current?.attachRemoteMedia(el);
+  }, []);
 
   // Timeout dering absolut: dihitung dari `created_at`, bukan dari saat layar
   // dibuka, dan idempotent karena `finish` menolak pemanggilan kedua.
@@ -474,8 +494,8 @@ export function useCall(opts: {
         });
       },
       switchCamera: () => void sessionRef.current?.switchCamera(),
-      attachLocalVideo: (el) => sessionRef.current?.attachLocalVideo(el),
-      attachRemoteVideo: (el) => sessionRef.current?.attachRemoteMedia(el),
+      attachLocalVideo,
+      attachRemoteVideo,
     }),
     [
       phase,
@@ -494,6 +514,8 @@ export function useCall(opts: {
       cleanup,
       finish,
       join,
+      attachLocalVideo,
+      attachRemoteVideo,
     ],
   );
 }
