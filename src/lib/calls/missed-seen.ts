@@ -1,16 +1,24 @@
 /**
- * Penanda kapan daftar panggilan terakhir dibuka.
+ * Penanda kapan panggilan tak terjawab terakhir dilihat.
  *
- * Badge "tak terjawab" di navigasi bawah hanya menghitung panggilan yang
- * masuk setelah stempel ini, jadi badge hilang begitu halaman Panggilan
- * dibuka dan hanya muncul lagi untuk panggilan baru.
+ * Stempel disimpan PER JENIS panggilan (suara dan video) supaya badge di
+ * navigasi bawah berperilaku sama untuk keduanya: panggilan video tak
+ * terjawab menaikkan badge dan ikut hilang saat ditandai sudah dilihat.
+ * Format lama (satu angka) tetap dibaca agar pengguna lama tidak melihat
+ * badge lama muncul kembali.
  */
 import { useSyncExternalStore } from "react";
 import { onAccountSwitch, scopedKey } from "@/lib/session-scope";
 
 const NAME = "calls.missed-seen-at";
+
+export type CallKind = "audio" | "video";
+export type MissedSeenMap = Record<CallKind, number>;
+
+const EMPTY: MissedSeenMap = { audio: 0, video: 0 };
+
 const listeners = new Set<() => void>();
-let cache: number | null = null;
+let cache: MissedSeenMap | null = null;
 let cacheKey = "";
 let browserListenersReady = false;
 
@@ -18,46 +26,72 @@ function emitChange() {
   for (const listener of listeners) listener();
 }
 
+function invalidate() {
+  cache = null;
+  cacheKey = "";
+  emitChange();
+}
+
 function ensureBrowserListeners() {
   if (browserListenersReady || typeof window === "undefined") return;
   browserListenersReady = true;
-
   window.addEventListener("storage", (event) => {
     if (event.key !== scopedKey(NAME)) return;
-    cache = null;
-    cacheKey = "";
-    emitChange();
+    invalidate();
   });
-
-  onAccountSwitch(() => {
-    cache = null;
-    cacheKey = "";
-    emitChange();
-  });
+  onAccountSwitch(() => invalidate());
 }
 
-function read(): number {
+const num = (value: unknown): number => {
+  const n = typeof value === "string" ? Number(value) : typeof value === "number" ? value : 0;
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+/** Terima format lama (angka) maupun baru (peta per jenis). */
+export function parseMissedSeen(raw: string | null): MissedSeenMap {
+  if (!raw) return { ...EMPTY };
+  const legacy = Number(raw);
+  if (Number.isFinite(legacy) && raw.trim() !== "" && !raw.trim().startsWith("{")) {
+    return { audio: num(legacy), video: num(legacy) };
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<MissedSeenMap>;
+    return { audio: num(parsed?.audio), video: num(parsed?.video) };
+  } catch {
+    return { ...EMPTY };
+  }
+}
+
+function read(): MissedSeenMap {
   const key = scopedKey(NAME);
-  if (typeof localStorage === "undefined") return 0;
+  if (typeof localStorage === "undefined") return EMPTY;
   if (cache !== null && cacheKey === key) return cache;
-  const raw = localStorage.getItem(key);
-  const value = raw ? Number(raw) : 0;
-  cache = Number.isFinite(value) ? value : 0;
+  cache = parseMissedSeen(localStorage.getItem(key));
   cacheKey = key;
   return cache;
 }
 
-export function markMissedCallsSeen(at: number = Date.now()) {
+/**
+ * Tandai panggilan tak terjawab sudah dilihat. Tanpa argumen `kind`,
+ * KEDUA jenis (suara dan video) ikut ditandai.
+ */
+export function markMissedCallsSeen(at: number = Date.now(), kind?: CallKind) {
   if (typeof localStorage === "undefined") return;
   const key = scopedKey(NAME);
-  localStorage.setItem(key, String(at));
-  cache = at;
+  const current = read();
+  const next: MissedSeenMap = kind
+    ? { ...current, [kind]: at }
+    : { audio: at, video: at };
+  localStorage.setItem(key, JSON.stringify(next));
+  cache = next;
   cacheKey = key;
   emitChange();
 }
 
-export function getMissedCallsSeenAt(): number {
-  return read();
+export function getMissedCallsSeenAt(kind?: CallKind): number {
+  const map = read();
+  if (kind) return map[kind];
+  return Math.min(map.audio, map.video);
 }
 
 function subscribe(listener: () => void) {
@@ -68,10 +102,18 @@ function subscribe(listener: () => void) {
   };
 }
 
-export function useMissedCallsSeenAt(): number {
-  return useSyncExternalStore(
-    subscribe,
-    () => read(),
-    () => 0,
-  );
+const SERVER_SNAPSHOT: MissedSeenMap = EMPTY;
+
+/** Peta stempel "sudah dilihat" per jenis panggilan, reaktif. */
+export function useMissedCallsSeen(): MissedSeenMap {
+  return useSyncExternalStore(subscribe, read, () => SERVER_SNAPSHOT);
+}
+
+/** Apakah panggilan tak terjawab ini belum dilihat (berlaku suara & video). */
+export function isMissedUnseen(
+  seen: MissedSeenMap,
+  call: { kind?: string | null; created_at: string },
+): boolean {
+  const kind: CallKind = call.kind === "video" ? "video" : "audio";
+  return new Date(call.created_at).getTime() > seen[kind];
 }
