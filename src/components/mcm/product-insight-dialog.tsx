@@ -214,11 +214,3 @@ function PurchaseEvidence({
   );
 }
 
-function CellUnused({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="truncate text-muted-foreground">{label}</p>
-      <p className={`truncate font-semibold ${tone ?? ""}`}>{value}</p>
-    </div>
-  );
-}
