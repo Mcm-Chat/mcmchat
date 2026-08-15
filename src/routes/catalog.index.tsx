@@ -540,6 +540,7 @@ function CatalogIndex() {
               product={p}
               indicator={indicatorMap.get(p.id)}
               canManage={canManage}
+              businessId={businessId!}
               onBuy={() => setBuyFor(p)}
               onDelete={() => setRemoveFor(p)}
             />
