@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link2 } from "lucide-react";
 import { fetchLinkPreview } from "@/lib/api/link-preview.functions";
 import { cn } from "@/lib/utils";
+import { useLinkOpener } from "@/lib/mcm/use-link-opener";
 
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 
@@ -26,6 +27,7 @@ export function firstUrlOf(text?: string | null): string | null {
 /** Kartu pratinjau link (judul, gambar, deskripsi) di dalam bubble chat. */
 export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boolean }) {
   const unfurl = useServerFn(fetchLinkPreview);
+  const openLink = useLinkOpener();
   const { data } = useQuery({
     queryKey: ["link-preview", url],
     queryFn: () => unfurl({ data: { url } }),
