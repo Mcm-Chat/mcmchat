@@ -260,7 +260,9 @@ export function useCall(opts: {
           kind: row.kind,
           audioTrack: audio,
           onState: (s: ProviderState) => {
-            setRemotes(s.remotes);
+            // Perbandingan isi: peserta yang tidak berubah tidak boleh
+            // memicu render ulang layar panggilan (hemat CPU/baterai).
+            setRemotes((prev) => (sameRemotes(prev, s.remotes) ? prev : s.remotes));
             setAudioBlocked(Boolean(s.audioBlocked));
             if (s.status === "failed") {
               devLog("media_failed", s.reason);
