@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw, SlidersHorizontal, Wrench } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
+import { summarizeCallFailure, type CallFailureAction } from "@/lib/calls/failure-messages";
 import { cn } from "@/lib/utils";
 
 export type CallFailureKind = "network" | "permission" | "device" | "provider" | "unknown";
@@ -76,6 +77,7 @@ export function CallFailureRecovery({
 }: Props) {
   const retryRef = useRef<HTMLButtonElement | null>(null);
   const kind = classifyCallFailure(reason, unconfigured);
+  const summary = summarizeCallFailure(reason, unconfigured);
   // Panel kegagalan diperlakukan sebagai dialog peringatan: Tab berputar di
   // dalam panel, Escape menutup, dan fokus kembali ke pemicu/tombol Kembali.
   const panelRef = useModalA11y<HTMLDivElement>({
@@ -92,6 +94,47 @@ export function CallFailureRecovery({
     return () => cancelAnimationFrame(id);
   }, [kind]);
 
+  // Aksi langsung diurutkan: yang paling relevan dengan penyebab tampil dulu.
+  const order: CallFailureAction[] =
+    summary.primary === "devices"
+      ? ["devices", "retry", "provider"]
+      : summary.primary === "provider"
+        ? ["provider", "retry", "devices"]
+        : ["retry", "devices", "provider"];
+
+  const retryButton = onRetry ? (
+    <Button
+      key="retry"
+      ref={retryRef}
+      className="min-h-11 rounded-xl px-4"
+      disabled={retrying}
+      onClick={onRetry}
+    >
+      <RotateCcw className="mr-1.5 size-4" aria-hidden="true" />
+      {retrying ? "Menyambungkan…" : summary.primary === "permission" ? "Minta izin lagi" : "Coba sambungkan lagi"}
+    </Button>
+  ) : null;
+
+  const deviceButton = onOpenDevices ? (
+    <Button key="devices" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={onOpenDevices}>
+      <SlidersHorizontal className="mr-1.5 size-4" aria-hidden="true" />
+      Ganti perangkat
+    </Button>
+  ) : null;
+
+  const providerButton = onOpenProvider ? (
+    <Button key="provider" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={onOpenProvider}>
+      <Wrench className="mr-1.5 size-4" aria-hidden="true" />
+      Ganti penyedia
+    </Button>
+  ) : null;
+
+  const buttons: Record<string, ReactNode> = {
+    retry: retryButton,
+    devices: deviceButton,
+    provider: providerButton,
+  };
+
   const banner = (
     <NotificationBanner
       role="alert"
@@ -104,34 +147,15 @@ export function CallFailureRecovery({
       )}
     >
       <p className="font-semibold">{TITLE[kind]}</p>
+      <p className="mt-1 inline-flex items-center rounded-full bg-destructive/25 px-2.5 py-0.5 text-xs font-medium">
+        Penyebab: {summary.label}
+      </p>
       <p className="mt-1 text-navy-foreground/85">{HINT[kind]}</p>
       {reason ? (
         <p className="mt-1 text-xs text-navy-foreground/70">Detail: {reason}</p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
-        {onRetry ? (
-          <Button
-            ref={retryRef}
-            className="min-h-11 rounded-xl px-4"
-            disabled={retrying}
-            onClick={onRetry}
-          >
-            <RotateCcw className="mr-1.5 size-4" aria-hidden="true" />
-            {retrying ? "Menyambungkan…" : "Coba sambungkan lagi"}
-          </Button>
-        ) : null}
-        {onOpenDevices ? (
-          <Button variant="secondary" className="min-h-11 rounded-xl px-4" onClick={onOpenDevices}>
-            <SlidersHorizontal className="mr-1.5 size-4" aria-hidden="true" />
-            Ganti perangkat
-          </Button>
-        ) : null}
-        {onOpenProvider ? (
-          <Button variant="secondary" className="min-h-11 rounded-xl px-4" onClick={onOpenProvider}>
-            <Wrench className="mr-1.5 size-4" aria-hidden="true" />
-            Ganti penyedia
-          </Button>
-        ) : null}
+        {order.map((k) => buttons[k]).filter(Boolean)}
       </div>
     </NotificationBanner>
   );
