@@ -204,15 +204,19 @@ function NotificationSettingsPage() {
                 pending: false,
                 hint: push.native
                   ? (push.reason ?? "Aktifkan notifikasi agar perangkat terdaftar.")
-                  : "Hanya tersedia pada aplikasi Android, bukan tab browser.",
+                  : push.webPush
+                    ? (push.reason ?? "Aktifkan notifikasi agar browser/PWA ini terdaftar.")
+                    : (push.reason ?? "Push web belum dikonfigurasi di build ini."),
               },
               {
-                label: "Penerima latar native terpasang",
-                ok: push.receiverInstalled,
+                label: push.native
+                  ? "Penerima latar native terpasang"
+                  : "Penerima latar web (service worker)",
+                ok: push.native ? push.receiverInstalled : push.webPush && push.registered,
                 pending: false,
-                hint: push.receiverInstalled
+                hint: (push.native ? push.receiverInstalled : push.webPush && push.registered)
                   ? "Pesan tetap masuk saat aplikasi ditutup."
-                  : "Belum terpasang di build ini, jadi pengiriman saat aplikasi benar-benar ditutup belum dijamin.",
+                  : "Belum aktif, jadi pengiriman saat aplikasi ditutup belum dijamin.",
               },
             ].map((row) => (
               <li key={row.label} className="flex items-start justify-between gap-3">
@@ -233,7 +237,7 @@ function NotificationSettingsPage() {
               </li>
             ))}
           </ul>
-          {userId && push.native && perms["notifications"] !== "granted" ? (
+          {userId && (push.native || push.webPush) && !push.registered ? (
             <Button
               size="sm"
               className="w-full rounded-xl"
@@ -241,6 +245,7 @@ function NotificationSettingsPage() {
                 void enablePush(userId).then((s) => {
                   setPerms((p) => ({ ...p, notifications: s.permission }));
                   if (s.permission !== "granted") toast.info("Izin notifikasi belum diberikan.");
+                  else if (!s.registered) toast.error(s.reason ?? "Pendaftaran perangkat gagal.");
                 });
               }}
             >
