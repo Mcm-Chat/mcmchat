@@ -48,6 +48,10 @@ export type ConnectOptions = {
  */
 export type SpeakerCapability = "sinkId" | "system";
 
+/** Perangkat input yang bisa dipilih pengguna saat panggilan berjalan. */
+export type MediaDeviceOption = { deviceId: string; label: string };
+export type CallDevices = { mics: MediaDeviceOption[]; cameras: MediaDeviceOption[] };
+
 export interface CallSessionHandle {
   readonly provider: string;
   readonly speakerCapability: SpeakerCapability;
@@ -56,6 +60,8 @@ export interface CallSessionHandle {
   setMicEnabled(enabled: boolean): Promise<void>;
   setCameraEnabled(enabled: boolean): Promise<void>;
   switchCamera(): Promise<void>;
+  /** Ganti kamera aktif ke perangkat tertentu tanpa memutus panggilan. */
+  setVideoInput(deviceId: string): Promise<boolean>;
   /** Ganti track audio keluar tanpa renegosiasi penuh (mis. efek suara on/off). */
   replaceAudioTrack(track: MediaStreamTrack): Promise<void>;
   attachLocalVideo(el: HTMLVideoElement | null): void;
@@ -326,6 +332,17 @@ export const liveKitProvider: CallProvider = {
           return;
         }
         sync();
+      },
+      async setVideoInput(deviceId) {
+        try {
+          await room.switchActiveDevice("videoinput", deviceId, true);
+          attachLocal();
+          sync();
+          return true;
+        } catch {
+          emit(liveStatus(), "Kamera itu tidak bisa dipakai saat ini");
+          return false;
+        }
       },
       async replaceAudioTrack(track) {
         for (const pub of room.localParticipant.audioTrackPublications.values()) {
