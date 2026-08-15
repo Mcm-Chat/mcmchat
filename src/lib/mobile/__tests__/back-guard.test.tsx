@@ -165,10 +165,21 @@ describe("tukar overlay pada tick yang sama", () => {
   });
 
   it("overlay baru tidak ikut tertutup oleh popstate dari pelepasan penanda", () => {
+    // Browser nyata mengirim popstate SETELAH tick berjalan; jsdom mengirimnya
+    // sinkron, jadi kita tiru perilaku asinkron itu agar bug tertangkap.
+    const realBack = window.history.back.bind(window.history);
+    const queued: (() => void)[] = [];
+    window.history.back = () => {
+      queued.push(() => window.dispatchEvent(new PopStateEvent("popstate", { state: null })));
+    };
     const { getByTestId } = render(<SwapOverlays />);
     act(() => {
       getByTestId("swap").click();
     });
+    act(() => {
+      queued.splice(0).forEach((f) => f());
+    });
+    window.history.back = realBack;
     expect(getByTestId("swap-state").textContent).toBe("-b");
     // Popstate susulan dari history.back() internal saat penanda dilepas tidak
     // boleh menutup overlay baru (inilah bug tile sheet "Tindakan").
