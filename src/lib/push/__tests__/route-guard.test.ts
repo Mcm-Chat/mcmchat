@@ -26,13 +26,13 @@ describe("guardPushRoute", () => {
   });
 
   it("meneruskan rute non-percakapan tanpa cek kapabilitas", async () => {
-    expect(await guardPushRoute("/calls")).toEqual({ route: "/calls", blocked: false });
+    expect(await guardPushRoute("/calls")).toMatchObject({ route: "/calls", blocked: false });
     expect(capability).not.toHaveBeenCalled();
   });
 
   it("mengizinkan percakapan yang dapat dibaca", async () => {
     capability.mockResolvedValue({ readable: true, reason: "ok" });
-    expect(await guardPushRoute(`/chat/${CONV}?m=9`)).toEqual({
+    expect(await guardPushRoute(`/chat/${CONV}?m=9`)).toMatchObject({
       route: `/chat/${CONV}?m=9`,
       blocked: false,
     });
@@ -43,12 +43,14 @@ describe("guardPushRoute", () => {
     const res = await guardPushRoute(`/chat/${CONV}`);
     expect(res.route).toBe("/chat");
     expect(res.blocked).toBe(true);
-    expect(res.reason).toContain("peserta");
+    expect(res.code).toBe("not_member");
+    expect(res.title).toContain("peserta");
+    expect(res.reason).toBeTruthy();
   });
 
   it("tidak mengunci pengguna saat pengecekan gagal", async () => {
     capability.mockRejectedValue(new Error("network"));
-    expect(await guardPushRoute(`/chat/${CONV}`)).toEqual({ route: `/chat/${CONV}`, blocked: false });
+    expect(await guardPushRoute(`/chat/${CONV}`)).toMatchObject({ route: `/chat/${CONV}`, blocked: false });
   });
 
   it("menolak rute protokol-relatif", async () => {

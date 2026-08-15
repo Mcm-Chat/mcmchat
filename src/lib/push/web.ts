@@ -10,7 +10,6 @@ import { WEB_PUSH, swUrl, webPushConfigured } from "./web-config";
 import { routeFromPush } from "./deeplink";
 import type { PushData } from "./payload";
 import { announceGuardResult, guardPushRoute } from "./route-guard";
-import { toast } from "sonner";
 
 const INSTALL_KEY = "mcm.web.installation";
 
