@@ -350,7 +350,7 @@ function PreCallScreen() {
           }
           kind={kind}
           name="kontak"
-          reason={error ?? undefined}
+          reason={error}
         />
         {error && (
           <p role="alert" aria-live="assertive" className="text-sm text-destructive">
