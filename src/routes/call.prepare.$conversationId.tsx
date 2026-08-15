@@ -352,11 +352,7 @@ function PreCallScreen() {
           name="kontak"
           reason={error}
         />
-        {error && (
-          <p role="alert" aria-live="assertive" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <Button
           className="min-h-12 w-full rounded-xl"
