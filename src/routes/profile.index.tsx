@@ -389,9 +389,9 @@ function ProfilePage() {
         />
       }
     >
-      <div className="space-y-4 px-4 py-4 pb-24">
+      <div className="space-y-4 px-4 py-4 pb-[max(6rem,env(safe-area-inset-bottom)+6rem)]">
         <div className="card-soft flex items-center gap-3 p-4">
-          <div className="relative">
+          <div className="relative p-1.5">
             <UserAvatar
               userId={profile.id}
               path={profile.avatar_url}
