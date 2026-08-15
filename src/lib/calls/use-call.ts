@@ -775,6 +775,7 @@ export function useCall(opts: {
       cleanup,
       finish,
       join,
+      runAnswer,
       retry,
       retrying,
       devices,
