@@ -203,6 +203,17 @@ function ChatIndex() {
           title="Chat"
           actions={
             <>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                aria-label="Buka status"
+                className="size-11"
+              >
+                <Link to="/status">
+                  <CircleDashed className="size-5" />
+                </Link>
+              </Button>
               <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Buat grup" className="size-11">
