@@ -194,11 +194,14 @@ function CallScreen() {
           ? hangupRef
           : session.phase === "ended"
             ? backRef
-            : null; // fase "error"/"unconfigured" difokuskan panel pemulihan
+            : (session.phase === "error" || session.phase === "unconfigured") && errorDismissed
+              ? // panel pemulihan sudah ditutup: fokus jangan jatuh ke <body>
+                backRef
+              : null; // fase gagal dengan panel terbuka difokuskan panel pemulihan
     if (!target) return;
     const raf = requestAnimationFrame(() => target.current?.focus());
     return () => cancelAnimationFrame(raf);
-  }, [session.phase]);
+  }, [session.phase, errorDismissed]);
 
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
