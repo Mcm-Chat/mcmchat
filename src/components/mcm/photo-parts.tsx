@@ -83,6 +83,8 @@ export function PhotoFlow({
   conversations,
   fixedConversationIds,
   startWithCamera,
+  sourceMode = "choose",
+  locationDefault = true,
   onDone,
   onCancel,
 }: {
@@ -90,6 +92,8 @@ export function PhotoFlow({
   conversations: ConversationView[];
   fixedConversationIds?: string[] | undefined;
   startWithCamera?: boolean | undefined;
+  sourceMode?: "choose" | "camera" | "gallery" | undefined;
+  locationDefault?: boolean | undefined;
   onDone: (conversationIds: string[], firstMessageId: string) => void;
   onCancel: () => void;
 }) {
@@ -104,7 +108,7 @@ export function PhotoFlow({
   // dan bisa dibuka lagi kapan pun lewat tombol "Edit foto" pada pratinjau.
   const [editing, setEditing] = useState(false);
   const [caption, setCaption] = useState("");
-  const [includeLocation, setIncludeLocation] = useState(true);
+  const [includeLocation, setIncludeLocation] = useState(locationDefault);
   const [manualOpen, setManualOpen] = useState(false);
   const [manual, setManual] = useState({ lat: "", lng: "" });
   const sending = useRef(false);
@@ -507,8 +511,8 @@ export function PhotoFlow({
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <Button
-                variant="outline"
-                className="h-20 flex-col rounded-2xl"
+                variant={sourceMode === "camera" ? "default" : "outline"}
+                className={cn("h-20 flex-col rounded-2xl", sourceMode === "gallery" && "order-2")}
                 disabled={busy}
                 onClick={() => cameraRef.current?.click()}
               >
@@ -516,8 +520,8 @@ export function PhotoFlow({
                 <span className="text-xs">Kamera</span>
               </Button>
               <Button
-                variant="outline"
-                className="h-20 flex-col rounded-2xl"
+                variant={sourceMode === "gallery" ? "default" : "outline"}
+                className={cn("h-20 flex-col rounded-2xl", sourceMode === "gallery" && "order-1")}
                 disabled={busy}
                 onClick={() => galleryRef.current?.click()}
               >
@@ -680,6 +684,112 @@ export function PhotoFlow({
           {sendLabel}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** Alur khusus berbagi lokasi—tidak menyamarkannya sebagai alur unggah foto. */
+export function LocationShareFlow({
+  userId,
+  conversationId,
+  onDone,
+  onCancel,
+}: {
+  userId: string;
+  conversationId: string;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const geo = useGeolocation();
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manual, setManual] = useState({ lat: "", lng: "" });
+  const [busy, setBusy] = useState(false);
+
+  const applyManual = () => {
+    const lat = Number(manual.lat);
+    const lng = Number(manual.lng);
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+      toast.error("Latitude harus antara -90 dan 90");
+      return;
+    }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+      toast.error("Longitude harus antara -180 dan 180");
+      return;
+    }
+    geo.setManual(lat, lng);
+    setManualOpen(false);
+  };
+
+  const send = async () => {
+    if (!geo.location || busy) return;
+    setBusy(true);
+    try {
+      await sendMessage({
+        conversationId,
+        senderId: userId,
+        kind: "location",
+        body: geo.location.label,
+        location: {
+          lat: geo.location.latitude,
+          lng: geo.location.longitude,
+          accuracy: geo.location.accuracy,
+          label: geo.location.label,
+          mapsUrl: geo.location.mapsUrl,
+        },
+      });
+      toast.success("Lokasi terkirim");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Lokasi gagal dikirim");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div aria-live="polite">
+        {geo.status === "loading" && (
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Mencari lokasi GPS…
+          </p>
+        )}
+        {geo.location && <LocationCard location={geo.location} />}
+        {geo.status === "error" && <p className="text-sm text-destructive">{geo.error}</p>}
+      </div>
+
+      {!geo.location && !manualOpen && (
+        <div className="grid gap-2">
+          <Button className="h-12 rounded-xl" disabled={geo.status === "loading"} onClick={geo.request}>
+            <MapPin className="size-4" /> Gunakan lokasi saat ini
+          </Button>
+          <Button variant="outline" className="h-12 rounded-xl" onClick={() => setManualOpen(true)}>
+            Masukkan koordinat manual
+          </Button>
+        </div>
+      )}
+
+      {manualOpen && (
+        <div className="space-y-3 rounded-xl border border-border p-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="Latitude" inputMode="decimal" placeholder="Latitude" value={manual.lat} onChange={(e) => setManual((p) => ({ ...p, lat: e.target.value }))} />
+            <Input aria-label="Longitude" inputMode="decimal" placeholder="Longitude" value={manual.lng} onChange={(e) => setManual((p) => ({ ...p, lng: e.target.value }))} />
+          </div>
+          <Button className="w-full" onClick={applyManual}>Gunakan koordinat</Button>
+        </div>
+      )}
+
+      {geo.location && (
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" className="h-12 rounded-xl" disabled={busy} onClick={geo.request}>
+            Perbarui GPS
+          </Button>
+          <Button className="h-12 rounded-xl" disabled={busy} onClick={() => void send()}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Kirim lokasi
+          </Button>
+        </div>
+      )}
+      <Button variant="ghost" className="w-full" disabled={busy} onClick={onCancel}>Batal</Button>
     </div>
   );
 }
