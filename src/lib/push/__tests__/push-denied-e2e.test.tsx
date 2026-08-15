@@ -148,8 +148,12 @@ describe("regresi guard izin push (end-to-end)", () => {
       expect(dialog).toHaveTextContent(c.titleRe);
       expect(screen.getByText(guarded.reason!)).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: /mengerti/i }));
-      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: c.fallback, replace: true }));
+      // Persisten: Escape tidak menutup modal.
+      fireEvent.keyDown(dialog, { key: "Escape" });
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: c.ctaRe }));
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: c.ctaRoute, replace: true }));
       await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     });
   }
