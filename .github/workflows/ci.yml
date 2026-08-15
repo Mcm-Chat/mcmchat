@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
       # Gate wajib: PIN, izin bucket avatar, hapus anggota jalur admin,
       # keanggotaan percakapan, dan invariant RLS lainnya.
@@ -29,7 +35,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
+      # Cache transform Vite/Nitro: build ulang hanya memproses file yang berubah.
+      - name: Cache build (Vite/Nitro)
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.vite
+            node_modules/.cache
+            .nitro
+            .tanstack
+          key: build-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'vite.config.ts') }}-${{ github.sha }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'vite.config.ts') }}-
+            build-${{ runner.os }}-
       - run: bunx tsgo --noEmit
       - run: bun run lint
       - run: bun run test
@@ -37,10 +62,9 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      - name: Laporan ukuran bundle
-        run: |
-          du -sh dist 2>/dev/null || true
-          find dist -name '*.js' -size +300k -printf '%s\t%p\n' 2>/dev/null | sort -rn | head -20 || true
+      # Gate performa: gagal bila bundel klien (gzip) melewati bundle-budget.json.
+      - name: Ambang ukuran bundel klien
+        run: bun run check:bundle
 
   android-static:
     name: Pemeriksaan statis Android
@@ -48,6 +72,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
       - name: targetSdk/compileSdk harus 36
         run: grep -q "compileSdkVersion = 36" android/variables.gradle && grep -q "targetSdkVersion = 36" android/variables.gradle
@@ -66,6 +96,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
       - name: Audit (gagal pada high/critical)
         run: bun audit --audit-level=high
@@ -79,7 +115,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
+      - name: Cache browser Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-chromium
       - name: Pasang Playwright Chromium
         run: |
           python -m pip install --no-cache-dir playwright
@@ -119,6 +166,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
       - name: Buat SBOM
         run: bun run sbom
