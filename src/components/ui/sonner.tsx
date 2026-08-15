@@ -2,11 +2,14 @@ import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const Toaster = ({ containerAriaLabel = "Notifikasi", ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      containerAriaLabel={containerAriaLabel}
       toastOptions={{
+        // Sonner merender wrapper aria-live="polite"; error/warning dinaikkan
+        // menjadi assertive lewat `important` di call site bila perlu.
         classNames: {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
