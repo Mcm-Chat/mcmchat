@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Camera, ImagePlus, Loader2, Trash2, Type } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +8,6 @@ import { StatusEditor } from "@/components/mcm/status-editor";
 import { LoadingSkeleton } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -25,7 +24,8 @@ import { useContacts } from "@/lib/api/queries";
 import { postStatus, type NewSlide } from "@/lib/api/status";
 import { useStatusPrefs } from "@/lib/status/hooks";
 import { composeStatus, textStatusMeta } from "@/lib/status/compose";
-import { initialEditor, type EditorState } from "@/lib/status/editor";
+import { loadEditableImage } from "@/lib/status/load-image";
+import { type EditorState } from "@/lib/status/editor";
 import {
   clampSlideMs,
   LIFETIME_OPTIONS,
@@ -56,15 +56,6 @@ export const Route = createFileRoute("/status/new")({
   component: StatusNew,
 });
 
-function loadImage(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Gambar tidak bisa dibaca"));
-    img.src = URL.createObjectURL(file);
-  });
-}
-
 function StatusNew() {
   const { userId, loading } = useRequireAuth();
   const navigate = useNavigate();
@@ -74,8 +65,6 @@ function StatusNew() {
 
   const [slides, setSlides] = useState<(NewSlide & { preview: string })[]>([]);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
-  const [editorState, setEditorState] = useState<EditorState>(initialEditor);
-  const [caption, setCaption] = useState("");
   const [text, setText] = useState("");
   const [bg, setBg] = useState<string>(TEXT_BACKGROUNDS[0]);
   const [font, setFont] = useState<string>(TEXT_FONTS[0].css);
@@ -84,21 +73,25 @@ function StatusNew() {
   const [privacy, setPrivacy] = useState<StatusPrivacy>("contacts");
   const [audience, setAudience] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [opening, setOpening] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const effectiveLifetime = lifetime || prefs?.default_lifetime_minutes || 1440;
-  const onStateChange = useCallback((s: EditorState) => setEditorState(s), []);
 
   const pilihFoto = async (file: File | undefined) => {
     if (!file) return;
+    setOpening(true);
     try {
-      setImage(await loadImage(file));
+      setImage(await loadEditableImage(file));
     } catch {
       toast.error("Foto tidak bisa dibuka");
+    } finally {
+      setOpening(false);
     }
   };
 
-  const tambahSlideFoto = async () => {
+  const tambahSlideFoto = async (editorState: EditorState, caption: string) => {
     if (!image) return;
     setBusy(true);
     try {
@@ -117,7 +110,6 @@ function StatusNew() {
         },
       ]);
       setImage(null);
-      setCaption("");
       toast.success("Slide ditambahkan");
     } catch {
       toast.error("Slide gagal diproses");
@@ -185,56 +177,59 @@ function StatusNew() {
           </TabsList>
 
           <TabsContent value="foto" className="space-y-3 pt-3">
-            {!image ? (
-              <div className="grid gap-2">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => void pilihFoto(e.target.files?.[0])}
-                />
+            <div className="grid gap-2">
+              <input
+                ref={cameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  void pilihFoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  void pilihFoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-24 flex-col gap-2"
+                  className="h-24 flex-col gap-2 rounded-2xl"
+                  disabled={opening}
+                  onClick={() => cameraRef.current?.click()}
+                >
+                  {opening ? (
+                    <Loader2 className="size-6 animate-spin" />
+                  ) : (
+                    <Camera className="size-6" />
+                  )}
+                  Ambil foto
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-24 flex-col gap-2 rounded-2xl"
+                  disabled={opening}
                   onClick={() => fileRef.current?.click()}
                 >
                   <ImagePlus className="size-6" />
-                  Pilih foto atau ambil dari kamera
+                  Pilih dari galeri
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  Foto otomatis dipangkas ke rasio layar penuh 9:16. Video status belum tersedia di
-                  versi ini.
-                </p>
               </div>
-            ) : (
-              <>
-                <StatusEditor image={image} onStateChange={onStateChange} />
-                <div className="space-y-1.5">
-                  <Label htmlFor="caption">Keterangan slide</Label>
-                  <Input
-                    id="caption"
-                    value={caption}
-                    onChange={(e) => setCaption(e.target.value)}
-                    placeholder="Opsional"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    className="flex-1"
-                    disabled={busy}
-                    onClick={() => void tambahSlideFoto()}
-                  >
-                    {busy && <Loader2 className="size-4 animate-spin" />} Tambahkan slide
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={() => setImage(null)}>
-                    Batal
-                  </Button>
-                </div>
-              </>
-            )}
+              <p className="text-xs text-muted-foreground">
+                Setiap foto langsung masuk editor layar penuh (filter, coretan, sensor, teks,
+                stiker) sebelum diunggah. Hasil akhir 9:16.
+              </p>
+            </div>
           </TabsContent>
 
           <TabsContent value="teks" className="space-y-3 pt-3">
@@ -409,6 +404,15 @@ function StatusNew() {
           {busy && <Loader2 className="size-4 animate-spin" />} Bagikan status ({slides.length})
         </Button>
       </div>
+
+      {image && (
+        <StatusEditor
+          image={image}
+          busy={busy}
+          onCancel={() => setImage(null)}
+          onDone={(s, cap) => void tambahSlideFoto(s, cap)}
+        />
+      )}
     </AppShell>
   );
 }
