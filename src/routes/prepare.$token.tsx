@@ -9,7 +9,10 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
+  Send,
+  Share2,
   ShieldAlert,
+  Store,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +28,7 @@ import {
   openPrepareTask,
   removePreparePhoto,
   savePrepareItem,
+  sendPrepareResult,
 } from "@/lib/prepare.functions";
 import { fileToDataUrl, koordinat, mapsUrlFor } from "@/lib/mcm/geo";
 import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
@@ -139,6 +143,7 @@ function PreparePage() {
           )}
           {done ? "Tugas sudah selesai" : "Selesai & kirim ke katalog"}
         </Button>
+        {done && <ResultActions token={token} task={task} />}
         {!done && !ready && (
           <p className="pb-6 text-center text-xs text-muted-foreground">
             Lengkapi foto, lokasi, dan jumlah aktual pada setiap item wajib untuk mengaktifkan
