@@ -1039,6 +1039,18 @@ function ChatRoom() {
         />
       )}
 
+      <ForwardDialog
+        open={forwarding.length > 0}
+        onOpenChange={(v) => !v && setForwarding([])}
+        messages={forwarding}
+        userId={userId}
+        onDone={() => {
+          setForwarding([]);
+          setSelection([]);
+          refresh();
+        }}
+      />
+
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="h-[92dvh] rounded-t-3xl p-0">
           <SheetHeader className="px-4 pt-4 pb-2">
