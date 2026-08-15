@@ -28,7 +28,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  TouchEvent as ReactTouchEvent,
+} from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -541,13 +544,13 @@ function useBubbleSwipe(onSwipe: (dir: "right" | "left") => void) {
   return {
     dx,
     handlers: {
-      onTouchStart: (e: React.TouchEvent) => {
+      onTouchStart: (e: ReactTouchEvent) => {
         const t = e.touches[0];
         if (!t) return;
         start.current = { x: t.clientX, y: t.clientY };
         axis.current = "none";
       },
-      onTouchMove: (e: React.TouchEvent) => {
+      onTouchMove: (e: ReactTouchEvent) => {
         const t = e.touches[0];
         const s = start.current;
         if (!t || !s) return;
