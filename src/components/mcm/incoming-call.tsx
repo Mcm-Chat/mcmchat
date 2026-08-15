@@ -27,6 +27,7 @@ import { playTone } from "@/lib/calls/tones";
 import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
+import { setIncomingCallActive } from "@/lib/calls/incoming-lock";
 
 type Incoming = { call: CallRow; name: string; color: string };
 
@@ -170,6 +171,11 @@ export function IncomingCallListener() {
 
   // Dering + getar selama banner panggilan masuk tampil.
   const ringingId = incoming?.call.id ?? null;
+  // Selama banner tampil, navigasi bawah dikunci (lihat BottomNavigation).
+  useEffect(() => {
+    setIncomingCallActive(Boolean(ringingId));
+    return () => setIncomingCallActive(false);
+  }, [ringingId]);
   useEffect(() => {
     if (!ringingId) return;
     const handle = playTone("ringtone");
