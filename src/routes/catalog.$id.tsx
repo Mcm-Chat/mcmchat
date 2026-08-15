@@ -270,7 +270,7 @@ function CatalogDetail() {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Varian & stok</h2>
+            <h2 className="text-sm font-semibold">Varian / ecer dari gudang</h2>
             <Button
               size="sm"
               variant="outline"
