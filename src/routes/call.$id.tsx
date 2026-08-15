@@ -39,6 +39,7 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { fetchProfileCards } from "@/lib/api/profiles";
 import { supabase } from "@/integrations/supabase/client";
 import { CALL_PROVIDER_NOTICE, type CallHistoryItem } from "@/lib/api/calls";
+import { toast } from "sonner";
 import { useCall } from "@/lib/calls/use-call";
 import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-effects";
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
@@ -389,6 +390,20 @@ function CallScreen() {
       : permission.state === "checking"
         ? "Memeriksa izin kamera…"
         : "Izin kamera belum diberikan. Izinkan kamera di pengaturan browser/perangkat.";
+
+  // Tombol tidak pernah dimatikan total: kalau izin belum ada, sentuhan
+  // pertama memicu permintaan izin, lalu aksinya langsung dijalankan.
+  const withPermission = (granted: boolean, hint: string, run: () => void) => () => {
+    if (granted) {
+      run();
+      return;
+    }
+    if (permission.requesting) return;
+    void permission.request().then((next) => {
+      if (next === "granted" || next === "audio_only") run();
+      else toast.error(hint);
+    });
+  };
 
   const phaseLabel =
     session.phase === "connected"
