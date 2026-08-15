@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   BellRing,
   Check,
+  CheckCheck,
   MoreHorizontal,
   Phone,
   PhoneCall,
@@ -44,6 +45,7 @@ import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { markMissedCallsSeen } from "@/lib/calls/missed-seen";
+import { toast } from "sonner";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 import {
@@ -241,6 +243,14 @@ function CallsPage() {
     setDismissedReminders((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
+  /** Kosongkan badge secara manual kapan saja dari halaman Panggilan. */
+  const clearMissedBadge = () => {
+    markMissedCallsSeen();
+    toast.success("Semua panggilan tak terjawab ditandai sudah dilihat", {
+      description: "Badge di menu Panggilan dikosongkan sampai ada panggilan baru.",
+    });
+  };
+
   const lastDueId = visibleDue.length > 0 ? visibleDue[visibleDue.length - 1]!.id : null;
   useEffect(() => {
     if (!lastDueId) return;
@@ -259,15 +269,29 @@ function CallsPage() {
           title="Panggilan"
           subtitle={`${missedCount} panggilan tak terjawab`}
           actions={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Pengaturan panggilan"
-              className="size-11"
-              onClick={() => void navigate({ to: "/settings/calls" })}
-            >
-              <Settings2 className="size-5" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {missedCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Tandai semua panggilan tak terjawab sudah dilihat"
+                  title="Tandai semua sudah dilihat"
+                  className="size-11"
+                  onClick={clearMissedBadge}
+                >
+                  <CheckCheck className="size-5" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Pengaturan panggilan"
+                className="size-11"
+                onClick={() => void navigate({ to: "/settings/calls" })}
+              >
+                <Settings2 className="size-5" />
+              </Button>
+            </div>
           }
         >
           <div className="px-3 pb-3">
