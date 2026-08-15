@@ -285,9 +285,77 @@ export function PurchaseDialog({
               placeholder="Opsional: no. nota, ongkos kirim"
             />
           </div>
+          <div className="space-y-2 rounded-xl border border-border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <Label className="text-xs">Template varian / ecer</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Judul & kemasan di sini otomatis dibuat atau diselaraskan ke varian produk.
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="rounded-lg text-xs"
+                onClick={addTemplate}
+              >
+                <Plus className="size-3.5" /> Tambah
+              </Button>
+            </div>
+            {templates.map((t, i) => (
+              <div key={i} className="space-y-1.5 rounded-lg bg-muted/50 p-2">
+                <div className="flex gap-2">
+                  <Input
+                    className="h-9 flex-1 text-xs"
+                    value={t.name}
+                    onChange={(e) => patchTemplate(i, { name: e.target.value })}
+                    placeholder="Judul varian, mis. Ecer 250 g"
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Hapus template"
+                    className="size-9 shrink-0"
+                    onClick={() => removeTemplate(i)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    className="h-9 flex-1 text-xs"
+                    inputMode="decimal"
+                    value={t.size}
+                    onChange={(e) => patchTemplate(i, { size: e.target.value })}
+                    placeholder={product.stock_kind === "weight" ? "Isi (250)" : "Isi per kemasan"}
+                  />
+                  <Select value={t.unit} onValueChange={(v) => patchTemplate(i, { unit: v })}>
+                    <SelectTrigger className="h-9 w-24 rounded-lg text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templateUnits.map((u) => (
+                        <SelectItem key={u} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    className="h-9 w-28 text-xs"
+                    inputMode="numeric"
+                    value={t.price}
+                    onChange={(e) => patchTemplate(i, { price: e.target.value })}
+                    placeholder="Harga jual"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
           <div className="space-y-1.5">
             <Label>Foto barang masuk</Label>
-          </div>
             {photoPreview ? (
               <div className="relative w-fit">
                 <img
