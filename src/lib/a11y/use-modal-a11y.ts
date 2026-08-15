@@ -11,11 +11,19 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
   onClose: () => void;
   active?: boolean | undefined;
   closeOnEscape?: boolean | undefined;
+  /**
+   * Sasaran cadangan bila elemen pemicu sudah hilang dari DOM (misalnya modal
+   * ditutup oleh timeout setelah pindah halaman). Tanpa ini fokus jatuh ke
+   * <body> dan pengguna keyboard kehilangan posisi.
+   */
+  fallbackFocus?: (() => HTMLElement | null) | undefined;
 }) {
-  const { onClose, active = true, closeOnEscape = true } = options;
+  const { onClose, active = true, closeOnEscape = true, fallbackFocus } = options;
   const containerRef = useRef<T | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const fallbackRef = useRef(fallbackFocus);
+  fallbackRef.current = fallbackFocus;
 
   useEffect(() => {
     if (!active) return;
@@ -75,11 +83,48 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKeyDown, true);
-      if (previouslyFocused && document.contains(previouslyFocused)) {
-        previouslyFocused.focus?.();
-      }
+      restoreFocus(previouslyFocused, containerRef.current, fallbackRef.current);
     };
   }, [active, closeOnEscape]);
 
   return containerRef;
+}
+
+/**
+ * Kembalikan fokus ke pemicu saat modal menutup — apa pun penyebabnya
+ * (aksi pengguna, timeout, atau perubahan status dari server).
+ *
+ * Urutan: elemen pemicu bila masih ada dan bisa difokuskan → sasaran cadangan
+ * → <main> yang dibuat fokusable sementara. Fokus tidak dipindahkan bila
+ * pengguna sudah berpindah sendiri ke elemen lain di luar modal.
+ */
+function restoreFocus(
+  previous: HTMLElement | null,
+  container: HTMLElement | null,
+  fallback?: (() => HTMLElement | null) | undefined,
+) {
+  const active = document.activeElement as HTMLElement | null;
+  const focusOutside =
+    active && active !== document.body && !(container && container.contains(active));
+  if (focusOutside) return;
+
+  const usable = (el: HTMLElement | null | undefined): el is HTMLElement =>
+    Boolean(el && document.contains(el) && !(el as HTMLButtonElement).disabled);
+
+  if (usable(previous)) {
+    previous.focus?.();
+    if (document.activeElement === previous) return;
+  }
+  const alt = fallback?.() ?? null;
+  if (usable(alt)) {
+    alt.focus?.();
+    if (document.activeElement === alt) return;
+  }
+  const main = document.querySelector("main") as HTMLElement | null;
+  if (!main) return;
+  if (!main.hasAttribute("tabindex")) {
+    main.setAttribute("tabindex", "-1");
+    main.addEventListener("blur", () => main.removeAttribute("tabindex"), { once: true });
+  }
+  main.focus?.();
 }
