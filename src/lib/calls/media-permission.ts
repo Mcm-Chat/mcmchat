@@ -77,14 +77,20 @@ export async function queryMediaPermission(
   if (!perms?.query) return "prompt";
   const names = requiredPermissions(kind);
   const states: PermissionState[] = [];
+  const byName: Partial<Record<"microphone" | "camera", PermissionState>> = {};
   for (const name of names) {
     try {
       const status = await perms.query({ name: name as PermissionName });
       states.push(status.state);
+      byName[name] = status.state;
     } catch {
       return "prompt";
     }
   }
+  // Panggilan video dengan kamera ditolak tetapi mikrofon siap tetap bisa
+  // dijawab sebagai panggilan suara saja.
+  if (kind === "video" && byName.camera === "denied" && byName.microphone === "granted")
+    return "audio_only";
   if (states.includes("denied")) return "denied";
   return states.every((s) => s === "granted") ? "granted" : "prompt";
 }
