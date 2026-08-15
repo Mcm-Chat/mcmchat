@@ -154,8 +154,9 @@ async def run(state):
 
         await page.route("**/_serverFn/**", route_config)
 
-        await page.goto(f"{BASE}/login", wait_until="domcontentloaded")
+        await page.goto(f"{BASE}/login", wait_until="networkidle")
         await page.wait_for_selector("#email")
+        await page.wait_for_timeout(1500)
         await page.fill("#email", state["email_a"])
         await page.fill("#password", state["password"])
         await page.get_by_role("button", name="Masuk").click()
