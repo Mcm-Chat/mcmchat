@@ -1,0 +1,13 @@
+{
+  "$comment": "Anggaran ukuran bundel klien (gzip, KiB). Naikkan HANYA dengan alasan yang jelas di deskripsi PR.",
+  "unit": "KiB (gzip)",
+  "budgets": {
+    "totalClient": 950,
+    "totalJs": 800,
+    "totalCss": 40,
+    "largestChunk": 160
+  },
+  "chunkOverrides": {
+    "livekit-client": 160
+  }
+}

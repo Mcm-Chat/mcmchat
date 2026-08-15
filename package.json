@@ -23,7 +23,8 @@
     "android:sync": "cap sync android",
     "android:bundle": "cd android && ./gradlew bundleRelease",
     "android:debug-apk": "cd android && ./gradlew assembleDebug",
-    "test:e2e:pwa": "python3 e2e/pwa_smoke.py"
+    "test:e2e:pwa": "python3 e2e/pwa_smoke.py",
+    "check:bundle": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
     "@capacitor/android": "7.6.8",
