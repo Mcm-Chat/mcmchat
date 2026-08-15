@@ -127,6 +127,9 @@ function ChatRoom() {
     fetchOlder,
   } = useMessages(id, userId);
   const conv = (conversations ?? []).find((c) => c.id === id);
+  const { nameOf } = useContactAliases();
+  // Nama tampilan chat mengikuti nama kontak yang saya simpan sendiri.
+  const headerName = nameOf(conv?.other?.id, conv?.title_resolved ?? "Percakapan");
   const connection = useConnectionState();
   const pending = useOutbox(id);
 
@@ -651,13 +654,13 @@ function ChatRoom() {
                       userId={conv.other.id}
                       path={conv.other.avatar_url}
                       version={conv.other.avatar_version ?? 0}
-                      name={conv.title_resolved}
+                      name={headerName}
                       color={conv.other.avatar_color}
                       size="sm"
                     />
                   ) : (
                     <MCMAvatar
-                      initials={initialsOf(conv.title_resolved)}
+                      initials={initialsOf(headerName)}
                       color="#0ea5e9"
                       size="sm"
                     />
@@ -769,14 +772,14 @@ function ChatRoom() {
                   userId={conv.other.id}
                   path={conv.other.avatar_url}
                   version={conv.other.avatar_version ?? 0}
-                  name={conv.title_resolved}
+                  name={headerName}
                   color={conv.other.avatar_color}
                 />
               ) : (
-                <MCMAvatar initials={initialsOf(conv.title_resolved)} color="#0ea5e9" />
+                <MCMAvatar initials={initialsOf(headerName)} color="#0ea5e9" />
               )}
             </span>
-            <p className="text-sm font-semibold">Mulai percakapan dengan {conv.title_resolved}</p>
+            <p className="text-sm font-semibold">Mulai percakapan dengan {headerName}</p>
             <p className="text-xs text-muted-foreground">
               Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.
             </p>
@@ -1011,7 +1014,7 @@ function ChatRoom() {
       <Sheet open={photoOpen} onOpenChange={setPhotoOpen}>
         <SheetContent side="bottom" className="h-[92dvh] rounded-t-3xl p-0">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle>Kirim foto ke {conv.title_resolved}</SheetTitle>
+            <SheetTitle>Kirim foto ke {headerName}</SheetTitle>
           </SheetHeader>
           {userId && (
             <PhotoFlow
@@ -1111,7 +1114,7 @@ function ChatRoom() {
           ownerId={userId}
           preset={{
             counterpartUserId: conv.other?.id ?? null,
-            counterpartName: conv.other?.display_name ?? conv.title_resolved,
+            counterpartName: headerName,
             conversationId: id,
           }}
           onCreated={async (entry) => {
@@ -1135,7 +1138,7 @@ function ChatRoom() {
           sellerId={userId}
           conversationId={id}
           customerUserId={conv.other?.id ?? null}
-          customerName={conv.other?.display_name ?? conv.title_resolved}
+          customerName={headerName}
           onSuccess={() => refresh()}
         />
       )}
@@ -1146,7 +1149,7 @@ function ChatRoom() {
           onOpenChange={setPrepOpen}
           businessId={business.business.id}
           conversationId={id}
-          customerName={conv.other?.display_name ?? conv.title_resolved}
+          customerName={headerName}
           customerUserId={conv.other?.id ?? null}
           onCreated={(job) => {
             void qc.invalidateQueries({ queryKey: ["prep-jobs", id] });
