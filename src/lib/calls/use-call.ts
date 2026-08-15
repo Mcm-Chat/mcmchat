@@ -34,6 +34,11 @@ import {
   describeAnswerFailure,
   describeConnectFailure,
 } from "./failure-messages";
+import {
+  HANDSHAKE_ATTEMPTS,
+  handshakeProgressText,
+  withHandshakeRetry,
+} from "./handshake";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
@@ -320,12 +325,7 @@ export function useCall(opts: {
           return;
         }
         const provider = getCallProvider(true);
-        const session = await provider.connect({
-          url: t.url,
-          token: t.token,
-          kind: row.kind,
-          audioTrack: audio,
-          onState: (s: ProviderState) => {
+        const onState = (s: ProviderState) => {
             // Setelah panggilan berakhir, event penyedia yang terlambat tidak
             // boleh mengubah fase layar.
             if (endedRef.current) return;
@@ -361,8 +361,34 @@ export function useCall(opts: {
             } else if (s.status === "reconnecting") {
               setReason("Menyambung ulang…");
             }
+        };
+        // Handshake pertama sering gagal di jaringan seluler; ulangi otomatis
+        // dengan jeda menaik sebelum menyerah ke layar gagal.
+        const session = await withHandshakeRetry(
+          () =>
+            provider.connect({
+              url: t.url,
+              token: t.token,
+              kind: row.kind,
+              audioTrack: audio,
+              onState,
+            }),
+          {
+            attempts: HANDSHAKE_ATTEMPTS,
+            isAborted: () => endedRef.current,
+            onAttempt: (attempt, total) => {
+              if (endedRef.current) return;
+              setPhase("connecting");
+              setReason(attempt <= 1 ? null : handshakeProgressText(attempt, total));
+            },
+            onRetry: (e, next) => {
+              devLog("handshake_retry", {
+                next,
+                detail: e instanceof Error ? e.message : "unknown",
+              });
+            },
           },
-        });
+        );
         if (endedRef.current) {
           void session.disconnect().catch(() => undefined);
           joinedRef.current = false;
