@@ -366,8 +366,6 @@ function CallScreen() {
                   </Button>
                   <span className="text-[10px] text-white/70">Tolak</span>
                 </div>
-                  <span className="text-[10px] text-white/70">Jawab</span>
-                </div>
               </div>
             ) : (
               <div className="space-y-5">
