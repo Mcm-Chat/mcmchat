@@ -5,6 +5,7 @@
  * dering dari perangkat yang mikrofonnya bermasalah.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Mic, MicOff, Phone, ShieldAlert, Video, VideoOff } from "lucide-react";
@@ -177,14 +178,15 @@ function PreCallScreen() {
         </section>
 
         {mediaError && (
-          <p
+          <NotificationBanner
             role="alert"
-            aria-live="assertive"
-            className="flex items-start gap-2 rounded-xl bg-destructive/10 p-3 text-sm text-destructive"
+            icon={<ShieldAlert className="size-4" />}
+            onDismiss={() => setMediaError(null)}
+            dismissLabel="Tutup peringatan media"
+            className="items-center rounded-xl bg-destructive/10 p-3 text-destructive"
           >
-            <ShieldAlert className="mt-0.5 size-4 shrink-0" />
             {mediaError}
-          </p>
+          </NotificationBanner>
         )}
 
         <section className="space-y-3 rounded-2xl border p-4">

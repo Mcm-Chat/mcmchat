@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { registerDismissible } from "@/lib/a11y/escape-dismiss";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDownLeft,
@@ -13,6 +14,7 @@ import {
   Search,
   Settings2,
   Video,
+  X,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -94,6 +96,7 @@ function CallsPage() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
+  const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
@@ -171,6 +174,17 @@ function CallsPage() {
   useSecondTick(hasLive);
   const busy = loading || isLoading;
   const due = dueReminders(reminders);
+  const visibleDue = due.filter((r) => !dismissedReminders.includes(r.id));
+
+  const dismissReminder = (id: string) => {
+    setDismissedReminders((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  const lastDueId = visibleDue.length > 0 ? visibleDue[visibleDue.length - 1]!.id : null;
+  useEffect(() => {
+    if (!lastDueId) return;
+    return registerDismissible(() => dismissReminder(lastDueId));
+  }, [lastDueId]);
 
   const finishReminder = async (id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id));
@@ -217,9 +231,9 @@ function CallsPage() {
       }
     >
       <div aria-live="polite" aria-atomic="false" aria-label="Pengingat panggilan" role="status">
-      {due.length > 0 && (
+      {visibleDue.length > 0 && (
         <ul className="space-y-2 px-4 pt-3">
-          {due.map((r) => (
+          {visibleDue.map((r) => (
             <li
               key={r.id}
               className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
@@ -254,6 +268,15 @@ function CallsPage() {
                 onClick={() => void finishReminder(r.id)}
               >
                 <Check className="size-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Tutup pengingat"
+                title="Tutup pengingat (Esc)"
+                onClick={() => dismissReminder(r.id)}
+              >
+                <X className="size-5" />
               </Button>
             </li>
           ))}
