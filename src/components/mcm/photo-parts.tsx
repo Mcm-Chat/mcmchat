@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Camera,
@@ -80,17 +80,21 @@ export function PhotoFlow({
   userId,
   conversations,
   fixedConversationIds,
+  startWithCamera,
   onDone,
   onCancel,
 }: {
   userId: string;
   conversations: ConversationView[];
   fixedConversationIds?: string[] | undefined;
+  startWithCamera?: boolean | undefined;
   onDone: (conversationIds: string[], firstMessageId: string) => void;
   onCancel: () => void;
 }) {
   const fixed = (fixedConversationIds ?? []).length > 0;
-  const [step, setStep] = useState<"penerima" | "review">(fixed ? "review" : "penerima");
+  const [step, setStep] = useState<"kamera" | "penerima" | "review">(
+    startWithCamera && !fixed ? "kamera" : fixed ? "review" : "penerima",
+  );
   const [selected, setSelected] = useState<string[]>(fixedConversationIds ?? []);
   const [q, setQ] = useState("");
   const [preview, setPreview] = useState("");
