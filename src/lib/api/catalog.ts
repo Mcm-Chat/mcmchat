@@ -299,20 +299,41 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
 }
 
 export async function deleteVariant(variantId: string) {
-  const movements = unwrap(
-    await supabase.from("inventory_movements").select("id").eq("variant_id", variantId).limit(1),
-    "Gagal memeriksa riwayat varian",
-  );
-  if (movements.length > 0) {
+  const deactivate = async () => {
     const { error } = await supabase
       .from("product_variants")
       .update({ is_active: false })
       .eq("id", variantId);
     if (error) throw new Error(friendly(error.message, "Gagal menonaktifkan varian"));
+  };
+
+  // Varian yang pernah dipakai (riwayat stok, unit fisik non-draf, atau
+  // terpakai di pesanan) tidak boleh dihapus permanen — cukup dinonaktifkan
+  // supaya riwayat transaksi tetap utuh.
+  const [movements, units, orderItems, chatItems] = await Promise.all([
+    supabase.from("inventory_movements").select("id").eq("variant_id", variantId).limit(1),
+    supabase
+      .from("variant_stock_units")
+      .select("id")
+      .eq("variant_id", variantId)
+      .neq("status", "draft")
+      .limit(1),
+    supabase.from("order_items").select("id").eq("variant_id", variantId).limit(1),
+    supabase.from("chat_order_items").select("id").eq("variant_id", variantId).limit(1),
+  ]);
+  const used = [movements, units, orderItems, chatItems].some(
+    (r) => (r.data?.length ?? 0) > 0 || Boolean(r.error),
+  );
+  if (used) {
+    await deactivate();
     return;
   }
+
   const { error } = await supabase.from("product_variants").delete().eq("id", variantId);
-  if (error) throw new Error(friendly(error.message, "Gagal menghapus varian"));
+  if (!error) return;
+  // Fallback: bila database menolak hapus permanen (mis. unit sudah dialokasikan),
+  // jangan tampilkan error mentah — nonaktifkan saja varian.
+  await deactivate();
 }
 
 export async function adjustStock(

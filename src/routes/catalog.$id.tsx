@@ -675,14 +675,14 @@ function VariantEditorDialog({
                 inputMode="decimal"
                 value={weightQty}
                 onChange={(e) => setWeightQty(e.target.value)}
-                placeholder="Contoh: 0,01"
+                placeholder="Contoh: 0,2"
               />
               <p className="text-[11px] text-muted-foreground">
                 {gramPreview
                   ? `Setara ${gramPreview} gram`
                   : !check.ok && check.field === "display_quantity"
                     ? check.message
-                    : "Berat minimum 0,01 gram."}
+                    : "Berat minimum 0,0001 gram (0,1 mg)."}
               </p>
             </div>
           )}

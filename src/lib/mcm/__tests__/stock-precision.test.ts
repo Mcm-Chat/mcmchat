@@ -33,7 +33,25 @@ describe("varian stok berat", () => {
       display_quantity: "0,01",
     } as never);
     expect(r.ok).toBe(true);
-    if (r.ok) expect(r.value.base_quantity_grams).toBeCloseTo(MIN_WEIGHT_GRAM, 6);
+    if (r.ok) expect(r.value.base_quantity_grams).toBeCloseTo(0.01, 6);
+  });
+  it("menerima skala miligram (0,2 mg)", () => {
+    const r = validateVariantDraft({
+      ...base,
+      stock_kind: "weight",
+      display_unit: "mg",
+      display_quantity: "0,2",
+    } as never);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.value.base_quantity_grams).toBeCloseTo(0.0002, 6);
+  });
+  it("menolak berat di bawah batas minimum", () => {
+    const r = validateVariantDraft({
+      ...base,
+      stock_kind: "weight",
+      display_quantity: String(MIN_WEIGHT_GRAM / 10),
+    } as never);
+    expect(r.ok).toBe(false);
   });
   it("mengonversi kg ke gram", () => {
     expect(toGrams(1.5, "kg")).toBe(1500);
