@@ -174,7 +174,7 @@ function ResultActions({ token, task }: { token: string; task: PrepTask }) {
   const send = useServerFn(sendPrepareResult);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<"customer" | "seller" | null>(null);
-  const [sent, setSent] = useState<Record<string, boolean>>({});
+  const [sent, setSent] = useState<{ customer?: boolean; seller?: boolean }>({});
 
   const summary = [
     `Hasil penyiapan ${task.code}${task.customer_name ? ` untuk ${task.customer_name}` : ""}:`,
