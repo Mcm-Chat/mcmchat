@@ -36,9 +36,17 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
   // bisa membedakan "trap dijeda" dari "modal benar-benar ditutup".
   const suspendedRef = useRef(suspended);
   suspendedRef.current = suspended;
+  // Menandai bahwa run efek berikutnya adalah "lanjut setelah jeda", bukan
+  // pembukaan modal baru — fokus tidak boleh dipindahkan lagi.
+  const resumingRef = useRef(false);
 
   useEffect(() => {
-    if (!active || suspended) return;
+    if (!active || suspended) {
+      if (active && suspended) resumingRef.current = true;
+      return;
+    }
+    const resuming = resumingRef.current;
+    resumingRef.current = false;
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
     const getItems = () => {
@@ -51,6 +59,7 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
 
     // Move focus into the modal so screen readers and keyboards start inside it.
     const raf = requestAnimationFrame(() => {
+      if (resuming) return;
       const root = containerRef.current;
       if (!root) return;
       if (root.contains(document.activeElement)) return;
