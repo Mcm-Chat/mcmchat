@@ -32,6 +32,11 @@ import { setIncomingCallActive } from "@/lib/calls/incoming-lock";
 import {
   mediaPermissionCopy,
   requestMediaPermission,
+} from "@/lib/calls/media-permission";
+import {
+  readCachedPermission,
+  writeCachedPermission,
+} from "@/lib/calls/permission-cache";
   type MediaPermissionState,
 } from "@/lib/calls/media-permission";
 
