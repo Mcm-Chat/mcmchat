@@ -138,6 +138,8 @@ export type UseCallResult = {
   durationSec: number;
   controls: CallControlsState;
   pipelineState: PipelineState;
+  /** Kualitas jaringan lokal untuk indikator sinyal. */
+  quality: "excellent" | "good" | "poor" | "unknown";
   /** Efek suara benar-benar aktif pada track keluar (bukan sekadar preferensi). */
   voiceApplied: boolean;
   /** Efek suara diminta tetapi gagal dipasang; panggilan tetap berjalan polos. */
