@@ -143,6 +143,26 @@ export function CallFailureRecovery({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
+  // Hasil percobaan: bila panel masih tampil setelah "menyambungkan…" selesai,
+  // artinya percobaan gagal — ganti toast loading dengan pesan tindak lanjut.
+  const wasRetrying = useRef(false);
+  useEffect(() => {
+    if (retrying) {
+      wasRetrying.current = true;
+      return;
+    }
+    if (!wasRetrying.current) return;
+    wasRetrying.current = false;
+    toast.error("Percobaan gagal", {
+      id: "call-recovery",
+      description: HINT[kind],
+    });
+  }, [retrying, kind]);
+
+  // Panel hilang (panggilan pulih / pindah halaman): jangan tinggalkan toast
+  // loading yang menggantung.
+  useEffect(() => () => toast.dismiss("call-recovery"), []);
+
   // Aksi langsung diurutkan: yang paling relevan dengan penyebab tampil dulu.
   const order: CallFailureAction[] =
     summary.primary === "devices"
