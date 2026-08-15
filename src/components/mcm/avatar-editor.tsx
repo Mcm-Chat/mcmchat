@@ -10,7 +10,6 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ConfirmDialog } from "@/components/mcm/primitives";
