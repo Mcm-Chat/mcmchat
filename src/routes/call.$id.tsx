@@ -36,6 +36,8 @@ import { useCall } from "@/lib/calls/use-call";
 import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-effects";
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
+import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
+import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
 import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
 import { DEFAULT_VOICE_PREFS, PRESET_MAP, type VoicePrefs } from "@/lib/voice/presets";
