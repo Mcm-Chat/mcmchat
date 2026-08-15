@@ -832,6 +832,7 @@ function ControlButton({
   ariaLabel,
   active,
   disabled,
+  hint,
   onClick,
   icon: Icon,
 }: {
@@ -839,25 +840,47 @@ function ControlButton({
   ariaLabel: string;
   active: boolean;
   disabled?: boolean;
+  /** Penjelasan kenapa tombol nonaktif (tooltip + judul aksesibilitas). */
+  hint?: string;
   onClick: () => void;
   icon: typeof Mic;
 }) {
+  const button = (
+    <Button
+      size="icon"
+      disabled={disabled ?? false}
+      aria-label={hint ? `${ariaLabel}. ${hint}` : ariaLabel}
+      onClick={onClick}
+      className={cn(
+        "size-14 rounded-full border border-white/20",
+        active
+          ? "bg-white text-navy hover:bg-white/90"
+          : "bg-white/15 text-white hover:bg-white/25",
+      )}
+    >
+      <Icon className="size-6" />
+    </Button>
+  );
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <Button
-        size="icon"
-        disabled={disabled ?? false}
-        aria-label={ariaLabel}
-        onClick={onClick}
-        className={cn(
-          "size-14 rounded-full border border-white/20",
-          active
-            ? "bg-white text-navy hover:bg-white/90"
-            : "bg-white/15 text-white hover:bg-white/25",
-        )}
-      >
-        <Icon className="size-6" />
-      </Button>
+      {hint ? (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            {/* Tombol nonaktif tidak memancarkan event, jadi pemicu tooltip
+                dibungkus span yang tetap bisa disentuh/di-hover. */}
+            <TooltipTrigger asChild>
+              <span tabIndex={0} title={hint} className="inline-flex rounded-full">
+                {button}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-56 text-center">
+              {hint}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        button
+      )}
       <span className="text-[10px] text-white/70">{label}</span>
     </div>
   );
