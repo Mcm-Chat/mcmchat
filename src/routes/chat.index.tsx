@@ -1,7 +1,14 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, MessageCirclePlus, MessagesSquare, Search, Users } from "lucide-react";
+import {
+  Camera,
+  CircleDashed,
+  MessageCirclePlus,
+  MessagesSquare,
+  Search,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { ChatListItem } from "@/components/mcm/chat-parts";
