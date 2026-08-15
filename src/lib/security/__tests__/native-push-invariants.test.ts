@@ -72,7 +72,16 @@ describe("token aksi per notifikasi", () => {
   });
 
   it("setiap tombol memakai pasangan id+token sendiri dari payload", () => {
-    for (const key of ["replyToken", "replyActionId", "readToken", "readActionId", "answerToken", "answerActionId", "declineToken", "declineActionId"]) {
+    for (const key of [
+      "replyToken",
+      "replyActionId",
+      "readToken",
+      "readActionId",
+      "answerToken",
+      "answerActionId",
+      "declineToken",
+      "declineActionId",
+    ]) {
       expect(delivery).toContain(`data["${key}"]`);
     }
     // Token generik lama tidak boleh dipakai lagi.
@@ -132,7 +141,13 @@ describe("event generik tanpa conversationId", () => {
     expect(delivery).toMatch(/private fun handleGeneric/);
     expect(delivery).toMatch(/handleGeneric\(data\)/);
     const start = delivery.indexOf("private fun handleGeneric");
-    const body = delivery.slice(start, delivery.indexOf("// ------------------------------------------------------------ panggilan", start));
+    const body = delivery.slice(
+      start,
+      delivery.indexOf(
+        "// ------------------------------------------------------------ panggilan",
+        start,
+      ),
+    );
     expect(body).not.toMatch(/conversationId/);
     expect(body).toMatch(/setContentIntent\(openAppIntent\(route, id\)\)/);
     expect(channels).toMatch(/fun channelFor/);

@@ -15,7 +15,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ALIAS_MAX, setContactAlias, useContactAliases, useRefreshAliases } from "@/lib/contacts/alias";
+import {
+  ALIAS_MAX,
+  setContactAlias,
+  useContactAliases,
+  useRefreshAliases,
+} from "@/lib/contacts/alias";
 
 type Props = {
   open: boolean;
@@ -81,7 +86,10 @@ export function RenameContactDialog({ open, onOpenChange, contactId, realName }:
           }}
         />
         <p className="text-xs text-muted-foreground">
-          Ditampilkan sebagai: <span className="font-medium text-foreground">{value.trim() || realName || "Pengguna MCM"}</span>
+          Ditampilkan sebagai:{" "}
+          <span className="font-medium text-foreground">
+            {value.trim() || realName || "Pengguna MCM"}
+          </span>
         </p>
         <DialogFooter className="gap-2 sm:gap-2">
           {current && (
@@ -94,11 +102,7 @@ export function RenameContactDialog({ open, onOpenChange, contactId, realName }:
               Pakai nama asli
             </Button>
           )}
-          <Button
-            className="h-11 rounded-xl"
-            disabled={saving}
-            onClick={() => void save(value)}
-          >
+          <Button className="h-11 rounded-xl" disabled={saving} onClick={() => void save(value)}>
             Simpan
           </Button>
         </DialogFooter>

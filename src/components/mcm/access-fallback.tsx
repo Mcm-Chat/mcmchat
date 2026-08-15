@@ -44,32 +44,32 @@ export function AccessFallback({
   };
   return (
     <div role="alert" aria-live="assertive">
-    <EmptyState
-      icon={ShieldAlert}
-      title={title}
-      description={description}
-      action={
-        <div className="flex w-full max-w-xs flex-col items-stretch gap-2">
-          <Button className="rounded-xl" disabled={busy} onClick={() => void retry()}>
-            <RefreshCw className={busy ? "size-4 animate-spin" : "size-4"} />
-            {busy ? "Mencoba…" : "Coba lagi"}
-          </Button>
-          {links.map((key) => {
-            const item = RECOVERY[key];
-            const Icon = item.icon;
-            return (
-              <Button key={key} asChild variant="ghost" className="rounded-xl">
-                <Link to={item.to} {...(item.search ? { search: item.search } : {})}>
-                  <Icon className="size-4" />
-                  {item.label}
-                </Link>
-              </Button>
-            );
-          })}
-          {extra}
-        </div>
-      }
-    />
+      <EmptyState
+        icon={ShieldAlert}
+        title={title}
+        description={description}
+        action={
+          <div className="flex w-full max-w-xs flex-col items-stretch gap-2">
+            <Button className="rounded-xl" disabled={busy} onClick={() => void retry()}>
+              <RefreshCw className={busy ? "size-4 animate-spin" : "size-4"} />
+              {busy ? "Mencoba…" : "Coba lagi"}
+            </Button>
+            {links.map((key) => {
+              const item = RECOVERY[key];
+              const Icon = item.icon;
+              return (
+                <Button key={key} asChild variant="ghost" className="rounded-xl">
+                  <Link to={item.to} {...(item.search ? { search: item.search } : {})}>
+                    <Icon className="size-4" />
+                    {item.label}
+                  </Link>
+                </Button>
+              );
+            })}
+            {extra}
+          </div>
+        }
+      />
     </div>
   );
 }

@@ -107,7 +107,9 @@ export function MissedCallActions({
         peerName: target.peerName,
         note: note.trim() || null,
       });
-      toast.success(`Pengingat disimpan: ${tanggalPanjang(at.toISOString())} ${jam(at.toISOString())}`);
+      toast.success(
+        `Pengingat disimpan: ${tanggalPanjang(at.toISOString())} ${jam(at.toISOString())}`,
+      );
       onReminderSaved?.();
       close();
     } catch (e) {

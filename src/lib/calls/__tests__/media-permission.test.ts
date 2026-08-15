@@ -13,9 +13,15 @@ describe("media-permission", () => {
   });
 
   it("mengklasifikasi error getUserMedia", () => {
-    expect(classifyMediaError(Object.assign(new Error("x"), { name: "NotAllowedError" }))).toBe("denied");
-    expect(classifyMediaError(Object.assign(new Error("x"), { name: "NotFoundError" }))).toBe("missing");
-    expect(classifyMediaError(Object.assign(new Error("x"), { name: "NotReadableError" }))).toBe("busy");
+    expect(classifyMediaError(Object.assign(new Error("x"), { name: "NotAllowedError" }))).toBe(
+      "denied",
+    );
+    expect(classifyMediaError(Object.assign(new Error("x"), { name: "NotFoundError" }))).toBe(
+      "missing",
+    );
+    expect(classifyMediaError(Object.assign(new Error("x"), { name: "NotReadableError" }))).toBe(
+      "busy",
+    );
   });
 
   it("hanya granted yang boleh menjawab", () => {

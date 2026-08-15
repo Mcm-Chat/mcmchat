@@ -7,13 +7,7 @@ import {
   type PushData,
   type PushKind,
 } from "./payload";
-import {
-  sendPush,
-  sendEach,
-  pushConfigured,
-  type FcmResult,
-  type PushMessage,
-} from "./fcm.server";
+import { sendPush, sendEach, pushConfigured, type FcmResult, type PushMessage } from "./fcm.server";
 
 type Row = Record<string, unknown>;
 
@@ -50,9 +44,7 @@ export async function mintNotificationAction(input: {
   });
   if (error) return null;
   const row = (Array.isArray(data) ? data[0] : data) as
-    | { action_id?: string; token?: string }
-    | null
-    | undefined;
+    { action_id?: string; token?: string } | null | undefined;
   if (!row?.action_id || !row.token) return null;
   return { actionId: row.action_id, token: row.token };
 }

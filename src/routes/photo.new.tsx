@@ -30,7 +30,9 @@ function PhotoNew() {
   return (
     <AppShell
       nav={false}
-      header={<MobileHeader title="Kirim foto" subtitle="Ambil foto, pilih penerima, lalu kirim" back />}
+      header={
+        <MobileHeader title="Kirim foto" subtitle="Ambil foto, pilih penerima, lalu kirim" back />
+      }
       className="flex flex-col"
     >
       {loading || isLoading || !userId ? (

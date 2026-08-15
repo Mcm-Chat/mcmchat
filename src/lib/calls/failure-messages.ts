@@ -76,7 +76,8 @@ export function describeConnectFailure(raw: unknown): CallFailureMessage {
   if (/token|kredensial|penyedia|livekit|unauthorized|401|403/.test(r))
     return {
       message: "Layanan panggilan menolak sambungan ini.",
-      action: "Coba sambungkan lagi; bila tetap gagal, hubungi pemilik aplikasi untuk memeriksa layanan panggilan.",
+      action:
+        "Coba sambungkan lagi; bila tetap gagal, hubungi pemilik aplikasi untuk memeriksa layanan panggilan.",
       outcome: "provider",
     };
   if (/ice|signal|sinyal|jaringan|network|koneksi|timeout|terputus|disconnect/.test(r))

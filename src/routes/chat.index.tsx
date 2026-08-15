@@ -295,164 +295,164 @@ function ChatIndex() {
             }
           />
         ) : (
-        <MobileHeader
-          title="Chat"
-          actions={
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Pilih percakapan"
-                className="size-11"
-                onClick={() => setSelectMode(true)}
-              >
-                <CheckSquare className="size-5" />
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                size="icon"
-                aria-label="Buka status"
-                className="size-11"
-              >
-                <Link to="/status">
-                  <CircleDashed className="size-5" />
-                </Link>
-              </Button>
-              <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Buat grup" className="size-11">
-                    <Users className="size-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="rounded-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Grup baru</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="group-name">Nama grup</Label>
-                      <Input
-                        id="group-name"
-                        value={groupName}
-                        maxLength={60}
-                        onChange={(e) => setGroupName(e.target.value)}
-                        placeholder="Contoh: Tim Kopi Nusa"
-                      />
+          <MobileHeader
+            title="Chat"
+            actions={
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Pilih percakapan"
+                  className="size-11"
+                  onClick={() => setSelectMode(true)}
+                >
+                  <CheckSquare className="size-5" />
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Buka status"
+                  className="size-11"
+                >
+                  <Link to="/status">
+                    <CircleDashed className="size-5" />
+                  </Link>
+                </Button>
+                <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Buat grup" className="size-11">
+                      <Users className="size-5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Grup baru</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="group-name">Nama grup</Label>
+                        <Input
+                          id="group-name"
+                          value={groupName}
+                          maxLength={60}
+                          onChange={(e) => setGroupName(e.target.value)}
+                          placeholder="Contoh: Tim Kopi Nusa"
+                        />
+                      </div>
+                      <div className="max-h-56 space-y-1 overflow-y-auto">
+                        {(contacts ?? []).map((c) => (
+                          <label
+                            key={c.contact_id}
+                            className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted"
+                          >
+                            <Checkbox
+                              checked={groupMembers.includes(c.contact_id)}
+                              onCheckedChange={(v) =>
+                                setGroupMembers((p) =>
+                                  v ? [...p, c.contact_id] : p.filter((x) => x !== c.contact_id),
+                                )
+                              }
+                            />
+                            <UserAvatar
+                              userId={c.contact_id}
+                              path={c.profile.avatar_url}
+                              version={c.profile.avatar_version}
+                              name={c.profile.display_name}
+                              color={c.profile.avatar_color}
+                              size="sm"
+                            />
+                            <span className="min-w-0 flex-1 truncate text-sm">
+                              {c.profile.display_name}
+                            </span>
+                          </label>
+                        ))}
+                        {(contacts ?? []).length === 0 && (
+                          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+                            Belum ada kontak.
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="max-h-56 space-y-1 overflow-y-auto">
-                      {(contacts ?? []).map((c) => (
-                        <label
-                          key={c.contact_id}
-                          className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-muted"
-                        >
-                          <Checkbox
-                            checked={groupMembers.includes(c.contact_id)}
-                            onCheckedChange={(v) =>
-                              setGroupMembers((p) =>
-                                v ? [...p, c.contact_id] : p.filter((x) => x !== c.contact_id),
-                              )
-                            }
-                          />
-                          <UserAvatar
-                            userId={c.contact_id}
-                            path={c.profile.avatar_url}
-                            version={c.profile.avatar_version}
-                            name={c.profile.display_name}
-                            color={c.profile.avatar_color}
-                            size="sm"
-                          />
-                          <span className="min-w-0 flex-1 truncate text-sm">
-                            {c.profile.display_name}
-                          </span>
-                        </label>
-                      ))}
+                    <DialogFooter>
+                      <Button className="w-full rounded-xl" onClick={() => void submitGroup()}>
+                        Buat grup
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={newOpen} onOpenChange={setNewOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Chat baru" className="size-11">
+                      <MessageCirclePlus className="size-5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="rounded-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Mulai chat</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-72 space-y-1 overflow-y-auto">
+                      {(contacts ?? [])
+                        .filter((c) => !c.is_blocked)
+                        .map((c) => (
+                          <button
+                            key={c.contact_id}
+                            type="button"
+                            className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-muted"
+                            onClick={() => void openDirect(c.contact_id)}
+                          >
+                            <UserAvatar
+                              userId={c.contact_id}
+                              path={c.profile.avatar_url}
+                              version={c.profile.avatar_version}
+                              name={c.profile.display_name}
+                              color={c.profile.avatar_color}
+                              size="sm"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium">
+                                {c.profile.display_name}
+                              </span>
+                              <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                                {c.profile.pin}
+                              </span>
+                            </span>
+                          </button>
+                        ))}
                       {(contacts ?? []).length === 0 && (
                         <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                          Belum ada kontak.
+                          Tambahkan kontak lewat PIN dulu.
                         </p>
                       )}
                     </div>
-                  </div>
-                  <DialogFooter>
-                    <Button className="w-full rounded-xl" onClick={() => void submitGroup()}>
-                      Buat grup
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={newOpen} onOpenChange={setNewOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Chat baru" className="size-11">
-                    <MessageCirclePlus className="size-5" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="rounded-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Mulai chat</DialogTitle>
-                  </DialogHeader>
-                  <div className="max-h-72 space-y-1 overflow-y-auto">
-                    {(contacts ?? [])
-                      .filter((c) => !c.is_blocked)
-                      .map((c) => (
-                        <button
-                          key={c.contact_id}
-                          type="button"
-                          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-muted"
-                          onClick={() => void openDirect(c.contact_id)}
-                        >
-                          <UserAvatar
-                            userId={c.contact_id}
-                            path={c.profile.avatar_url}
-                            version={c.profile.avatar_version}
-                            name={c.profile.display_name}
-                            color={c.profile.avatar_color}
-                            size="sm"
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium">
-                              {c.profile.display_name}
-                            </span>
-                            <span className="block truncate font-mono text-[11px] text-muted-foreground">
-                              {c.profile.pin}
-                            </span>
-                          </span>
-                        </button>
-                      ))}
-                    {(contacts ?? []).length === 0 && (
-                      <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                        Tambahkan kontak lewat PIN dulu.
-                      </p>
-                    )}
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="secondary"
-                      className="w-full rounded-xl"
-                      onClick={() => void navigate({ to: "/contacts/add" })}
-                    >
-                      Tambah kontak lewat PIN
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          }
-        >
-          <div className="px-3 pb-3">
-            <div className="relative">
-              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                maxLength={60}
-                aria-label="Cari percakapan"
-                placeholder="Cari percakapan"
-                className="h-11 rounded-xl pl-9"
-              />
+                    <DialogFooter>
+                      <Button
+                        variant="secondary"
+                        className="w-full rounded-xl"
+                        onClick={() => void navigate({ to: "/contacts/add" })}
+                      >
+                        Tambah kontak lewat PIN
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
+            }
+          >
+            <div className="px-3 pb-3">
+              <div className="relative">
+                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  maxLength={60}
+                  aria-label="Cari percakapan"
+                  placeholder="Cari percakapan"
+                  className="h-11 rounded-xl pl-9"
+                />
+              </div>
             </div>
-          </div>
-        </MobileHeader>
+          </MobileHeader>
         )
       }
     >
@@ -511,38 +511,38 @@ function ChatIndex() {
                 </label>
               )}
               <div className="min-w-0 flex-1">
-              {selectMode && (
-                <button
-                  type="button"
-                  onClick={() => toggleSelect(c.id)}
-                  aria-label={`Pilih percakapan ${c.title_resolved}`}
-                  className="absolute inset-0 z-10"
+                {selectMode && (
+                  <button
+                    type="button"
+                    onClick={() => toggleSelect(c.id)}
+                    aria-label={`Pilih percakapan ${c.title_resolved}`}
+                    className="absolute inset-0 z-10"
+                  />
+                )}
+                {!selectMode && sendProductId && (
+                  <button
+                    type="button"
+                    disabled={!!sendingTo}
+                    onClick={() => void sendCardTo(c.id)}
+                    aria-label={`Kirim kartu produk ke ${c.title_resolved}`}
+                    className="absolute inset-0 z-10 bg-primary/0 transition-colors hover:bg-primary/10 disabled:opacity-50"
+                  />
+                )}
+                <ChatListItem
+                  conv={c}
+                  time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
+                  outgoingStatus={
+                    c.lastMessage && c.lastMessage.sender_id === userId
+                      ? deriveStatus(
+                          receiptIndex.get(c.lastMessage.id) ?? [],
+                          Math.max(0, c.members.length - 1),
+                        )
+                      : undefined
+                  }
+                  onTogglePin={() => void patchMember(c.id, { is_pinned: !c.me.is_pinned })}
+                  onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
+                  onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}
                 />
-              )}
-              {!selectMode && sendProductId && (
-                <button
-                  type="button"
-                  disabled={!!sendingTo}
-                  onClick={() => void sendCardTo(c.id)}
-                  aria-label={`Kirim kartu produk ke ${c.title_resolved}`}
-                  className="absolute inset-0 z-10 bg-primary/0 transition-colors hover:bg-primary/10 disabled:opacity-50"
-                />
-              )}
-              <ChatListItem
-                conv={c}
-                time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
-                outgoingStatus={
-                  c.lastMessage && c.lastMessage.sender_id === userId
-                    ? deriveStatus(
-                        receiptIndex.get(c.lastMessage.id) ?? [],
-                        Math.max(0, c.members.length - 1),
-                      )
-                    : undefined
-                }
-                onTogglePin={() => void patchMember(c.id, { is_pinned: !c.me.is_pinned })}
-                onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
-                onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}
-              />
               </div>
             </li>
           ))}

@@ -26,7 +26,13 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>(options: {
    */
   suspended?: boolean | undefined;
 }) {
-  const { onClose, active = true, closeOnEscape = true, fallbackFocus, suspended = false } = options;
+  const {
+    onClose,
+    active = true,
+    closeOnEscape = true,
+    fallbackFocus,
+    suspended = false,
+  } = options;
   const containerRef = useRef<T | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -174,10 +180,10 @@ function restoreFocus(
   const usable = (el: HTMLElement | null | undefined): el is HTMLElement =>
     Boolean(
       el &&
-        el !== document.body &&
-        el !== document.documentElement &&
-        document.contains(el) &&
-        !(el as HTMLButtonElement).disabled,
+      el !== document.body &&
+      el !== document.documentElement &&
+      document.contains(el) &&
+      !(el as HTMLButtonElement).disabled,
     );
 
   if (usable(previous)) {

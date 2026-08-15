@@ -22,12 +22,10 @@ export async function listHiddenCallIds(userId: string): Promise<Set<string>> {
 export async function hideCalls(userId: string, callIds: string[]): Promise<void> {
   const ids = [...new Set(callIds)].filter(Boolean);
   if (ids.length === 0) return;
-  const { error } = await supabase
-    .from("call_log_hides")
-    .upsert(
-      ids.map((call_id) => ({ user_id: userId, call_id })),
-      { onConflict: "user_id,call_id" },
-    );
+  const { error } = await supabase.from("call_log_hides").upsert(
+    ids.map((call_id) => ({ user_id: userId, call_id })),
+    { onConflict: "user_id,call_id" },
+  );
   if (error) throw new Error(friendly(error.message, "Gagal menghapus riwayat panggilan"));
 }
 

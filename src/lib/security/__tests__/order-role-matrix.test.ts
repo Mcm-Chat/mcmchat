@@ -86,7 +86,9 @@ describe("matriks kelola pesanan chat", () => {
 
   it("pembeli tetap boleh membatalkan hanya pada tahap awal", () => {
     expect(cancel).toContain("o.buyer_user_id is distinct from _uid");
-    expect(cancel).toContain("'buyer_requested','seller_confirmed','changes_requested','buyer_approved'");
+    expect(cancel).toContain(
+      "'buyer_requested','seller_confirmed','changes_requested','buyer_approved'",
+    );
   });
 });
 
@@ -137,13 +139,19 @@ describe("create_chat_order: peran & identitas pembeli", () => {
 
   it("buyer_user_id payload tidak dipercaya; pembeli diturunkan dari percakapan", () => {
     expect(createOrder).toContain("bc.customer_id into _buyer");
-    expect(createOrder).toContain("from public.direct_conversations dc where dc.conversation_id = _conv");
-    expect(createOrder).toContain("if _buyer is null then raise exception 'pembeli tidak dapat ditentukan");
+    expect(createOrder).toContain(
+      "from public.direct_conversations dc where dc.conversation_id = _conv",
+    );
+    expect(createOrder).toContain(
+      "if _buyer is null then raise exception 'pembeli tidak dapat ditentukan",
+    );
     expect(createOrder).toContain("if _claim is not null and _claim <> _buyer then");
   });
 
   it("pembeli hanya boleh memesan pada percakapan yang terikat bisnis tersebut", () => {
-    expect(createOrder).toContain("from public.business_conversations bc where bc.conversation_id = _conv and bc.business_id = _biz and (bc.customer_id = _uid");
+    expect(createOrder).toContain(
+      "from public.business_conversations bc where bc.conversation_id = _conv and bc.business_id = _biz and (bc.customer_id = _uid",
+    );
   });
 });
 

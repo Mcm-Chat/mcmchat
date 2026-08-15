@@ -214,15 +214,15 @@ describe("2B — business conversation", () => {
   });
 
   it("assignee wajib anggota bisnis dan inbox hanya aktor berwenang", () => {
-    expect(lastFunctionBody("set_conversation_assignee")).toMatch(/is_business_member\(_biz, _assignee\)/);
+    expect(lastFunctionBody("set_conversation_assignee")).toMatch(
+      /is_business_member\(_biz, _assignee\)/,
+    );
     expect(lastFunctionBody("set_conversation_inbox_status")).toMatch(/can_sell_business/);
   });
 
   it("admin bisnis tidak dapat mengangkat owner (anti eskalasi)", () => {
     expect(
-      has(
-        /role <> 'owner' or public\.business_role_of\(business_id, auth\.uid\(\)\) = 'owner'/,
-      ),
+      has(/role <> 'owner' or public\.business_role_of\(business_id, auth\.uid\(\)\) = 'owner'/),
     ).toBe(true);
   });
 });
@@ -236,7 +236,9 @@ describe("2B — ACL akhir", () => {
       expect(revoke, t).toBeGreaterThan(-1);
       expect(
         lastIndexOfPattern(
-          new RegExp(`grant (insert|update|delete|all)[^;]*on table public\\.${t} to [^;]*authenticated`),
+          new RegExp(
+            `grant (insert|update|delete|all)[^;]*on table public\\.${t} to [^;]*authenticated`,
+          ),
         ),
         t,
       ).toBeLessThan(revoke);
@@ -272,7 +274,9 @@ describe("2B — ACL akhir", () => {
       );
       expect(revoke, fn).toBeGreaterThan(-1);
       expect(
-        lastIndexOfPattern(new RegExp(`grant execute on function public\\.${fn} to [^;]*authenticated`)),
+        lastIndexOfPattern(
+          new RegExp(`grant execute on function public\\.${fn} to [^;]*authenticated`),
+        ),
         fn,
       ).toBeLessThan(revoke);
     }
@@ -297,10 +301,9 @@ describe("2B — ACL akhir", () => {
       "conversation_overview\\(\\)",
       "my_conversation_capability\\(uuid\\)",
     ]) {
-      expect(
-        has(new RegExp(`revoke all on function public\\.${fn} from public, anon`)),
-        fn,
-      ).toBe(true);
+      expect(has(new RegExp(`revoke all on function public\\.${fn} from public, anon`)), fn).toBe(
+        true,
+      );
       expect(
         has(new RegExp(`grant execute on function public\\.${fn} to authenticated, service_role`)),
         fn,
@@ -337,7 +340,8 @@ describe("2B — audit sumber klien", () => {
     const offenders: string[] = [];
     for (const file of sourceFiles) {
       const text = readFileSync(file, "utf8");
-      const re = /from\("(conversations|conversation_members)"\)\s*\.\s*(insert|update|delete|upsert)/g;
+      const re =
+        /from\("(conversations|conversation_members)"\)\s*\.\s*(insert|update|delete|upsert)/g;
       if (re.test(text)) offenders.push(path.relative(SRC, file));
     }
     expect(offenders).toEqual([]);

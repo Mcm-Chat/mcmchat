@@ -192,7 +192,9 @@ function ResultActions({ token, task }: { token: string; task: PrepTask }) {
     try {
       await send({ data: { token, target, note } });
       setSent((s) => ({ ...s, [target]: true }));
-      toast.success(target === "customer" ? "Hasil terkirim ke pelanggan" : "Konfirmasi terkirim ke penjual");
+      toast.success(
+        target === "customer" ? "Hasil terkirim ke pelanggan" : "Konfirmasi terkirim ke penjual",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengirim hasil");
     } finally {
@@ -231,7 +233,11 @@ function ResultActions({ token, task }: { token: string; task: PrepTask }) {
         disabled={busy !== null}
         onClick={() => void run("customer")}
       >
-        {busy === "customer" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+        {busy === "customer" ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Send className="size-4" />
+        )}
         {sent.customer ? "Kirim ulang ke pelanggan" : "Kirim ke pelanggan"}
       </Button>
       <Button
@@ -240,7 +246,11 @@ function ResultActions({ token, task }: { token: string; task: PrepTask }) {
         disabled={busy !== null}
         onClick={() => void run("seller")}
       >
-        {busy === "seller" ? <Loader2 className="size-4 animate-spin" /> : <Store className="size-4" />}
+        {busy === "seller" ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Store className="size-4" />
+        )}
         {sent.seller ? "Konfirmasi ulang ke penjual" : "Konfirmasi ke penjual"}
       </Button>
       <Button variant="ghost" className="h-11 w-full rounded-xl" onClick={() => void share()}>

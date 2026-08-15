@@ -748,7 +748,7 @@ function ProfilePage() {
                   />
                 }
               />
-              
+
               <button
                 type="button"
                 onClick={() => void navigate({ to: "/settings/notifications" })}

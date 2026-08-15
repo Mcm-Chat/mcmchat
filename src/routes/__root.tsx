@@ -207,11 +207,7 @@ function RootComponent() {
             <PushSession />
             <IncomingCallListener />
             <ScreenPrivacyGuard />
-            <Toaster
-              position="top-center"
-              richColors
-              closeButton
-            />
+            <Toaster position="top-center" richColors closeButton />
           </AuthProvider>
         </ReduceMotionProvider>
       </ThemeProvider>

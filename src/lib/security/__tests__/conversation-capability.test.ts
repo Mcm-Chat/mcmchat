@@ -71,9 +71,10 @@ describe("koreksi 2B — policy tidak boleh memanggil helper arbitrary-user", ()
 
   it("helper self-scoped tersedia untuk authenticated", () => {
     // Grant dikeluarkan lewat loop format() atas daftar nama fungsi.
-    const grantLoop = /foreach f in array array\[(.*?)\] loop execute format\('revoke all on function public\.%s from public, anon', f\); execute format\('grant execute on function public\.%s to authenticated, service_role', f\)/s.exec(
-      sql,
-    );
+    const grantLoop =
+      /foreach f in array array\[(.*?)\] loop execute format\('revoke all on function public\.%s from public, anon', f\); execute format\('grant execute on function public\.%s to authenticated, service_role', f\)/s.exec(
+        sql,
+      );
     expect(grantLoop).not.toBeNull();
     for (const fn of [
       "current_user_can_read_conversation",
@@ -90,9 +91,17 @@ describe("koreksi 2B — policy tidak boleh memanggil helper arbitrary-user", ()
   });
 
   it("helper arbitrary-user dicabut dari authenticated", () => {
-    for (const fn of ["can_manage_business", "can_sell_business", "is_business_member", "business_role_of", "can_use_conversation"]) {
+    for (const fn of [
+      "can_manage_business",
+      "can_sell_business",
+      "is_business_member",
+      "business_role_of",
+      "can_use_conversation",
+    ]) {
       expect(sql).toMatch(
-        new RegExp(`revoke all on function public\\.${fn}\\(uuid,uuid\\) from public, anon, authenticated`),
+        new RegExp(
+          `revoke all on function public\\.${fn}\\(uuid,uuid\\) from public, anon, authenticated`,
+        ),
       );
     }
   });

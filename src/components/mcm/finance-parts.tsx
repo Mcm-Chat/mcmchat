@@ -240,7 +240,9 @@ export function ContactSummaryRow({
           {row.net === 0 ? "Seimbang" : positif ? "Menerima" : "Membayar"}
         </StatusBadge>
       </div>
-      <p className={cn("mt-1.5 text-base font-bold", positif ? "text-success" : "text-destructive")}>
+      <p
+        className={cn("mt-1.5 text-base font-bold", positif ? "text-success" : "text-destructive")}
+      >
         {rupiah(Math.abs(row.net))}
       </p>
       <p className="text-[11px] text-muted-foreground">

@@ -8,14 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 
 export type CallShortcutAction =
-  | "mute"
-  | "camera"
-  | "speaker"
-  | "switchCamera"
-  | "devices"
-  | "hangup"
-  | "answer"
-  | "decline";
+  "mute" | "camera" | "speaker" | "switchCamera" | "devices" | "hangup" | "answer" | "decline";
 
 export const CALL_SHORTCUTS: { keys: string; label: string }[] = [
   { keys: "M", label: "Bisukan / nyalakan mikrofon" },

@@ -30,11 +30,16 @@ type Props = {
 };
 
 /** Terjemahkan alasan teknis jadi kategori pemulihan yang bisa ditindaklanjuti. */
-export function classifyCallFailure(reason: string | null, unconfigured?: boolean): CallFailureKind {
+export function classifyCallFailure(
+  reason: string | null,
+  unconfigured?: boolean,
+): CallFailureKind {
   if (unconfigured) return "provider";
   const r = (reason ?? "").toLowerCase();
   if (/izin|permission|denied|notallowed/.test(r)) return "permission";
-  if (/perangkat|device|mikrofon|microphone|kamera|camera|notfound|notreadable|sedang dipakai/.test(r))
+  if (
+    /perangkat|device|mikrofon|microphone|kamera|camera|notfound|notreadable|sedang dipakai/.test(r)
+  )
     return "device";
   if (/sinyal|jaringan|network|koneksi|connection|timeout|ice|signal|terputus/.test(r))
     return "network";
@@ -51,14 +56,16 @@ const TITLE: Record<CallFailureKind, string> = {
 };
 
 const HINT: Record<CallFailureKind, string> = {
-  network: "Jaringan tidak stabil saat menyambungkan media. Pastikan sinyal/Wi-Fi stabil, lalu coba sambungkan lagi.",
+  network:
+    "Jaringan tidak stabil saat menyambungkan media. Pastikan sinyal/Wi-Fi stabil, lalu coba sambungkan lagi.",
   permission:
     "Browser atau sistem menolak akses mikrofon/kamera. Izinkan akses di pengaturan aplikasi, lalu coba sambungkan lagi.",
   device:
     "Mikrofon atau kamera tidak terbaca (mungkin dipakai aplikasi lain). Ganti perangkat input, lalu coba sambungkan lagi.",
   provider:
     "Kredensial layanan panggilan belum lengkap atau ditolak. Periksa pengaturan penyedia panggilan sebelum mencoba lagi.",
-  unknown: "Panggilan tidak dapat disambungkan. Coba sambungkan lagi atau ganti perangkat/penyedia.",
+  unknown:
+    "Panggilan tidak dapat disambungkan. Coba sambungkan lagi atau ganti perangkat/penyedia.",
 };
 
 /**
@@ -89,7 +96,8 @@ export function CallFailureRecovery({
     if (kind === "permission") {
       toast.loading("Meminta izin mikrofon/kamera…", {
         id: "call-recovery",
-        description: "Pilih “Izinkan” pada permintaan sistem, lalu panggilan disambungkan otomatis.",
+        description:
+          "Pilih “Izinkan” pada permintaan sistem, lalu panggilan disambungkan otomatis.",
       });
     } else {
       toast.loading("Menyambungkan ulang panggilan…", {
@@ -184,19 +192,33 @@ export function CallFailureRecovery({
       onClick={handleRetry}
     >
       <RotateCcw className="mr-1.5 size-4" aria-hidden="true" />
-      {retrying ? "Menyambungkan…" : summary.primary === "permission" ? "Minta izin lagi" : "Coba sambungkan lagi"}
+      {retrying
+        ? "Menyambungkan…"
+        : summary.primary === "permission"
+          ? "Minta izin lagi"
+          : "Coba sambungkan lagi"}
     </Button>
   ) : null;
 
   const deviceButton = onOpenDevices ? (
-    <Button key="devices" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={handleDevices}>
+    <Button
+      key="devices"
+      variant="secondary"
+      className="min-h-11 rounded-xl px-4"
+      onClick={handleDevices}
+    >
       <SlidersHorizontal className="mr-1.5 size-4" aria-hidden="true" />
       Ganti perangkat
     </Button>
   ) : null;
 
   const providerButton = onOpenProvider ? (
-    <Button key="provider" variant="secondary" className="min-h-11 rounded-xl px-4" onClick={handleProvider}>
+    <Button
+      key="provider"
+      variant="secondary"
+      className="min-h-11 rounded-xl px-4"
+      onClick={handleProvider}
+    >
       <Wrench className="mr-1.5 size-4" aria-hidden="true" />
       Ganti penyedia
     </Button>
@@ -224,9 +246,7 @@ export function CallFailureRecovery({
         Penyebab: {summary.label}
       </p>
       <p className="mt-1 text-navy-foreground/85">{HINT[kind]}</p>
-      {reason ? (
-        <p className="mt-1 text-xs text-navy-foreground/70">Detail: {reason}</p>
-      ) : null}
+      {reason ? <p className="mt-1 text-xs text-navy-foreground/70">Detail: {reason}</p> : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {order.map((k) => buttons[k]).filter(Boolean)}
       </div>

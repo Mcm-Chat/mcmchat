@@ -23,7 +23,10 @@ const sql = files.join("\n");
 function latestFunction(name: string): string {
   let found = "";
   for (const file of files) {
-    const re = new RegExp(`create (?:or replace )?function public\\.${name}\\b[\\s\\S]*?\\$\\$;`, "gi");
+    const re = new RegExp(
+      `create (?:or replace )?function public\\.${name}\\b[\\s\\S]*?\\$\\$;`,
+      "gi",
+    );
     const matches = file.match(re);
     if (matches?.length) found = matches[matches.length - 1]!;
   }
@@ -109,7 +112,9 @@ describe("consume: single-use atomik", () => {
   });
 
   it("menandai used_at + result pada transaksi yang sama", () => {
-    expect(consume).toMatch(/update public\.notification_actions[\s\S]*set used_at = now\(\), result = _res/i);
+    expect(consume).toMatch(
+      /update public\.notification_actions[\s\S]*set used_at = now\(\), result = _res/i,
+    );
   });
 
   it("menolak token untuk sumber daya lain", () => {

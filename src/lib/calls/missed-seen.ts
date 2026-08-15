@@ -63,11 +63,11 @@ export function parseMissedSeen(raw: string | null): MissedSeenMap {
 }
 
 function read(): MissedSeenMap {
-  const key = scopedKey(NAME);
+  const storageKey = scopedKey(NAME);
   if (typeof localStorage === "undefined") return EMPTY;
-  if (cache !== null && cacheKey === key) return cache;
-  cache = parseMissedSeen(localStorage.getItem(key));
-  cacheKey = key;
+  if (cache !== null && cacheKey === storageKey) return cache;
+  cache = parseMissedSeen(localStorage.getItem(storageKey));
+  cacheKey = storageKey;
   return cache;
 }
 
@@ -77,14 +77,12 @@ function read(): MissedSeenMap {
  */
 export function markMissedCallsSeen(at: number = Date.now(), kind?: CallKind) {
   if (typeof localStorage === "undefined") return;
-  const key = scopedKey(NAME);
+  const storageKey = scopedKey(NAME);
   const current = read();
-  const next: MissedSeenMap = kind
-    ? { ...current, [kind]: at }
-    : { audio: at, video: at };
-  localStorage.setItem(key, JSON.stringify(next));
+  const next: MissedSeenMap = kind ? { ...current, [kind]: at } : { audio: at, video: at };
+  localStorage.setItem(storageKey, JSON.stringify(next));
   cache = next;
-  cacheKey = key;
+  cacheKey = storageKey;
   emitChange();
 }
 

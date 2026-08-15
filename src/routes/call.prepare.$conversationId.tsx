@@ -52,7 +52,11 @@ function classifyMediaError(err: unknown): PermissionKind {
   const name = err instanceof Error ? err.name : "";
   if (name === "NotAllowedError" || name === "SecurityError" || name === "PermissionDeniedError")
     return "denied";
-  if (name === "NotFoundError" || name === "OverconstrainedError" || name === "DevicesNotFoundError")
+  if (
+    name === "NotFoundError" ||
+    name === "OverconstrainedError" ||
+    name === "DevicesNotFoundError"
+  )
     return "notfound";
   if (name === "NotReadableError" || name === "TrackStartError") return "busy";
   return "unknown";
@@ -204,7 +208,10 @@ function PreCallScreen() {
     setStarting(true);
     setError(null);
     try {
-      const created = await startCall(conversationId, kind === "video" && camOn ? "video" : "audio");
+      const created = await startCall(
+        conversationId,
+        kind === "video" && camOn ? "video" : "audio",
+      );
       stopMedia();
       void navigate({ to: "/call/$id", params: { id: created.id } });
     } catch (e) {
@@ -359,7 +366,11 @@ function PreCallScreen() {
           disabled={loading || starting || configured === false}
           onClick={() => void begin()}
         >
-          {starting ? "Memulai…" : kind === "video" ? "Mulai panggilan video" : "Mulai panggilan suara"}
+          {starting
+            ? "Memulai…"
+            : kind === "video"
+              ? "Mulai panggilan video"
+              : "Mulai panggilan suara"}
         </Button>
       </div>
     </AppShell>

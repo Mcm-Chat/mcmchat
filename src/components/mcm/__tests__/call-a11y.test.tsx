@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Uji aksesibilitas layar panggilan masuk & panel pemulihan.
  *
@@ -19,13 +20,31 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: "me" } }) }));
 vi.mock("@/lib/api/profiles", () => ({
-  fetchProfileCard: async () => ({ display_name: "Can", avatar_color: "from-slate-500 to-slate-700" }),
+  fetchProfileCard: async () => ({
+    display_name: "Can",
+    avatar_color: "from-slate-500 to-slate-700",
+  }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 vi.mock("@/lib/realtime/connection", () => ({ onConnectionChange: () => () => {} }));
 vi.mock("@/lib/calls/tones", () => ({ playTone: () => ({ stop: () => {} }) }));
-vi.mock("@/lib/contacts/alias", () => ({ useContactAliases: () => ({ nameOf: (_id: string, n: string) => n }) }));
-vi.mock("@/lib/calls/return-focus", () => ({ setCallReturnFocus: vi.fn(), redialButtonId: (id: string) => `redial-call-${id}` }));
+vi.mock("@/lib/contacts/alias", () => ({
+  useContactAliases: () => ({ nameOf: (_id: string, n: string) => n }),
+}));
+// Izin mikrofon/kamera: di jsdom tidak ada perangkat nyata, jadi izin
+// dianggap sudah diberikan supaya alur "jawab" bisa diuji.
+vi.mock("@/lib/calls/media-permission", () => ({
+  requestMediaPermission: async () => "granted",
+  mediaPermissionCopy: () => ({ title: "", body: "", action: "" }),
+}));
+vi.mock("@/lib/calls/permission-cache", () => ({
+  readCachedPermission: () => "granted",
+  writeCachedPermission: () => {},
+}));
+vi.mock("@/lib/calls/return-focus", () => ({
+  setCallReturnFocus: vi.fn(),
+  redialButtonId: (id: string) => `redial-call-${id}`,
+}));
 vi.mock("@/lib/api/calls", () => ({
   RING_TIMEOUT_MS: 45_000,
   ringRemainingMs: () => 45_000,
@@ -33,11 +52,15 @@ vi.mock("@/lib/api/calls", () => ({
   listRingingCalls: async () => (ringingRow ? [ringingRow] : []),
   subscribeIncomingCalls: (_uid: string, cb: (row: any) => void) => {
     incomingCb = cb;
-    return () => { incomingCb = null; };
+    return () => {
+      incomingCb = null;
+    };
   },
   subscribeCall: (_id: string, cb: (row: any) => void) => {
     callCb = cb;
-    return () => { callCb = null; };
+    return () => {
+      callCb = null;
+    };
   },
 }));
 
@@ -53,7 +76,9 @@ const row = (kind: "audio" | "video" = "audio") => ({
 
 function tab(shift = false) {
   act(() => {
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: shift, bubbles: true }));
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", shiftKey: shift, bubbles: true }),
+    );
   });
 }
 
@@ -212,7 +237,9 @@ describe("Panel pemulihan panggilan gagal", () => {
 
   it("state perangkat: aksi Ganti perangkat tampil lebih dulu", async () => {
     renderPanel({ reason: "NotReadableError: mikrofon sedang dipakai aplikasi lain" });
-    const names = within(screen.getByRole("alertdialog")).getAllByRole("button").map((b) => b.textContent ?? "");
+    const names = within(screen.getByRole("alertdialog"))
+      .getAllByRole("button")
+      .map((b) => b.textContent ?? "");
     expect(names.join("|")).toMatch(/ganti perangkat.*coba sambungkan lagi/i);
     expect(screen.getByText(/penyebab: mikrofon dipakai aplikasi lain/i)).toBeInTheDocument();
   });
@@ -220,7 +247,9 @@ describe("Panel pemulihan panggilan gagal", () => {
   it("state penyedia belum siap: penyebab dan urutan aksi sesuai", async () => {
     renderPanel({ reason: null, unconfigured: true });
     expect(screen.getByText(/penyebab: layanan panggilan belum siap/i)).toBeInTheDocument();
-    const names = within(screen.getByRole("alertdialog")).getAllByRole("button").map((b) => b.textContent ?? "");
+    const names = within(screen.getByRole("alertdialog"))
+      .getAllByRole("button")
+      .map((b) => b.textContent ?? "");
     expect(names.join("|")).toMatch(/ganti penyedia.*coba sambungkan lagi/i);
   });
 
@@ -272,13 +301,24 @@ describe("panel pemulihan — sheet perangkat/efek suara", () => {
     document.body.appendChild(outside);
 
     const view = render(
-      <CallFailureRecovery trapFocus reason="NotAllowedError" onRetry={() => {}} onOpenDevices={() => {}} />,
+      <CallFailureRecovery
+        trapFocus
+        reason="NotAllowedError"
+        onRetry={() => {}}
+        onOpenDevices={() => {}}
+      />,
     );
     await new Promise((r) => setTimeout(r, 30));
 
     // Sheet terbuka: fokus milik sheet (disimulasikan elemen di luar panel).
     view.rerender(
-      <CallFailureRecovery trapFocus suspendTrap reason="NotAllowedError" onRetry={() => {}} onOpenDevices={() => {}} />,
+      <CallFailureRecovery
+        trapFocus
+        suspendTrap
+        reason="NotAllowedError"
+        onRetry={() => {}}
+        onOpenDevices={() => {}}
+      />,
     );
     outside.focus();
     await new Promise((r) => setTimeout(r, 30));
@@ -286,7 +326,12 @@ describe("panel pemulihan — sheet perangkat/efek suara", () => {
 
     // Sheet tertutup: trap menyala lagi tanpa merebut fokus.
     view.rerender(
-      <CallFailureRecovery trapFocus reason="NotAllowedError" onRetry={() => {}} onOpenDevices={() => {}} />,
+      <CallFailureRecovery
+        trapFocus
+        reason="NotAllowedError"
+        onRetry={() => {}}
+        onOpenDevices={() => {}}
+      />,
     );
     await new Promise((r) => setTimeout(r, 30));
     expect(document.activeElement).toBe(outside);

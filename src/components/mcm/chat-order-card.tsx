@@ -486,7 +486,6 @@ function ConfirmOrderDialog({
   );
 }
 
-
 function DispatchDialog({
   order,
   onClose,

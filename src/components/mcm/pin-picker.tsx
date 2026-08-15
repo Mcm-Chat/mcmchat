@@ -77,7 +77,11 @@ export function SavedContactPicker({
               key={c.id}
               type="button"
               onClick={() => {
-                onPick({ pin: c.profile.pin, name: c.alias || c.profile.display_name, id: c.profile.id });
+                onPick({
+                  pin: c.profile.pin,
+                  name: c.alias || c.profile.display_name,
+                  id: c.profile.id,
+                });
                 onOpenChange(false);
               }}
               className="flex min-h-14 w-full items-center gap-3 rounded-xl px-2 text-left hover:bg-muted/60"

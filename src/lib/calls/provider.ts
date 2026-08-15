@@ -111,7 +111,8 @@ export const liveKitProvider: CallProvider = {
         channelCount: 1,
       },
       videoCaptureDefaults: {
-        resolution: opts.kind === "video" ? VideoPresets.h360.resolution : VideoPresets.h180.resolution,
+        resolution:
+          opts.kind === "video" ? VideoPresets.h360.resolution : VideoPresets.h180.resolution,
         facingMode: "user",
       },
       publishDefaults: {
@@ -229,7 +230,13 @@ export const liveKitProvider: CallProvider = {
       .on(RoomEvent.ConnectionQualityChanged, (q, p) => {
         if (p?.identity !== room.localParticipant.identity) return;
         quality =
-          q === "excellent" ? "excellent" : q === "good" ? "good" : q === "poor" ? "poor" : "unknown";
+          q === "excellent"
+            ? "excellent"
+            : q === "good"
+              ? "good"
+              : q === "poor"
+                ? "poor"
+                : "unknown";
         sync();
       })
       .on(RoomEvent.TrackMuted, sync)

@@ -48,8 +48,10 @@ export const generateProductDescription = createServerFn({ method: "POST" })
       }),
     });
 
-    if (res.status === 429) return { ok: false as const, reason: "Terlalu banyak permintaan, coba lagi sebentar lagi" };
-    if (res.status === 402) return { ok: false as const, reason: "Kredit AI habis. Tambahkan kredit workspace." };
+    if (res.status === 429)
+      return { ok: false as const, reason: "Terlalu banyak permintaan, coba lagi sebentar lagi" };
+    if (res.status === 402)
+      return { ok: false as const, reason: "Kredit AI habis. Tambahkan kredit workspace." };
     if (!res.ok) return { ok: false as const, reason: "Gagal menghubungi layanan AI" };
 
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };

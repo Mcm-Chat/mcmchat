@@ -201,9 +201,7 @@ export function QrScannerDialog({
       <DialogContent className="max-w-[360px] rounded-2xl">
         <DialogHeader>
           <DialogTitle>Pindai QR PIN</DialogTitle>
-          <DialogDescription>
-            Arahkan kamera ke QR Code PIN MCM milik teman Anda.
-          </DialogDescription>
+          <DialogDescription>Arahkan kamera ke QR Code PIN MCM milik teman Anda.</DialogDescription>
         </DialogHeader>
 
         <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black">

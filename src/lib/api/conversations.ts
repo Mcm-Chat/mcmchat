@@ -58,7 +58,8 @@ export async function createGroup(title: string, memberIds: string[]): Promise<s
 
 export function addGroupMembers(conversationId: string, memberIds: string[]) {
   return rpc(
-    () => supabase.rpc("add_group_members", { _conversation: conversationId, _member_ids: memberIds }),
+    () =>
+      supabase.rpc("add_group_members", { _conversation: conversationId, _member_ids: memberIds }),
     "Gagal menambahkan anggota",
   );
 }
@@ -89,7 +90,10 @@ export function setGroupMemberRole(
 export function transferGroupOwnership(conversationId: string, targetId: string) {
   return rpc(
     () =>
-      supabase.rpc("transfer_group_ownership", { _conversation: conversationId, _target: targetId }),
+      supabase.rpc("transfer_group_ownership", {
+        _conversation: conversationId,
+        _target: targetId,
+      }),
     "Gagal memindahkan kepemilikan",
   );
 }
