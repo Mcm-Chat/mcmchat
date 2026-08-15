@@ -554,6 +554,8 @@ function CallScreen() {
                   <ControlButton
                     label={session.controls.muted ? "Suara mati" : "Mikrofon"}
                     active={session.controls.muted}
+                    disabled={!micGranted}
+                    hint={micGranted ? undefined : micHint}
                     ariaLabel="Bisukan mikrofon"
                     onClick={session.toggleMute}
                     icon={session.controls.muted ? MicOff : Mic}
@@ -561,7 +563,8 @@ function CallScreen() {
                   <ControlButton
                     label="Kamera"
                     active={!session.controls.cameraOn}
-                    disabled={!isVideo || session.cameraBlocked}
+                    disabled={!cameraGranted}
+                    hint={cameraGranted ? undefined : cameraHint}
                     ariaLabel="Nyalakan kamera"
                     onClick={session.toggleCamera}
                     icon={session.controls.cameraOn ? Video : VideoOff}
@@ -589,7 +592,8 @@ function CallScreen() {
                   <ControlButton
                     label="Balik kamera"
                     active={false}
-                    disabled={!isVideo}
+                    disabled={!cameraGranted}
+                    hint={cameraGranted ? undefined : cameraHint}
                     ariaLabel="Balik kamera"
                     onClick={session.switchCamera}
                     icon={RefreshCcw}
@@ -597,6 +601,8 @@ function CallScreen() {
                   <ControlButton
                     label="Perangkat"
                     active={devicesOpen}
+                    disabled={!micGranted}
+                    hint={micGranted ? undefined : micHint}
                     ariaLabel="Pilih mikrofon dan kamera"
                     onClick={() => {
                       session.refreshDevices();
