@@ -6,12 +6,35 @@
  * dibuka dan hanya muncul lagi untuk panggilan baru.
  */
 import { useSyncExternalStore } from "react";
-import { scopedKey } from "@/lib/session-scope";
+import { onAccountSwitch, scopedKey } from "@/lib/session-scope";
 
 const NAME = "calls.missed-seen-at";
 const listeners = new Set<() => void>();
 let cache: number | null = null;
 let cacheKey = "";
+let browserListenersReady = false;
+
+function emitChange() {
+  for (const listener of listeners) listener();
+}
+
+function ensureBrowserListeners() {
+  if (browserListenersReady || typeof window === "undefined") return;
+  browserListenersReady = true;
+
+  window.addEventListener("storage", (event) => {
+    if (event.key !== scopedKey(NAME)) return;
+    cache = null;
+    cacheKey = "";
+    emitChange();
+  });
+
+  onAccountSwitch(() => {
+    cache = null;
+    cacheKey = "";
+    emitChange();
+  });
+}
 
 function read(): number {
   const key = scopedKey(NAME);
@@ -30,7 +53,7 @@ export function markMissedCallsSeen(at: number = Date.now()) {
   localStorage.setItem(key, String(at));
   cache = at;
   cacheKey = key;
-  for (const l of listeners) l();
+  emitChange();
 }
 
 export function getMissedCallsSeenAt(): number {
@@ -38,6 +61,7 @@ export function getMissedCallsSeenAt(): number {
 }
 
 function subscribe(listener: () => void) {
+  ensureBrowserListeners();
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
