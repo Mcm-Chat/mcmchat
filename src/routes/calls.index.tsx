@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  BellRing,
+  Check,
+  MoreHorizontal,
   Phone,
   PhoneCall,
   PhoneMissed,
@@ -38,6 +41,16 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
+import {
+  MissedCallActions,
+  type MissedCallTarget,
+} from "@/components/mcm/missed-call-actions";
+import {
+  completeCallReminder,
+  dueReminders,
+  listCallReminders,
+  type CallReminder,
+} from "@/lib/api/call-reminders";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -78,6 +91,8 @@ function CallsPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
+  const [reminders, setReminders] = useState<CallReminder[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
@@ -86,6 +101,18 @@ function CallsPage() {
       .then((c) => setConfigured(c.configured))
       .catch(() => setConfigured(false));
   }, [loadConfig]);
+
+  const reloadReminders = () => {
+    if (!userId) return;
+    void listCallReminders(userId)
+      .then(setReminders)
+      .catch(() => undefined);
+  };
+
+  useEffect(() => {
+    reloadReminders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   /** Panggil ulang: membuat panggilan nyata baru, bukan mengulang riwayat. */
   const redial = async (c: CallHistoryItem) => {
