@@ -6,7 +6,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { BellPlus, MessageSquarePlus, Phone, Video } from "lucide-react";
+import { BellPlus, MessageSquarePlus, Phone, Trash2, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -40,11 +40,13 @@ export function MissedCallActions({
   target,
   onOpenChange,
   onReminderSaved,
+  onDelete,
 }: {
   userId: string | undefined;
   target: MissedCallTarget | null;
   onOpenChange: (open: boolean) => void;
   onReminderSaved?: (() => void) | undefined;
+  onDelete?: ((target: MissedCallTarget) => void) | undefined;
 }) {
   const navigate = useNavigate();
   const [note, setNote] = useState("");
@@ -175,6 +177,22 @@ export function MissedCallActions({
           >
             <MessageSquarePlus className="size-4" /> Kirim permintaan chat
           </Button>
+
+          {onDelete && (
+            <Button
+              variant="outline"
+              className="min-h-12 w-full rounded-xl text-destructive hover:text-destructive"
+              disabled={busy}
+              onClick={() => {
+                if (!target) return;
+                const t = target;
+                close();
+                onDelete(t);
+              }}
+            >
+              <Trash2 className="size-4" /> Hapus dari riwayat
+            </Button>
+          )}
 
           <div className="space-y-2">
             <p className="flex items-center gap-2 text-sm font-medium">
