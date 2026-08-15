@@ -692,6 +692,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-9"
                   aria-label="Panggilan suara"
                   disabled={inactive || blocked || blockedByOther}
                   onClick={() => void call("audio")}
@@ -701,6 +702,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-9"
                   aria-label="Panggilan video"
                   disabled={inactive || blocked || blockedByOther}
                   onClick={() => void call("video")}
@@ -711,6 +713,7 @@ function ChatRoom() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="size-9"
                     aria-label="Buat perintah penyiapan"
                     onClick={() => setPrepOpen(true)}
                   >
@@ -726,6 +729,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-9"
                   aria-label="Detail chat"
                   onClick={() => setDetailOpen(true)}
                 >
