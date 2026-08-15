@@ -12,7 +12,7 @@ Menjalankan: python3 e2e/calls_focus_a11y.py
 Butuh env SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (seed + cleanup) dan dev
 server di http://localhost:8080. Kredensial hanya hidup di memori proses ini.
 """
-import asyncio, os, secrets, sys, uuid
+import asyncio, base64, os, secrets, sys, uuid
 
 sys.path.insert(0, os.path.dirname(__file__))
 import qa_admin as qa
@@ -75,6 +75,16 @@ def cleanup(state):
     qa.rest("DELETE", "conversations", f"?id=eq.{state['conv']}")
     for uid in (state["a"], state["b"]):
         qa.delete_user(uid)
+
+
+def _is_call_config(url: str) -> bool:
+    """Server function id adalah base64 dari {file, export} — cocokkan setelah decode."""
+    seg = url.rsplit("/", 1)[-1].split("?")[0]
+    try:
+        decoded = base64.urlsafe_b64decode(seg + "=" * (-len(seg) % 4)).decode("utf-8", "ignore")
+    except Exception:
+        return False
+    return "getCallConfig" in decoded
 
 
 # ---------------------------------------------------------------- helpers
@@ -145,16 +155,14 @@ async def run(state):
 
         async def route_config(route):
             req = route.request
-            if unconfigured["on"] and "getCallConfig" in req.url:
-                pass
-            if unconfigured["on"] and "getCallConfig" in req.url:
+            if unconfigured["on"] and _is_call_config(req.url):
                 unconfigured["hit"] = True
                 await route.fulfill(status=200, content_type="application/json",
                                     body='{"provider":"livekit","configured":false,"code":"missing_env"}')
             else:
                 await route.continue_()
 
-        await page.route("**/*", route_config)
+        await page.route("**/_serverFn/*", route_config)
 
         await page.goto(f"{BASE}/login", wait_until="networkidle")
         await page.wait_for_selector("#email")
