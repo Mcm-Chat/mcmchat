@@ -494,7 +494,9 @@ function CallScreen() {
             />
 
             {session.phase === "incoming" ? (
-              <div className="flex items-center justify-center gap-10">
+              <>
+                <CallPermissionGate permission={permission} onDecline={session.decline} />
+                <div className="flex items-center justify-center gap-10">
                 {/* Jawab lebih dulu di DOM (urutan Tab), tetap di kanan secara visual. */}
                 <div className="order-2 flex flex-col items-center gap-1.5">
                   <Button
@@ -502,11 +504,15 @@ function CallScreen() {
                     size="icon"
                     className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
                     aria-label="Jawab panggilan"
-                    onClick={session.answer}
+                    disabled={answerBlocked}
+                    aria-describedby={answerBlocked ? "call-permission-help" : undefined}
+                    onClick={answerWithPermission}
                   >
                     <PhoneIcon className="size-7" />
                   </Button>
-                  <span className="text-[10px] text-white/70">Jawab</span>
+                  <span className="text-[10px] text-white/70" id="call-permission-help">
+                    {answerBlocked ? "Butuh izin" : "Jawab"}
+                  </span>
                 </div>
                 <div className="order-1 flex flex-col items-center gap-1.5">
                   <Button
@@ -519,7 +525,8 @@ function CallScreen() {
                   </Button>
                   <span className="text-[10px] text-white/70">Tolak</span>
                 </div>
-              </div>
+                </div>
+              </>
             ) : (
               <div className="space-y-5">
                 <div className="grid grid-cols-4 justify-items-center gap-3">
