@@ -65,6 +65,7 @@ function CallDetailPage() {
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
 
