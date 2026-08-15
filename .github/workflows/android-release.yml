@@ -19,6 +19,9 @@ on:
 jobs:
   bundle:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     env:
       # Secret opsional harus lewat env: GitHub melarang `secrets.*` di dalam `if:`.
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -36,10 +39,10 @@ jobs:
       - name: Verifikasi identitas aplikasi
         run: bun run verify:identity
 
-      - name: Verifikasi assetlinks
-        env:
-          MCM_ASSETLINKS_SHA256: ${{ secrets.PLAY_APP_SIGNING_SHA256 }}
-        run: bun run verify:assetlinks
+      - name: Catatan App Links
+        run: |
+          echo "App Links belum digate fingerprint: keystore upload MCM Chat dibuat/dipulihkan di runner."
+          echo "Setelah AAB diunggah ke Play Console, salin SHA-256 Play App Signing ke public/.well-known/assetlinks.json."
 
       - uses: actions/setup-java@v4
         with:
