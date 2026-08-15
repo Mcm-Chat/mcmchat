@@ -27,6 +27,7 @@ import { playTone } from "@/lib/calls/tones";
 import { useModalA11y } from "@/lib/a11y/use-modal-a11y";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
+import { markAnswerIntent } from "@/lib/calls/answer-intent";
 import { setIncomingCallActive } from "@/lib/calls/incoming-lock";
 
 type Incoming = { call: CallRow; name: string; color: string };
@@ -231,6 +232,10 @@ export function IncomingCallListener() {
             // gagal dan pengguna kembali ke daftar, fokus pulih ke tombol
             // panggil ulang percakapan ini (bukan hilang ke <body>).
             setCallReturnFocus(id);
+            // Satu tap = benar-benar menjawab. Layar panggilan membaca niat ini
+            // dan langsung memanggil `answer_call`, tanpa tap kedua yang sering
+            // kehabisan batas dering 45 detik.
+            markAnswerIntent(id);
             closeBanner("Panggilan dijawab. Membuka layar panggilan.");
             void navigate({ to: "/call/$id", params: { id } });
           }}
