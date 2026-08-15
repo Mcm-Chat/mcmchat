@@ -342,7 +342,7 @@ function CallScreen() {
 
             {session.phase === "incoming" ? (
               <div className="flex items-center justify-center gap-10">
-                <div className="flex flex-col items-center gap-1.5">
+                <div className="order-1 flex flex-col items-center gap-1.5">
                   <Button
                     size="icon"
                     className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -353,8 +353,9 @@ function CallScreen() {
                   </Button>
                   <span className="text-[10px] text-white/70">Tolak</span>
                 </div>
-                <div className="flex flex-col items-center gap-1.5">
+                <div className="order-2 flex flex-col items-center gap-1.5">
                   <Button
+                    ref={answerRef}
                     size="icon"
                     className="size-16 rounded-full bg-success text-success-foreground hover:bg-success/90"
                     aria-label="Jawab panggilan"
@@ -424,6 +425,7 @@ function CallScreen() {
                 </div>
                 <div className="flex justify-center">
                   <Button
+                    ref={hangupRef}
                     size="icon"
                     className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     aria-label="Akhiri panggilan"
