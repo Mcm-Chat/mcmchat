@@ -140,4 +140,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Semua gate keamanan lolos
-          run: echo "Regresi keamanan DB, typecheck, test, build, audit dependensi, dan smoke PWA lolos."
+        run: echo "Regresi keamanan DB, typecheck, test, build, audit dependensi, dan smoke PWA lolos."
