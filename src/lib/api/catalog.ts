@@ -600,3 +600,66 @@ export async function reorderPhotos(orderedIds: string[]) {
     if (error) throw new Error(friendly(error.message, "Gagal mengurutkan foto"));
   }
 }
+
+// ---------------------------------------------------------------------------
+// Template varian / ecer pada pencatatan pembelian (penyiapan & penetapan)
+// ---------------------------------------------------------------------------
+
+/** Satu baris template ecer/kemasan yang diisi saat mencatat pembelian. */
+export type VariantTemplate = {
+  /** Judul varian, mis. "Ecer 250 g" atau "Botol 600 ml". */
+  name: string;
+  /** Satuan tampilan: satuan berat (g/ons/kg/mg) atau kemasan (botol, sachet, …). */
+  displayUnit: string;
+  /** Isi per kemasan: berat pada satuan tampilan (weight) atau jumlah unit dasar (count). */
+  size: number;
+  /** Harga jual per kemasan. */
+  price: number;
+};
+
+/**
+ * Buat atau selaraskan varian produk sesuai template yang diisi pengguna.
+ * Pencocokan memakai nama varian (case-insensitive) agar pencatatan berulang
+ * tidak menghasilkan varian ganda — judul, satuan, isi, dan harga ikut
+ * diperbarui mengikuti template terakhir.
+ */
+export async function syncVariantTemplates(
+  product: Pick<ProductRow, "id" | "business_id" | "stock_kind" | "base_unit">,
+  templates: VariantTemplate[],
+): Promise<VariantRow[]> {
+  const rows = templates.filter((t) => t.name.trim() !== "");
+  if (rows.length === 0) return [];
+  const existing = unwrap(
+    await supabase.from("product_variants").select("*").eq("product_id", product.id),
+    "Gagal memuat varian",
+  );
+  const byName = new Map(existing.map((v) => [v.name.trim().toLowerCase(), v]));
+  const out: VariantRow[] = [];
+  for (const [i, t] of rows.entries()) {
+    const match = byName.get(t.name.trim().toLowerCase());
+    const isWeight = product.stock_kind === "weight";
+    const saved = await upsertVariant({
+      ...(match ? { id: match.id } : {}),
+      business_id: product.business_id,
+      product_id: product.id,
+      name: t.name.trim(),
+      stock_type: product.stock_kind,
+      base_unit: isWeight ? "g" : product.base_unit || "pcs",
+      display_unit: t.displayUnit,
+      price: t.price,
+      allow_decimal: isWeight,
+      sort_order: match?.sort_order ?? existing.length + i,
+      display_quantity: isWeight ? t.size : null,
+      units_per_display: isWeight ? null : t.size,
+    });
+    if (match && match.is_active === false) {
+      const { error } = await supabase
+        .from("product_variants")
+        .update({ is_active: true })
+        .eq("id", saved.id);
+      if (error) throw new Error(friendly(error.message, "Gagal mengaktifkan varian"));
+    }
+    out.push(saved);
+  }
+  return out;
+}
