@@ -29,6 +29,7 @@ import {
 } from "@/lib/api/calls";
 import type { EndReason } from "./policy";
 import { consumeAnswerIntent } from "./answer-intent";
+import { mediaPermissionCopy, requestMediaPermission } from "./media-permission";
 import {
   answerFailureText,
   connectFailureText,
