@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
+import {
+  clearLastCallState,
+  loadLastCallState,
+  saveLastCallState,
+  type LastCallPhase,
+  type RecoveryTarget,
+} from "@/lib/calls/last-call-state";
 import { playTone, playEndTone } from "@/lib/calls/tones";
 import {
   ArrowLeft,
@@ -100,11 +107,53 @@ function CallScreen() {
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
   const [errorDismissed, setErrorDismissed] = useState(false);
+  /** Status panggilan tersimpan (dipulihkan sekali setelah refresh/pindah halaman). */
+  const restoredRef = useRef(false);
+  const [restored, setRestored] = useState<ReturnType<typeof loadLastCallState>>(null);
   const answerRef = useRef<HTMLButtonElement | null>(null);
   const hangupRef = useRef<HTMLButtonElement | null>(null);
   const backRef = useRef<HTMLButtonElement | null>(null);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
+
+  // Pulihkan status terakhir supaya UI tidak kembali ke state yang salah
+  // (mis. panel gagal hilang) setelah refresh atau pindah halaman.
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const saved = loadLastCallState(id);
+    if (!saved) return;
+    setRestored(saved);
+    if (saved.phase === "error" || saved.phase === "unconfigured") setErrorDismissed(saved.dismissed);
+  }, [id]);
+
+  // Simpan status + target pemulihan setiap kali fase/alasan berubah.
+  useEffect(() => {
+    const phase = session.phase;
+    if (phase === "loading") return;
+    if (phase === "error" || phase === "unconfigured") {
+      const recovery: RecoveryTarget = errorDismissed ? "back" : "retry";
+      saveLastCallState({
+        callId: id,
+        phase,
+        reason: session.reason,
+        dismissed: errorDismissed,
+        recovery,
+      });
+      return;
+    }
+    if (phase === "ended") {
+      clearLastCallState();
+      return;
+    }
+    saveLastCallState({
+      callId: id,
+      phase: phase as LastCallPhase,
+      reason: session.reason,
+      dismissed: false,
+      recovery: "back",
+    });
+  }, [id, session.phase, session.reason, errorDismissed]);
 
   // Pintasan keyboard kontrol panggilan (M/V/S/B/P/E/A/T dan "?" untuk bantuan).
   const shortcutsLive =
@@ -287,6 +336,13 @@ function CallScreen() {
     session.phase === "connecting" ||
     session.phase === "connected";
   const voiceActive = session.voiceApplied;
+  // Setelah refresh, sesi tidak lagi tahu panggilan sempat gagal. Status
+  // tersimpan dipakai agar panel pemulihan tetap muncul (bukan layar netral).
+  const restoredFailure =
+    !live &&
+    session.phase !== "error" &&
+    session.phase !== "unconfigured" &&
+    (restored?.phase === "error" || restored?.phase === "unconfigured");
   const voiceFallback = session.voiceFallback;
 
   const phaseLabel =
@@ -583,13 +639,15 @@ function CallScreen() {
         </p>
       </div>
 
-      {session.phase === "unconfigured" && !errorDismissed && (
+      {(session.phase === "unconfigured" ||
+        (restoredFailure && restored?.phase === "unconfigured")) &&
+        !errorDismissed && (
         <CallFailureRecovery
           className="mt-6"
           unconfigured
           trapFocus={!devicesOpen && !voiceOpen}
           fallbackFocus={() => backRef.current}
-          reason={session.reason ?? CALL_PROVIDER_NOTICE}
+          reason={session.reason ?? restored?.reason ?? CALL_PROVIDER_NOTICE}
           retrying={session.retrying}
           onRetry={session.retry}
           onOpenProvider={() => void navigate({ to: "/settings/calls" })}
@@ -597,12 +655,13 @@ function CallScreen() {
         />
       )}
 
-      {session.phase === "error" && !errorDismissed && (
+      {(session.phase === "error" || (restoredFailure && restored?.phase === "error")) &&
+        !errorDismissed && (
         <CallFailureRecovery
           className="mt-6"
           trapFocus={!devicesOpen && !voiceOpen}
           fallbackFocus={() => backRef.current}
-          reason={session.reason}
+          reason={session.reason ?? restored?.reason ?? null}
           retrying={session.retrying}
           onRetry={session.retry}
           onOpenDevices={() => {
