@@ -211,7 +211,6 @@ function RootComponent() {
               position="top-center"
               richColors
               closeButton
-              closeButtonAriaLabel="Tutup notifikasi"
             />
           </AuthProvider>
         </ReduceMotionProvider>
