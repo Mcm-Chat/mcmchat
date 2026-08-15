@@ -7,6 +7,8 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { WEB_PUSH, swUrl, webPushConfigured } from "./web-config";
+import { routeFromPush } from "./deeplink";
+import type { PushData } from "./payload";
 
 const INSTALL_KEY = "mcm.web.installation";
 
@@ -108,8 +110,25 @@ export function attachWebPushListeners(navigateTo: (route: string) => void): () 
   if (!webPushSupported()) return () => undefined;
   const onMessage = (e: MessageEvent) => {
     const data = e.data as { type?: string; route?: string } | null;
-    if (data?.type === "mcm-push-route" && data.route?.startsWith("/") && !data.route.startsWith("//"))
-      navigateTo(data.route);
+    if (data?.type !== "mcm-push-route") return;
+    // Balas segera: service worker memakai ack ini untuk memutuskan apakah
+    // perlu memaksa navigasi penuh (tab ada tapi aplikasi belum siap).
+    e.ports[0]?.postMessage({ type: "mcm-push-route-ack" });
+
+    const route = routeFromPush({ route: data.route } as Partial<PushData>);
+    void (async () => {
+      const conv = /^\/chat\/([0-9a-f-]{36})/i.exec(route)?.[1];
+      if (conv) {
+        await supabase.rpc("mark_messages_delivered", { _conv: conv }).then(
+          () => undefined,
+          () => undefined,
+        );
+        const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+        const notes = (await reg?.getNotifications({ tag: conv }).catch(() => [])) ?? [];
+        for (const n of notes) n.close();
+      }
+      navigateTo(route);
+    })();
   };
   navigator.serviceWorker.addEventListener("message", onMessage);
   return () => navigator.serviceWorker.removeEventListener("message", onMessage);
