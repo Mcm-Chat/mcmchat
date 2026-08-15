@@ -56,6 +56,11 @@ import {
 } from "@/lib/calls/return-focus";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import {
+  DeleteCallHistoryDialog,
+  DeleteCallIconButton,
+  type DeleteCallTarget,
+} from "@/components/mcm/delete-call-history";
+import {
   MissedCallActions,
   missedActionTriggerId,
   type MissedCallTarget,
@@ -111,6 +116,7 @@ function CallsPage() {
   const noticeReturnRef = useRef<HTMLElement | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -281,6 +287,18 @@ function CallsPage() {
                 >
                   <CheckCheck className="size-5" />
                 </Button>
+              )}
+              {(calls ?? []).length > 0 && (
+                <DeleteCallIconButton
+                  label="Hapus semua riwayat panggilan"
+                  onClick={() =>
+                    setDeleteTarget({
+                      ids: (calls ?? []).map((c) => c.id),
+                      title: "Hapus semua riwayat panggilan?",
+                      description: `${(calls ?? []).length} entri akan hilang dari daftar Anda. Riwayat lawan bicara tidak terpengaruh.`,
+                    })
+                  }
+                />
               )}
               <Button
                 variant="ghost"
@@ -457,6 +475,15 @@ function CallsPage() {
                     <MoreHorizontal className="size-5" />
                   </Button>
                 )}
+                <DeleteCallIconButton
+                  label={`Hapus riwayat panggilan dengan ${nameOf(other?.user_id, other?.display_name ?? "pengguna")}`}
+                  onClick={() =>
+                    setDeleteTarget({
+                      ids: [c.id],
+                      title: `Hapus panggilan dengan ${nameOf(other?.user_id, other?.display_name ?? "pengguna")}?`,
+                    })
+                  }
+                />
                 <Button
                   variant="ghost"
                   size="icon"
@@ -485,6 +512,17 @@ function CallsPage() {
         target={missedTarget}
         onOpenChange={(o) => (o ? undefined : setMissedTarget(null))}
         onReminderSaved={reloadReminders}
+        onDelete={(t) => {
+          setMissedTarget(null);
+          setDeleteTarget({ ids: [t.callId], title: `Hapus panggilan dengan ${t.peerName}?` });
+        }}
+      />
+
+      <DeleteCallHistoryDialog
+        userId={userId}
+        target={deleteTarget}
+        onOpenChange={(o) => (o ? undefined : setDeleteTarget(null))}
+        onDeleted={() => void refetch()}
       />
 
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
