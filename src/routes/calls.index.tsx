@@ -167,6 +167,12 @@ function CallsPage() {
 
   const missedCount = (calls ?? []).filter((c) => c.status === "missed").length;
   const busy = loading || isLoading;
+  const due = dueReminders(reminders);
+
+  const finishReminder = async (id: string) => {
+    setReminders((prev) => prev.filter((r) => r.id !== id));
+    await completeCallReminder(id).catch(() => reloadReminders());
+  };
 
   return (
     <AppShell
