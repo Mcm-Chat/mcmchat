@@ -22,7 +22,8 @@
     "sbom": "node scripts/generate-sbom.mjs sbom",
     "android:sync": "cap sync android",
     "android:bundle": "cd android && ./gradlew bundleRelease",
-    "android:debug-apk": "cd android && ./gradlew assembleDebug"
+    "android:debug-apk": "cd android && ./gradlew assembleDebug",
+    "test:e2e:pwa": "python3 e2e/pwa_smoke.py"
   },
   "dependencies": {
     "@capacitor/android": "7.6.8",

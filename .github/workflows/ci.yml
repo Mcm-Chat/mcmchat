@@ -70,6 +70,49 @@ jobs:
       - name: Audit (gagal pada high/critical)
         run: bun audit --audit-level=high
 
+  pwa-smoke:
+    name: Smoke E2E PWA mobile (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: bun install --frozen-lockfile
+      - name: Pasang Playwright Chromium
+        run: |
+          python -m pip install --no-cache-dir playwright
+          python -m playwright install --with-deps chromium
+      # Build produksi memakai preset Cloudflare/Nitro yang tidak bisa dilayani
+      # `vite preview`, jadi smoke test dijalankan terhadap server dev.
+      - name: Jalankan server aplikasi
+        run: |
+          mkdir -p e2e-artifacts
+          nohup bun run dev > e2e-artifacts/dev-server.log 2>&1 &
+          disown || true
+          for i in $(seq 1 90); do
+            curl -sf -o /dev/null http://localhost:8080/ && exit 0
+            sleep 2
+          done
+          echo "Server tidak siap dalam 180 detik"; tail -50 e2e-artifacts/dev-server.log; exit 1
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Smoke test navigasi + halaman utama
+        run: bun run test:e2e:pwa
+        env:
+          E2E_BASE_URL: http://localhost:8080
+          E2E_ARTIFACTS: ${{ github.workspace }}/e2e-artifacts
+      - name: Unggah artefak smoke test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa-smoke-${{ github.sha }}
+          path: e2e-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
   sbom:
     name: SBOM (CycloneDX + SPDX)
     runs-on: ubuntu-latest
@@ -94,8 +137,8 @@ jobs:
   production-gate:
     name: Gate sebelum merge ke production
     if: github.event_name == 'pull_request' && github.base_ref == 'production'
-    needs: [db-security-regression, quality, dependency-audit, sbom]
+    needs: [db-security-regression, quality, dependency-audit, sbom, pwa-smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Semua gate keamanan lolos
-        run: echo "Regresi keamanan DB, typecheck, test, build, dan audit dependensi lolos."
+        run: echo "Regresi keamanan DB, typecheck, test, build, audit dependensi, dan smoke PWA lolos."
