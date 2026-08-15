@@ -10,7 +10,6 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ConfirmDialog } from "@/components/mcm/primitives";
@@ -118,8 +117,6 @@ export function AvatarEditor({
     try {
       const blob = await renderFinalBlob(img, state);
       await onApply(blob);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal memasang foto profil");
     } finally {
       submitting.current = false;
       setBusy(false);
