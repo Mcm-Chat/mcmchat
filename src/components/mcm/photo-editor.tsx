@@ -316,7 +316,14 @@ export function PhotoEditorDialog({
   ];
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      tabIndex={-1}
+      className="fixed inset-0 z-[70] flex flex-col bg-background outline-none"
+    >
       <header className="flex items-center gap-2 border-b border-border px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <Button size="icon" variant="ghost" className="size-11 rounded-xl" onClick={onCancel} aria-label="Batal">
           <X className="size-5" />
