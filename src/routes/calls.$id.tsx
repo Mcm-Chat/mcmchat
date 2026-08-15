@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Phone,
   PhoneMissed,
+  Trash2,
   User,
   Video,
   Zap,
@@ -23,6 +24,11 @@ import { useCalls } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { MissedCallActions, type MissedCallTarget } from "@/components/mcm/missed-call-actions";
+import {
+  DeleteCallHistoryDialog,
+  DeleteCallIconButton,
+  type DeleteCallTarget,
+} from "@/components/mcm/delete-call-history";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 
 export const Route = createFileRoute("/calls/$id")({
@@ -69,6 +75,7 @@ function CallDetailPage() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteCallTarget | null>(null);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
   const liveStatus = (calls ?? []).find((c) => c.id === id)?.status ?? "";
@@ -107,8 +114,28 @@ function CallDetailPage() {
 
   const busy = loading || isLoading;
 
+  const askDelete = () => {
+    if (!call) return;
+    setDeleteTarget({
+      ids: [call.id],
+      title: `Hapus panggilan dengan ${peerName}?`,
+    });
+  };
+
   return (
-    <AppShell header={<MobileHeader title="Detail panggilan" back />}>
+    <AppShell
+      header={
+        <MobileHeader
+          title="Detail panggilan"
+          back
+          actions={
+            call ? (
+              <DeleteCallIconButton label="Hapus riwayat panggilan ini" onClick={askDelete} />
+            ) : undefined
+          }
+        />
+      }
+    >
       {busy ? (
         <LoadingSkeleton rows={5} />
       ) : isError ? (
@@ -254,6 +281,13 @@ function CallDetailPage() {
                 </Link>
               </Button>
             )}
+            <Button
+              variant="outline"
+              className="h-11 w-full justify-start rounded-xl text-destructive hover:text-destructive"
+              onClick={askDelete}
+            >
+              <Trash2 className="size-4" /> Hapus riwayat panggilan ini
+            </Button>
           </section>
         </div>
       )}
@@ -261,6 +295,20 @@ function CallDetailPage() {
         userId={userId}
         target={missedTarget}
         onOpenChange={(o) => (o ? undefined : setMissedTarget(null))}
+        onDelete={(t) => {
+          setMissedTarget(null);
+          setDeleteTarget({ ids: [t.callId], title: `Hapus panggilan dengan ${t.peerName}?` });
+        }}
+      />
+
+      <DeleteCallHistoryDialog
+        userId={userId}
+        target={deleteTarget}
+        onOpenChange={(o) => (o ? undefined : setDeleteTarget(null))}
+        onDeleted={() => {
+          void refetch();
+          void navigate({ to: "/calls" });
+        }}
       />
     </AppShell>
   );
