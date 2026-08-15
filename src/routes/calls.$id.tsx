@@ -21,6 +21,7 @@ import { useCalls } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { MissedCallActions, type MissedCallTarget } from "@/components/mcm/missed-call-actions";
+import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 
 export const Route = createFileRoute("/calls/$id")({
   head: () => ({
@@ -68,6 +69,8 @@ function CallDetailPage() {
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
+  const liveStatus = (calls ?? []).find((c) => c.id === id)?.status ?? "";
+  useSecondTick(isLiveCall(liveStatus));
 
   useEffect(() => {
     void loadConfig()
@@ -179,10 +182,23 @@ function CallDetailPage() {
 
           <section className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
             <Row label="Arah" value={incoming ? "Masuk" : "Keluar"} />
-            <Row label="Status" value={STATUS_LABEL[call.status] ?? call.status} />
+            <Row
+              label="Status"
+              value={
+                isLiveCall(call.status)
+                  ? liveStatusLabel(call)
+                  : (STATUS_LABEL[call.status] ?? call.status)
+              }
+            />
             <Row
               label="Durasi"
-              value={call.status === "ended" ? durasi(call.duration_sec) : "—"}
+              value={
+                call.status === "ended"
+                  ? durasi(call.duration_sec)
+                  : isLiveCall(call.status)
+                    ? liveStatusLabel(call).split(" • ")[1] ?? "—"
+                    : "—"
+              }
             />
             <Row label="Tanggal" value={tanggalPanjang(call.created_at)} />
             <Row label="Jam mulai" value={jam(call.created_at)} />

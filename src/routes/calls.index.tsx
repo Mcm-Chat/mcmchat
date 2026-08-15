@@ -40,6 +40,7 @@ import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
 import { type CallHistoryItem } from "@/lib/api/calls";
+import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import {
   MissedCallActions,
@@ -166,6 +167,8 @@ function CallsPage() {
   );
 
   const missedCount = (calls ?? []).filter((c) => c.status === "missed").length;
+  const hasLive = (calls ?? []).some((c) => isLiveCall(c.status));
+  useSecondTick(hasLive);
   const busy = loading || isLoading;
   const due = dueReminders(reminders);
 
@@ -300,6 +303,12 @@ function CallsPage() {
                     >
                       {other?.display_name ?? "Pengguna MCM"}
                     </p>
+                    {isLiveCall(c.status) && (
+                      <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                        <span className="size-1.5 animate-pulse rounded-full bg-success" />
+                        {c.status === "ringing" ? "Sedang dipanggil" : "Berlangsung"}
+                      </span>
+                    )}
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
                       {isMissed ? (
                         <PhoneMissed className="size-3.5 text-destructive" />
@@ -311,9 +320,11 @@ function CallsPage() {
                       {c.kind === "video" ? "Video" : "Suara"} •{" "}
                       {isMissed
                         ? "Tak terjawab"
-                        : c.status === "ended"
-                          ? durasi(c.duration_sec)
-                          : STATUS_LABEL[c.status]}{" "}
+                        : isLiveCall(c.status)
+                          ? liveStatusLabel(c)
+                          : c.status === "ended"
+                            ? durasi(c.duration_sec)
+                            : STATUS_LABEL[c.status]}{" "}
                       • {waktuRelatif(c.created_at)}
                     </p>
                   </div>
