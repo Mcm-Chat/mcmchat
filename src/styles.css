@@ -197,6 +197,30 @@
   }
 }
 
+/*
+ * Preferensi "Kurangi Animasi" (per akun). Mematikan animasi & transisi
+ * non-kritis. Elemen yang animasinya bermakna (indikator memuat/spinner,
+ * atau apa pun bertanda data-motion-critical) tetap berjalan.
+ */
+.reduce-motion *:not([data-motion-critical]):not([data-motion-critical] *) {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  transition-delay: 0ms !important;
+}
+
+.reduce-motion .animate-spin,
+.reduce-motion [data-motion-critical],
+.reduce-motion [data-motion-critical] * {
+  animation-duration: revert !important;
+  animation-iteration-count: revert !important;
+  transition-duration: revert !important;
+}
+
+.reduce-motion {
+  scroll-behavior: auto !important;
+}
+
 /* Proteksi cetak: isi MCM tidak boleh keluar lewat Print / Save as PDF. */
 @media print {
   body * {
