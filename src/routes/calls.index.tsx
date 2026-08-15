@@ -200,7 +200,7 @@ function CallsPage() {
                 <button
                   type="button"
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                  onClick={() => void navigate({ to: "/call/$id", params: { id: c.id } })}
+                  onClick={() => void navigate({ to: "/calls/$id", params: { id: c.id } })}
                 >
                   {other ? (
                     <UserAvatar

@@ -95,7 +95,7 @@ function CallDetailPage() {
   const busy = loading || isLoading;
 
   return (
-    <AppShell header={<MobileHeader title="Detail panggilan" back="/calls" />}>
+    <AppShell header={<MobileHeader title="Detail panggilan" back />}>
       {busy ? (
         <LoadingSkeleton rows={5} />
       ) : isError ? (
