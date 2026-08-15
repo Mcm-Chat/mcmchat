@@ -60,12 +60,16 @@ describe("regresi guard izin push (end-to-end)", () => {
     code: string;
     fallback: string;
     titleRe: RegExp;
+    ctaRe: RegExp;
+    ctaRoute: string;
   }> = [
     {
       name: "sesi habis",
       setup: () => getSession.mockResolvedValue({ data: { session: null } }),
       route: `/chat/${CONV}`,
       code: "no_session",
+      ctaRe: /masuk ulang/i,
+      ctaRoute: "/login",
       fallback: "/login",
       titleRe: /sesi/i,
     },
@@ -74,6 +78,8 @@ describe("regresi guard izin push (end-to-end)", () => {
       setup: () => capability.mockResolvedValue({ readable: false, reason: "removed" }),
       route: `/chat/${CONV}`,
       code: "removed",
+      ctaRe: /minta akses/i,
+      ctaRoute: "/contacts",
       fallback: "/chat",
       titleRe: /dikeluarkan/i,
     },
@@ -82,6 +88,8 @@ describe("regresi guard izin push (end-to-end)", () => {
       setup: () => capability.mockResolvedValue({ readable: false, reason: "blocked" }),
       route: `/chat/${CONV}?m=9`,
       code: "blocked",
+      ctaRe: /kelola blokir/i,
+      ctaRoute: "/contacts",
       fallback: "/chat",
       titleRe: /diblokir/i,
     },
@@ -90,6 +98,8 @@ describe("regresi guard izin push (end-to-end)", () => {
       setup: () => capability.mockResolvedValue({ readable: false, reason: "not_member" }),
       route: `/chat/${CONV}`,
       code: "not_member",
+      ctaRe: /minta akses/i,
+      ctaRoute: "/contacts",
       fallback: "/chat",
       titleRe: /peserta/i,
     },
@@ -98,6 +108,8 @@ describe("regresi guard izin push (end-to-end)", () => {
       setup: () => capability.mockResolvedValue({ readable: false, reason: "missing" }),
       route: `/chat/${CONV}`,
       code: "missing",
+      ctaRe: /daftar chat/i,
+      ctaRoute: "/chat",
       fallback: "/chat",
       titleRe: /tidak ada/i,
     },
@@ -106,6 +118,8 @@ describe("regresi guard izin push (end-to-end)", () => {
       setup: () => undefined,
       route: "//evil.example/chat",
       code: "invalid_route",
+      ctaRe: /daftar chat/i,
+      ctaRoute: "/chat",
       fallback: "/chat",
       titleRe: /tidak sah/i,
     },
@@ -114,6 +128,8 @@ describe("regresi guard izin push (end-to-end)", () => {
       setup: () => capability.mockResolvedValue({ readable: false, reason: "weird_state" }),
       route: `/chat/${CONV}`,
       code: "unknown",
+      ctaRe: /daftar chat/i,
+      ctaRoute: "/chat",
       fallback: "/chat",
       titleRe: /ditolak/i,
     },
@@ -132,8 +148,12 @@ describe("regresi guard izin push (end-to-end)", () => {
       expect(dialog).toHaveTextContent(c.titleRe);
       expect(screen.getByText(guarded.reason!)).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: /mengerti/i }));
-      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: c.fallback, replace: true }));
+      // Persisten: Escape tidak menutup modal.
+      fireEvent.keyDown(dialog, { key: "Escape" });
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: c.ctaRe }));
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: c.ctaRoute, replace: true }));
       await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     });
   }
