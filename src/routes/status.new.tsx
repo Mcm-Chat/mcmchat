@@ -404,6 +404,15 @@ function StatusNew() {
           {busy && <Loader2 className="size-4 animate-spin" />} Bagikan status ({slides.length})
         </Button>
       </div>
+
+      {image && (
+        <StatusEditor
+          image={image}
+          busy={busy}
+          onCancel={() => setImage(null)}
+          onDone={(s, cap) => void tambahSlideFoto(s, cap)}
+        />
+      )}
     </AppShell>
   );
 }
