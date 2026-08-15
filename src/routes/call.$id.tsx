@@ -113,6 +113,12 @@ function CallScreen() {
     if (session.phase === "ended") playEndTone();
   }, [session.phase]);
 
+  // Kegagalan baru selalu memunculkan panel pemulihan lagi, walau panel
+  // sebelumnya sempat ditutup pengguna.
+  useEffect(() => {
+    if (session.phase === "error" || session.phase === "unconfigured") setErrorDismissed(false);
+  }, [session.phase, session.reason]);
+
   /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
   const backToCalls = () => {
     setCallReturnFocus(id);
