@@ -536,6 +536,23 @@ function CallScreen() {
   );
 }
 
+/** Indikator sinyal jaringan panggilan — jujur mengikuti laporan SFU. */
+function SignalBadge({ quality }: { quality: "excellent" | "good" | "poor" | "unknown" }) {
+  if (quality === "unknown") return null;
+  const map = {
+    excellent: { Icon: SignalHigh, text: "Sinyal bagus", tone: "text-success" },
+    good: { Icon: SignalMedium, text: "Sinyal sedang", tone: "text-navy-foreground/80" },
+    poor: { Icon: SignalLow, text: "Sinyal lemah", tone: "text-destructive" },
+  } as const;
+  const { Icon, text, tone } = map[quality];
+  return (
+    <span className={cn("flex items-center gap-1 text-xs", tone)} role="status" aria-label={text}>
+      <Icon className="size-4" aria-hidden="true" />
+      <span className="sr-only sm:not-sr-only">{text}</span>
+    </span>
+  );
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-3">
