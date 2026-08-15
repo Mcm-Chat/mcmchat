@@ -1066,16 +1066,24 @@ export function ChatComposer({
             value={value}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              }
-            }}
+            onKeyDown={onComposerKeyDown}
+            aria-label="Tulis pesan"
+            aria-keyshortcuts="Enter Control+Enter Control+Shift+A Control+Shift+C Control+Shift+D"
+            aria-describedby="composer-shortcut-help"
+            role="combobox"
+            aria-expanded={quickOpen}
+            aria-controls={quickOpen ? "composer-quick-replies" : undefined}
+            aria-activedescendant={
+              quickOpen ? `quick-reply-${Math.min(quickIdx, matches.length - 1)}` : undefined
+            }
             rows={1}
             placeholder="Tulis pesan…"
             className="max-h-32 min-h-10 resize-none border-0 bg-transparent px-1 py-2.5 text-[15px] leading-5 shadow-none focus-visible:ring-0 dark:bg-transparent"
           />
+          <span id="composer-shortcut-help" className="sr-only">
+            Enter untuk mengirim, Shift+Enter baris baru, panah atas bawah memilih balasan cepat,
+            Ctrl+Shift+A membuka menu lampiran, Ctrl+Shift+C kamera, Ctrl+Shift+D dokumen.
+          </span>
           <Button
             variant="ghost"
             size="icon"
