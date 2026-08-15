@@ -395,6 +395,14 @@ function CallScreen() {
       </div>
 
       <div className="mt-8 flex flex-col items-center gap-3">
+        <CallStatusLive
+          phase={session.phase === "loading" ? "ended" : session.phase}
+          kind={isVideo ? "video" : "audio"}
+          name={name}
+          reason={session.reason}
+          endStatus={detail.status}
+          durationSec={detail.duration_sec}
+        />
         {other ? (
           <UserAvatar
             userId={other.user_id}
