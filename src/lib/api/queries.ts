@@ -186,6 +186,9 @@ export function useRealtimeSync(uid?: string) {
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
           void qc.invalidateQueries({ queryKey: qk.calls(uid) });
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "call_participants" }, () => {
+          void qc.invalidateQueries({ queryKey: qk.calls(uid) });
         }),
     );
     return () => {
