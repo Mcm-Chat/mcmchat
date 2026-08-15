@@ -318,6 +318,23 @@ function CallsPage() {
                     </p>
                   </div>
                 </button>
+                {isMissed && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Aksi cepat panggilan tak terjawab dari ${other?.display_name ?? "pengguna"}`}
+                    onClick={() =>
+                      setMissedTarget({
+                        callId: c.id,
+                        conversationId: c.conversation_id,
+                        peerId: other?.user_id ?? null,
+                        peerName: other?.display_name ?? "Pengguna MCM",
+                      })
+                    }
+                  >
+                    <MoreHorizontal className="size-5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
