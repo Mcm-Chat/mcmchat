@@ -32,6 +32,9 @@ export type MissedCallTarget = {
   peerName: string;
 };
 
+/** Id tombol pemicu aksi cepat — dipakai untuk mengembalikan fokus saat sheet ditutup. */
+export const missedActionTriggerId = (callId: string) => `missed-action-${callId}`;
+
 export function MissedCallActions({
   userId,
   target,
@@ -47,6 +50,8 @@ export function MissedCallActions({
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const firstActionRef = useRef<HTMLButtonElement>(null);
+  const lastCallIdRef = useRef<string | null>(null);
+  if (target) lastCallIdRef.current = target.callId;
 
   const close = () => {
     setNote("");
@@ -118,6 +123,14 @@ export function MissedCallActions({
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           firstActionRef.current?.focus();
+        }}
+        onCloseAutoFocus={(e) => {
+          const id = lastCallIdRef.current;
+          if (!id) return;
+          const trigger = document.getElementById(missedActionTriggerId(id));
+          if (!trigger) return;
+          e.preventDefault();
+          trigger.focus();
         }}
       >
         <SheetHeader className="text-left">
