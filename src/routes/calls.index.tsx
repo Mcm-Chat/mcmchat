@@ -19,6 +19,7 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -410,13 +411,20 @@ function CallsPage() {
             <PhoneCall className="size-5.5" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="rounded-2xl">
+        <DialogContent
+          className="rounded-2xl"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            searchRef.current?.focus();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Panggilan baru</DialogTitle>
           </DialogHeader>
           <div className="relative">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              ref={searchRef}
               value={q}
               maxLength={60}
               onChange={(e) => setQ(e.target.value)}
@@ -479,6 +487,7 @@ function CallsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setNotice(false)}>Mengerti</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setNotice(false);
@@ -487,7 +496,6 @@ function CallsPage() {
             >
               Buka diagnostik
             </AlertDialogAction>
-            <AlertDialogAction onClick={() => setNotice(false)}>Mengerti</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
