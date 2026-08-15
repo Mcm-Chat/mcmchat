@@ -333,4 +333,3 @@ export const sendPrepareSale = createServerFn({ method: "POST" })
     if (!jobId) throw new Error("Tautan tidak berlaku");
     return runPrepareSale({ ...data, jobId });
   });
-
