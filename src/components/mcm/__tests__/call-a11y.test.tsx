@@ -294,3 +294,19 @@ describe("panel pemulihan — sheet perangkat/efek suara", () => {
     outside.remove();
   });
 });
+
+describe("rotasi layar", () => {
+  it("mengembalikan fokus ke dalam panel pemulihan setelah orientasi berubah", async () => {
+    render(<CallFailureRecovery trapFocus reason="NotAllowedError" onRetry={() => {}} />);
+    await new Promise((r) => setTimeout(r, 30));
+    const before = document.activeElement as HTMLElement;
+    expect(before.tagName).toBe("BUTTON");
+
+    // Browser membuang fokus ke <body> saat rotasi.
+    before.blur();
+    expect(document.activeElement).toBe(document.body);
+    window.dispatchEvent(new Event("orientationchange"));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(document.activeElement).toBe(before);
+  });
+});
