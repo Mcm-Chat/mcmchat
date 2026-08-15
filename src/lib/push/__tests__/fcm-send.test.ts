@@ -142,7 +142,12 @@ describe("pengiriman FCM HTTP v1", () => {
   });
 
   it("gagal OAuth dilaporkan tanpa memangkas token", async () => {
-    configure();
+    // Service account berbeda supaya cache access token test sebelumnya tidak dipakai.
+    process.env[KEY] = JSON.stringify({
+      project_id: "mcm-lain",
+      client_email: "rotasi@mcm-lain.iam.gserviceaccount.com",
+      private_key: pem,
+    });
     vi.spyOn(globalThis, "fetch").mockImplementation((async () =>
       new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 })) as typeof fetch);
     const res = await sendEach([{ token: "t1", sound: true, vibrate: true, data: data() }]);
