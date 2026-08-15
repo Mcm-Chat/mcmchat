@@ -10,6 +10,16 @@
 
 export type MediaPermissionKind = "audio" | "video";
 
+/** Error khusus izin media agar pesannya tampil apa adanya di layar panggilan. */
+export class MediaPermissionError extends Error {
+  readonly state: MediaPermissionState;
+  constructor(state: MediaPermissionState, message: string) {
+    super(message);
+    this.name = "MediaPermissionError";
+    this.state = state;
+  }
+}
+
 export type MediaPermissionState =
   /** Belum diperiksa. */
   | "checking"
