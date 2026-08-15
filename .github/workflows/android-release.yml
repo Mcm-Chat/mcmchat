@@ -75,10 +75,14 @@ jobs:
           "$SDKMANAGER" --sdk_root="$SDK_ROOT" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
 
-      # google-services.json tidak pernah di-commit; disuntik dari secret (base64).
+      # Prioritaskan secret; gunakan salinan konfigurasi Firebase yang tersimpan sebagai fallback.
       - name: Inject FCM config
-        if: ${{ env.GOOGLE_SERVICES_JSON_BASE64 != '' }}
-        run: printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+          elif [ -f android/firebase/google-services.json ]; then
+            cp android/firebase/google-services.json android/app/google-services.json
+          fi
 
       - name: Status FCM
         run: |
@@ -101,9 +105,33 @@ jobs:
       - name: Restore keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "ANDROID_KEYSTORE_BASE64 belum diset"; exit 1; }
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mcm-release.jks"
+          node <<'NODE'
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const raw = process.env.ANDROID_KEYSTORE_BASE64;
+          const runnerTemp = process.env.RUNNER_TEMP;
+          if (!raw) throw new Error("ANDROID_KEYSTORE_BASE64 belum diset");
+          if (!runnerTemp) throw new Error("RUNNER_TEMP tidak tersedia");
+
+          const cleaned = raw.replace(/[^A-Za-z0-9+/=]/g, "");
+          const bytes = Buffer.from(cleaned, "base64");
+          if (cleaned.length < 16 || bytes.length < 1024) {
+            throw new Error("Data keystore hasil decode tidak valid atau terlalu kecil");
+          }
+
+          fs.writeFileSync(path.join(runnerTemp, "mcm-release.jks"), bytes, { mode: 0o600 });
+          NODE
+          if ! keytool -list \
+            -keystore "$RUNNER_TEMP/mcm-release.jks" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" > /dev/null 2>&1; then
+            echo "Keystore/password/alias tidak cocok"
+            exit 1
+          fi
 
       - name: Build signed AAB
         working-directory: android
