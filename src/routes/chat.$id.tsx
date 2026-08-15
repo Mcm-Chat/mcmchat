@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
+import { useContactAliases } from "@/lib/contacts/alias";
 import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
 import { PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -664,7 +666,7 @@ function ChatRoom() {
                     <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-success" />
                   )}
                 </span>
-                <span className="truncate">{conv.title_resolved}</span>
+                <span className="truncate">{headerName}</span>
                 {conv.me.is_muted && <BellOff className="size-3.5 text-muted-foreground" />}
               </span>
             }
@@ -708,6 +710,12 @@ function ChatRoom() {
                   >
                     <ClipboardList className="size-5" />
                   </Button>
+                )}
+                {conv.other && (
+                  <RenameContactButton
+                    contactId={conv.other.id}
+                    realName={conv.other.display_name}
+                  />
                 )}
                 <Button
                   variant="ghost"
