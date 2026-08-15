@@ -44,6 +44,12 @@ import { VoiceEffectsSheet, VoicePrivacyBadge } from "@/components/mcm/voice-eff
 import { CallDeviceSheet } from "@/components/mcm/call-device-sheet";
 import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CallPermissionGate } from "@/components/mcm/call-permission-gate";
 import { useMediaPermission } from "@/lib/calls/use-media-permission";
 import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
@@ -122,7 +128,7 @@ function CallScreen() {
   // masuk berdering; tombol "Jawab" baru aktif setelah izin benar-benar ada.
   const permission = useMediaPermission(
     detail?.kind === "video" ? "video" : "audio",
-    session.phase === "incoming",
+    session.phase !== "ended",
   );
   const answerBlocked = session.phase === "incoming" && !permission.ready;
   const answerWithPermission = () => {
@@ -369,6 +375,23 @@ function CallScreen() {
     (restored?.phase === "error" || restored?.phase === "unconfigured");
   const voiceFallback = session.voiceFallback;
 
+  // Kontrol perangkat hanya aktif kalau izinnya benar-benar ada. Tooltip
+  // memakai kalimat yang sama di semua tombol supaya tidak membingungkan.
+  const micGranted = permission.state === "granted" || permission.state === "audio_only";
+  const cameraGranted = isVideo && permission.state === "granted" && !session.cameraBlocked;
+  const micHint = permission.requesting
+    ? "Sedang meminta izin mikrofon…"
+    : permission.state === "checking"
+      ? "Memeriksa izin mikrofon…"
+      : "Izin mikrofon belum diberikan. Izinkan mikrofon di pengaturan browser/perangkat.";
+  const cameraHint = !isVideo
+    ? "Panggilan suara tidak memakai kamera."
+    : session.cameraBlocked || permission.state === "audio_only"
+      ? "Izin kamera ditolak. Panggilan berjalan sebagai suara saja."
+      : permission.state === "checking"
+        ? "Memeriksa izin kamera…"
+        : "Izin kamera belum diberikan. Izinkan kamera di pengaturan browser/perangkat.";
+
   const phaseLabel =
     session.phase === "connected"
       ? durasi(session.durationSec)
@@ -537,6 +560,8 @@ function CallScreen() {
                   <ControlButton
                     label={session.controls.muted ? "Suara mati" : "Mikrofon"}
                     active={session.controls.muted}
+                    disabled={!micGranted}
+                    hint={micGranted ? undefined : micHint}
                     ariaLabel="Bisukan mikrofon"
                     onClick={session.toggleMute}
                     icon={session.controls.muted ? MicOff : Mic}
@@ -544,7 +569,8 @@ function CallScreen() {
                   <ControlButton
                     label="Kamera"
                     active={!session.controls.cameraOn}
-                    disabled={!isVideo || session.cameraBlocked}
+                    disabled={!cameraGranted}
+                    hint={cameraGranted ? undefined : cameraHint}
                     ariaLabel="Nyalakan kamera"
                     onClick={session.toggleCamera}
                     icon={session.controls.cameraOn ? Video : VideoOff}
@@ -572,7 +598,8 @@ function CallScreen() {
                   <ControlButton
                     label="Balik kamera"
                     active={false}
-                    disabled={!isVideo}
+                    disabled={!cameraGranted}
+                    hint={cameraGranted ? undefined : cameraHint}
                     ariaLabel="Balik kamera"
                     onClick={session.switchCamera}
                     icon={RefreshCcw}
@@ -580,6 +607,8 @@ function CallScreen() {
                   <ControlButton
                     label="Perangkat"
                     active={devicesOpen}
+                    disabled={!micGranted}
+                    hint={micGranted ? undefined : micHint}
                     ariaLabel="Pilih mikrofon dan kamera"
                     onClick={() => {
                       session.refreshDevices();
@@ -809,6 +838,7 @@ function ControlButton({
   ariaLabel,
   active,
   disabled,
+  hint,
   onClick,
   icon: Icon,
 }: {
@@ -816,25 +846,47 @@ function ControlButton({
   ariaLabel: string;
   active: boolean;
   disabled?: boolean;
+  /** Penjelasan kenapa tombol nonaktif (tooltip + judul aksesibilitas). */
+  hint?: string | undefined;
   onClick: () => void;
   icon: typeof Mic;
 }) {
+  const button = (
+    <Button
+      size="icon"
+      disabled={disabled ?? false}
+      aria-label={hint ? `${ariaLabel}. ${hint}` : ariaLabel}
+      onClick={onClick}
+      className={cn(
+        "size-14 rounded-full border border-white/20",
+        active
+          ? "bg-white text-navy hover:bg-white/90"
+          : "bg-white/15 text-white hover:bg-white/25",
+      )}
+    >
+      <Icon className="size-6" />
+    </Button>
+  );
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <Button
-        size="icon"
-        disabled={disabled ?? false}
-        aria-label={ariaLabel}
-        onClick={onClick}
-        className={cn(
-          "size-14 rounded-full border border-white/20",
-          active
-            ? "bg-white text-navy hover:bg-white/90"
-            : "bg-white/15 text-white hover:bg-white/25",
-        )}
-      >
-        <Icon className="size-6" />
-      </Button>
+      {hint ? (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            {/* Tombol nonaktif tidak memancarkan event, jadi pemicu tooltip
+                dibungkus span yang tetap bisa disentuh/di-hover. */}
+            <TooltipTrigger asChild>
+              <span tabIndex={0} title={hint} className="inline-flex rounded-full">
+                {button}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-56 text-center">
+              {hint}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        button
+      )}
       <span className="text-[10px] text-white/70">{label}</span>
     </div>
   );
