@@ -47,7 +47,10 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
       href={data.url}
       target="_blank"
       rel="noreferrer noopener"
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        openLink(data.url, e);
+      }}
       onPointerDown={(e) => e.stopPropagation()}
       className={cn(
         "mt-1.5 block w-56 max-w-full overflow-hidden rounded-xl border text-left transition-opacity active:opacity-80",
