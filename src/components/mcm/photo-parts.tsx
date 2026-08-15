@@ -211,9 +211,77 @@ export function PhotoFlow({
       ? `Kirim ke ${selected.length} chat`
       : `Kirim ke ${selectedConvs[0]?.title_resolved.split(" ")[0] ?? "penerima"}`;
 
+  const fileInputs = (
+    <>
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          void pick(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) => {
+          void pick(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+    </>
+  );
+
+  if (step === "kamera") {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+        {fileInputs}
+        <div className="flex size-20 items-center justify-center rounded-full bg-primary/10">
+          {busy ? (
+            <Loader2 className="size-9 animate-spin text-primary" />
+          ) : (
+            <Camera className="size-9 text-primary" />
+          )}
+        </div>
+        <div className="space-y-1">
+          <p className="text-base font-semibold">Ambil foto</p>
+          <p className="text-sm text-muted-foreground">
+            Kamera terbuka dulu. Penerima dipilih setelah foto siap.
+          </p>
+        </div>
+        <div className="flex w-full max-w-xs flex-col gap-2">
+          <Button
+            className="h-12 rounded-2xl"
+            disabled={busy}
+            onClick={() => cameraRef.current?.click()}
+          >
+            <Camera className="size-5" /> Buka kamera
+          </Button>
+          <Button
+            variant="outline"
+            className="h-12 rounded-2xl"
+            disabled={busy}
+            onClick={() => galleryRef.current?.click()}
+          >
+            <ImageIcon className="size-5" /> Pilih dari galeri
+          </Button>
+          <Button variant="ghost" className="rounded-2xl" onClick={onCancel}>
+            Batal
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (step === "penerima") {
     return (
       <div className="flex min-h-0 flex-col">
+        {fileInputs}
         <div className="space-y-3 px-4 pt-2 pb-3">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
