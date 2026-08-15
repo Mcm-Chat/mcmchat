@@ -1,4 +1,5 @@
 import { fetchProfileCards } from "./profiles";
+import { listHiddenCallIds } from "./call-history";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
@@ -239,7 +240,10 @@ export async function listCalls(userId: string): Promise<CallHistoryItem[]> {
     "Gagal memuat panggilan",
   );
   if (mine.length === 0) return [];
-  const ids = mine.map((m) => m.call_id);
+  // Entri yang sudah dihapus pengguna ini tidak pernah muncul lagi di daftarnya.
+  const hidden = await listHiddenCallIds(userId);
+  const ids = mine.map((m) => m.call_id).filter((id) => !hidden.has(id));
+  if (ids.length === 0) return [];
   const [calls, parts] = await Promise.all([
     supabase
       .from("calls")
