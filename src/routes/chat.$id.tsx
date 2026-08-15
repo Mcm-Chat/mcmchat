@@ -58,7 +58,6 @@ import {
 import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
 import { scopedKey } from "@/lib/session-scope";
 import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";

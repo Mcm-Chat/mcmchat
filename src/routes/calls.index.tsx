@@ -36,7 +36,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls, useConversations } from "@/lib/api/queries";
-import { startCall, type CallHistoryItem } from "@/lib/api/calls";
+import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 
 export const Route = createFileRoute("/calls/")({
@@ -95,8 +95,11 @@ function CallsPage() {
       return;
     }
     try {
-      const created = await startCall(c.conversation_id, c.kind);
-      void navigate({ to: "/call/$id", params: { id: created.id } });
+      void navigate({
+        to: "/call/prepare/$conversationId",
+        params: { conversationId: c.conversation_id },
+        search: { kind: c.kind === "video" ? "video" : "audio" },
+      });
     } catch {
       setNotice(true);
     }
@@ -110,9 +113,12 @@ function CallsPage() {
       return;
     }
     try {
-      const created = await startCall(conversationId, kind);
       setNewOpen(false);
-      void navigate({ to: "/call/$id", params: { id: created.id } });
+      void navigate({
+        to: "/call/prepare/$conversationId",
+        params: { conversationId },
+        search: { kind },
+      });
     } catch {
       setNewOpen(false);
       setNotice(true);

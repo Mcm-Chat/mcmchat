@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { durasi, jam, tanggalPanjang } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useCalls } from "@/lib/api/queries";
-import { startCall, type CallHistoryItem } from "@/lib/api/calls";
+import { type CallHistoryItem } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 
 export const Route = createFileRoute("/calls/$id")({
@@ -85,8 +85,11 @@ function CallDetailPage() {
       return;
     }
     try {
-      const created = await startCall(call.conversation_id, kind);
-      void navigate({ to: "/call/$id", params: { id: created.id } });
+      void navigate({
+        to: "/call/prepare/$conversationId",
+        params: { conversationId: call.conversation_id },
+        search: { kind },
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal memulai panggilan.");
     }
