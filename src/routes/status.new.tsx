@@ -177,56 +177,59 @@ function StatusNew() {
           </TabsList>
 
           <TabsContent value="foto" className="space-y-3 pt-3">
-            {!image ? (
-              <div className="grid gap-2">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => void pilihFoto(e.target.files?.[0])}
-                />
+            <div className="grid gap-2">
+              <input
+                ref={cameraRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={(e) => {
+                  void pilihFoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  void pilihFoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-24 flex-col gap-2"
+                  className="h-24 flex-col gap-2 rounded-2xl"
+                  disabled={opening}
+                  onClick={() => cameraRef.current?.click()}
+                >
+                  {opening ? (
+                    <Loader2 className="size-6 animate-spin" />
+                  ) : (
+                    <Camera className="size-6" />
+                  )}
+                  Ambil foto
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-24 flex-col gap-2 rounded-2xl"
+                  disabled={opening}
                   onClick={() => fileRef.current?.click()}
                 >
                   <ImagePlus className="size-6" />
-                  Pilih foto atau ambil dari kamera
+                  Pilih dari galeri
                 </Button>
-                <p className="text-xs text-muted-foreground">
-                  Foto otomatis dipangkas ke rasio layar penuh 9:16. Video status belum tersedia di
-                  versi ini.
-                </p>
               </div>
-            ) : (
-              <>
-                <StatusEditor image={image} onStateChange={onStateChange} />
-                <div className="space-y-1.5">
-                  <Label htmlFor="caption">Keterangan slide</Label>
-                  <Input
-                    id="caption"
-                    value={caption}
-                    onChange={(e) => setCaption(e.target.value)}
-                    placeholder="Opsional"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    className="flex-1"
-                    disabled={busy}
-                    onClick={() => void tambahSlideFoto()}
-                  >
-                    {busy && <Loader2 className="size-4 animate-spin" />} Tambahkan slide
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={() => setImage(null)}>
-                    Batal
-                  </Button>
-                </div>
-              </>
-            )}
+              <p className="text-xs text-muted-foreground">
+                Setiap foto langsung masuk editor layar penuh (filter, coretan, sensor, teks,
+                stiker) sebelum diunggah. Hasil akhir 9:16.
+              </p>
+            </div>
           </TabsContent>
 
           <TabsContent value="teks" className="space-y-3 pt-3">
