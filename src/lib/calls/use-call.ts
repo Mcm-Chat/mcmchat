@@ -560,6 +560,25 @@ export function useCall(opts: {
     [],
   );
 
+  /**
+   * Pemulihan manual dari status gagal: bongkar sesi lama, reset penghitung
+   * sambung-ulang otomatis, lalu bergabung lagi ke panggilan yang sama.
+   */
+  const retry = useCallback(() => {
+    const row = call;
+    if (!row || endedRef.current) return;
+    setRetrying(true);
+    setReason("Mencoba menyambungkan ulang…");
+    setPhase("connecting");
+    rejoinRef.current = 0;
+    void cleanup()
+      .then(() => {
+        joinedRef.current = false;
+        return join(row);
+      })
+      .finally(() => setRetrying(false));
+  }, [call, cleanup, join]);
+
   return useMemo<UseCallResult>(
     () => ({
       phase,
