@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { NotificationBanner } from "@/components/mcm/notification-banner";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
+import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import {
   ArrowLeft,
   Mic,
@@ -91,6 +92,12 @@ function CallScreen() {
   const [errorDismissed, setErrorDismissed] = useState(false);
   const entitlement = useEntitlement(userId, FEATURE_VOICE_EFFECTS);
   const session = useCall({ callId: id, userId, prefs: voicePrefs, premium: entitlement.active });
+
+  /** Kembali ke riwayat sambil menandai tombol panggilan mana yang harus difokuskan. */
+  const backToCalls = () => {
+    setCallReturnFocus(id);
+    void navigate({ to: "/calls" });
+  };
 
   const load = () => {
     if (!userId) return;
