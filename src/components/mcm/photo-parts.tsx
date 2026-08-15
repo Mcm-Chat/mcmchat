@@ -4,6 +4,7 @@ import {
   Camera,
   Pencil,
   Check,
+  Download,
   Image as ImageIcon,
   Loader2,
   MapPin,
@@ -216,6 +217,25 @@ export function PhotoFlow({
   const toggle = (id: string) =>
     setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
+  /** Unduh salinan foto yang sudah diedit ke penyimpanan perangkat. */
+  const saveToDevice = async () => {
+    if (!preview) return;
+    try {
+      const blob = await dataUrlToBlob(preview);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `MCM-foto-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast.success("Salinan foto diunduh ke penyimpanan perangkat");
+    } catch {
+      toast.error("Gagal mengunduh salinan foto");
+    }
+  };
+
   const sendLabel =
     selected.length > 1
       ? `Kirim ke ${selected.length} chat`
@@ -254,11 +274,16 @@ export function PhotoFlow({
       <PhotoEditorDialog
         src={preview}
         title="Edit foto sebelum dikirim"
+        doneLabel="Gunakan foto"
         onCancel={() => setEditing(false)}
         onDone={(dataUrl) => {
           setPreview(dataUrl);
           setEditing(false);
-          toast.success("Perubahan foto disimpan");
+          toast.success(
+            selected.length > 0
+              ? "Foto siap. Tekan Kirim untuk mengirimnya."
+              : "Foto siap. Pilih penerima lalu tekan Kirim.",
+          );
         }}
       />
     );
@@ -309,6 +334,29 @@ export function PhotoFlow({
     return (
       <div className="flex min-h-0 flex-col">
         {fileInputs}
+        {preview && (
+          <div className="flex items-center gap-3 border-b border-border bg-muted/40 px-4 py-2.5">
+            <img
+              src={preview}
+              alt="Foto yang akan dikirim"
+              className="size-14 shrink-0 rounded-xl border border-border object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Foto siap dikirim</p>
+              <p className="text-[11px] text-muted-foreground">
+                Belum terkirim — pilih penerima lalu tekan Kirim.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-9 rounded-lg text-xs"
+              onClick={() => setEditing(true)}
+            >
+              <Pencil className="size-3.5" /> Edit
+            </Button>
+          </div>
+        )}
         <div className="space-y-3 px-4 pt-2 pb-3">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -507,6 +555,17 @@ export function PhotoFlow({
                   <ImageIcon className="size-4" /> Ganti foto
                 </Button>
               </div>
+              <Button
+                variant="ghost"
+                className="h-10 w-full rounded-xl text-xs"
+                onClick={() => void saveToDevice()}
+              >
+                <Download className="size-4" /> Simpan salinan ke perangkat
+              </Button>
+              <p className="text-[11px] text-muted-foreground">
+                Hasil edit disimpan sementara di aplikasi. Foto baru tersimpan permanen di dalam
+                chat setelah tombol Kirim ditekan.
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">

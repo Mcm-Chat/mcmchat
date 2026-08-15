@@ -144,11 +144,13 @@ type Tool = "arrow" | "crop" | "text" | "sticker";
 export function PhotoEditorDialog({
   src,
   title = "Edit foto",
+  doneLabel = "Simpan",
   onCancel,
   onDone,
 }: {
   src: string;
   title?: string;
+  doneLabel?: string;
   onCancel: () => void;
   onDone: (dataUrl: string) => void;
 }) {
@@ -534,7 +536,7 @@ export function PhotoEditorDialog({
                 Lanjut edit
               </Button>
               <Button className="h-12 flex-1 rounded-xl" onClick={() => onDone(preview)}>
-                <Check className="size-4" /> Simpan
+                <Check className="size-4" /> {doneLabel}
               </Button>
             </div>
           </div>
