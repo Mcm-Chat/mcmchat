@@ -133,3 +133,49 @@ describe("chat selection + confirm back priority", () => {
     expect(backGuardMarkerActive()).toBe(false);
   });
 });
+
+/** Overlay A ditutup dan overlay B dibuka pada tick yang sama (tile sheet). */
+function SwapOverlays() {
+  const [a, setA] = useState(true);
+  const [b, setB] = useState(false);
+  return (
+    <>
+      <Overlay open={a} onDismiss={() => setA(false)} />
+      <Overlay open={b} onDismiss={() => setB(false)} />
+      <button
+        data-testid="swap"
+        onClick={() => {
+          setA(false);
+          setB(true);
+        }}
+      />
+      <span data-testid="swap-state">{`${a ? "a" : "-"}${b ? "b" : "-"}`}</span>
+    </>
+  );
+}
+
+describe("tukar overlay pada tick yang sama", () => {
+  beforeEach(() => {
+    __resetBackGuard();
+    window.history.replaceState(null, "", "/chat/1");
+  });
+  afterEach(() => {
+    cleanup();
+    __resetBackGuard();
+  });
+
+  it("overlay baru tidak ikut tertutup oleh popstate dari pelepasan penanda", async () => {
+    const { getByTestId } = render(<SwapOverlays />);
+    act(() => {
+      getByTestId("swap").click();
+    });
+    expect(getByTestId("swap-state").textContent).toBe("-b");
+    // Popstate susulan akibat history.back() internal.
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(getByTestId("swap-state").textContent).toBe("-b");
+    expect(backGuardDepth()).toBe(1);
+    expect(backGuardMarkerActive()).toBe(true);
+  });
+});
