@@ -58,7 +58,6 @@ import {
 import { deriveStatus, indexReceipts, markDelivered, markRead } from "@/lib/api/receipts";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { startCall } from "@/lib/api/calls";
 import { useRequireAuth } from "@/lib/api/guard";
 import { scopedKey } from "@/lib/session-scope";
 import { qk, useConversations, useMessages, useMyBusiness, useReceipts } from "@/lib/api/queries";
@@ -557,8 +556,11 @@ function ChatRoom() {
         toast.error("Penyedia panggilan belum terhubung. Hubungi admin untuk mengaktifkan.");
         return;
       }
-      const created = await startCall(id, kind);
-      void navigate({ to: "/call/$id", params: { id: created.id } });
+      void navigate({
+        to: "/call/prepare/$conversationId",
+        params: { conversationId: id },
+        search: { kind },
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Panggilan gagal dimulai");
     }
