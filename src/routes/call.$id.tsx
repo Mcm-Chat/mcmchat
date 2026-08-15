@@ -122,7 +122,7 @@ function CallScreen() {
   // masuk berdering; tombol "Jawab" baru aktif setelah izin benar-benar ada.
   const permission = useMediaPermission(
     detail?.kind === "video" ? "video" : "audio",
-    session.phase === "incoming",
+    session.phase !== "ended",
   );
   const answerBlocked = session.phase === "incoming" && !permission.ready;
   const answerWithPermission = () => {
