@@ -153,7 +153,7 @@ export function MobileHeader({
             variant="ghost"
             size="icon"
             aria-label="Kembali"
-            className="size-11 shrink-0"
+            className="size-10 shrink-0"
             onClick={() =>
               onBack
                 ? onBack()
@@ -169,7 +169,7 @@ export function MobileHeader({
           <h1 className="truncate text-base leading-tight font-semibold">{title}</h1>
           {subtitle && <div className="truncate text-xs text-muted-foreground">{subtitle}</div>}
         </div>
-        {actions && <div className="flex shrink-0 items-center gap-1">{actions}</div>}
+        {actions && <div className="flex shrink-0 items-center gap-0.5">{actions}</div>}
       </div>
       {children}
     </header>

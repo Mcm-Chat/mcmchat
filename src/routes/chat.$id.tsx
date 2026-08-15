@@ -650,7 +650,7 @@ function ChatRoom() {
           <MobileHeader
             back
             title={
-              <span className="flex items-center gap-2">
+              <span className="flex min-w-0 items-center gap-2">
                 <span className="relative shrink-0">
                   {conv.other ? (
                     <UserAvatar
@@ -672,7 +672,7 @@ function ChatRoom() {
                     <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-card bg-success" />
                   )}
                 </span>
-                <span className="truncate">{headerName}</span>
+                <span className="min-w-0 truncate">{headerName}</span>
                 {conv.me.is_muted && <BellOff className="size-3.5 text-muted-foreground" />}
               </span>
             }
@@ -692,6 +692,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-9"
                   aria-label="Panggilan suara"
                   disabled={inactive || blocked || blockedByOther}
                   onClick={() => void call("audio")}
@@ -701,6 +702,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-9"
                   aria-label="Panggilan video"
                   disabled={inactive || blocked || blockedByOther}
                   onClick={() => void call("video")}
@@ -711,6 +713,7 @@ function ChatRoom() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="size-9"
                     aria-label="Buat perintah penyiapan"
                     onClick={() => setPrepOpen(true)}
                   >
@@ -726,6 +729,7 @@ function ChatRoom() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-9"
                   aria-label="Detail chat"
                   onClick={() => setDetailOpen(true)}
                 >
