@@ -13,6 +13,7 @@ import {
   PhoneOff,
   RefreshCcw,
   ShieldAlert,
+  SlidersHorizontal,
   SignalHigh,
   SignalLow,
   SignalMedium,
@@ -91,6 +92,7 @@ function CallScreen() {
   const [detail, setDetail] = useState<CallHistoryItem | null>(null);
   const [detailStatus, setDetailStatus] = useState<"loading" | "ready" | "error">("loading");
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [devicesOpen, setDevicesOpen] = useState(false);
   const [, setSettingsRow] = useState<UserSettingsRow | null>(null);
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
