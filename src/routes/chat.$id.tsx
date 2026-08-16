@@ -905,8 +905,8 @@ function ChatRoom() {
                 data-index={virtualRow.index}
                 data-virtual-row=""
                 ref={virtualizer.measureElement}
-                className="absolute top-0 left-0 w-full"
-                style={{ transform: `translateY(${virtualRow.start}px)` }}
+                className="chat-row absolute top-0 left-0 w-full"
+                style={{ transform: `translate3d(0, ${virtualRow.start}px, 0)` }}
               >
                 {row.showDay && (
                   <div className="my-3 flex justify-center">
