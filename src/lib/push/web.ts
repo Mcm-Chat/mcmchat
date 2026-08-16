@@ -11,7 +11,7 @@ import { routeFromPush } from "./deeplink";
 import type { PushData } from "./payload";
 import { announceGuardResult, guardPushRoute } from "./route-guard";
 
-const INSTALL_KEY = "mcm.web.installation";
+const installationKey = "mcm.web.installation";
 
 export type WebRegisterResult = { registered: boolean; reason?: string };
 
@@ -33,10 +33,10 @@ export function webPushReady(): { ok: boolean; reason?: string } {
 
 /** ID instalasi stabil per-browser (non-secret) untuk dedupe baris perangkat. */
 function installationId(): string {
-  let id = localStorage.getItem(INSTALL_KEY);
+  let id = localStorage.getItem(installationKey);
   if (!id || id.length < 8) {
     id = `web-${crypto.randomUUID()}`;
-    localStorage.setItem(INSTALL_KEY, id);
+    localStorage.setItem(installationKey, id);
   }
   return id;
 }
@@ -94,7 +94,7 @@ export async function registerWebPush(deviceName: string): Promise<WebRegisterRe
 /** Cabut instalasi browser ini (dipanggil saat logout). */
 export async function revokeWebPush() {
   if (typeof window === "undefined") return;
-  const id = localStorage.getItem(INSTALL_KEY);
+  const id = localStorage.getItem(installationKey);
   if (id) {
     await supabase.rpc("revoke_my_push_installation", { _installation_id: id }).then(
       () => undefined,
