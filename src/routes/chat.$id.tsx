@@ -9,6 +9,7 @@ import {
   BellOff,
   ClipboardList,
   Info,
+  MailOpen,
   Phone,
   RotateCw,
   Users,
@@ -95,6 +96,7 @@ import {
   saveChatView,
   shouldRestoreScroll,
 } from "@/lib/chat/scroll-restore";
+import { summarizeUnread } from "@/lib/chat/unread";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
@@ -175,6 +177,10 @@ function ChatRoom() {
   const lastInteractionRef = useRef(0);
   const [missedCount, setMissedCount] = useState(0);
   const lastMessageIdRef = useRef<string | null>(null);
+  // Baseline "terakhir dibaca" dibekukan saat ruang dibuka, sebelum server
+  // menandai pesan sebagai dibaca — supaya penanda pertama-belum-dibaca stabil.
+  const readBaselineRef = useRef<string | null | undefined>(undefined);
+  const [unreadDismissed, setUnreadDismissed] = useState(false);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
   // Pemulihan posisi baca & fokus komposer saat chat yang sama dibuka lagi.
   const restoreRef = useRef<ReturnType<typeof loadChatView> | null | undefined>(undefined);
@@ -384,6 +390,31 @@ function ChatRoom() {
     },
     [messages.length, virtualizer],
   );
+
+  // Ringkasan pesan belum dibaca (baseline dibekukan saat percakapan dibuka).
+  if (readBaselineRef.current === undefined && conv) {
+    readBaselineRef.current = conv.me.last_read_at ?? null;
+  }
+  const unread = useMemo(
+    () =>
+      summarizeUnread(
+        messages.map((m) => ({
+          id: m.id,
+          sender_id: m.sender_id,
+          created_at: m.created_at,
+          kind: m.kind,
+        })),
+        userId ?? null,
+        readBaselineRef.current ?? null,
+      ),
+    [messages, userId],
+  );
+  const jumpToFirstUnread = useCallback(() => {
+    if (unread.firstIndex < 0) return;
+    setUnreadDismissed(true);
+    virtualizer.scrollToIndex(unread.firstIndex, { align: "start" });
+    requestAnimationFrame(() => virtualizer.scrollToIndex(unread.firstIndex, { align: "start" }));
+  }, [unread.firstIndex, virtualizer]);
   useEffect(() => {
     const lastId = messages.at(-1)?.id ?? null;
     const grew = lastId !== null && lastId !== lastMessageIdRef.current;
@@ -1172,8 +1203,20 @@ function ChatRoom() {
         </div>
       </div>
 
-      {(!atBottom || scrollLocked) && (
+      {(!atBottom || scrollLocked || (unread.count > 0 && !unreadDismissed)) && (
         <div className="pointer-events-none sticky bottom-24 z-10 flex items-center justify-end gap-2 px-4">
+          {unread.count > 0 && !unreadDismissed && (
+            <Button
+              size="sm"
+              variant="default"
+              aria-label={`Ke pesan belum dibaca — ${unread.count} pesan`}
+              className="pointer-events-auto h-8 rounded-full px-3 text-xs shadow-md"
+              onClick={jumpToFirstUnread}
+            >
+              <MailOpen className="mr-1 size-3.5" />
+              {unread.count > 99 ? "99+" : unread.count} belum dibaca
+            </Button>
+          )}
           <Button
             size="sm"
             variant={scrollLocked ? "default" : "secondary"}
