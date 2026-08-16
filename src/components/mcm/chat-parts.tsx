@@ -474,6 +474,7 @@ function ImageBubble({ message }: { message: MessageRow }) {
       src={url}
       alt={message.body || "Foto terkirim"}
       loading="lazy"
+      decoding="async"
       className="max-h-56 w-52 max-w-full rounded-xl object-cover"
     />
   ) : (
@@ -500,6 +501,7 @@ function StickerBubble({ message }: { message: MessageRow }) {
       src={url}
       alt={message.body || "Stiker"}
       loading="lazy"
+      decoding="async"
       className="size-32 object-contain"
     />
   ) : (
