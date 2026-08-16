@@ -84,6 +84,7 @@ import {
   isNearBottom,
   isUserScrolling,
   shouldAutoScroll,
+  keyboardScrollAction,
   USER_SCROLL_GRACE_MS,
 } from "@/lib/chat/scroll";
 import {
@@ -466,13 +467,36 @@ function ChatRoom() {
   useEffect(() => {
     const vv = typeof window !== "undefined" ? window.visualViewport : undefined;
     if (!vv) return;
+    let prevHeight = vv.height;
     const onResize = () => {
-      if (!atBottom) return;
-      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
+      const el = scrollRef.current;
+      const nextHeight = vv.height;
+      const action = keyboardScrollAction({
+        prevHeight,
+        nextHeight,
+        atBottom,
+        locked: scrollLocked,
+      });
+      prevHeight = nextHeight;
+      if (!el || action.type === "none") return;
+      if (action.type === "stick") {
+        requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
+        return;
+      }
+      // Membaca riwayat lama: geser balik sebesar perubahan tinggi layar agar
+      // baris yang sedang dibaca tetap di posisi yang sama.
+      const apply = () => {
+        const node = scrollRef.current;
+        if (!node) return;
+        const max = Math.max(0, node.scrollHeight - node.clientHeight);
+        node.scrollTop = Math.min(Math.max(0, node.scrollTop + action.delta), max);
+      };
+      apply();
+      requestAnimationFrame(apply);
     };
     vv.addEventListener("resize", onResize);
     return () => vv.removeEventListener("resize", onResize);
-  }, [atBottom]);
+  }, [atBottom, scrollLocked]);
 
   // Draf per percakapan bertahan saat pindah layar atau reload; state teksnya
   // hidup di dalam ComposerHost supaya mengetik tidak me-render ulang daftar.
