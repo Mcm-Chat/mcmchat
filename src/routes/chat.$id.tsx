@@ -461,6 +461,22 @@ function ChatRoom() {
       advanceReadBaseline(advanceReadBaseline(readBaselineRef.current ?? null, prev), lastUnreadAt),
     );
   }, [unread.firstIndex, virtualizer, messages]);
+  // Tandai semua sebagai dibaca: badge hilang seketika (lokal) lalu server
+  // menyusul menulis receipt agar pengirim ikut melihat centang biru.
+  const markAllAsRead = useCallback(() => {
+    const latest = messages.at(-1)?.created_at ?? new Date().toISOString();
+    setSettledBaselineAt((prev) =>
+      advanceReadBaseline(advanceReadBaseline(readBaselineRef.current ?? null, prev), latest),
+    );
+    setUnreadDismissed(true);
+    setUnreadMarked(false);
+    setMissedCount(0);
+    if (!id) return;
+    void markRead(id).then(() => {
+      if (userId) void qc.invalidateQueries({ queryKey: qk.conversations(userId) });
+      void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
+    });
+  }, [messages, id, userId, qc]);
   // Sorotan memudar sendiri agar tidak mengganggu pembacaan selanjutnya.
   useEffect(() => {
     if (!unreadMarked) return;
