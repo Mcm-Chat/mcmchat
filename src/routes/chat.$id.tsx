@@ -18,7 +18,8 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
-import { ChatComposer, MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
+import { MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
+import { ComposerHost, type ComposerHandle } from "@/components/mcm/composer-host";
 import { ForwardDialog } from "@/components/mcm/forward-dialog";
 import { LocationShareFlow, PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -135,8 +136,8 @@ function ChatRoom() {
   const connection = useConnectionState();
   const pending = useOutbox(id);
 
-  const [text, setText] = useState("");
   const [reply, setReply] = useState<MessageRow | null>(null);
+  const composerRef = useRef<ComposerHandle>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
   const [forwarding, setForwarding] = useState<MessageRow[]>([]);
@@ -345,17 +346,9 @@ function ChatRoom() {
     return () => vv.removeEventListener("resize", onResize);
   }, [atBottom]);
 
-  // Draf per percakapan bertahan saat pindah layar atau reload.
+  // Draf per percakapan bertahan saat pindah layar atau reload; state teksnya
+  // hidup di dalam ComposerHost supaya mengetik tidak me-render ulang daftar.
   const draftKey = scopedKey(`draft:${id}`, userId ?? null);
-  useEffect(() => {
-    const saved = typeof localStorage !== "undefined" ? localStorage.getItem(draftKey) : null;
-    if (saved) setText(saved);
-  }, [draftKey]);
-  useEffect(() => {
-    if (typeof localStorage === "undefined") return;
-    if (text) localStorage.setItem(draftKey, text);
-    else localStorage.removeItem(draftKey);
-  }, [text, draftKey]);
 
   const nameOf = useMemo(() => {
     const map = new Map((conv?.members ?? []).map((m) => [m.id, m.display_name]));
@@ -411,14 +404,13 @@ function ChatRoom() {
   const inactive = !!conv && !conv.sendable;
   const canCall = !!conv && conv.callable;
 
-  const doSend = async () => {
-    const body = text.trim();
+  const doSend = async (raw: string) => {
+    const body = raw.trim();
     if (!body || !userId) return;
     if (editingId) {
       try {
         await editMessage(editingId, body);
         setEditingId(null);
-        setText("");
         refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Pesan gagal diubah");
@@ -428,7 +420,6 @@ function ChatRoom() {
     // Pesan teks masuk outbox: tampil langsung, terkirim otomatis saat online,
     // dan tidak pernah hilang meski koneksi putus.
     enqueueText({ conversationId: id, senderId: userId, body, replyToId: reply?.id ?? null });
-    setText("");
     setReply(null);
     setAtBottom(true);
   };
@@ -509,7 +500,7 @@ function ChatRoom() {
           break;
         case "edit":
           setEditingId(message.id);
-          setText(message.body);
+          composerRef.current?.setText(message.body);
           break;
         case "react":
           await toggleReaction(message.id, userId, payload ?? "👍");
@@ -1080,12 +1071,10 @@ function ChatRoom() {
           )}
         </div>
       ) : (
-        <ChatComposer
-          value={text}
-          onChange={(v) => {
-            setText(v);
-            if (v) notifyTyping();
-          }}
+        <ComposerHost
+          ref={composerRef}
+          draftKey={draftKey}
+          onTyping={notifyTyping}
           onSend={doSend}
           onAttach={(kind) => {
             if (kind === "document") {
@@ -1104,7 +1093,7 @@ function ChatRoom() {
           editing={!!editingId}
           onCancelEdit={() => {
             setEditingId(null);
-            setText("");
+            composerRef.current?.clear();
           }}
           replyPreview={reply ?? undefined}
           replySenderName={reply ? nameOf(reply.sender_id) : undefined}
