@@ -1296,6 +1296,18 @@ function ChatRoom() {
           {unread.count > 0 && !unreadDismissed && (
             <Button
               size="sm"
+              variant="secondary"
+              aria-label="Tandai semua pesan sebagai dibaca"
+              className="pointer-events-auto h-8 rounded-full px-3 text-xs shadow-md"
+              onClick={markAllAsRead}
+            >
+              <CheckCheck className="mr-1 size-3.5" />
+              Tandai semua dibaca
+            </Button>
+          )}
+          {unread.count > 0 && !unreadDismissed && (
+            <Button
+              size="sm"
               variant="default"
               aria-label={`Ke pesan belum dibaca — ${unread.count} pesan`}
               className="pointer-events-auto h-8 rounded-full px-3 text-xs shadow-md"
