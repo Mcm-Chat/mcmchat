@@ -874,6 +874,18 @@ function ChatRoom() {
           onTouchMove={() => {
             lastInteractionRef.current = Date.now();
           }}
+          onTouchEnd={() => {
+            lastInteractionRef.current = Date.now();
+            // Setelah jari lepas dan momentum reda, rapatkan lagi bila memang
+            // sedang berada di pesan terbaru.
+            window.setTimeout(() => {
+              const el = scrollRef.current;
+              if (el && isNearBottom(el)) {
+                setMissedCount(0);
+                scrollToLatest();
+              }
+            }, USER_SCROLL_GRACE_MS);
+          }}
           onWheel={() => {
             lastInteractionRef.current = Date.now();
           }}
