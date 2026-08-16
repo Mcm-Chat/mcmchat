@@ -24,6 +24,7 @@ import {
   type NativeCapabilities,
 } from "@/lib/push/native";
 import { enablePush, usePushChannels, usePushState } from "@/lib/push/use-push";
+import { missingWebPushKeys } from "@/lib/push/web-config";
 import {
   PERM_LABEL,
   STATE_LABEL,
@@ -98,6 +99,7 @@ function NotificationSettingsPage() {
   const [settings, setSettings] = useState<UserSettingsRow | null>(null);
   const [devices, setDevices] = useState<DeviceRow[]>([]);
   const [perms, setPerms] = useState<Record<string, PermState>>({});
+  const missingKeys: string[] = missingWebPushKeys();
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [caps, setCaps] = useState<NativeCapabilities | null>(null);
@@ -237,6 +239,20 @@ function NotificationSettingsPage() {
               </li>
             ))}
           </ul>
+          {!push.native && !push.webPush ? (
+            <div className="rounded-xl border border-border bg-muted/40 p-3">
+              <p className="text-xs font-medium">Push web belum aktif di build ini</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Nilai konfigurasi Firebase Web berikut masih kosong, sehingga notifikasi saat
+                aplikasi ditutup tidak bisa dikirim ke browser/PWA:
+              </p>
+              <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
+                {missingKeys.map((k) => (
+                  <li key={k}>{k}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {userId && (push.native || push.webPush) && !push.registered ? (
             <Button
               size="sm"
