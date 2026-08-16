@@ -64,6 +64,23 @@ function AddContactPage() {
   const [scanned, setScanned] = useState<ProfileLite | null>(null);
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [relation, setRelation] = useState<ContactRelation | null>(null);
+
+  // Status relasi selalu disegarkan setiap profil hasil pencarian berubah agar
+  // badge yang tampil benar-benar mencerminkan kondisi di server.
+  useEffect(() => {
+    if (!found || !userId) {
+      setRelation(null);
+      return;
+    }
+    let alive = true;
+    void getContactRelation(userId, found.id)
+      .then((r) => alive && setRelation(r))
+      .catch(() => alive && setRelation(null));
+    return () => {
+      alive = false;
+    };
+  }, [found, userId]);
 
   // Buka pemindai QR langsung saat masuk lewat pintasan "Pindai QR".
   useEffect(() => {
