@@ -54,6 +54,12 @@ import {
   connectTimeoutMs,
 } from "./connect-watchdog";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
+import {
+  diffSnapshots,
+  snapshotFromStats,
+  type QualityMetrics,
+  type QualitySnapshot,
+} from "./quality-metrics";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
 /**
@@ -166,6 +172,8 @@ export type UseCallResult = {
   pipelineState: PipelineState;
   /** Kualitas jaringan lokal untuk indikator sinyal. */
   quality: "excellent" | "good" | "poor" | "unknown";
+  /** Metrik kualitas real-time (packet loss, jitter, bitrate); null bila belum ada. */
+  metrics: QualityMetrics | null;
   /** Efek suara benar-benar aktif pada track keluar (bukan sekadar preferensi). */
   voiceApplied: boolean;
   /** Efek suara diminta tetapi gagal dipasang; panggilan tetap berjalan polos. */
