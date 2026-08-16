@@ -47,7 +47,6 @@ import {
 } from "./failure-messages";
 import { HANDSHAKE_ATTEMPTS, handshakeProgressText, withHandshakeRetry } from "./handshake";
 import {
-  CONNECT_MAX_RECOVERIES,
   CONNECT_RECOVERY_DELAY_MS,
   CONNECT_SLOW_MS,
   canAutoRecover,
@@ -948,6 +947,7 @@ export function useCall(opts: {
     [
       phase,
       reason,
+      connectStalled,
       call,
       remotes,
       durationSec,
