@@ -433,6 +433,10 @@ function AddContactPage() {
         open={scannerOpen}
         onOpenChange={setScannerOpen}
         onResult={(value) => void handleScan(value)}
+        onManualPin={() => {
+          toast.info("Masukkan PIN 8 karakter secara manual.");
+          setTimeout(() => document.getElementById("pin")?.focus(), 50);
+        }}
       />
       <ContactRequestConfirmDialog
         open={confirmOpen}
