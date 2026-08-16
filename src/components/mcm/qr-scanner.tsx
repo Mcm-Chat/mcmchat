@@ -97,6 +97,7 @@ export function QrScannerDialog({
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [phase, setPhase] = useState<CamPhase>("idle");
   const [attempt, setAttempt] = useState(0);
+  const [armed, setArmed] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
 
@@ -126,6 +127,7 @@ export function QrScannerDialog({
     if (!open) {
       stop();
       setPhase("idle");
+      setArmed(false);
       return;
     }
     doneRef.current = false;
