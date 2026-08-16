@@ -85,6 +85,8 @@ import {
   isUserScrolling,
   shouldAutoScroll,
   keyboardScrollAction,
+  pickScrollAnchor,
+  anchorScrollDelta,
   USER_SCROLL_GRACE_MS,
 } from "@/lib/chat/scroll";
 import {
