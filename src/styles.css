@@ -194,7 +194,15 @@
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  will-change: scroll-position;
+  /* Batasi repaint ke area yang terlihat: tanpa ini seluruh daftar panjang
+     ikut dicat ulang tiap frame gulir dan terasa patah-patah di ponsel. */
+  contain: paint;
+}
+
+/* Baris virtual: isolasi tata letak/paint tiap bubble supaya pengukuran satu
+   baris tidak memaksa reflow seluruh daftar saat menggulir. */
+@utility chat-row {
+  contain: layout paint style;
 }
 
 @utility composer-raise {
