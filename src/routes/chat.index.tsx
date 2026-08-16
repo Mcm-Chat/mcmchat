@@ -128,6 +128,10 @@ function ChatIndex() {
     () => overviewUnread((conversations ?? []).filter((c) => !c.me.is_archived)),
     [conversations],
   );
+  const unreadActiveCount = useMemo(
+    () => (conversations ?? []).filter((c) => !c.me.is_archived && c.unread > 0).length,
+    [conversations],
+  );
 
   const selectedConvs = useMemo(
     () => list.filter((c) => selected.includes(c.id)),
@@ -481,7 +485,14 @@ function ChatIndex() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-2">
           <TabsTrigger value="semua">Semua</TabsTrigger>
-          <TabsTrigger value="belum">Belum dibaca</TabsTrigger>
+          <TabsTrigger value="belum" className="gap-1.5">
+            Belum dibaca
+            {unreadActiveCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                {unreadActiveCount > 99 ? "99+" : unreadActiveCount}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="arsip">Arsip</TabsTrigger>
         </TabsList>
       </Tabs>
