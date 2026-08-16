@@ -285,6 +285,15 @@ function ChatRoom() {
   });
   const virtualItems = virtualizer.getVirtualItems();
 
+  // Pesan yang disorot dari pencarian bisa berada di luar jendela virtual —
+  // gulirkan ke indeksnya begitu pesan tersedia.
+  const hl = search.hl;
+  useEffect(() => {
+    if (!hl) return;
+    const idx = rows.findIndex((r) => r.message.id === hl);
+    if (idx >= 0) virtualizer.scrollToIndex(idx, { align: "center" });
+  }, [hl, rows, virtualizer]);
+
   // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
   // memang miliknya sendiri.
   const lastSenderId = messages.at(-1)?.sender_id ?? null;
