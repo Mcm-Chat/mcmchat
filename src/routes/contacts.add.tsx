@@ -289,6 +289,67 @@ function AddContactPage() {
         </div>
 
         {searched && !found && !error && (
+          <></>
+        )}
+        {history.length > 0 && (
+          <div className="card-soft space-y-2 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold">
+                <History className="size-4" /> Riwayat pindai (7 hari)
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-lg text-xs text-muted-foreground"
+                onClick={() => {
+                  if (!userId) return;
+                  clearScanHistory(userId);
+                  setHistory([]);
+                }}
+              >
+                Bersihkan
+              </Button>
+            </div>
+            <ul className="divide-y divide-border/60">
+              {history.map((h) => (
+                <li key={h.id} className="flex items-center gap-3 py-2">
+                  <UserAvatar
+                    userId={h.id}
+                    path={h.avatarUrl ?? null}
+                    version={h.avatarVersion ?? null}
+                    name={h.name}
+                    color={h.avatarColor ?? null}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{h.name}</p>
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">
+                      {h.pin} · {scanAgeLabel(h.scannedAt)}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-9 rounded-lg"
+                    onClick={() => void handleScan(h.pin)}
+                  >
+                    <Send className="size-3.5" /> Kirim ulang
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Hapus ${h.name} dari riwayat pindai`}
+                    className="size-9 rounded-lg text-muted-foreground"
+                    onClick={() => userId && setHistory(removeScan(userId, h.id))}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {searched && !found && !error && (
           <div className="card-soft p-4 text-center text-sm text-muted-foreground">
             PIN tidak ditemukan. Pastikan PIN benar dan coba lagi.
           </div>
