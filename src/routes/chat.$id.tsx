@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   Lock as LockIcon,
@@ -85,6 +85,8 @@ import {
   isUserScrolling,
   shouldAutoScroll,
   keyboardScrollAction,
+  pickScrollAnchor,
+  anchorScrollDelta,
   USER_SCROLL_GRACE_MS,
 } from "@/lib/chat/scroll";
 import {
@@ -312,6 +314,31 @@ function ChatRoom() {
   });
   const virtualItems = virtualizer.getVirtualItems();
 
+  // Jangkar posisi baca: baris pertama yang terlihat. Saat tinggi baris di atas
+  // viewport berubah (gambar selesai dimuat, balasan terbuka), scrollTop
+  // dikoreksi sebesar perubahannya supaya daftar tidak loncat.
+  const anchorRef = useRef<import("@/lib/chat/scroll").ScrollAnchor | null>(null);
+  const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useIsoLayoutEffect(() => {
+    const el = scrollRef.current;
+    const anchor = anchorRef.current;
+    if (!el) return;
+    if (isNearBottom(el)) {
+      anchorRef.current = null;
+      return;
+    }
+    if (!anchor) {
+      anchorRef.current = pickScrollAnchor(virtualItems, el.scrollTop);
+      return;
+    }
+    const next = virtualizer.measurementsCache[anchor.index]?.start;
+    const delta = anchorScrollDelta(anchor, next);
+    if (delta !== 0) {
+      el.scrollTop += delta;
+      anchor.start = next as number;
+    }
+  });
+
   // Pesan yang disorot dari pencarian bisa berada di luar jendela virtual —
   // gulirkan ke indeksnya begitu pesan tersedia.
   const hl = search.hl;
@@ -403,9 +430,13 @@ function ChatRoom() {
         if (next && !prev) setMissedCount(0);
         return next === prev ? prev : next;
       });
+      // Perbarui jangkar mengikuti posisi baca terbaru pengguna.
+      anchorRef.current = isNearBottom(el)
+        ? null
+        : pickScrollAnchor(virtualizer.getVirtualItems(), el.scrollTop);
       if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
     });
-  }, [hasOlder, isFetchingOlder, fetchOlder]);
+  }, [hasOlder, isFetchingOlder, fetchOlder, virtualizer]);
 
   // Pulihkan posisi baca terakhir sekali daftar pertama sudah terpasang.
   useEffect(() => {
