@@ -419,6 +419,16 @@ function ChatRoom() {
     virtualizer.scrollToIndex(unread.firstIndex, { align: "start" });
     requestAnimationFrame(() => virtualizer.scrollToIndex(unread.firstIndex, { align: "start" }));
   }, [unread.firstIndex, virtualizer]);
+  // Sorotan memudar sendiri agar tidak mengganggu pembacaan selanjutnya.
+  useEffect(() => {
+    if (!unreadMarked) return;
+    const t = setTimeout(() => setUnreadMarked(false), 8000);
+    return () => clearTimeout(t);
+  }, [unreadMarked]);
+  const markedIds = useMemo(
+    () => (unreadMarked ? new Set(unread.ids) : null),
+    [unreadMarked, unread.ids],
+  );
   useEffect(() => {
     const lastId = messages.at(-1)?.id ?? null;
     const grew = lastId !== null && lastId !== lastMessageIdRef.current;
