@@ -25,7 +25,10 @@ export function shouldAutoScroll(opts: {
   lastSenderId?: string | null;
   userId?: string | null | undefined;
   userScrolling?: boolean | undefined;
+  /** Kunci manual: pengguna memilih tidak diseret ke pesan terbaru sama sekali. */
+  locked?: boolean | undefined;
 }): boolean {
+  if (opts.locked) return false;
   const own = !!opts.userId && opts.lastSenderId === opts.userId;
   if (own) return true;
   if (opts.userScrolling) return false;
