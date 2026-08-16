@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { pinsFor } from "./pins";
+import { notifyContactRequest } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ContactRow = Tables<"contacts">;
