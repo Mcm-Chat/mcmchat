@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallConnectionBadge } from "@/components/mcm/call-connection-badge";
 import { CallProviderStatus } from "@/components/mcm/call-provider-status";
+import { useProviderHealth } from "@/lib/calls/use-provider-health";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import {
@@ -115,6 +116,7 @@ function CallScreen() {
   const [voicePrefs, setVoicePrefs] = useState<VoicePrefs>(DEFAULT_VOICE_PREFS);
   const [savingVoice, setSavingVoice] = useState(false);
   const [errorDismissed, setErrorDismissed] = useState(false);
+  const providerHealth = useProviderHealth();
   /** Status panggilan tersimpan (dipulihkan sekali setelah refresh/pindah halaman). */
   const restoredRef = useRef(false);
   const [restored, setRestored] = useState<ReturnType<typeof loadLastCallState>>(null);
@@ -414,7 +416,13 @@ function CallScreen() {
 
   const phaseLabel =
     session.phase === "connected"
-      ? durasi(session.durationSec)
+      ? // Durasi hanya ditampilkan bila server panggilan terhubung dan media
+        // benar-benar mulai; kalau tidak, layar jujur menyebut tahapannya.
+        providerHealth.health === "offline"
+        ? "Server panggilan terputus"
+        : session.mediaLive
+          ? durasi(session.durationSec)
+          : "Menyiapkan media…"
       : session.phase === "connecting"
         ? "Menyambungkan…"
         : session.phase === "outgoing"
@@ -504,9 +512,11 @@ function CallScreen() {
               quality={session.quality}
               audioBlocked={session.audioBlocked}
               permission={permission.state}
+              providerHealth={providerHealth.health}
+              mediaLive={session.mediaLive}
               className="mt-1"
             />
-            <CallProviderStatus className="mt-1" />
+            <CallProviderStatus status={providerHealth} className="mt-1" />
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             {session.connectStalled && (
               <Button

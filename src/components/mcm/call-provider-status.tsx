@@ -3,19 +3,14 @@
  * lengkap dengan waktu pemeriksaan terakhir. Nilai diambil dari server; tidak
  * ada status palsu — bila kredensial belum aktif, statusnya "Belum terhubung".
  */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { RefreshCcw } from "lucide-react";
-import { getCallConfig } from "@/lib/calls/calls.functions";
+import type { ProviderHealthResult } from "@/lib/calls/use-provider-health";
 import { cn } from "@/lib/utils";
-
-type Health = "checking" | "online" | "offline";
-
-const REFRESH_MS = 60_000;
 
 const CODE_TEXT: Record<string, string> = {
   provider_unconfigured: "Kredensial server panggilan belum lengkap.",
   provider_url_invalid: "Alamat server panggilan tidak valid (harus wss://).",
+  network: "Status server tidak bisa diperiksa — jaringan bermasalah.",
 };
 
 function waktu(d: Date) {
@@ -27,43 +22,14 @@ function waktu(d: Date) {
   });
 }
 
-export function CallProviderStatus({ className }: { className?: string }) {
-  const loadConfig = useServerFn(getCallConfig);
-  const [health, setHealth] = useState<Health>("checking");
-  const [code, setCode] = useState<string | null>(null);
-  const [checkedAt, setCheckedAt] = useState<Date | null>(null);
-  const [busy, setBusy] = useState(false);
-  const alive = useRef(true);
-
-  const refresh = useCallback(async () => {
-    setBusy(true);
-    try {
-      const c = await loadConfig();
-      if (!alive.current) return;
-      setHealth(c.configured ? "online" : "offline");
-      setCode(c.configured ? null : (c.code ?? null));
-    } catch {
-      if (!alive.current) return;
-      setHealth("offline");
-      setCode("network");
-    } finally {
-      if (alive.current) {
-        setCheckedAt(new Date());
-        setBusy(false);
-      }
-    }
-  }, [loadConfig]);
-
-  useEffect(() => {
-    alive.current = true;
-    void refresh();
-    const t = setInterval(() => void refresh(), REFRESH_MS);
-    return () => {
-      alive.current = false;
-      clearInterval(t);
-    };
-  }, [refresh]);
-
+export function CallProviderStatus({
+  status,
+  className,
+}: {
+  status: ProviderHealthResult;
+  className?: string;
+}) {
+  const { health, code, checkedAt, busy, refresh } = status;
   const label =
     health === "online"
       ? "Server panggilan terhubung"
@@ -99,7 +65,7 @@ export function CallProviderStatus({ className }: { className?: string }) {
         </span>
         <button
           type="button"
-          onClick={() => void refresh()}
+          onClick={refresh}
           disabled={busy}
           aria-label="Perbarui status server panggilan"
           className="inline-flex size-7 items-center justify-center rounded-full bg-white/10 text-navy-foreground disabled:opacity-50"
