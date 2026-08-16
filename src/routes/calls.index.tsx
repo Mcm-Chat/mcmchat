@@ -48,6 +48,7 @@ import { markMissedCallsSeen } from "@/lib/calls/missed-seen";
 import { toast } from "sonner";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import { PageSkeleton } from "@/components/mcm/route-skeletons";
 import {
   CALL_RETURN_FOCUS_NEW,
   consumeCallReturnFocus,
@@ -86,6 +87,7 @@ export const Route = createFileRoute("/calls/")({
     ],
   }),
   component: CallsPage,
+  pendingComponent: () => <PageSkeleton rows={7} />,
 });
 
 const STATUS_LABEL: Record<string, string> = {

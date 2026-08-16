@@ -41,6 +41,7 @@ import {
   type LedgerRow,
 } from "@/lib/api/ledger";
 import { qk } from "@/lib/api/queries";
+import { LedgerSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/ledger/$id")({
   head: () => ({
@@ -55,6 +56,7 @@ export const Route = createFileRoute("/ledger/$id")({
     ],
   }),
   component: LedgerDetail,
+  pendingComponent: () => <LedgerSkeleton nav={false} />,
 });
 
 function LedgerDetail() {

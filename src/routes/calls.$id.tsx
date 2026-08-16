@@ -30,6 +30,7 @@ import {
   type DeleteCallTarget,
 } from "@/components/mcm/delete-call-history";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import { PageSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/calls/$id")({
   head: () => ({
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/calls/$id")({
     ],
   }),
   component: CallDetailPage,
+  pendingComponent: () => <PageSkeleton rows={4} nav={false} />,
 });
 
 const STATUS_LABEL: Record<string, string> = {

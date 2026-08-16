@@ -53,6 +53,7 @@ import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
 import { FEATURE_VOICE_EFFECTS, useEntitlement } from "@/lib/api/entitlements";
 import { DEFAULT_VOICE_PREFS, PRESET_MAP, type VoicePrefs } from "@/lib/voice/presets";
+import { CallSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/call/$id")({
   head: () => ({
@@ -67,6 +68,7 @@ export const Route = createFileRoute("/call/$id")({
     ],
   }),
   component: CallScreen,
+  pendingComponent: () => <CallSkeleton />,
 });
 
 const STATUS_LABEL: Record<string, string> = {
