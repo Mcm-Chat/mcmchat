@@ -159,6 +159,27 @@ function ChatRoom() {
   const { nameOf: contactNameOf } = useContactAliases();
   // Nama tampilan chat mengikuti nama kontak yang saya simpan sendiri.
   const headerName = contactNameOf(conv?.other?.id, conv?.title_resolved ?? "Percakapan");
+  // Antrian chat yang masih belum dibaca untuk tombol "Unread berikutnya".
+  const unreadQueue = useMemo(
+    () =>
+      (conversations ?? [])
+        .filter((c) => !c.me.is_archived && c.unread > 0)
+        .sort(
+          (a, b) =>
+            b.unread - a.unread ||
+            (new Date(b.updated_at).getTime() || 0) - (new Date(a.updated_at).getTime() || 0),
+        ),
+    [conversations],
+  );
+  const nextUnread = useMemo(() => {
+    const idx = unreadQueue.findIndex((c) => c.id === id);
+    if (idx === -1) return unreadQueue[0] ?? null;
+    return unreadQueue[idx + 1] ?? null;
+  }, [unreadQueue, id]);
+  const remainingUnreadCount = useMemo(
+    () => Math.max(0, unreadQueue.length - (unreadQueue.findIndex((c) => c.id === id) + 1)),
+    [unreadQueue, id],
+  );
   const connection = useConnectionState();
   const pending = useOutbox(id);
 
