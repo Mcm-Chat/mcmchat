@@ -958,6 +958,8 @@ export function ChatComposer({
   onCancelReply,
   quickReplies,
   disabled,
+  inputRef,
+  onFocusChange,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -977,6 +979,10 @@ export function ChatComposer({
   onCancelReply?: (() => void) | undefined;
   quickReplies?: { shortcut: string; text: string }[] | undefined;
   disabled?: boolean | undefined;
+  /** Ref textarea untuk pemulihan fokus saat membuka kembali chat. */
+  inputRef?: React.RefObject<HTMLTextAreaElement | null> | undefined;
+  /** Dipanggil saat komposer mendapat/kehilangan fokus. */
+  onFocusChange?: ((focused: boolean) => void) | undefined;
 }) {
   const { recording, preparing, seconds, start, stop } = useVoiceRecorder(onVoice);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -1225,10 +1231,13 @@ export function ChatComposer({
             </PopoverContent>
           </Popover>
           <Textarea
+            ref={inputRef}
             value={value}
             disabled={disabled}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onComposerKeyDown}
+            onFocus={() => onFocusChange?.(true)}
+            onBlur={() => onFocusChange?.(false)}
             aria-label="Tulis pesan"
             aria-keyshortcuts="Enter Control+Enter Control+Shift+A Control+Shift+C Control+Shift+D"
             aria-describedby="composer-shortcut-help"
