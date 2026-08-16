@@ -4,6 +4,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
+  ArrowRight,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
   BellOff,
@@ -158,6 +159,27 @@ function ChatRoom() {
   const { nameOf: contactNameOf } = useContactAliases();
   // Nama tampilan chat mengikuti nama kontak yang saya simpan sendiri.
   const headerName = contactNameOf(conv?.other?.id, conv?.title_resolved ?? "Percakapan");
+  // Antrian chat yang masih belum dibaca untuk tombol "Unread berikutnya".
+  const unreadQueue = useMemo(
+    () =>
+      (conversations ?? [])
+        .filter((c) => !c.me.is_archived && c.unread > 0)
+        .sort(
+          (a, b) =>
+            b.unread - a.unread ||
+            (new Date(b.updated_at).getTime() || 0) - (new Date(a.updated_at).getTime() || 0),
+        ),
+    [conversations],
+  );
+  const nextUnread = useMemo(() => {
+    const idx = unreadQueue.findIndex((c) => c.id === id);
+    if (idx === -1) return unreadQueue[0] ?? null;
+    return unreadQueue[idx + 1] ?? null;
+  }, [unreadQueue, id]);
+  const remainingUnreadCount = useMemo(
+    () => Math.max(0, unreadQueue.length - (unreadQueue.findIndex((c) => c.id === id) + 1)),
+    [unreadQueue, id],
+  );
   const connection = useConnectionState();
   const pending = useOutbox(id);
 
@@ -673,6 +695,14 @@ function ChatRoom() {
     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
   };
 
+  const openNextUnread = useCallback(() => {
+    if (!nextUnread) {
+      toast.info("Tidak ada chat belum dibaca lainnya");
+      return;
+    }
+    void navigate({ to: "/chat/$id", params: { id: nextUnread.id } });
+  }, [nextUnread, navigate]);
+
   // Saat entri outbox berhasil terkirim, muat ulang halaman pesan percakapan itu.
   useEffect(
     () =>
@@ -1109,6 +1139,27 @@ function ChatRoom() {
                 >
                   <Info className="size-5" />
                 </Button>
+                {unreadQueue.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative size-9"
+                    aria-label={
+                      nextUnread
+                        ? `Unread berikutnya: ${nextUnread.title_resolved}`
+                        : "Tidak ada unread berikutnya"
+                    }
+                    disabled={!nextUnread}
+                    onClick={() => void openNextUnread()}
+                  >
+                    <ArrowRight className="size-5" />
+                    {remainingUnreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
+                        {remainingUnreadCount > 99 ? "99+" : remainingUnreadCount}
+                      </span>
+                    )}
+                  </Button>
+                )}
               </>
             }
           />
