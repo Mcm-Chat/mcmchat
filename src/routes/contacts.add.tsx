@@ -222,7 +222,11 @@ function AddContactPage() {
                 rows={3}
               />
             </div>
-            <Button className="w-full rounded-xl" onClick={() => void send()} disabled={sending}>
+            <Button
+              className="w-full rounded-xl"
+              onClick={() => setConfirmOpen(true)}
+              disabled={sending}
+            >
               <Send className="size-4" /> {sending ? "Mengirim…" : "Kirim permintaan"}
             </Button>
           </div>
