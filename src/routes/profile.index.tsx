@@ -520,12 +520,12 @@ function ProfilePage() {
 
         <PinCard pin={profile.pin} name={profile.display_name} subtitle={profile.bio} />
 
-        <div className="card-soft space-y-3 p-4">
-          <div className="space-y-1.5">
+        <div className="card-soft space-y-2 p-4">
+          <div className="space-y-1">
             <Label htmlFor="nm">Nama</Label>
             <Input id="nm" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label htmlFor="bio">Bio</Label>
             <Textarea
               id="bio"
