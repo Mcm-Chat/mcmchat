@@ -24,9 +24,7 @@ export function QrScannerDialog(props: ComponentProps<typeof QrScannerLazy>) {
 
 export function PhotoEditorDialog(props: ComponentProps<typeof PhotoEditorLazy>) {
   return (
-    <Suspense
-      fallback={props.open ? <OverlayLoading label="Menyiapkan editor foto…" /> : null}
-    >
+    <Suspense fallback={<OverlayLoading label="Menyiapkan editor foto…" />}>
       <PhotoEditorLazy {...props} />
     </Suspense>
   );
