@@ -642,6 +642,9 @@ function MessageBubbleBase({
   selected?: boolean | undefined;
   highlighted?: boolean | undefined;
   grouped?: boolean | undefined;
+  /** Animasi masuk hanya untuk pesan terbaru — baris yang dipasang ulang oleh
+      daftar virtual saat menggulir tidak boleh ikut beranimasi. */
+  animateIn?: boolean | undefined;
 }) {
   const isSticker = message.kind === "sticker";
   const swipe = useBubbleSwipe((dir) => onAction(dir === "right" ? "reply" : "forward", message));
