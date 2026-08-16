@@ -112,9 +112,17 @@ function ChatIndex() {
 
   const list = useMemo(() => {
     const all = conversations ?? [];
-    const filtered = all.filter((c) =>
-      c.title_resolved.toLowerCase().includes(q.trim().toLowerCase()),
-    );
+    const needle = q.trim().toLowerCase();
+    const filtered = needle
+      ? all.filter((c) => {
+          if (c.title_resolved.toLowerCase().includes(needle)) return true;
+          return c.members.some(
+            (m) =>
+              m.display_name.toLowerCase().includes(needle) ||
+              m.pin.toLowerCase().includes(needle),
+          );
+        })
+      : all;
     if (tab === "arsip") return filtered.filter((c) => c.me.is_archived);
     const active = filtered.filter((c) => !c.me.is_archived);
     return tab === "belum" ? active.filter((c) => c.unread > 0) : active;
