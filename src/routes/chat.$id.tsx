@@ -5,6 +5,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   ArrowDown,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Search as SearchIcon,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
   BellOff,
@@ -384,6 +387,44 @@ function ChatRoom() {
     const idx = rows.findIndex((r) => r.message.id === hl);
     if (idx >= 0) virtualizer.scrollToIndex(idx, { align: "center" });
   }, [hl, rows, virtualizer]);
+
+  // ——— Pencarian di dalam percakapan ———
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [matchCursor, setMatchCursor] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const matchIndexes = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (q.length < 2) return [] as number[];
+    const out: number[] = [];
+    rows.forEach((r, idx) => {
+      const body = (r.message.body ?? "").toLowerCase();
+      if (body.includes(q)) out.push(idx);
+    });
+    return out;
+  }, [rows, searchTerm]);
+
+  useEffect(() => {
+    setMatchCursor(matchIndexes.length > 0 ? matchIndexes.length - 1 : 0);
+  }, [matchIndexes.length, searchTerm]);
+
+  const activeMatchIndex = matchIndexes[matchCursor];
+  const activeMatchId =
+    activeMatchIndex === undefined ? null : (rows[activeMatchIndex]?.message.id ?? null);
+
+  useEffect(() => {
+    if (!searchOpen || activeMatchIndex === undefined) return;
+    virtualizer.scrollToIndex(activeMatchIndex, { align: "center" });
+  }, [searchOpen, activeMatchIndex, virtualizer]);
+
+  const stepMatch = useCallback(
+    (dir: 1 | -1) => {
+      if (matchIndexes.length === 0) return;
+      setMatchCursor((c) => (c + dir + matchIndexes.length) % matchIndexes.length);
+    },
+    [matchIndexes.length],
+  );
 
   // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
   // memang miliknya sendiri.
@@ -1130,6 +1171,18 @@ function ChatRoom() {
                     realName={conv.other.display_name}
                   />
                 )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-9"
+                  aria-label="Cari pesan di percakapan ini"
+                  onClick={() => {
+                    setSearchOpen((v) => !v);
+                    requestAnimationFrame(() => searchInputRef.current?.focus());
+                  }}
+                >
+                  <SearchIcon className="size-5" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
