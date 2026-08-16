@@ -14,9 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   findByPin,
+  getContactRelation,
   isValidPin,
   normalizePin,
   sendContactRequest,
+  type ContactRelation,
   type ProfileLite,
 } from "@/lib/api/contacts";
 import { useRequireAuth } from "@/lib/api/guard";
