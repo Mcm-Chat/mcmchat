@@ -330,7 +330,9 @@ function ContactsPage() {
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">
-            {filteredIncoming.map((r) => (
+            {filteredIncoming.map((r) => {
+              const status = requestStatusLabel(r, "incoming");
+              return (
               <li key={r.id} className="flex items-center gap-3 px-4 py-3">
                 {r.profile ? (
                   <UserAvatar
@@ -349,7 +351,11 @@ function ContactsPage() {
                   </p>
                   <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
                   <p className="truncate text-xs text-muted-foreground">{r.message}</p>
+                  <StatusBadge tone={status.tone} className="mt-1">
+                    {status.label}
+                  </StatusBadge>
                 </div>
+                {r.status === "pending" && (
                 <div className="flex shrink-0 items-center gap-1">
                   <Button
                     size="icon"
@@ -370,8 +376,10 @@ function ContactsPage() {
                     <X className="size-4" />
                   </Button>
                 </div>
+                )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )
       ) : tab === "terkirim" ? (
@@ -383,7 +391,9 @@ function ContactsPage() {
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">
-            {filteredOutgoing.map((r) => (
+            {filteredOutgoing.map((r) => {
+              const status = requestStatusLabel(r, "outgoing");
+              return (
               <li key={r.id} className="flex items-center gap-3 px-4 py-3">
                 {r.profile ? (
                   <UserAvatar
@@ -402,9 +412,10 @@ function ContactsPage() {
                   </p>
                   <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
                 </div>
-                <StatusBadge tone="warning">Menunggu</StatusBadge>
+                <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )
       ) : filteredBlocked.length === 0 ? (
