@@ -773,6 +773,9 @@ export function useCall(opts: {
     setRetrying(true);
     setReason("Mencoba menyambungkan ulang…");
     setPhase("connecting");
+    setConnectStalled(false);
+    recoverRoundRef.current = 0;
+    setRecoverTick((t) => t + 1);
     rejoinRef.current = 0;
     void cleanup()
       .then(() => {
