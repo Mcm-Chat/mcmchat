@@ -13,13 +13,15 @@ const DEFAULT_PROJECT_ID = "mcm-chat-b8e94";
 const DEFAULT_SENDER_ID = "304269903025";
 const DEFAULT_API_KEY = "AIzaSyCQ1OrB8M9BDbToWY9-xmMCwgpfsU6C8yg";
 const DEFAULT_APP_ID = "1:304269903025:web:234a8bb440e1ff03d80e90";
+const DEFAULT_VAPID_KEY =
+  "BMYn3nW74ODp30gnAYmW1hXubu_ENLo44YoQxCoBwrYpJbkSeBASV9SO-_VaggKFi9cnia4cykNvHeVenvRgcO8";
 
 export const WEB_PUSH = {
   apiKey: env["VITE_FCM_API_KEY"] || DEFAULT_API_KEY,
   projectId: env["VITE_FCM_PROJECT_ID"] || DEFAULT_PROJECT_ID,
   senderId: env["VITE_FCM_SENDER_ID"] || DEFAULT_SENDER_ID,
   appId: env["VITE_FCM_APP_ID"] || DEFAULT_APP_ID,
-  vapidKey: env["VITE_FCM_VAPID_KEY"] ?? "",
+  vapidKey: env["VITE_FCM_VAPID_KEY"] || DEFAULT_VAPID_KEY,
 } as const;
 
 /** Daftar env yang masih kosong (untuk diagnostik di UI, bukan secret). */
