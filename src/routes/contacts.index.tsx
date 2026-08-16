@@ -21,6 +21,7 @@ import {
   respondToRequest,
   sendContactRequest,
   setBlocked,
+  requestStatusLabel,
   type ContactWithProfile,
   type RequestRow,
 } from "@/lib/api/contacts";
@@ -81,6 +82,8 @@ function ContactsPage() {
   const blocked = (contacts ?? []).filter((c) => c.is_blocked);
   const incoming = requests?.incoming ?? [];
   const outgoing = requests?.outgoing ?? [];
+  const incomingPending = incoming.filter((r) => r.status === "pending");
+  const outgoingPending = outgoing.filter((r) => r.status === "pending");
 
   const term = q.trim().toLowerCase();
   const matches = (name: string, pin: string) =>
