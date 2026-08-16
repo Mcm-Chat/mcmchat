@@ -398,6 +398,8 @@ export function useCall(opts: {
             setPhase("connected");
             startedRef.current ??= Date.now();
             rejoinRef.current = 0;
+            recoverRoundRef.current = 0;
+            setConnectStalled(false);
             // Reconnected/Connected tanpa alasan membersihkan pesan lama
             // seperti "Menyambung ulang…" agar tidak basi di layar.
             setReason(s.reason ?? null);
