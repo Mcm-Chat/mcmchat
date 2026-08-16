@@ -202,6 +202,7 @@ function RootComponent() {
       offViewport();
       offToastFocus();
       offEscape();
+      offScrollPerf();
     };
   }, []);
 
