@@ -218,11 +218,17 @@ export function ChatListItem({
                 conv.unread > 0 ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              {!titleMatches && matchedPin ? (
-                <>
-                  <span className="text-muted-foreground">PIN:</span>{" "}
-                  <Highlight text={matchedPin} query={query} />
-                </>
+              {!titleMatches && matchedMember ? (
+                matchedMember.display_name.toLowerCase().includes(needle) ? (
+                  <Highlight text={matchedMember.display_name} query={query} />
+                ) : matchedPin ? (
+                  <>
+                    <span className="text-muted-foreground">PIN:</span>{" "}
+                    <Highlight text={matchedPin} query={query} />
+                  </>
+                ) : (
+                  previewOf(conv.lastMessage)
+                )
               ) : (
                 previewOf(conv.lastMessage)
               )}
