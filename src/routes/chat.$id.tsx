@@ -1020,14 +1020,24 @@ function ChatRoom() {
           <Button
             size="icon"
             variant="secondary"
-            aria-label="Lompat ke pesan terbaru"
-            className="pointer-events-auto rounded-full shadow-md"
+            aria-label={
+              missedCount > 0
+                ? `Lompat ke ${missedCount} pesan baru`
+                : "Lompat ke pesan terbaru"
+            }
+            className="pointer-events-auto relative rounded-full shadow-md"
             onClick={() => {
+              setMissedCount(0);
               setAtBottom(true);
               scrollToLatest("smooth");
             }}
           >
             <ArrowDown className="size-4" />
+            {missedCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-5 rounded-full bg-primary px-1.5 text-[10px] leading-5 font-semibold text-primary-foreground">
+                {missedCount > 99 ? "99+" : missedCount}
+              </span>
+            )}
           </Button>
         </div>
       )}
