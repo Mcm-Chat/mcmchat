@@ -168,13 +168,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-/** Sesi push dipasang sekali; tidak pernah memicu dialog izin sendiri. */
-function PushSession() {
-  const { user } = useAuth();
-  usePushSession(user?.id);
-  return null;
-}
-
 /** Cache query dibuang total saat akun berganti (termasuk logout). */
 function AccountCacheGuard() {
   const client = useQueryClient();
@@ -184,6 +177,14 @@ function AccountCacheGuard() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [mounted, setMounted] = useState(false);
+  const [perf, setPerf] = useState(false);
+
+  // Widget global dipasang setelah hidrasi supaya bundel awal tetap kecil.
+  useEffect(() => {
+    setMounted(true);
+    setPerf(isPerfOverlayEnabled());
+  }, []);
 
   // Pemantau koneksi realtime + pengiriman ulang outbox dipasang sekali.
   useEffect(() => {
@@ -209,11 +210,12 @@ function RootComponent() {
             <AccountCacheGuard />
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
-            <PushSession />
-            <IncomingCallListener />
-            <PushDeniedDialog />
-            <ScreenPrivacyGuard />
-            <PerfOverlay />
+            {mounted ? (
+              <Suspense fallback={null}>
+                <RootExtrasLazy />
+                {perf ? <PerfOverlayLazy /> : null}
+              </Suspense>
+            ) : null}
             <Toaster position="top-center" richColors closeButton />
           </AuthProvider>
         </ReduceMotionProvider>
