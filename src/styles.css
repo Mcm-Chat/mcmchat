@@ -202,7 +202,8 @@
 /* Baris virtual: isolasi tata letak/paint tiap bubble supaya pengukuran satu
    baris tidak memaksa reflow seluruh daftar saat menggulir. */
 @utility chat-row {
-  contain: layout paint style;
+  /* paint sengaja tidak dipakai: indikator geser & reaksi meluber ke luar baris. */
+  contain: layout style;
 }
 
 @utility composer-raise {
