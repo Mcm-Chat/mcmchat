@@ -64,3 +64,28 @@ export function keyboardScrollAction(opts: {
   if (Math.abs(delta) < VIEWPORT_DELTA_MIN_PX) return { type: "none" };
   return { type: "adjust", delta };
 }
+
+/**
+ * Anchor baris untuk menjaga posisi baca saat tinggi baris berubah (gambar
+ * selesai dimuat, kartu balasan terbuka, emoji besar, dsb).
+ */
+export type ScrollAnchor = { index: number; start: number };
+
+/** Baris pertama yang masih terlihat di viewport — dipakai sebagai jangkar. */
+export function pickScrollAnchor(
+  items: readonly { index: number; start: number; end: number }[],
+  scrollTop: number,
+): ScrollAnchor | null {
+  for (const it of items) {
+    if (it.end > scrollTop) return { index: it.index, start: it.start };
+  }
+  const last = items.at(-1);
+  return last ? { index: last.index, start: last.start } : null;
+}
+
+/** Selisih px yang perlu ditambahkan ke scrollTop agar jangkar tetap di tempat. */
+export function anchorScrollDelta(anchor: ScrollAnchor, nextStart: number | undefined): number {
+  if (nextStart === undefined || !Number.isFinite(nextStart)) return 0;
+  const delta = nextStart - anchor.start;
+  return Math.abs(delta) < 1 ? 0 : delta;
+}
