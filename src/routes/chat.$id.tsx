@@ -849,11 +849,15 @@ function ChatRoom() {
           </span>
         </NotificationBanner>
       )}
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className="chat-canvas chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
-      >
+      {/* Pola kanvas dipasang di pembungkus yang TIDAK ikut menggulir: bila
+          background bermotif menempel di elemen scroll, ponsel mengecat ulang
+          seluruh pola tiap frame dan gulir terasa patah-patah. */}
+      <div className="chat-canvas relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
+        >
         {hasOlder && (
           <div className="mb-2 flex justify-center">
             <Button
@@ -969,6 +973,7 @@ function ChatRoom() {
           </div>
         ))}
         <div ref={bottomRef} />
+        </div>
       </div>
 
       {!atBottom && (
