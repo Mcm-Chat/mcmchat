@@ -1197,6 +1197,9 @@ function ChatRoom() {
       ) : (
         <ComposerHost
           ref={composerRef}
+          onFocusChange={(focused) => {
+            composerFocusedRef.current = focused;
+          }}
           draftKey={draftKey}
           onTyping={notifyTyping}
           onSend={doSend}
