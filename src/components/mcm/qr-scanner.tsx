@@ -4,6 +4,7 @@ import {
   Camera,
   CameraOff,
   Image as ImageIcon,
+  Keyboard,
   Loader2,
   RefreshCw,
   Settings,
@@ -29,9 +30,19 @@ export function extractPin(raw: string): string | null {
   return parseContactScan(raw);
 }
 
-type CamPhase = "idle" | "requesting" | "streaming" | "denied" | "missing" | "busy" | "unsupported";
+type CamPhase =
+  | "idle"
+  | "prompt"
+  | "requesting"
+  | "streaming"
+  | "denied"
+  | "missing"
+  | "busy"
+  | "unsupported";
 
-const PHASE_COPY: Record<Exclude<CamPhase, "idle" | "requesting" | "streaming">, string> = {
+type BlockedPhase = Exclude<CamPhase, "idle" | "prompt" | "requesting" | "streaming">;
+
+const PHASE_COPY: Record<BlockedPhase, string> = {
   denied:
     "Izin kamera ditolak. Aktifkan izin kamera untuk aplikasi ini, lalu tekan Coba lagi — atau pindai QR dari galeri foto.",
   missing: "Tidak ada kamera yang terdeteksi di perangkat ini. Gunakan pindai dari galeri foto.",
@@ -40,14 +51,42 @@ const PHASE_COPY: Record<Exclude<CamPhase, "idle" | "requesting" | "streaming">,
     "Peramban ini tidak mendukung akses kamera. Buka lewat aplikasi MCM atau pindai dari galeri foto.",
 };
 
+/** Status izin kamera sebelum stream diminta (bila Permissions API tersedia). */
+async function readCameraPermission(): Promise<"granted" | "denied" | "prompt" | "unknown"> {
+  try {
+    const perms = navigator.permissions as
+      | { query?: (d: { name: string }) => Promise<PermissionStatus> }
+      | undefined;
+    if (!perms?.query) return "unknown";
+    const status = await perms.query({ name: "camera" });
+    return status.state as "granted" | "denied" | "prompt";
+  } catch {
+    return "unknown";
+  }
+}
+
+/** Cek keberadaan kamera di perangkat (label kosong sebelum izin diberikan). */
+async function hasCameraDevice(): Promise<boolean> {
+  try {
+    if (!navigator.mediaDevices?.enumerateDevices) return true;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.some((d) => d.kind === "videoinput");
+  } catch {
+    return true;
+  }
+}
+
 export function QrScannerDialog({
   open,
   onOpenChange,
   onResult,
+  onManualPin,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onResult: (pin: string) => void;
+  /** Fallback saat kamera tidak tersedia atau izin ditolak: isi PIN manual. */
+  onManualPin?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -58,6 +97,7 @@ export function QrScannerDialog({
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [phase, setPhase] = useState<CamPhase>("idle");
   const [attempt, setAttempt] = useState(0);
+  const [armed, setArmed] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
 
@@ -87,10 +127,10 @@ export function QrScannerDialog({
     if (!open) {
       stop();
       setPhase("idle");
+      setArmed(false);
       return;
     }
     doneRef.current = false;
-    setPhase("requesting");
     let cancelled = false;
 
     const tick = () => {
@@ -119,6 +159,23 @@ export function QrScannerDialog({
           if (!cancelled) setPhase("unsupported");
           return;
         }
+        if (!(await hasCameraDevice())) {
+          if (!cancelled) setPhase("missing");
+          return;
+        }
+        const permission = await readCameraPermission();
+        if (cancelled) return;
+        if (permission === "denied") {
+          setPhase("denied");
+          return;
+        }
+        // Jelaskan dulu kenapa kamera dibutuhkan; izin baru diminta setelah
+        // pengguna menekan "Izinkan kamera" (kecuali izin sudah diberikan).
+        if (permission !== "granted" && !armed) {
+          setPhase("prompt");
+          return;
+        }
+        setPhase("requesting");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: facing },
           audio: false,
@@ -248,7 +305,46 @@ export function QrScannerDialog({
               Meminta izin kamera… setujui permintaan izin yang muncul.
             </div>
           )}
-          {phase !== "idle" && phase !== "requesting" && phase !== "streaming" && (
+          {phase === "prompt" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
+              <Camera className="size-6 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                MCM butuh izin kamera untuk membaca QR PIN. Kamera hanya aktif di layar ini dan
+                tidak ada foto yang disimpan.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => {
+                    setArmed(true);
+                    setAttempt((a) => a + 1);
+                  }}
+                >
+                  <Camera className="size-4" /> Izinkan kamera
+                </Button>
+                {onManualPin && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onManualPin();
+                    }}
+                  >
+                    <Keyboard className="size-4" /> Masukkan PIN manual
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+          {phase !== "idle" &&
+            phase !== "prompt" &&
+            phase !== "requesting" &&
+            phase !== "streaming" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
               <CameraOff className="size-6 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">{PHASE_COPY[phase]}</p>
@@ -257,7 +353,10 @@ export function QrScannerDialog({
                   type="button"
                   size="sm"
                   className="rounded-xl"
-                  onClick={() => setAttempt((a) => a + 1)}
+                  onClick={() => {
+                    setArmed(true);
+                    setAttempt((a) => a + 1);
+                  }}
                 >
                   <RefreshCw className="size-4" /> Coba lagi
                 </Button>
@@ -277,6 +376,20 @@ export function QrScannerDialog({
                     }}
                   >
                     <Settings className="size-4" /> Buka setelan
+                  </Button>
+                )}
+                {onManualPin && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onManualPin();
+                    }}
+                  >
+                    <Keyboard className="size-4" /> Masukkan PIN manual
                   </Button>
                 )}
               </div>
