@@ -350,6 +350,7 @@ function ChatRoom() {
   );
 
   const blocked = block?.iBlocked ?? false;
+  actionRef.current = (a, m, p) => void onAction(a, m, p);
   const blockedByOther = block?.blockedMe ?? false;
   // Kapabilitas berasal dari server dan dipecah per aksi: percakapan yang
   // hanya bisa dibaca tetap menampilkan riwayat, tetapi komposer dimatikan.
