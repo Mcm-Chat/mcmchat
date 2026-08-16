@@ -32,7 +32,7 @@ import {
   type StockUnitWithPhotos,
 } from "@/lib/api/stock-units";
 import { dataUrlToBlob, fileToDataUrl } from "@/lib/mcm/geo";
-import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
+import { PhotoEditorDialog } from "@/components/mcm/lazy-heavy";
 
 export const unitsKey = (variantId: string) => ["catalog", "units", variantId];
 
