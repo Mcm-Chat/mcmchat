@@ -318,7 +318,8 @@ function ChatRoom() {
   // viewport berubah (gambar selesai dimuat, balasan terbuka), scrollTop
   // dikoreksi sebesar perubahannya supaya daftar tidak loncat.
   const anchorRef = useRef<import("@/lib/chat/scroll").ScrollAnchor | null>(null);
-  useLayoutEffect(() => {
+  const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useIsoLayoutEffect(() => {
     const el = scrollRef.current;
     const anchor = anchorRef.current;
     if (!el) return;
