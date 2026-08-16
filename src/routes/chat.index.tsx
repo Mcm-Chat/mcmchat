@@ -112,9 +112,17 @@ function ChatIndex() {
 
   const list = useMemo(() => {
     const all = conversations ?? [];
-    const filtered = all.filter((c) =>
-      c.title_resolved.toLowerCase().includes(q.trim().toLowerCase()),
-    );
+    const needle = q.trim().toLowerCase();
+    const filtered = needle
+      ? all.filter((c) => {
+          if (c.title_resolved.toLowerCase().includes(needle)) return true;
+          return c.members.some(
+            (m) =>
+              m.display_name.toLowerCase().includes(needle) ||
+              m.pin.toLowerCase().includes(needle),
+          );
+        })
+      : all;
     if (tab === "arsip") return filtered.filter((c) => c.me.is_archived);
     const active = filtered.filter((c) => !c.me.is_archived);
     return tab === "belum" ? active.filter((c) => c.unread > 0) : active;
@@ -458,8 +466,8 @@ function ChatIndex() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   maxLength={60}
-                  aria-label="Cari percakapan"
-                  placeholder="Cari percakapan"
+                  aria-label="Cari nama atau PIN"
+                  placeholder="Cari nama atau PIN"
                   className="h-11 rounded-xl pl-9"
                 />
               </div>
@@ -532,16 +540,24 @@ function ChatIndex() {
           links={["contacts", "support"]}
         />
       ) : list.length === 0 ? (
-        <EmptyState
-          icon={MessagesSquare}
-          title="Belum ada percakapan"
-          description="Tambahkan kontak lewat PIN MCM, lalu mulai chat pertama Anda."
-          action={
-            <Button className="rounded-xl" onClick={() => void navigate({ to: "/contacts/add" })}>
-              Tambah kontak
-            </Button>
-          }
-        />
+        q.trim() ? (
+          <EmptyState
+            icon={Search}
+            title="Tidak ada hasil"
+            description={`Tidak ditemukan percakapan untuk “${q.trim()}”. Coba nama lain atau PIN publik kontak.`}
+          />
+        ) : (
+          <EmptyState
+            icon={MessagesSquare}
+            title="Belum ada percakapan"
+            description="Tambahkan kontak lewat PIN MCM, lalu mulai chat pertama Anda."
+            action={
+              <Button className="rounded-xl" onClick={() => void navigate({ to: "/contacts/add" })}>
+                Tambah kontak
+              </Button>
+            }
+          />
+        )
       ) : (
         <ul className="divide-y divide-border/70">
           {list.map((c) => (
