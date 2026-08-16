@@ -628,6 +628,7 @@ function MessageBubbleBase({
   selected,
   highlighted,
   grouped,
+  animateIn,
 }: {
   message: MessageRow;
   replyTo?: MessageRow | undefined;
@@ -642,6 +643,9 @@ function MessageBubbleBase({
   selected?: boolean | undefined;
   highlighted?: boolean | undefined;
   grouped?: boolean | undefined;
+  /** Animasi masuk hanya untuk pesan terbaru — baris yang dipasang ulang oleh
+      daftar virtual saat menggulir tidak boleh ikut beranimasi. */
+  animateIn?: boolean | undefined;
 }) {
   const isSticker = message.kind === "sticker";
   const swipe = useBubbleSwipe((dir) => onAction(dir === "right" ? "reply" : "forward", message));
@@ -657,7 +661,8 @@ function MessageBubbleBase({
   return (
     <div
       className={cn(
-        "group animate-bubble-in relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        "group relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        animateIn && "animate-bubble-in",
         grouped ? "py-[1px]" : "pt-1.5 pb-[1px]",
         mine ? "justify-end" : "justify-start",
         selectable && "cursor-pointer",

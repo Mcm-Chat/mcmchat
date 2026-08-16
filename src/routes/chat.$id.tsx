@@ -849,11 +849,15 @@ function ChatRoom() {
           </span>
         </NotificationBanner>
       )}
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className="chat-canvas chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
-      >
+      {/* Pola kanvas dipasang di pembungkus yang TIDAK ikut menggulir: bila
+          background bermotif menempel di elemen scroll, ponsel mengecat ulang
+          seluruh pola tiap frame dan gulir terasa patah-patah. */}
+      <div className="chat-canvas relative flex min-h-0 flex-1 flex-col">
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
+        >
         {hasOlder && (
           <div className="mb-2 flex justify-center">
             <Button
@@ -901,8 +905,8 @@ function ChatRoom() {
                 data-index={virtualRow.index}
                 data-virtual-row=""
                 ref={virtualizer.measureElement}
-                className="absolute top-0 left-0 w-full"
-                style={{ transform: `translateY(${virtualRow.start}px)` }}
+                className="chat-row absolute top-0 left-0 w-full"
+                style={{ transform: `translate3d(0, ${virtualRow.start}px, 0)` }}
               >
                 {row.showDay && (
                   <div className="my-3 flex justify-center">
@@ -921,6 +925,7 @@ function ChatRoom() {
                   reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
                   status={status}
                   grouped={row.grouped}
+                  animateIn={virtualRow.index === rows.length - 1}
                   selectable={selection.length > 0}
                   selected={selection.includes(m.id)}
                   highlighted={search.hl === m.id}
@@ -969,6 +974,7 @@ function ChatRoom() {
           </div>
         ))}
         <div ref={bottomRef} />
+        </div>
       </div>
 
       {!atBottom && (
