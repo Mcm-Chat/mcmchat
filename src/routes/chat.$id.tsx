@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Info,
   MailOpen,
+  CheckCheck,
   Phone,
   RotateCw,
   Users,
