@@ -27,6 +27,8 @@ import {
   installChunkRecovery,
   isChunkLoadError,
   recoverFromChunkError,
+  retryRouteLoad,
+  type RecoveryStage,
 } from "@/lib/chunk-recovery";
 
 // Modul berat/opsional dipisah dari bundel awal dan baru diunduh setelah
@@ -62,11 +64,31 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   const chunk = isChunkLoadError(error);
+  const [stage, setStage] = useState<RecoveryStage>("idle");
+  const busy = stage !== "idle" && stage !== "gagal";
   useEffect(() => {
     // Modul rute basi (rilis baru / sinyal putus): muat ulang otomatis.
     if (chunk && recoverFromChunkError()) return;
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error, chunk]);
+
+  const stageLabel: Record<RecoveryStage, string> = {
+    idle: chunk ? "Muat ulang" : "Coba lagi",
+    membersihkan: "Membersihkan cache…",
+    mengunduh: "Mengunduh ulang halaman…",
+    menampilkan: "Menampilkan halaman…",
+    gagal: "Memuat ulang aplikasi…",
+  };
+
+  const handleRetry = async () => {
+    if (busy) return;
+    const target =
+      typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
+    const ok = await retryRouteLoad(router, target, setStage);
+    if (!ok) return;
+    setStage("idle");
+    reset();
+  };
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
@@ -79,19 +101,25 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             ? "Sebagian aplikasi tidak berhasil diunduh, biasanya karena ada versi baru atau koneksi terputus. Muat ulang untuk melanjutkan."
             : "Terjadi kesalahan. Coba lagi atau kembali ke beranda."}
         </p>
+        {busy && (
+          <p aria-live="polite" className="mt-3 text-xs font-medium text-primary">
+            {stageLabel[stage]}
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => {
-              if (chunk) {
-                window.location.reload();
-                return;
-              }
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            onClick={() => void handleRetry()}
+            disabled={busy}
+            aria-busy={busy}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-70"
           >
-            {chunk ? "Muat ulang" : "Coba lagi"}
+            {busy && (
+              <span
+                aria-hidden
+                className="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
+              />
+            )}
+            {stageLabel[stage]}
           </button>
           <a
             href="/"
