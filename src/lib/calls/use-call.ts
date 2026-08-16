@@ -408,16 +408,26 @@ export function useCall(opts: {
         // Handshake pertama sering gagal di jaringan seluler; ulangi otomatis
         // dengan jeda menaik sebelum menyerah ke layar gagal.
         const session = await withHandshakeRetry(
-          () =>
-            provider.connect({
-              url: t.url,
-              token: t.token,
+          async (attempt) => {
+            // Percobaan ulang selalu memakai token baru: token lama bisa sudah
+            // kedaluwarsa atau ditolak server saat handshake pertama tertahan.
+            let cred = { url: t.url, token: t.token };
+            if (attempt > 1) {
+              const fresh = await token({ data: { callId: row.id } }).catch(() => null);
+              if (fresh && fresh.configured && "allowed" in fresh && fresh.allowed) {
+                cred = { url: fresh.url, token: fresh.token };
+              }
+            }
+            return provider.connect({
+              url: cred.url,
+              token: cred.token,
               // Tanpa izin kamera, sesi dibuka sebagai panggilan suara supaya
               // penyedia tidak pernah mencoba menerbitkan track video.
               kind: videoDisabled ? "audio" : row.kind,
               audioTrack: audio,
               onState,
-            }),
+            });
+          },
           {
             attempts: HANDSHAKE_ATTEMPTS,
             isAborted: () => endedRef.current,
@@ -459,6 +469,16 @@ export function useCall(opts: {
         devLog("join_failed", e instanceof Error ? e.message : "unknown");
         if (endedRef.current) return;
         const info = describeConnectFailure(e);
+        // Kegagalan sementara tidak melempar pengguna ke layar error selama
+        // masih ada jatah pemulihan otomatis: tetap di layar panggilan.
+        if (info.outcome !== "ended" && canAutoRecover(recoverRoundRef.current)) {
+          recoverRoundRef.current += 1;
+          setPhase("connecting");
+          setReason(connectStageMessage("recovering", recoverRoundRef.current));
+          const round = recoverRoundRef.current;
+          setTimeout(() => recoverRef.current(round), CONNECT_RECOVERY_DELAY_MS);
+          return;
+        }
         setPhase(info.outcome === "ended" ? "ended" : "error");
         setReason(`${info.message} ${info.action}`);
       }
