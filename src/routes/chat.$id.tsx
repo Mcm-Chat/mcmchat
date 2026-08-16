@@ -78,7 +78,7 @@ import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "
 import { useConnectionState } from "@/lib/realtime/connection";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { useTyping } from "@/lib/api/presence";
-import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
+import { isNearBottom, isUserScrolling, shouldAutoScroll } from "@/lib/chat/scroll";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
@@ -154,6 +154,11 @@ function ChatRoom() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  // Waktu interaksi gulir/sentuh terakhir: dipakai untuk menahan auto-scroll
+  // selama jari (atau momentum) masih menggerakkan daftar.
+  const lastInteractionRef = useRef(0);
+  const [missedCount, setMissedCount] = useState(0);
+  const lastMessageIdRef = useRef<string | null>(null);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
 
   // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
@@ -311,8 +316,23 @@ function ChatRoom() {
     [messages.length, virtualizer],
   );
   useEffect(() => {
-    if (shouldAutoScroll({ atBottom, lastSenderId, userId })) scrollToLatest();
-  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest]);
+    const lastId = messages.at(-1)?.id ?? null;
+    const grew = lastId !== null && lastId !== lastMessageIdRef.current;
+    lastMessageIdRef.current = lastId;
+    const auto = shouldAutoScroll({
+      atBottom,
+      lastSenderId,
+      userId,
+      userScrolling: isUserScrolling(lastInteractionRef.current),
+    });
+    if (auto) {
+      setMissedCount(0);
+      scrollToLatest();
+    } else if (grew && lastSenderId !== userId) {
+      // Pesan masuk saat pengguna membaca riwayat: jangan loncat, cukup hitung.
+      setMissedCount((n) => n + 1);
+    }
+  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest, messages]);
 
   // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
   // setState tidak pernah dipanggil per event scroll.
@@ -326,6 +346,7 @@ function ChatRoom() {
       if (!el) return;
       setAtBottom((prev) => {
         const next = isNearBottom(el);
+        if (next && !prev) setMissedCount(0);
         return next === prev ? prev : next;
       });
       if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
@@ -847,6 +868,15 @@ function ChatRoom() {
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          onTouchStart={() => {
+            lastInteractionRef.current = Date.now();
+          }}
+          onTouchMove={() => {
+            lastInteractionRef.current = Date.now();
+          }}
+          onWheel={() => {
+            lastInteractionRef.current = Date.now();
+          }}
           className="chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
         >
         {hasOlder && (
