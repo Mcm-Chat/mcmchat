@@ -628,6 +628,7 @@ function MessageBubbleBase({
   selected,
   highlighted,
   grouped,
+  animateIn,
 }: {
   message: MessageRow;
   replyTo?: MessageRow | undefined;
@@ -660,7 +661,8 @@ function MessageBubbleBase({
   return (
     <div
       className={cn(
-        "group animate-bubble-in relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        "group relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
+        animateIn && "animate-bubble-in",
         grouped ? "py-[1px]" : "pt-1.5 pb-[1px]",
         mine ? "justify-end" : "justify-start",
         selectable && "cursor-pointer",
