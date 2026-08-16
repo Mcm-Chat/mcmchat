@@ -925,6 +925,7 @@ function ChatRoom() {
                   reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
                   status={status}
                   grouped={row.grouped}
+                  animateIn={virtualRow.index === rows.length - 1}
                   selectable={selection.length > 0}
                   selected={selection.includes(m.id)}
                   highlighted={search.hl === m.id}
