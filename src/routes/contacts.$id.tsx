@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Ban, MessageSquare, Trash2, UserPlus, Unlink } from "lucide-react";
+import { Ban, MessageSquare, Phone, Trash2, UserPlus, Unlink, Video } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
@@ -11,7 +11,8 @@ import { LoadingSkeleton, StatusBadge } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk } from "@/lib/api/queries";
-import { getOrCreateDirect } from "@/lib/api/chat";
+import { getOrCreateDirect, listConversations, previewOf } from "@/lib/api/chat";
+import { waktuStatus } from "@/lib/status/model";
 import { fetchFullProfile, fetchProfileCard } from "@/lib/api/profiles";
 import {
   cancelContactRequest,
