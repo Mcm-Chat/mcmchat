@@ -29,6 +29,7 @@ import { useContactAliases } from "@/lib/contacts/alias";
 import { MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
 import { ComposerHost, type ComposerHandle } from "@/components/mcm/composer-host";
 import { ForwardDialog } from "@/components/mcm/forward-dialog";
+import { TypingIndicator } from "@/components/mcm/typing-indicator";
 import { LocationShareFlow, PhotoFlow } from "@/components/mcm/photo-parts";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { ConfirmDialog, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
@@ -1450,6 +1451,7 @@ function ChatRoom() {
           </p>
         )}
         </div>
+        <TypingIndicator names={typingUsers.map((u) => nameOf(u))} className="pt-1" />
       </div>
 
       {(!atBottom || scrollLocked || (unread.count > 0 && !unreadDismissed)) && (
