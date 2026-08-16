@@ -1203,8 +1203,20 @@ function ChatRoom() {
         </div>
       </div>
 
-      {(!atBottom || scrollLocked) && (
+      {(!atBottom || scrollLocked || (unread.count > 0 && !unreadDismissed)) && (
         <div className="pointer-events-none sticky bottom-24 z-10 flex items-center justify-end gap-2 px-4">
+          {unread.count > 0 && !unreadDismissed && (
+            <Button
+              size="sm"
+              variant="default"
+              aria-label={`Ke pesan belum dibaca — ${unread.count} pesan`}
+              className="pointer-events-auto h-8 rounded-full px-3 text-xs shadow-md"
+              onClick={jumpToFirstUnread}
+            >
+              <MailOpen className="mr-1 size-3.5" />
+              {unread.count > 99 ? "99+" : unread.count} belum dibaca
+            </Button>
+          )}
           <Button
             size="sm"
             variant={scrollLocked ? "default" : "secondary"}
