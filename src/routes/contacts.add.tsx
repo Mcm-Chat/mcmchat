@@ -14,14 +14,38 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   findByPin,
+  getContactRelation,
   isValidPin,
   normalizePin,
   sendContactRequest,
+  type ContactRelation,
   type ProfileLite,
 } from "@/lib/api/contacts";
 import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
+
+type StatusBadge = { label: string; className: string };
+
+/** Badge status relasi yang akurat untuk kartu hasil pencarian PIN. */
+function relationBadges(r: ContactRelation): StatusBadge[] {
+  const out: StatusBadge[] = [];
+  if (r.blockedMe)
+    out.push({ label: "Anda diblokir", className: "bg-destructive/10 text-destructive" });
+  if (r.blockedByMe)
+    out.push({ label: "Anda memblokir", className: "bg-destructive/10 text-destructive" });
+  if (r.connected)
+    out.push({ label: "Sudah terhubung", className: "bg-emerald-500/15 text-emerald-600" });
+  if (r.incomingRequest)
+    out.push({ label: "Menunggu jawaban Anda", className: "bg-primary/10 text-primary" });
+  if (r.outgoingPending)
+    out.push({ label: "Menunggu jawaban mereka", className: "bg-amber-500/15 text-amber-600" });
+  if (r.saved && !r.connected)
+    out.push({ label: "Tersimpan (belum terhubung)", className: "bg-muted text-muted-foreground" });
+  if (out.length === 0)
+    out.push({ label: "Belum terhubung", className: "bg-muted text-muted-foreground" });
+  return out;
+}
 
 export const Route = createFileRoute("/contacts/add")({
   validateSearch: (
@@ -62,6 +86,23 @@ function AddContactPage() {
   const [scanned, setScanned] = useState<ProfileLite | null>(null);
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [relation, setRelation] = useState<ContactRelation | null>(null);
+
+  // Status relasi selalu disegarkan setiap profil hasil pencarian berubah agar
+  // badge yang tampil benar-benar mencerminkan kondisi di server.
+  useEffect(() => {
+    if (!found || !userId) {
+      setRelation(null);
+      return;
+    }
+    let alive = true;
+    void getContactRelation(userId, found.id)
+      .then((r) => alive && setRelation(r))
+      .catch(() => alive && setRelation(null));
+    return () => {
+      alive = false;
+    };
+  }, [found, userId]);
 
   // Buka pemindai QR langsung saat masuk lewat pintasan "Pindai QR".
   useEffect(() => {
@@ -134,19 +175,35 @@ function AddContactPage() {
     setSending(true);
     try {
       const res = await sendContactRequest(userId, found.id, message.trim());
-      if (res.code === "accepted_incoming") {
+      const code = res.code ?? res.status ?? "created";
+      // Form hanya dikosongkan bila kontak benar-benar tersimpan/terhubung.
+      const savedForReal = code === "accepted_incoming" || code === "accepted";
+      if (savedForReal) {
         toast.success("Kontak tersimpan — permintaan mereka langsung diterima.");
-      } else if (res.code === "incoming_pending") {
-        toast.info("Mereka sudah mengirim permintaan. Buka Kontak → Permintaan untuk menerima.");
-      } else if (res.code === "already_pending") {
-        toast.info("Permintaan sebelumnya masih menunggu jawaban.");
+      } else if (code === "incoming_pending") {
+        toast.info("Mereka sudah mengirim permintaan. Buka Kontak → Masuk untuk menerima.");
+      } else if (code === "already_pending" || code === "pending") {
+        toast.info("Permintaan sebelumnya masih menunggu jawaban. Belum tersimpan sebagai kontak.");
+      } else if (code === "already_connected") {
+        toast.info("Kalian sudah terhubung.");
       } else {
-        toast.success("Permintaan kontak terkirim");
+        toast.success("Permintaan kontak terkirim — menunggu jawaban mereka.");
       }
       setConfirmOpen(false);
-      setFound(null);
-      setSearched(false);
-      setPin("");
+      if (savedForReal) {
+        setFound(null);
+        setSearched(false);
+        setRelation(null);
+        setPin("");
+      } else {
+        // Pertahankan form dan segarkan badge status supaya pengguna tahu
+        // posisi permintaan tanpa kehilangan pesan yang sudah diketik.
+        try {
+          setRelation(await getContactRelation(userId, found.id));
+        } catch {
+          /* badge dibiarkan apa adanya bila status gagal dimuat */
+        }
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Permintaan gagal dikirim");
     } finally {
@@ -229,6 +286,18 @@ function AddContactPage() {
                 {found.bio && <p className="truncate text-xs text-muted-foreground">{found.bio}</p>}
               </div>
             </div>
+            {relation && (
+              <div className="flex flex-wrap gap-1.5">
+                {relationBadges(relation).map((b) => (
+                  <span
+                    key={b.label}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${b.className}`}
+                  >
+                    {b.label}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="msg">Pesan permintaan</Label>
               <Textarea
