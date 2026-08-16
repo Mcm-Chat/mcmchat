@@ -104,9 +104,7 @@ function PerfPanel() {
           </div>
           <div className="flex gap-2">
             <dt className="opacity-60">memori</dt>
-            <dd>
-              {sample.heapMB === null ? "n/a" : `${sample.heapMB}/${sample.heapLimitMB} MB`}
-            </dd>
+            <dd>{sample.heapMB === null ? "n/a" : `${sample.heapMB}/${sample.heapLimitMB} MB`}</dd>
           </div>
           <div className="flex gap-2">
             <dt className="opacity-60">rute</dt>
