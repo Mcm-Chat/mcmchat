@@ -7,7 +7,7 @@
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { ChatComposer } from "@/components/mcm/chat-parts";
-import type { MessageRow } from "@/lib/api/messages";
+import type { MessageRow } from "@/lib/api/chat";
 
 export type ComposerHandle = {
   /** Isi ulang teks komposer (mis. saat mulai mengedit pesan). */
