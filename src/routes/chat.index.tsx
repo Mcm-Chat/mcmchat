@@ -121,6 +121,13 @@ function ChatIndex() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
 
+  // Ringkasan unread lintas chat: total, jumlah ruang, dan pintasan melompat
+  // ke percakapan dengan pesan belum dibaca terbanyak.
+  const unreadOverview = useMemo(
+    () => overviewUnread((conversations ?? []).filter((c) => !c.me.is_archived)),
+    [conversations],
+  );
+
   const selectedConvs = useMemo(
     () => list.filter((c) => selected.includes(c.id)),
     [list, selected],
