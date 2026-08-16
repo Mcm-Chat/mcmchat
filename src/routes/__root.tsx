@@ -8,17 +8,13 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { onAccountSwitch } from "@/lib/session-scope";
-import { useEffect, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
-import { usePushSession } from "@/lib/push/use-push";
-import { PushDeniedDialog } from "@/components/mcm/push-denied-dialog";
-import { IncomingCallListener } from "@/components/mcm/incoming-call";
-import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
-import { PerfOverlay } from "@/components/mcm/perf-overlay";
+import { isPerfOverlayEnabled } from "@/lib/debug/perf-flag";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { installViewportMetrics } from "@/lib/mobile/viewport";
 import { initOutboxFlush } from "@/lib/api/outbox";
@@ -26,6 +22,13 @@ import { installImportantToastFocus } from "@/lib/a11y/toast-focus";
 import { installEscapeDismiss } from "@/lib/a11y/escape-dismiss";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import { ReduceMotionProvider, MOTION_BOOTSTRAP_SCRIPT } from "@/lib/a11y/reduce-motion";
+
+// Modul berat/opsional dipisah dari bundel awal dan baru diunduh setelah
+// aplikasi terpasang di browser (atau, untuk overlay debug, saat diaktifkan).
+const RootExtrasLazy = lazy(() => import("@/components/mcm/root-extras"));
+const PerfOverlayLazy = lazy(() =>
+  import("@/components/mcm/perf-overlay").then((m) => ({ default: m.PerfOverlay })),
+);
 
 function NotFoundComponent() {
   return (
