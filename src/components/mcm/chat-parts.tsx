@@ -27,7 +27,7 @@ import {
   Trash2,
   Wallet,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent as ReactTouchEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -578,6 +578,12 @@ function useBubbleSwipe(onSwipe: (dir: "right" | "left") => void) {
     },
   };
 }
+
+/**
+ * Bubble dimemo: daftar chat panjang tidak me-render ulang seluruh pesan
+ * setiap kali state layar (scroll, typing, draf) berubah.
+ */
+export const MessageBubble = memo(MessageBubbleBase);
 
 function MessageBubbleBase({
   message,
