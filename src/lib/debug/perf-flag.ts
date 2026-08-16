@@ -3,7 +3,7 @@
  * pengguna biasa. Aktifkan dengan menambahkan `?debugPerf=1` pada URL
  * (tersimpan di perangkat ini), matikan dengan `?debugPerf=0`.
  */
-const KEY = "mcm:debug-perf";
+const debugPerfKey = "mcm:debug-perf";
 
 export function readPerfFlagFromSearch(search: string): boolean | null {
   const value = new URLSearchParams(search).get("debugPerf");
@@ -16,11 +16,11 @@ export function isPerfOverlayEnabled(): boolean {
   try {
     const fromUrl = readPerfFlagFromSearch(window.location.search);
     if (fromUrl !== null) {
-      if (fromUrl) window.localStorage.setItem(KEY, "1");
-      else window.localStorage.removeItem(KEY);
+      if (fromUrl) window.localStorage.setItem(debugPerfKey, "1");
+      else window.localStorage.removeItem(debugPerfKey);
       return fromUrl;
     }
-    return window.localStorage.getItem(KEY) === "1";
+    return window.localStorage.getItem(debugPerfKey) === "1";
   } catch {
     return false;
   }
