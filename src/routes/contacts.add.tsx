@@ -21,6 +21,7 @@ import {
 } from "@/lib/api/contacts";
 import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
+import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
 
 export const Route = createFileRoute("/contacts/add")({
   validateSearch: (search: Record<string, unknown>): { conv?: string; reason?: string } => {
@@ -56,6 +57,7 @@ function AddContactPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanned, setScanned] = useState<ProfileLite | null>(null);
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Prefill dari CTA "Minta akses ke kontak": identitas percakapan diisi
   // otomatis sehingga tombol kirim langsung tersedia.
@@ -124,6 +126,7 @@ function AddContactPage() {
     try {
       await sendContactRequest(userId, found.id, message.trim());
       toast.success("Permintaan kontak terkirim");
+      setConfirmOpen(false);
       setFound(null);
       setSearched(false);
       setPin("");
@@ -257,6 +260,16 @@ function AddContactPage() {
         open={scannerOpen}
         onOpenChange={setScannerOpen}
         onResult={(value) => void handleScan(value)}
+      />
+      <ContactRequestConfirmDialog
+        open={confirmOpen}
+        profile={found}
+        message={message}
+        reason={reason}
+        conversationId={conv}
+        sending={sending}
+        onConfirm={() => void send()}
+        onOpenChange={setConfirmOpen}
       />
       {userId && (
         <ScanResultSheet
