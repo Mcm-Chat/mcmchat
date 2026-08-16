@@ -241,6 +241,7 @@ export function useCall(opts: {
   const [voiceActive, setVoiceActive] = useState(false);
   const [speakerSupported, setSpeakerSupported] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [mediaLive, setMediaLive] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
@@ -281,6 +282,7 @@ export function useCall(opts: {
       /* pembongkaran tidak boleh melempar ke UI */
     }
     sessionRef.current = null;
+    setMediaLive(false);
     await pipeRef.current?.dispose();
     pipeRef.current = null;
     micRef.current?.getTracks().forEach((t) => t.stop());
@@ -381,6 +383,7 @@ export function useCall(opts: {
           setRemotes((prev) => (sameRemotes(prev, s.remotes) ? prev : s.remotes));
           setAudioBlocked(Boolean(s.audioBlocked));
           setQuality(s.quality ?? "unknown");
+          if (s.status !== "connected") setMediaLive(false);
           if (s.status === "failed") {
             devLog("media_failed", s.reason);
             // Putus tak terduga: coba sambung ulang otomatis dua kali dulu,
@@ -400,6 +403,11 @@ export function useCall(opts: {
             setReason(connectFailureText(s.reason ?? "media"));
           } else if (s.status === "connected") {
             setPhase("connected");
+            // Media dianggap benar-benar mulai hanya bila track mikrofon lokal
+            // masih hidup — bukan sekadar room penyedia berstatus connected.
+            setMediaLive(
+              (micRef.current?.getAudioTracks() ?? []).some((t) => t.readyState === "live"),
+            );
             startedRef.current ??= Date.now();
             rejoinRef.current = 0;
             recoverRoundRef.current = 0;
@@ -876,6 +884,7 @@ export function useCall(opts: {
       voiceFallback,
       speakerSupported,
       audioBlocked,
+      mediaLive,
       cameraBlocked,
       enableAudio: () => {
         void sessionRef.current?.startAudio().then((ok) => {
@@ -963,6 +972,7 @@ export function useCall(opts: {
       voiceFallback,
       speakerSupported,
       audioBlocked,
+      mediaLive,
       cameraBlocked,
       userId,
       callId,
