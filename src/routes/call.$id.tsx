@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallConnectionBadge } from "@/components/mcm/call-connection-badge";
+import { CallProviderStatus } from "@/components/mcm/call-provider-status";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
 import {
@@ -505,6 +506,7 @@ function CallScreen() {
               permission={permission.state}
               className="mt-1"
             />
+            <CallProviderStatus className="mt-1" />
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             {session.connectStalled && (
               <Button
