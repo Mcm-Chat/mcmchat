@@ -897,6 +897,7 @@ function ChatRoom() {
               <div
                 key={virtualRow.key}
                 data-index={virtualRow.index}
+                data-virtual-row=""
                 ref={virtualizer.measureElement}
                 className="absolute top-0 left-0 w-full"
                 style={{ transform: `translateY(${virtualRow.start}px)` }}
