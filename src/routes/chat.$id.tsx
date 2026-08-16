@@ -9,6 +9,7 @@ import {
   BellOff,
   ClipboardList,
   Info,
+  MailOpen,
   Phone,
   RotateCw,
   Users,
@@ -95,6 +96,7 @@ import {
   saveChatView,
   shouldRestoreScroll,
 } from "@/lib/chat/scroll-restore";
+import { summarizeUnread } from "@/lib/chat/unread";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
