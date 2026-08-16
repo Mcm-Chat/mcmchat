@@ -395,7 +395,7 @@ function ProfilePage() {
         />
       }
     >
-      <div className="space-y-4 px-4 py-4 pb-[max(6rem,env(safe-area-inset-bottom)+6rem)]">
+      <div className="space-y-3 px-4 py-4 pb-[max(6rem,env(safe-area-inset-bottom)+6rem)]">
         <div className="card-soft flex items-center gap-3 p-4">
           <div className="relative shrink-0 p-1.5">
             <UserAvatar
@@ -564,11 +564,11 @@ function ProfilePage() {
               Anda belum tergabung dalam bisnis apa pun.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {canManage(role) ? (
                 <>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-0.5">
                       <Label className="text-xs">Nama bisnis</Label>
                       <Input
                         value={bizForm.name}
@@ -576,7 +576,7 @@ function ProfilePage() {
                         onChange={(e) => setBizForm((p) => ({ ...p, name: e.target.value }))}
                       />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label className="text-xs">Kategori</Label>
                       <Input
                         value={bizForm.category}
@@ -585,7 +585,7 @@ function ProfilePage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label className="text-xs">Deskripsi</Label>
                     <Textarea
                       value={bizForm.description}
@@ -594,7 +594,7 @@ function ProfilePage() {
                       onChange={(e) => setBizForm((p) => ({ ...p, description: e.target.value }))}
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label className="text-xs">Alamat</Label>
                     <Input
                       value={bizForm.address}
@@ -602,8 +602,8 @@ function ProfilePage() {
                       onChange={(e) => setBizForm((p) => ({ ...p, address: e.target.value }))}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-0.5">
                       <Label className="text-xs">Jam operasional</Label>
                       <Input
                         value={bizForm.hours}
@@ -611,7 +611,7 @@ function ProfilePage() {
                         onChange={(e) => setBizForm((p) => ({ ...p, hours: e.target.value }))}
                       />
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <Label className="text-xs">Kontak</Label>
                       <Input
                         value={bizForm.contact}
@@ -620,7 +620,7 @@ function ProfilePage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label className="text-xs">Pesan sapaan</Label>
                     <Textarea
                       value={bizForm.greeting}
@@ -629,7 +629,7 @@ function ProfilePage() {
                       onChange={(e) => setBizForm((p) => ({ ...p, greeting: e.target.value }))}
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <Label className="text-xs">Pesan tidak aktif</Label>
                     <Textarea
                       value={bizForm.away_message}
