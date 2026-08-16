@@ -310,6 +310,30 @@ function ChatRoom() {
     return (uid: string) => map.get(uid) ?? "Pengguna";
   }, [conv, userId, profile]);
 
+  // Indeks O(1): tanpa ini setiap bubble melakukan find/filter linear sehingga
+  // render daftar panjang menjadi kuadratik dan terasa berat di ponsel.
+  const messageById = useMemo(() => {
+    const map = new Map<string, MessageRow>();
+    for (const m of messages) map.set(m.id, m);
+    return map;
+  }, [messages]);
+  const reactionsByMessage = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const r of reactions ?? []) {
+      const list = map.get(r.message_id);
+      if (list) list.push(r.emoji);
+      else map.set(r.message_id, [r.emoji]);
+    }
+    return map;
+  }, [reactions]);
+  const EMPTY_REACTIONS = useMemo<string[]>(() => [], []);
+
+  // Handler stabil supaya React.memo pada MessageBubble benar-benar bekerja.
+  const actionRef = useRef<(a: MessageAction, m: MessageRow, p?: string) => void>(() => {});
+  const handleAction = useCallback((a: MessageAction, m: MessageRow, p?: string) => {
+    actionRef.current(a, m, p);
+  }, []);
+
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: qk.messages(id) });
     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
