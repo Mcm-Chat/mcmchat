@@ -78,7 +78,12 @@ import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "
 import { useConnectionState } from "@/lib/realtime/connection";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { useTyping } from "@/lib/api/presence";
-import { isNearBottom, shouldAutoScroll } from "@/lib/chat/scroll";
+import {
+  isNearBottom,
+  isUserScrolling,
+  shouldAutoScroll,
+  USER_SCROLL_GRACE_MS,
+} from "@/lib/chat/scroll";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
@@ -154,6 +159,11 @@ function ChatRoom() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  // Waktu interaksi gulir/sentuh terakhir: dipakai untuk menahan auto-scroll
+  // selama jari (atau momentum) masih menggerakkan daftar.
+  const lastInteractionRef = useRef(0);
+  const [missedCount, setMissedCount] = useState(0);
+  const lastMessageIdRef = useRef<string | null>(null);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
 
   // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
@@ -311,8 +321,23 @@ function ChatRoom() {
     [messages.length, virtualizer],
   );
   useEffect(() => {
-    if (shouldAutoScroll({ atBottom, lastSenderId, userId })) scrollToLatest();
-  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest]);
+    const lastId = messages.at(-1)?.id ?? null;
+    const grew = lastId !== null && lastId !== lastMessageIdRef.current;
+    lastMessageIdRef.current = lastId;
+    const auto = shouldAutoScroll({
+      atBottom,
+      lastSenderId,
+      userId,
+      userScrolling: isUserScrolling(lastInteractionRef.current),
+    });
+    if (auto) {
+      setMissedCount(0);
+      scrollToLatest();
+    } else if (grew && lastSenderId !== userId) {
+      // Pesan masuk saat pengguna membaca riwayat: jangan loncat, cukup hitung.
+      setMissedCount((n) => n + 1);
+    }
+  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest, messages]);
 
   // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
   // setState tidak pernah dipanggil per event scroll.
@@ -326,6 +351,7 @@ function ChatRoom() {
       if (!el) return;
       setAtBottom((prev) => {
         const next = isNearBottom(el);
+        if (next && !prev) setMissedCount(0);
         return next === prev ? prev : next;
       });
       if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
@@ -847,6 +873,27 @@ function ChatRoom() {
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          onTouchStart={() => {
+            lastInteractionRef.current = Date.now();
+          }}
+          onTouchMove={() => {
+            lastInteractionRef.current = Date.now();
+          }}
+          onTouchEnd={() => {
+            lastInteractionRef.current = Date.now();
+            // Setelah jari lepas dan momentum reda, rapatkan lagi bila memang
+            // sedang berada di pesan terbaru.
+            window.setTimeout(() => {
+              const el = scrollRef.current;
+              if (el && isNearBottom(el)) {
+                setMissedCount(0);
+                scrollToLatest();
+              }
+            }, USER_SCROLL_GRACE_MS);
+          }}
+          onWheel={() => {
+            lastInteractionRef.current = Date.now();
+          }}
           className="chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
         >
         {hasOlder && (
@@ -973,14 +1020,24 @@ function ChatRoom() {
           <Button
             size="icon"
             variant="secondary"
-            aria-label="Lompat ke pesan terbaru"
-            className="pointer-events-auto rounded-full shadow-md"
+            aria-label={
+              missedCount > 0
+                ? `Lompat ke ${missedCount} pesan baru`
+                : "Lompat ke pesan terbaru"
+            }
+            className="pointer-events-auto relative rounded-full shadow-md"
             onClick={() => {
+              setMissedCount(0);
               setAtBottom(true);
               scrollToLatest("smooth");
             }}
           >
             <ArrowDown className="size-4" />
+            {missedCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-5 rounded-full bg-primary px-1.5 text-[10px] leading-5 font-semibold text-primary-foreground">
+                {missedCount > 99 ? "99+" : missedCount}
+              </span>
+            )}
           </Button>
         </div>
       )}

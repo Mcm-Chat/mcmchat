@@ -26,3 +26,19 @@ describe("shouldAutoScroll", () => {
     );
   });
 });
+
+import { isUserScrolling, USER_SCROLL_GRACE_MS } from "../scroll";
+
+describe("auto-scroll cerdas", () => {
+  it("tidak loncat saat pengguna masih menggulir", () => {
+    expect(shouldAutoScroll({ atBottom: true, lastSenderId: "b", userId: "a", userScrolling: true })).toBe(false);
+  });
+  it("tetap turun untuk pesan sendiri meski sedang menggulir", () => {
+    expect(shouldAutoScroll({ atBottom: false, lastSenderId: "a", userId: "a", userScrolling: true })).toBe(true);
+  });
+  it("masa tenggang interaksi berakhir", () => {
+    const t = 1_000_000;
+    expect(isUserScrolling(t, t + 100)).toBe(true);
+    expect(isUserScrolling(t, t + USER_SCROLL_GRACE_MS + 1)).toBe(false);
+  });
+});
