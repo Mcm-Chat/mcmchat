@@ -89,8 +89,7 @@ export async function rotateTaskToken(
   return data as unknown as { id: string; token: string };
 }
 
-export const taskUrl = (token: string) =>
-  `${typeof window === "undefined" ? "" : window.location.origin}/prepare/${token}`;
+export const taskUrl = (token: string) => shareUrl(`/prepare/${token}`);
 
 export async function listBusinessEmployees(businessId: string) {
   const rows = unwrap(
