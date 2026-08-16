@@ -750,7 +750,7 @@ function ProfilePage() {
                 }
               />
 
-              <NotificationPermissionRow userId={user?.id} />
+              <NotificationPermissionRow userId={userId} />
               <button
                 type="button"
                 onClick={() => void navigate({ to: "/settings/notifications" })}
