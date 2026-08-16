@@ -284,6 +284,7 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
     "product-photos",
     (photo as { image_path?: string }).image_path ?? photo.id,
   );
+  const [open, setOpen] = useState(false);
   const mapsUrl =
     photo.location_url ||
     (photo.location_lat != null && photo.location_lng != null
@@ -293,11 +294,22 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
     <div className="w-20 shrink-0 space-y-1">
       <div className="size-20 overflow-hidden rounded-lg bg-black/10">
         {url ? (
-          <img src={url} alt="Foto produk" className="size-full object-cover" />
+          <button
+            type="button"
+            aria-label="Lihat foto produk"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="size-full"
+          >
+            <img src={url} alt="Foto produk" className="size-full object-cover" />
+          </button>
         ) : (
           <div className="size-full animate-pulse" />
         )}
       </div>
+      {open && url && <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />}
       {mapsUrl && (
         <a
           href={mapsUrl}
