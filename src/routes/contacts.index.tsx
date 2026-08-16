@@ -195,10 +195,10 @@ function ContactsPage() {
                   Disimpan{savedOnly.length > 0 ? ` (${savedOnly.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="masuk" className="flex-1 rounded-lg text-xs">
-                  Masuk{incoming.length > 0 ? ` (${incoming.length})` : ""}
+                  Masuk{incomingPending.length > 0 ? ` (${incomingPending.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="terkirim" className="flex-1 rounded-lg text-xs">
-                  Terkirim
+                  Terkirim{outgoingPending.length > 0 ? ` (${outgoingPending.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="blokir" className="flex-1 rounded-lg text-xs">
                   Blokir
