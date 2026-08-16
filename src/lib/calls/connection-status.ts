@@ -18,6 +18,10 @@ export type CallConnectionInput = {
   quality?: "excellent" | "good" | "fair" | "poor" | "unknown" | undefined;
   audioBlocked?: boolean;
   permission?: MediaPermissionState | undefined;
+  /** Status server panggilan (LiveKit) hasil pemeriksaan terakhir. */
+  providerHealth?: "checking" | "online" | "offline" | undefined;
+  /** Media benar-benar berjalan (room tersambung + mikrofon hidup). */
+  mediaLive?: boolean;
 };
 
 export type CallConnectionStatus = {
@@ -74,6 +78,20 @@ export function callConnectionStatus(input: CallConnectionInput): CallConnection
   if (input.phase === "loading") return { tone: "pending", label: "Menyiapkan…", hint: null };
 
   // phase === "connected"
+  // Sinkron dengan LiveKit: label "berjalan" hanya bila server terhubung DAN
+  // media benar-benar mulai. Selain itu, statusnya masih tahap persiapan.
+  if (input.providerHealth === "offline")
+    return {
+      tone: "down",
+      label: "Server panggilan terputus",
+      hint: "Panggilan tidak bisa berjalan sampai server terhubung kembali.",
+    };
+  if (input.mediaLive === false)
+    return {
+      tone: "pending",
+      label: "Menyiapkan media…",
+      hint: perm ?? "Suara dan video mulai setelah perangkat siap.",
+    };
   if (input.audioBlocked)
     return {
       tone: "warn",
@@ -81,8 +99,8 @@ export function callConnectionStatus(input: CallConnectionInput): CallConnection
       hint: "Tekan “Aktifkan suara” agar bisa mendengar.",
     };
   if (input.quality === "poor")
-    return { tone: "warn", label: "Terhubung — sinyal lemah", hint: perm };
+    return { tone: "warn", label: "Panggilan berjalan — sinyal lemah", hint: perm };
   if (input.quality === "fair")
-    return { tone: "live", label: "Terhubung — sinyal sedang", hint: perm };
-  return { tone: "live", label: "Terhubung", hint: perm };
+    return { tone: "live", label: "Panggilan berjalan — sinyal sedang", hint: perm };
+  return { tone: "live", label: "Panggilan berjalan", hint: perm };
 }
