@@ -579,7 +579,7 @@ function useBubbleSwipe(onSwipe: (dir: "right" | "left") => void) {
   };
 }
 
-export function MessageBubble({
+function MessageBubbleBase({
   message,
   replyTo,
   senderName,
