@@ -197,7 +197,7 @@ export function ChatListItem({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <p className="truncate text-[15px] leading-5 font-semibold tracking-[-0.01em]">
-              {name}
+              <Highlight text={name} query={query} />
             </p>
             {conv.me.is_pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
             {conv.me.is_muted && <BellOff className="size-3 shrink-0 text-muted-foreground" />}
@@ -221,7 +221,14 @@ export function ChatListItem({
                 conv.unread > 0 ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              {previewOf(conv.lastMessage)}
+              {!titleMatches && matchedPin ? (
+                <>
+                  <span className="text-muted-foreground">PIN:</span>{" "}
+                  <Highlight text={matchedPin} query={query} />
+                </>
+              ) : (
+                previewOf(conv.lastMessage)
+              )}
             </p>
             {conv.unread > 0 && (
               <span className="ml-auto min-w-5 shrink-0 rounded-full bg-primary px-1.5 text-center text-[10px] leading-5 font-bold text-primary-foreground">
