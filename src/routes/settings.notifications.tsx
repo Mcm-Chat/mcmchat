@@ -237,6 +237,20 @@ function NotificationSettingsPage() {
               </li>
             ))}
           </ul>
+          {!push.native && !push.webPush ? (
+            <div className="rounded-xl border border-border bg-muted/40 p-3">
+              <p className="text-xs font-medium">Push web belum aktif di build ini</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Nilai konfigurasi Firebase Web berikut masih kosong, sehingga notifikasi saat
+                aplikasi ditutup tidak bisa dikirim ke browser/PWA:
+              </p>
+              <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
+                {missingKeys.map((k) => (
+                  <li key={k}>{k}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {userId && (push.native || push.webPush) && !push.registered ? (
             <Button
               size="sm"
