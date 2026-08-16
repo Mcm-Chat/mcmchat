@@ -230,8 +230,10 @@ export function QrScannerDialog({
       ctx.drawImage(bitmap, 0, 0);
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const found = jsQR(img.data, canvas.width, canvas.height);
-      if (!found?.data || !accept(found.data)) {
-        toast.error("QR tidak terbaca atau bukan QR PIN MCM");
+      if (!found?.data) {
+        toast.error("QR tidak terbaca. Coba foto yang lebih jelas.");
+      } else if (!accept(found.data)) {
+        toast.error("Bukan QR PIN MCM. Format PIN harus 8 karakter, contoh: A2B3-C4D5.");
       }
     } catch {
       toast.error("Gagal membaca gambar");
