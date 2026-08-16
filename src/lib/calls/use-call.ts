@@ -637,7 +637,7 @@ export function useCall(opts: {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callId, userId]);
+  }, [callId, userId, recoverTick]);
 
   // Timer durasi — satu render per detik dan hanya bila detiknya berubah.
   useEffect(() => {
