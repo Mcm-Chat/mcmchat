@@ -11,12 +11,14 @@ const env = import.meta.env as unknown as Record<string, string | undefined>;
  */
 const DEFAULT_PROJECT_ID = "mcm-chat-b8e94";
 const DEFAULT_SENDER_ID = "304269903025";
+const DEFAULT_API_KEY = "AIzaSyCQ1OrB8M9BDbToWY9-xmMCwgpfsU6C8yg";
+const DEFAULT_APP_ID = "1:304269903025:web:234a8bb440e1ff03d80e90";
 
 export const WEB_PUSH = {
-  apiKey: env["VITE_FCM_API_KEY"] ?? "",
+  apiKey: env["VITE_FCM_API_KEY"] || DEFAULT_API_KEY,
   projectId: env["VITE_FCM_PROJECT_ID"] || DEFAULT_PROJECT_ID,
   senderId: env["VITE_FCM_SENDER_ID"] || DEFAULT_SENDER_ID,
-  appId: env["VITE_FCM_APP_ID"] ?? "",
+  appId: env["VITE_FCM_APP_ID"] || DEFAULT_APP_ID,
   vapidKey: env["VITE_FCM_VAPID_KEY"] ?? "",
 } as const;
 
