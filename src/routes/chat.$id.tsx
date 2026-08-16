@@ -430,9 +430,13 @@ function ChatRoom() {
         if (next && !prev) setMissedCount(0);
         return next === prev ? prev : next;
       });
+      // Perbarui jangkar mengikuti posisi baca terbaru pengguna.
+      anchorRef.current = isNearBottom(el)
+        ? null
+        : pickScrollAnchor(virtualizer.getVirtualItems(), el.scrollTop);
       if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
     });
-  }, [hasOlder, isFetchingOlder, fetchOlder]);
+  }, [hasOlder, isFetchingOlder, fetchOlder, virtualizer]);
 
   // Pulihkan posisi baca terakhir sekali daftar pertama sudah terpasang.
   useEffect(() => {
