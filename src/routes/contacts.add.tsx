@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Send } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
@@ -20,8 +20,15 @@ import {
   type ProfileLite,
 } from "@/lib/api/contacts";
 import { useRequireAuth } from "@/lib/api/guard";
+import { buildAccessPrefill } from "@/lib/contacts/access-request";
 
 export const Route = createFileRoute("/contacts/add")({
+  validateSearch: (search: Record<string, unknown>): { conv?: string; reason?: string } => {
+    const out: { conv?: string; reason?: string } = {};
+    if (typeof search['conv'] === "string") out.conv = search['conv'];
+    if (typeof search['reason'] === "string") out.reason = search['reason'];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Tambah kontak lewat PIN — MCM" },
@@ -38,6 +45,7 @@ export const Route = createFileRoute("/contacts/add")({
 
 function AddContactPage() {
   const { userId, profile } = useRequireAuth();
+  const { conv, reason } = Route.useSearch();
   const [pin, setPin] = useState("");
   const [message, setMessage] = useState("Halo, saya ingin terhubung di MCM.");
   const [searching, setSearching] = useState(false);
@@ -48,6 +56,27 @@ function AddContactPage() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanned, setScanned] = useState<ProfileLite | null>(null);
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
+
+  // Prefill dari CTA "Minta akses ke kontak": identitas percakapan diisi
+  // otomatis sehingga tombol kirim langsung tersedia.
+  useEffect(() => {
+    if (!conv || !userId) return;
+    let alive = true;
+    void buildAccessPrefill(conv, userId, reason).then((prefill) => {
+      if (!alive) return;
+      setMessage(prefill.message);
+      if (prefill.profile) {
+        setFound(prefill.profile);
+        setSearched(true);
+        if (prefill.profile.pin) setPin(normalizePin(prefill.profile.pin));
+      } else {
+        toast.info("Masukkan PIN kontak untuk mengirim permintaan akses.");
+      }
+    });
+    return () => {
+      alive = false;
+    };
+  }, [conv, userId, reason]);
 
   const handleScan = async (value: string) => {
     setPin(value);

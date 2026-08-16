@@ -15,10 +15,13 @@ type Cta = { label: string; route: string; icon: typeof LogIn };
 
 /** CTA utama sesuai alasan penolakan; rute cadangan dipakai bila tidak ada. */
 function ctaFor(notice: PushDeniedNotice): Cta {
+  const q = notice.conversationId
+    ? `?conv=${encodeURIComponent(notice.conversationId)}&reason=${notice.code}`
+    : `?reason=${notice.code}`;
   const map: Partial<Record<PushDeniedCode, Cta>> = {
     no_session: { label: "Masuk ulang", route: "/login", icon: LogIn },
-    not_member: { label: "Minta akses ke kontak", route: "/contacts", icon: UserPlus },
-    removed: { label: "Minta akses ke kontak", route: "/contacts", icon: UserPlus },
+    not_member: { label: "Minta akses ke kontak", route: `/contacts/add${q}`, icon: UserPlus },
+    removed: { label: "Minta akses ke kontak", route: `/contacts/add${q}`, icon: UserPlus },
     blocked: { label: "Kelola blokir kontak", route: "/contacts", icon: UserPlus },
   };
   return (

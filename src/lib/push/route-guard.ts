@@ -16,6 +16,8 @@ export type GuardedRoute = {
   reason?: string;
   code?: PushDeniedCode;
   title?: string;
+  /** Id percakapan asal (bila rute push menunjuk percakapan). */
+  conversationId?: string;
 };
 
 const CONV_RE = /^\/chat\/([0-9a-f-]{36})(?:[/?#]|$)/i;
@@ -87,7 +89,14 @@ export async function guardPushRoute(route: string): Promise<GuardedRoute> {
     const cap = await fetchConversationCapability(conversationId);
     if (cap.readable) return { route, blocked: false };
     const info = REASON_TEXT[cap.reason] ?? UNKNOWN;
-    return { route: "/chat", blocked: true, code: info.code, title: info.title, reason: info.detail };
+    return {
+      route: "/chat",
+      blocked: true,
+      code: info.code,
+      title: info.title,
+      reason: info.detail,
+      conversationId,
+    };
   } catch {
     // Jaringan gagal: jangan kunci pengguna keluar dari percakapan miliknya —
     // rute tetap dibuka dan layar chat punya fallback aksesnya sendiri.
@@ -105,5 +114,6 @@ export function announceGuardResult(guarded: GuardedRoute): void {
     title: guarded.title ?? "Akses ditolak",
     detail: guarded.reason,
     fallbackRoute: guarded.route,
+    conversationId: guarded.conversationId,
   });
 }

@@ -21,6 +21,8 @@ export type PushDeniedNotice = {
   detail: string;
   /** Rute pengganti yang dibuka setelah pengguna menutup penjelasan. */
   fallbackRoute: string;
+  /** Percakapan asal notifikasi (dipakai untuk prefill permintaan akses). */
+  conversationId?: string | undefined;
   at: number;
 };
 
