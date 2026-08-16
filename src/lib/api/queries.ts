@@ -184,12 +184,35 @@ export function useRealtimeSync(uid?: string) {
       );
     };
 
+    /**
+     * Hanya percakapan yang benar-benar saya ikuti (ada di cache daftar chat)
+     * atau yang sedang dibuka yang diproses. Event lain dibuang lebih awal
+     * sehingga ChatList tidak melakukan pekerjaan cache untuk chat asing.
+     */
+    const openConversationId = () => {
+      if (typeof window === "undefined") return null;
+      const m = window.location.pathname.match(/^\/chat\/([^/]+)/);
+      return m?.[1] ?? null;
+    };
+    const isRelevant = (cid: string) => {
+      if (cid === openConversationId()) return true;
+      const list = qc.getQueryData<ConversationView[]>(qk.conversations(uid));
+      // Selama daftar belum termuat, jangan buang event apa pun.
+      if (!list) return true;
+      return list.some((c) => c.id === cid);
+    };
+
     const unsubscribe = registerSubscription(`mcm-sync-${uid}`, (name) =>
       supabase
         .channel(name)
         .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (payload) => {
           const row = (payload.new ?? payload.old) as MessageRow | null;
           if (!row?.conversation_id) return;
+          if (!isRelevant(row.conversation_id)) {
+            // Chat baru yang belum ada di cache: cukup segarkan daftar sekali.
+            if (payload.eventType === "INSERT") refreshConversations();
+            return;
+          }
           if (payload.eventType === "INSERT") applyInsert(row);
           else if (payload.eventType === "DELETE") applyDelete(row);
           else void qc.invalidateQueries({ queryKey: qk.messages(row.conversation_id) });
@@ -198,12 +221,14 @@ export function useRealtimeSync(uid?: string) {
           if (payload.eventType === "INSERT" && row.sender_id && row.sender_id !== uid) {
             bumpUnread(row);
             void markDelivered(row.conversation_id).then(() =>
-              qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" }),
+              qc.invalidateQueries({ queryKey: qk.receipts(row.conversation_id) }),
             );
           }
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "message_receipts" }, () => {
-          void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
+          // Tanda terima hanya relevan untuk ruang chat yang sedang dibuka.
+          const open = openConversationId();
+          if (open) void qc.invalidateQueries({ queryKey: qk.receipts(open) });
           refreshConversations();
         })
         .on(
