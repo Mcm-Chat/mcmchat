@@ -68,6 +68,11 @@ export interface CallSessionHandle {
   attachRemoteMedia(el: HTMLVideoElement | null): void;
   /** Buka blokir autoplay audio (harus dipicu gestur pengguna). */
   startAudio(): Promise<boolean>;
+  /**
+   * Cuplikan RTCStatsReport dari seluruh track (lokal + remote) untuk metrik
+   * kualitas. Opsional: penyedia yang tidak mendukung mengembalikan undefined.
+   */
+  getRtcStats?(): Promise<RTCStatsReport[]>;
   disconnect(): Promise<void>;
 }
 
@@ -299,6 +304,21 @@ export const liveKitProvider: CallProvider = {
 
     return {
       provider: "livekit",
+      async getRtcStats() {
+        const tracks: Array<{ getRTCStatsReport?: () => Promise<RTCStatsReport | undefined> }> = [];
+        for (const pub of room.localParticipant.trackPublications.values()) {
+          if (pub.track) tracks.push(pub.track as never);
+        }
+        for (const p of room.remoteParticipants.values()) {
+          for (const pub of p.trackPublications.values()) {
+            if (pub.track) tracks.push(pub.track as never);
+          }
+        }
+        const reports = await Promise.all(
+          tracks.map((t) => t.getRTCStatsReport?.().catch(() => undefined) ?? undefined),
+        );
+        return reports.filter((r): r is RTCStatsReport => Boolean(r));
+      },
       async startAudio() {
         try {
           await room.startAudio();

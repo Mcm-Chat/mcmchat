@@ -54,6 +54,12 @@ import {
   connectTimeoutMs,
 } from "./connect-watchdog";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
+import {
+  diffSnapshots,
+  snapshotFromStats,
+  type QualityMetrics,
+  type QualitySnapshot,
+} from "./quality-metrics";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
 /**
@@ -166,6 +172,8 @@ export type UseCallResult = {
   pipelineState: PipelineState;
   /** Kualitas jaringan lokal untuk indikator sinyal. */
   quality: "excellent" | "good" | "poor" | "unknown";
+  /** Metrik kualitas real-time (packet loss, jitter, bitrate); null bila belum ada. */
+  metrics: QualityMetrics | null;
   /** Efek suara benar-benar aktif pada track keluar (bukan sekadar preferensi). */
   voiceApplied: boolean;
   /** Efek suara diminta tetapi gagal dipasang; panggilan tetap berjalan polos. */
@@ -244,6 +252,9 @@ export function useCall(opts: {
   const [mediaLive, setMediaLive] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
+  const [metrics, setMetrics] = useState<QualityMetrics | null>(null);
+  /** Cuplikan stats sebelumnya — metrik hanya berarti sebagai selisih. */
+  const lastSnapRef = useRef<QualitySnapshot | null>(null);
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
@@ -275,6 +286,41 @@ export function useCall(opts: {
 
   const voiceApplied = premium && prefs.enabled && prefs.preset !== "off";
 
+  /**
+   * Metrik kualitas real-time: RTCStatsReport bersifat kumulatif, jadi nilai
+   * yang berarti dihitung dari selisih dua cuplikan tiap 2 detik. Polling
+   * hanya berjalan saat panggilan benar-benar tersambung.
+   */
+  useEffect(() => {
+    if (phase !== "connected") {
+      lastSnapRef.current = null;
+      setMetrics(null);
+      return;
+    }
+    let alive = true;
+    const sample = async () => {
+      const session = sessionRef.current;
+      if (!session?.getRtcStats) return;
+      const reports = await session.getRtcStats().catch(() => []);
+      if (!alive || reports.length === 0) return;
+      const snap = snapshotFromStats(
+        reports.map((r) => Array.from(r.values()) as Record<string, unknown>[]),
+        Date.now(),
+      );
+      const prev = lastSnapRef.current;
+      lastSnapRef.current = snap;
+      if (!prev) return;
+      const next = diffSnapshots(prev, snap);
+      if (next) setMetrics(next);
+    };
+    void sample();
+    const id = setInterval(() => void sample(), 2000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [phase]);
+
   const cleanup = useCallback(async () => {
     try {
       await sessionRef.current?.disconnect();
@@ -283,6 +329,8 @@ export function useCall(opts: {
     }
     sessionRef.current = null;
     setMediaLive(false);
+    setMetrics(null);
+    lastSnapRef.current = null;
     await pipeRef.current?.dispose();
     pipeRef.current = null;
     micRef.current?.getTracks().forEach((t) => t.stop());
@@ -880,6 +928,7 @@ export function useCall(opts: {
       controls,
       pipelineState,
       quality,
+      metrics,
       voiceApplied: voiceActive,
       voiceFallback,
       speakerSupported,
@@ -968,6 +1017,7 @@ export function useCall(opts: {
       controls,
       pipelineState,
       quality,
+      metrics,
       voiceActive,
       voiceFallback,
       speakerSupported,
