@@ -18,6 +18,7 @@ import { usePushSession } from "@/lib/push/use-push";
 import { PushDeniedDialog } from "@/components/mcm/push-denied-dialog";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
 import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
+import { PerfOverlay } from "@/components/mcm/perf-overlay";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { installViewportMetrics } from "@/lib/mobile/viewport";
 import { initOutboxFlush } from "@/lib/api/outbox";
@@ -209,6 +210,7 @@ function RootComponent() {
             <IncomingCallListener />
             <PushDeniedDialog />
             <ScreenPrivacyGuard />
+            <PerfOverlay />
             <Toaster position="top-center" richColors closeButton />
           </AuthProvider>
         </ReduceMotionProvider>
