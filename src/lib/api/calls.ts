@@ -1,3 +1,4 @@
+import { uniqueTopic } from "@/lib/realtime/topic";
 import { fetchProfileCards } from "./profiles";
 import { listHiddenCallIds } from "./call-history";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,7 +174,7 @@ export async function isActiveRecipient(callId: string, userId: string): Promise
 /** Ikuti perubahan satu panggilan (dijawab, ditolak, berakhir) secara realtime. */
 export function subscribeCall(callId: string, onChange: (row: CallRow) => void) {
   const ch = supabase
-    .channel(`call:${callId}`)
+    .channel(uniqueTopic(`call:${callId}`))
     .on(
       "postgres_changes",
       { event: "UPDATE", schema: "public", table: "calls", filter: `id=eq.${callId}` },
@@ -191,7 +192,7 @@ export function subscribeCall(callId: string, onChange: (row: CallRow) => void) 
  */
 export function subscribeMyCalls(userId: string, onChange: (row: CallRow) => void) {
   const ch = supabase
-    .channel(`calls-feed:${userId}`)
+    .channel(uniqueTopic(`calls-feed:${userId}`))
     .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, (p) => {
       const row = (p.new ?? p.old) as CallRow | null;
       if (row) onChange(row);
@@ -209,7 +210,7 @@ export function subscribeMyCalls(userId: string, onChange: (row: CallRow) => voi
 
 export function subscribeIncomingCalls(userId: string, onIncoming: (call: CallRow) => void) {
   const ch = supabase
-    .channel(`incoming-calls:${userId}`)
+    .channel(uniqueTopic(`incoming-calls:${userId}`))
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "calls" }, (p) => {
       const row = p.new as CallRow;
       if (row.status !== "ringing" || row.initiator_id === userId) return;
