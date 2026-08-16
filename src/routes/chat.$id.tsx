@@ -338,38 +338,6 @@ function ChatRoom() {
   }, [reactions]);
   const EMPTY_REACTIONS = useMemo<string[]>(() => [], []);
 
-  /**
-   * Meta baris dihitung sekali per daftar pesan (pemisah hari + pengelompokan),
-   * bukan saat render berurutan — syarat agar daftar bisa divirtualisasi.
-   */
-  const rows = useMemo(() => {
-    let lastDayLabel = "";
-    return messages.map((m, idx) => {
-      const day = labelHari(m.created_at);
-      const showDay = day !== lastDayLabel;
-      lastDayLabel = day;
-      const prev = messages[idx - 1];
-      const grouped =
-        !showDay &&
-        !!prev &&
-        prev.sender_id === m.sender_id &&
-        prev.kind !== "system" &&
-        new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 4 * 60 * 1000;
-      return { message: m, day, showDay, grouped };
-    });
-  }, [messages]);
-
-  // Virtualisasi: hanya bubble di sekitar viewport yang benar-benar dirender,
-  // tinggi tiap baris diukur nyata agar foto/kartu tidak bikin lompatan.
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => 84,
-    getItemKey: (index) => rows[index]?.message.id ?? index,
-    overscan: 10,
-  });
-  const virtualItems = virtualizer.getVirtualItems();
-
   // Handler stabil supaya React.memo pada MessageBubble benar-benar bekerja.
   const actionRef = useRef<(a: MessageAction, m: MessageRow, p?: string) => void>(() => {});
   const handleAction = useCallback((a: MessageAction, m: MessageRow, p?: string) => {
