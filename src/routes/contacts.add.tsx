@@ -23,10 +23,12 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 
 export const Route = createFileRoute("/contacts/add")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    conv: typeof search['conv'] === "string" ? (search['conv'] as string) : undefined,
-    reason: typeof search['reason'] === "string" ? (search['reason'] as string) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { conv?: string; reason?: string } => {
+    const out: { conv?: string; reason?: string } = {};
+    if (typeof search['conv'] === "string") out.conv = search['conv'];
+    if (typeof search['reason'] === "string") out.reason = search['reason'];
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Tambah kontak lewat PIN — MCM" },
