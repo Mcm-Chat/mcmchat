@@ -540,16 +540,24 @@ function ChatIndex() {
           links={["contacts", "support"]}
         />
       ) : list.length === 0 ? (
-        <EmptyState
-          icon={MessagesSquare}
-          title="Belum ada percakapan"
-          description="Tambahkan kontak lewat PIN MCM, lalu mulai chat pertama Anda."
-          action={
-            <Button className="rounded-xl" onClick={() => void navigate({ to: "/contacts/add" })}>
-              Tambah kontak
-            </Button>
-          }
-        />
+        q.trim() ? (
+          <EmptyState
+            icon={Search}
+            title="Tidak ada hasil"
+            description={`Tidak ditemukan percakapan untuk “${q.trim()}”. Coba nama lain atau PIN publik kontak.`}
+          />
+        ) : (
+          <EmptyState
+            icon={MessagesSquare}
+            title="Belum ada percakapan"
+            description="Tambahkan kontak lewat PIN MCM, lalu mulai chat pertama Anda."
+            action={
+              <Button className="rounded-xl" onClick={() => void navigate({ to: "/contacts/add" })}>
+                Tambah kontak
+              </Button>
+            }
+          />
+        )
       ) : (
         <ul className="divide-y divide-border/70">
           {list.map((c) => (
