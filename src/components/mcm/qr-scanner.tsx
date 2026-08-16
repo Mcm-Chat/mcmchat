@@ -129,7 +129,6 @@ export function QrScannerDialog({
       return;
     }
     doneRef.current = false;
-    setPhase("requesting");
     let cancelled = false;
 
     const tick = () => {
@@ -158,6 +157,23 @@ export function QrScannerDialog({
           if (!cancelled) setPhase("unsupported");
           return;
         }
+        if (!(await hasCameraDevice())) {
+          if (!cancelled) setPhase("missing");
+          return;
+        }
+        const permission = await readCameraPermission();
+        if (cancelled) return;
+        if (permission === "denied") {
+          setPhase("denied");
+          return;
+        }
+        // Jelaskan dulu kenapa kamera dibutuhkan; izin baru diminta setelah
+        // pengguna menekan "Izinkan kamera" (kecuali izin sudah diberikan).
+        if (permission !== "granted" && !armed) {
+          setPhase("prompt");
+          return;
+        }
+        setPhase("requesting");
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: facing },
           audio: false,
