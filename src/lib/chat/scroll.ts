@@ -39,3 +39,28 @@ export function shouldAutoScroll(opts: {
 export function isUserScrolling(lastInteractionAt: number, now = Date.now()): boolean {
   return now - lastInteractionAt < USER_SCROLL_GRACE_MS;
 }
+
+/**
+ * Kompensasi scroll saat tinggi visual viewport berubah (keyboard muncul /
+ * hilang / berubah tinggi). Tujuannya: konten yang sedang dibaca tetap di
+ * tempat, tidak "loncat".
+ *
+ * - `stick`: pengguna memang di pesan terbaru dan tidak mengunci scroll →
+ *   tempelkan lagi ke dasar.
+ * - `adjust`: geser scrollTop sebesar selisih tinggi viewport supaya baris
+ *   yang sama tetap terlihat.
+ * - `none`: perubahan terlalu kecil (mis. bar URL) → jangan sentuh scroll.
+ */
+export const VIEWPORT_DELTA_MIN_PX = 24;
+
+export function keyboardScrollAction(opts: {
+  prevHeight: number;
+  nextHeight: number;
+  atBottom: boolean;
+  locked?: boolean | undefined;
+}): { type: "stick" } | { type: "adjust"; delta: number } | { type: "none" } {
+  const delta = opts.prevHeight - opts.nextHeight;
+  if (opts.atBottom && !opts.locked) return { type: "stick" };
+  if (Math.abs(delta) < VIEWPORT_DELTA_MIN_PX) return { type: "none" };
+  return { type: "adjust", delta };
+}
