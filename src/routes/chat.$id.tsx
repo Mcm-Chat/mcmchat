@@ -412,6 +412,8 @@ function ChatRoom() {
   const jumpToFirstUnread = useCallback(() => {
     if (unread.firstIndex < 0) return;
     setUnreadDismissed(true);
+    // Sorotan visual: pesan belum dibaca ditandai sementara agar posisinya jelas.
+    setUnreadMarked(true);
     virtualizer.scrollToIndex(unread.firstIndex, { align: "start" });
     requestAnimationFrame(() => virtualizer.scrollToIndex(unread.firstIndex, { align: "start" }));
   }, [unread.firstIndex, virtualizer]);
