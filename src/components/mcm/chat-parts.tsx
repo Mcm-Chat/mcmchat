@@ -121,7 +121,7 @@ const initialsOf = (name: string) =>
     .join("") || "MC";
 
 /** Menyoroti substring yang cocok dengan kata kunci pencarian. */
-function Highlight({ text, query }: { text: string; query?: string }) {
+function Highlight({ text, query }: { text: string; query: string | undefined }) {
   const needle = (query ?? "").trim();
   if (!needle) return <>{text}</>;
   const lower = text.toLowerCase();
