@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
@@ -252,13 +253,63 @@ function ChatRoom() {
 
   const { typingUsers, notifyTyping } = useTyping(id, userId);
 
+  /**
+   * Meta baris dihitung sekali per daftar pesan (pemisah hari + pengelompokan),
+   * bukan saat render berurutan — syarat agar daftar bisa divirtualisasi.
+   */
+  const rows = useMemo(() => {
+    let lastDayLabel = "";
+    return messages.map((m, idx) => {
+      const day = labelHari(m.created_at);
+      const showDay = day !== lastDayLabel;
+      lastDayLabel = day;
+      const prev = messages[idx - 1];
+      const grouped =
+        !showDay &&
+        !!prev &&
+        prev.sender_id === m.sender_id &&
+        prev.kind !== "system" &&
+        new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 4 * 60 * 1000;
+      return { message: m, day, showDay, grouped };
+    });
+  }, [messages]);
+
+  // Virtualisasi: hanya bubble di sekitar viewport yang benar-benar dirender,
+  // tinggi tiap baris diukur nyata agar foto/kartu tidak bikin lompatan.
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 84,
+    getItemKey: (index) => rows[index]?.message.id ?? index,
+    overscan: 10,
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+
+  // Pesan yang disorot dari pencarian bisa berada di luar jendela virtual —
+  // gulirkan ke indeksnya begitu pesan tersedia.
+  const hl = search.hl;
+  useEffect(() => {
+    if (!hl) return;
+    const idx = rows.findIndex((r) => r.message.id === hl);
+    if (idx >= 0) virtualizer.scrollToIndex(idx, { align: "center" });
+  }, [hl, rows, virtualizer]);
+
   // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
   // memang miliknya sendiri.
   const lastSenderId = messages.at(-1)?.sender_id ?? null;
+  // Dengan daftar virtual, tinggi baris di luar viewport masih perkiraan —
+  // gulir ke indeks terakhir dulu, baru rapatkan ke sentinel dasar.
+  const scrollToLatest = useCallback(
+    (behavior: ScrollBehavior = "auto") => {
+      const last = messages.length - 1;
+      if (last >= 0) virtualizer.scrollToIndex(last, { align: "end" });
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior, block: "end" }));
+    },
+    [messages.length, virtualizer],
+  );
   useEffect(() => {
-    if (shouldAutoScroll({ atBottom, lastSenderId, userId }))
-      bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, pending.length, atBottom, lastSenderId, userId]);
+    if (shouldAutoScroll({ atBottom, lastSenderId, userId })) scrollToLatest();
+  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest]);
 
   // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
   // setState tidak pernah dipanggil per event scroll.
@@ -640,8 +691,6 @@ function ChatRoom() {
     );
   }
 
-  let lastDay = "";
-
   return (
     <AppShell
       nav={false}
@@ -836,47 +885,48 @@ function ChatRoom() {
             </p>
           </div>
         )}
-        {messages.map((m, idx) => {
-          const day = labelHari(m.created_at);
-          const showDay = day !== lastDay;
-          lastDay = day;
-          const mine = m.sender_id === userId;
-          const replyTo = m.reply_to_id ? messageById.get(m.reply_to_id) : undefined;
-          const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
-          const prev = messages[idx - 1];
-          const grouped =
-            !showDay &&
-            !!prev &&
-            prev.sender_id === m.sender_id &&
-            prev.kind !== "system" &&
-            new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 4 * 60 * 1000;
-          return (
-            <div key={m.id}>
-              {showDay && (
-                <div className="my-3 flex justify-center">
-                  <span className="rounded-full border border-border/60 bg-card/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur">
-                    {day}
-                  </span>
-                </div>
-              )}
-              <MessageBubble
-                message={m}
-                replyTo={replyTo}
-                replySenderName={replyTo ? nameOf(replyTo.sender_id) : undefined}
-                senderName={nameOf(m.sender_id)}
-                mine={mine}
-                showSender={conv.type !== "direct"}
-                reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
-                status={status}
-                grouped={grouped}
-                selectable={selection.length > 0}
-                selected={selection.includes(m.id)}
-                highlighted={search.hl === m.id}
-                onAction={handleAction}
-              />
-            </div>
-          );
-        })}
+        <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+          {virtualItems.map((virtualRow) => {
+            const row = rows[virtualRow.index];
+            if (!row) return null;
+            const m = row.message;
+            const mine = m.sender_id === userId;
+            const replyTo = m.reply_to_id ? messageById.get(m.reply_to_id) : undefined;
+            const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+                className="absolute top-0 left-0 w-full"
+                style={{ transform: `translateY(${virtualRow.start}px)` }}
+              >
+                {row.showDay && (
+                  <div className="my-3 flex justify-center">
+                    <span className="rounded-full border border-border/60 bg-card/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur">
+                      {row.day}
+                    </span>
+                  </div>
+                )}
+                <MessageBubble
+                  message={m}
+                  replyTo={replyTo}
+                  replySenderName={replyTo ? nameOf(replyTo.sender_id) : undefined}
+                  senderName={nameOf(m.sender_id)}
+                  mine={mine}
+                  showSender={conv.type !== "direct"}
+                  reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
+                  status={status}
+                  grouped={row.grouped}
+                  selectable={selection.length > 0}
+                  selected={selection.includes(m.id)}
+                  highlighted={search.hl === m.id}
+                  onAction={handleAction}
+                />
+              </div>
+            );
+          })}
+        </div>
 
         {/* Pesan yang masih di outbox: tampil optimistis, tidak pernah hilang. */}
         {pending.map((entry) => (
@@ -927,7 +977,7 @@ function ChatRoom() {
             className="pointer-events-auto rounded-full shadow-md"
             onClick={() => {
               setAtBottom(true);
-              bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+              scrollToLatest("smooth");
             }}
           >
             <ArrowDown className="size-4" />
