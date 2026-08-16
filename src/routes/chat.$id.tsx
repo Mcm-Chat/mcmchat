@@ -390,6 +390,31 @@ function ChatRoom() {
     },
     [messages.length, virtualizer],
   );
+
+  // Ringkasan pesan belum dibaca (baseline dibekukan saat percakapan dibuka).
+  if (readBaselineRef.current === undefined && conv) {
+    readBaselineRef.current = conv.me.last_read_at ?? null;
+  }
+  const unread = useMemo(
+    () =>
+      summarizeUnread(
+        messages.map((m) => ({
+          id: m.id,
+          sender_id: m.sender_id,
+          created_at: m.created_at,
+          kind: m.kind,
+        })),
+        userId,
+        readBaselineRef.current ?? null,
+      ),
+    [messages, userId],
+  );
+  const jumpToFirstUnread = useCallback(() => {
+    if (unread.firstIndex < 0) return;
+    setUnreadDismissed(true);
+    virtualizer.scrollToIndex(unread.firstIndex, { align: "start" });
+    requestAnimationFrame(() => virtualizer.scrollToIndex(unread.firstIndex, { align: "start" }));
+  }, [unread.firstIndex, virtualizer]);
   useEffect(() => {
     const lastId = messages.at(-1)?.id ?? null;
     const grew = lastId !== null && lastId !== lastMessageIdRef.current;
