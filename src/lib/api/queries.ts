@@ -150,6 +150,39 @@ export function useRealtimeSync(uid?: string) {
       );
     };
 
+    /**
+     * Perbarui badge unread di ChatList secara instan saat pesan masuk,
+     * tanpa menunggu refetch daftar percakapan (yang di-debounce 400ms).
+     * Percakapan yang sedang dibuka tidak dihitung sebagai unread.
+     */
+    const bumpUnread = (row: MessageRow) => {
+      const openHere =
+        typeof window !== "undefined" &&
+        window.location.pathname.startsWith(`/chat/${row.conversation_id}`);
+      qc.setQueryData<ConversationView[]>(qk.conversations(uid), (prev) =>
+        prev
+          ? prev.map((c) =>
+              c.id === row.conversation_id
+                ? {
+                    ...c,
+                    unread: openHere ? c.unread : c.unread + 1,
+                    last_message_at: row.created_at ?? c.last_message_at,
+                    lastMessage: {
+                      id: row.id,
+                      kind: row.kind,
+                      body: row.body,
+                      sender_id: row.sender_id,
+                      created_at: row.created_at,
+                      attachment_name: row.attachment_name,
+                      location_lat: row.location_lat,
+                    },
+                  }
+                : c,
+            )
+          : prev,
+      );
+    };
+
     const unsubscribe = registerSubscription(`mcm-sync-${uid}`, (name) =>
       supabase
         .channel(name)
@@ -162,6 +195,7 @@ export function useRealtimeSync(uid?: string) {
           refreshConversations();
           // Penerima mencatat delivery receipt untuk pesan masuk.
           if (payload.eventType === "INSERT" && row.sender_id && row.sender_id !== uid) {
+            bumpUnread(row);
             void markDelivered(row.conversation_id).then(() =>
               qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" }),
             );
@@ -169,6 +203,7 @@ export function useRealtimeSync(uid?: string) {
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "message_receipts" }, () => {
           void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
+          refreshConversations();
         })
         .on(
           "postgres_changes",
