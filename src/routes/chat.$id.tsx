@@ -1155,6 +1155,15 @@ function ChatRoom() {
                     </span>
                   </div>
                 )}
+                {markedIds && m.id === unread.firstId && (
+                  <div className="my-2 flex items-center gap-2 px-3" aria-hidden="true">
+                    <span className="h-px flex-1 bg-primary/40" />
+                    <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                      Belum dibaca
+                    </span>
+                    <span className="h-px flex-1 bg-primary/40" />
+                  </div>
+                )}
                 <MessageBubble
                   message={m}
                   replyTo={replyTo}
@@ -1168,7 +1177,7 @@ function ChatRoom() {
                   animateIn={virtualRow.index === rows.length - 1}
                   selectable={selection.length > 0}
                   selected={selection.includes(m.id)}
-                  highlighted={search.hl === m.id}
+                  highlighted={search.hl === m.id || markedIds?.has(m.id) === true}
                   onAction={handleAction}
                 />
               </div>
