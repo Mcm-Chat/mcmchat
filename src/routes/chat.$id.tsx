@@ -177,6 +177,10 @@ function ChatRoom() {
   const lastInteractionRef = useRef(0);
   const [missedCount, setMissedCount] = useState(0);
   const lastMessageIdRef = useRef<string | null>(null);
+  // Baseline "terakhir dibaca" dibekukan saat ruang dibuka, sebelum server
+  // menandai pesan sebagai dibaca — supaya penanda pertama-belum-dibaca stabil.
+  const readBaselineRef = useRef<string | null | undefined>(undefined);
+  const [unreadDismissed, setUnreadDismissed] = useState(false);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
   // Pemulihan posisi baca & fokus komposer saat chat yang sama dibuka lagi.
   const restoreRef = useRef<ReturnType<typeof loadChatView> | null | undefined>(undefined);
