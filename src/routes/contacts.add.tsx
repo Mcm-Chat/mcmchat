@@ -145,17 +145,43 @@ function AddContactPage() {
   }, [conv, userId, reason]);
 
   const handleScan = async (value: string) => {
-    setPin(value);
-    if (profile && normalizePin(value) === normalizePin(profile.pin)) {
+    const clean = normalizePin(value);
+    if (!isValidPin(clean)) {
+      toast.error("QR tidak valid. PIN harus 8 karakter, contoh: A2B3-C4D5.");
+      return;
+    }
+    setPin(clean);
+    if (profile && clean === normalizePin(profile.pin)) {
       toast.info("Ini adalah PIN Anda sendiri.");
       return;
     }
     try {
-      const result = await findByPin(value);
+      const result = await findByPin(clean);
       if (!result) {
-        toast.error("Pengguna tidak ditemukan.");
+        toast.error("PIN tidak terdaftar. Periksa kembali kode QR-nya.");
         setSearched(true);
         return;
+      }
+      if (userId) {
+        const rel = await getContactRelation(userId, result.id).catch(() => null);
+        if (rel?.blockedMe || rel?.blockedByMe) {
+          toast.error("Permintaan tidak bisa dikirim ke kontak yang diblokir.");
+          return;
+        }
+        if (rel?.connected || rel?.saved) {
+          setFound(result);
+          setSearched(true);
+          setRelation(rel);
+          toast.info(`${result.display_name} sudah menjadi kontak Anda.`);
+          return;
+        }
+        if (rel?.outgoingPending) {
+          setFound(result);
+          setSearched(true);
+          setRelation(rel);
+          toast.info("Permintaan sebelumnya masih menunggu jawaban.");
+          return;
+        }
       }
       setScanned(result);
       if (userId)
