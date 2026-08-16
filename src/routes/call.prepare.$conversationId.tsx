@@ -104,7 +104,7 @@ function PreCallScreen() {
   const loadCallConfig = useServerFn(getCallConfig);
 
   const [kind, setKind] = useState<Kind>(initialKind ?? "audio");
-  const mediaPermission = useMediaPermission(initialKind ?? "audio");
+  const mediaPermission = useMediaPermission(kind);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(initialKind === "video");
   const [level, setLevel] = useState(0);
@@ -393,8 +393,8 @@ function PreCallScreen() {
             : !mediaPermission.ready
               ? "Aktifkan izin lalu mulai"
               : kind === "video" && !mediaPermission.audioOnly
-              ? "Mulai panggilan video"
-              : "Mulai panggilan suara"}
+                ? "Mulai panggilan video"
+                : "Mulai panggilan suara"}
         </Button>
       </div>
     </AppShell>
