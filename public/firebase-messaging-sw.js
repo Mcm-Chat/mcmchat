@@ -25,6 +25,7 @@ function routeFromData(d) {
     return d.jobId ? `/tasks/${d.jobId}` : "/tasks";
   if (d.kind === "sale" || d.kind === "order") return d.orderId ? `/catalog/${d.orderId}` : "/finance";
   if (d.kind === "ledger") return d.ledgerId ? `/ledger/${d.ledgerId}` : "/finance";
+  if (d.kind === "contact_request") return "/contacts";
   return "/chat";
 }
 
