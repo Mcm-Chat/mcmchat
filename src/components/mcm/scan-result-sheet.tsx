@@ -14,6 +14,16 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   cancelContactRequest,
   getContactRelation,
   removeSavedContact,
@@ -56,6 +66,7 @@ export function ScanResultSheet({
   const [alias, setAlias] = useState("");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useBackDismiss(open, () => onOpenChange(false));
 
@@ -64,6 +75,7 @@ export function ScanResultSheet({
     setRelation(null);
     setAlias("");
     setSaved(false);
+    setConfirmOpen(false);
     let active = true;
     void getContactRelation(userId, profile.id)
       .then((r) => active && setRelation(r))
@@ -97,6 +109,17 @@ export function ScanResultSheet({
 
   if (!profile) return null;
   const blockedMe = relation?.blockedMe ?? false;
+  const willSendRequest = !relation?.outgoingPending && !relation?.incomingRequest;
+
+  const confirmSave = () =>
+    void run(async () => {
+      await saveContact(userId, profile.id, "qr", alias.trim() || null);
+      if (!relation?.outgoingPending && !relation?.incomingRequest) {
+        await sendContactRequest(userId, profile.id, "Halo, saya ingin terhubung di MCM.");
+      }
+      setSaved(true);
+      setConfirmOpen(false);
+    }, "Kontak berhasil disimpan");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -204,19 +227,7 @@ export function ScanResultSheet({
                 <Button
                   className="h-12 rounded-xl"
                   disabled={busy || !relation}
-                  onClick={() =>
-                    void run(async () => {
-                      await saveContact(userId, profile.id, "qr", alias.trim() || null);
-                      if (!relation?.outgoingPending && !relation?.incomingRequest) {
-                        await sendContactRequest(
-                          userId,
-                          profile.id,
-                          "Halo, saya ingin terhubung di MCM.",
-                        );
-                      }
-                      setSaved(true);
-                    }, "Kontak berhasil disimpan")
-                  }
+                  onClick={() => setConfirmOpen(true)}
                 >
                   <UserPlus className="size-4" />{" "}
                   {relation?.incomingRequest ? "Simpan tanpa menerima" : "Simpan Kontak"}
@@ -345,6 +356,38 @@ export function ScanResultSheet({
           </div>
         </div>
       </SheetContent>
+      <AlertDialog open={confirmOpen} onOpenChange={(v) => !busy && setConfirmOpen(v)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader className="text-left">
+            <AlertDialogTitle>Kirim permintaan kontak?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {willSendRequest
+                ? `Simpan ${profile.display_name} (${profile.pin}) sebagai kontak dan kirim permintaan agar bisa chat dan telepon.`
+                : `Simpan ${profile.display_name} (${profile.pin}) sebagai kontak. Permintaan yang sudah ada tidak dikirim ulang.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {alias.trim() && (
+            <p className="text-xs text-muted-foreground">
+              Disimpan dengan nama panggilan: <span className="font-medium">{alias.trim()}</span>
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy} className="h-11 rounded-xl">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              className="h-11 rounded-xl"
+              onClick={(e) => {
+                e.preventDefault();
+                confirmSave();
+              }}
+            >
+              {busy ? "Mengirim…" : willSendRequest ? "Kirim permintaan" : "Simpan kontak"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
