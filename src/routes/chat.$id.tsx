@@ -256,10 +256,19 @@ function ChatRoom() {
   // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
   // memang miliknya sendiri.
   const lastSenderId = messages.at(-1)?.sender_id ?? null;
+  // Dengan daftar virtual, tinggi baris di luar viewport masih perkiraan —
+  // gulir ke indeks terakhir dulu, baru rapatkan ke sentinel dasar.
+  const scrollToLatest = useCallback(
+    (behavior: ScrollBehavior = "auto") => {
+      const last = messages.length - 1;
+      if (last >= 0) virtualizer.scrollToIndex(last, { align: "end" });
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior, block: "end" }));
+    },
+    [messages.length, virtualizer],
+  );
   useEffect(() => {
-    if (shouldAutoScroll({ atBottom, lastSenderId, userId }))
-      bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, pending.length, atBottom, lastSenderId, userId]);
+    if (shouldAutoScroll({ atBottom, lastSenderId, userId })) scrollToLatest();
+  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest]);
 
   // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
   // setState tidak pernah dipanggil per event scroll.
@@ -959,7 +968,7 @@ function ChatRoom() {
             className="pointer-events-auto rounded-full shadow-md"
             onClick={() => {
               setAtBottom(true);
-              bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+              scrollToLatest("smooth");
             }}
           >
             <ArrowDown className="size-4" />
