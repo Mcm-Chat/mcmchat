@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { clearConversationForMe, createGroup, getOrCreateDirect, markRead } from "@/lib/api/chat";
+import { overviewUnread } from "@/lib/chat/unread-overview";
 import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import { sendProductCard } from "@/lib/api/product-card";
 import { useRequireAuth } from "@/lib/api/guard";
@@ -120,6 +121,13 @@ function ChatIndex() {
   }, [conversations, q, tab]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+
+  // Ringkasan unread lintas chat: total, jumlah ruang, dan pintasan melompat
+  // ke percakapan dengan pesan belum dibaca terbanyak.
+  const unreadOverview = useMemo(
+    () => overviewUnread((conversations ?? []).filter((c) => !c.me.is_archived)),
+    [conversations],
+  );
 
   const selectedConvs = useMemo(
     () => list.filter((c) => selected.includes(c.id)),
@@ -477,6 +485,32 @@ function ChatIndex() {
           <TabsTrigger value="arsip">Arsip</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {unreadOverview.total > 0 && !selectMode && (
+        <div className="flex items-center justify-between gap-2 border-b border-border bg-primary/5 px-3 py-2">
+          <p className="min-w-0 truncate text-[13px] text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {unreadOverview.total > 99 ? "99+" : unreadOverview.total} belum dibaca
+            </span>{" "}
+            di {unreadOverview.rooms} chat
+          </p>
+          {unreadOverview.top && (
+            <Button
+              size="sm"
+              className="h-8 shrink-0 rounded-full px-3 text-xs"
+              aria-label={`Buka ${unreadOverview.top.title_resolved} — ${unreadOverview.top.unread} pesan belum dibaca`}
+              onClick={() =>
+                void navigate({
+                  to: "/chat/$id",
+                  params: { id: unreadOverview.top!.id },
+                })
+              }
+            >
+              Lompat ke {unreadOverview.top.title_resolved}
+            </Button>
+          )}
+        </div>
+      )}
 
       {loading || isLoading ? (
         <LoadingSkeleton rows={6} />
