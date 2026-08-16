@@ -283,3 +283,39 @@
     0 0 0 2px var(--background),
     0 0 0 5px var(--ring);
 }
+
+/*
+ * ——— Anggaran compositing (performa gulir) ———
+ * `backdrop-filter` adalah efek termahal di aplikasi ini: setiap bilah lengket
+ * yang memakainya memaksa GPU menyalin ulang latar belakang tiap frame saat
+ * daftar pesan digulir. Latar bilah tersebut sudah 92–95% opak, jadi
+ * mematikan blur nyaris tak terlihat namun menghapus lonjakan frame.
+ */
+html[data-scrolling="1"] [class*="backdrop-blur"],
+html[data-perf="low"] [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Perangkat lemah: hilangkan bayangan besar & animasi masuk bubble. */
+html[data-perf="low"] .composer-raise,
+html[data-perf="low"] .bubble-elevate {
+  box-shadow: none;
+}
+
+html[data-perf="low"] .animate-bubble-in {
+  animation: none;
+}
+
+/*
+ * Isolasi baris daftar: tiap bubble/kartu baris hanya me-layout & mengecat
+ * dirinya sendiri, sehingga pesan baru tidak memicu reflow seluruh daftar.
+ */
+[data-virtual-row] {
+  contain: layout paint style;
+}
+
+/* Gulir bebas jank: jangan biarkan browser menunggu handler sentuh. */
+.chat-scroll {
+  scrollbar-width: thin;
+}
