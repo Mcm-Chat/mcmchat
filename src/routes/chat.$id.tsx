@@ -1235,6 +1235,61 @@ function ChatRoom() {
       {/* Pola kanvas dipasang di pembungkus yang TIDAK ikut menggulir: bila
           background bermotif menempel di elemen scroll, ponsel mengecat ulang
           seluruh pola tiap frame dan gulir terasa patah-patah. */}
+      {searchOpen && (
+        <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/60 bg-card/95 px-3 py-2 backdrop-blur">
+          <Input
+            ref={searchInputRef}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                stepMatch(e.shiftKey ? -1 : 1);
+              }
+              if (e.key === "Escape") setSearchOpen(false);
+            }}
+            placeholder="Cari pesan di percakapan ini…"
+            aria-label="Cari pesan"
+            className="h-9 flex-1"
+          />
+          <span className="min-w-14 text-center text-[11px] font-medium text-muted-foreground">
+            {searchTerm.trim().length < 2
+              ? "≥2 huruf"
+              : matchIndexes.length === 0
+                ? "0 hasil"
+                : `${matchCursor + 1}/${matchIndexes.length}`}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Hasil sebelumnya"
+            disabled={matchIndexes.length === 0}
+            onClick={() => stepMatch(-1)}
+          >
+            <ChevronUp className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Hasil berikutnya"
+            disabled={matchIndexes.length === 0}
+            onClick={() => stepMatch(1)}
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Tutup pencarian"
+            onClick={() => setSearchOpen(false)}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      )}
       <div className="chat-canvas relative flex min-h-0 flex-1 flex-col">
         <div
           ref={scrollRef}
@@ -1341,7 +1396,9 @@ function ChatRoom() {
                   animateIn={virtualRow.index === rows.length - 1}
                   selectable={selection.length > 0}
                   selected={selection.includes(m.id)}
-                  highlighted={search.hl === m.id || markedIds?.has(m.id) === true}
+                  highlighted={
+                    search.hl === m.id || markedIds?.has(m.id) === true || activeMatchId === m.id
+                  }
                   onAction={handleAction}
                 />
               </div>
