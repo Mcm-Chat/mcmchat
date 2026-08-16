@@ -264,6 +264,18 @@ function AddContactPage() {
                 {found.bio && <p className="truncate text-xs text-muted-foreground">{found.bio}</p>}
               </div>
             </div>
+            {relation && (
+              <div className="flex flex-wrap gap-1.5">
+                {relationBadges(relation).map((b) => (
+                  <span
+                    key={b.label}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${b.className}`}
+                  >
+                    {b.label}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="msg">Pesan permintaan</Label>
               <Textarea
