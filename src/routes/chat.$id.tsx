@@ -165,6 +165,11 @@ function ChatRoom() {
   const [missedCount, setMissedCount] = useState(0);
   const lastMessageIdRef = useRef<string | null>(null);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
+  // Pemulihan posisi baca & fokus komposer saat chat yang sama dibuka lagi.
+  const restoreRef = useRef<ReturnType<typeof loadChatView> | null | undefined>(undefined);
+  const restoredRef = useRef(false);
+  const composerFocusedRef = useRef(false);
+  if (restoreRef.current === undefined) restoreRef.current = loadChatView(id);
 
   // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
   // mode pilih), bukan langsung meninggalkan percakapan.
@@ -324,6 +329,8 @@ function ChatRoom() {
     const lastId = messages.at(-1)?.id ?? null;
     const grew = lastId !== null && lastId !== lastMessageIdRef.current;
     lastMessageIdRef.current = lastId;
+    // Selama posisi tersimpan belum dipulihkan, jangan paksa turun ke dasar.
+    if (!restoredRef.current && shouldRestoreScroll(restoreRef.current ?? null)) return;
     const auto = shouldAutoScroll({
       atBottom,
       lastSenderId,
