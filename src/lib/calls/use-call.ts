@@ -785,10 +785,83 @@ export function useCall(opts: {
       .finally(() => setRetrying(false));
   }, [call, cleanup, join]);
 
+  /**
+   * Pemulihan otomatis tahap "Menyambungkan…": bongkar sesi setengah jadi,
+   * ambil baris panggilan terbaru, paksa langganan realtime dibuat ulang, lalu
+   * bergabung lagi dengan token baru. Pengguna tetap di layar panggilan.
+   */
+  const recoverConnect = useCallback(
+    (round: number) => {
+      if (endedRef.current) return;
+      const known = call;
+      setRetrying(true);
+      setPhase("connecting");
+      setReason(connectStageMessage("recovering", round));
+      void cleanup()
+        .then(async () => {
+          joinedRef.current = false;
+          if (endedRef.current) return;
+          const fresh = await getCall(callId).catch(() => null);
+          const row = fresh ?? known;
+          if (!row || endedRef.current) return;
+          if (fresh) setCall(fresh);
+          if (
+            row.status === "ended" ||
+            row.status === "missed" ||
+            row.status === "declined" ||
+            row.status === "failed"
+          ) {
+            endedRef.current = true;
+            setPhase("ended");
+            return;
+          }
+          await join(row);
+        })
+        .catch((e: unknown) => devLog("connect_recover_failed", e))
+        .finally(() => {
+          setRetrying(false);
+          // Restart watchdog + langganan realtime untuk ronde berikutnya.
+          setRecoverTick((t) => t + 1);
+        });
+    },
+    [call, callId, cleanup, join],
+  );
+  recoverRef.current = recoverConnect;
+
+  /**
+   * Watchdog terukur: beri kabar saat lambat, pulihkan sendiri saat lewat
+   * batas, dan berhenti pada status "macet" (tetap di layar panggilan).
+   */
+  useEffect(() => {
+    if (phase !== "connecting") {
+      if (phase === "connected" || phase === "ended") setConnectStalled(false);
+      return;
+    }
+    const round = recoverRoundRef.current;
+    const slow = setTimeout(() => {
+      if (!endedRef.current) setReason(connectStageMessage("slow", round));
+    }, CONNECT_SLOW_MS);
+    const hard = setTimeout(() => {
+      if (endedRef.current) return;
+      if (!canAutoRecover(recoverRoundRef.current)) {
+        setConnectStalled(true);
+        setReason(connectStageMessage("stalled", recoverRoundRef.current));
+        return;
+      }
+      recoverRoundRef.current += 1;
+      recoverRef.current(recoverRoundRef.current);
+    }, connectTimeoutMs(round));
+    return () => {
+      clearTimeout(slow);
+      clearTimeout(hard);
+    };
+  }, [phase, recoverTick]);
+
   return useMemo<UseCallResult>(
     () => ({
       phase,
       reason,
+      connectStalled,
       call,
       remotes,
       durationSec,
