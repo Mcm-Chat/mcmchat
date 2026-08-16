@@ -55,6 +55,12 @@ import {
 } from "./connect-watchdog";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import {
+  MEDIA_RETRY_DELAY_MS,
+  MEDIA_START_GRACE_MS,
+  hasLiveAudio,
+  planMediaRecovery,
+} from "./media-recovery";
+import {
   diffSnapshots,
   snapshotFromStats,
   type QualityMetrics,
@@ -251,6 +257,8 @@ export function useCall(opts: {
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [mediaLive, setMediaLive] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
+  /** Ronde pemulihan media berjalan (0 = belum ada kegagalan media). */
+  const mediaRoundRef = useRef(0);
   const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
   const [metrics, setMetrics] = useState<QualityMetrics | null>(null);
   /** Cuplikan stats sebelumnya — metrik hanya berarti sebagai selisih. */
