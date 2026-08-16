@@ -282,9 +282,11 @@ const PAYMENT_LABEL_ID: Record<string, string> = {
 };
 
 function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
+  const { ref, inView } = useInView<HTMLDivElement>();
   const url = useSignedUrl(
     "product-photos",
     (photo as { image_path?: string }).image_path ?? photo.id,
+    inView,
   );
   const [open, setOpen] = useState(false);
   const mapsUrl =
@@ -294,7 +296,7 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
       : "");
   return (
     <div className="w-20 shrink-0 space-y-1">
-      <div className="size-20 overflow-hidden rounded-lg bg-black/10">
+      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-black/10">
         {url ? (
           <button
             type="button"
@@ -305,10 +307,16 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
             }}
             className="size-full"
           >
-            <img src={url} alt="Foto produk" className="size-full object-cover" />
+            <img
+              src={url}
+              alt="Foto produk"
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
           </button>
         ) : (
-          <div className="size-full animate-pulse" />
+          <MediaSkeleton className="size-full rounded-lg" />
         )}
       </div>
       {open && url && <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />}
