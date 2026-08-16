@@ -11,6 +11,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { Mic, MicOff, Phone, ShieldAlert, Video, VideoOff } from "lucide-react";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
+import { CallPermissionStatus } from "@/components/mcm/call-permission-status";
+import { useMediaPermission } from "@/lib/calls/use-media-permission";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -102,6 +104,7 @@ function PreCallScreen() {
   const loadCallConfig = useServerFn(getCallConfig);
 
   const [kind, setKind] = useState<Kind>(initialKind ?? "audio");
+  const mediaPermission = useMediaPermission(initialKind ?? "audio");
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(initialKind === "video");
   const [level, setLevel] = useState(0);
@@ -207,12 +210,21 @@ function PreCallScreen() {
       setError(CALL_PROVIDER_NOTICE);
       return;
     }
+    // Izin harus ada sebelum panggilan dibuat: tanpa ini lawan bicara
+    // berdering lalu hanya mendengar sunyi.
+    if (!mediaPermission.ready) {
+      const next = await mediaPermission.request();
+      if (next !== "granted" && next !== "audio_only") {
+        setError(mediaPermission.copy.help || "Izin mikrofon belum aktif.");
+        return;
+      }
+    }
     setStarting(true);
     setError(null);
     try {
       const created = await startCall(
         conversationId,
-        kind === "video" && camOn ? "video" : "audio",
+        kind === "video" && camOn && !mediaPermission.audioOnly ? "video" : "audio",
       );
       stopMedia();
       void navigate({ to: "/call/$id", params: { id: created.id } });
@@ -280,6 +292,8 @@ function PreCallScreen() {
             </span>
           </NotificationBanner>
         )}
+
+        <CallPermissionStatus permission={mediaPermission} />
 
         <section className="space-y-3 rounded-2xl border p-4">
           <div className="flex items-center justify-between gap-3">
@@ -365,12 +379,20 @@ function PreCallScreen() {
 
         <Button
           className="min-h-12 w-full rounded-xl"
-          disabled={loading || starting || configured === false}
+          disabled={
+            loading ||
+            starting ||
+            configured === false ||
+            mediaPermission.requesting ||
+            (!mediaPermission.ready && mediaPermission.copy.action === null)
+          }
           onClick={() => void begin()}
         >
           {starting
             ? "Memulai…"
-            : kind === "video"
+            : !mediaPermission.ready
+              ? "Aktifkan izin lalu mulai"
+              : kind === "video" && !mediaPermission.audioOnly
               ? "Mulai panggilan video"
               : "Mulai panggilan suara"}
         </Button>
