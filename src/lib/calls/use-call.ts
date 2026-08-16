@@ -893,6 +893,7 @@ export function useCall(opts: {
       controls,
       pipelineState,
       quality,
+      metrics,
       voiceApplied: voiceActive,
       voiceFallback,
       speakerSupported,
