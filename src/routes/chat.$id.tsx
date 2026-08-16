@@ -321,6 +321,29 @@ function ChatRoom() {
   // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
   // memang miliknya sendiri.
   const lastSenderId = messages.at(-1)?.sender_id ?? null;
+  // Kunci scroll manual (persisten per percakapan): saat aktif, daftar tidak
+  // pernah menyeret pengguna ke pesan terbaru — bahkan untuk pesan sendiri.
+  const lockKey = `mcm.chat.scrollLock.${id}`;
+  const [scrollLocked, setScrollLocked] = useState(false);
+  useEffect(() => {
+    try {
+      setScrollLocked(localStorage.getItem(lockKey) === "1");
+    } catch {
+      setScrollLocked(false);
+    }
+  }, [lockKey]);
+  const toggleScrollLock = useCallback(() => {
+    setScrollLocked((prev) => {
+      const next = !prev;
+      try {
+        if (next) localStorage.setItem(lockKey, "1");
+        else localStorage.removeItem(lockKey);
+      } catch {
+        /* storage tidak tersedia */
+      }
+      return next;
+    });
+  }, [lockKey]);
   // Dengan daftar virtual, tinggi baris di luar viewport masih perkiraan —
   // gulir ke indeks terakhir dulu, baru rapatkan ke sentinel dasar.
   const scrollToLatest = useCallback(
@@ -342,6 +365,7 @@ function ChatRoom() {
       lastSenderId,
       userId,
       userScrolling: isUserScrolling(lastInteractionRef.current),
+      locked: scrollLocked,
     });
     if (auto) {
       setMissedCount(0);
@@ -350,7 +374,16 @@ function ChatRoom() {
       // Pesan masuk saat pengguna membaca riwayat: jangan loncat, cukup hitung.
       setMissedCount((n) => n + 1);
     }
-  }, [messages.length, pending.length, atBottom, lastSenderId, userId, scrollToLatest, messages]);
+  }, [
+    messages.length,
+    pending.length,
+    atBottom,
+    lastSenderId,
+    userId,
+    scrollToLatest,
+    messages,
+    scrollLocked,
+  ]);
 
   // Scroll handler di-throttle ke satu frame agar gulir jari tetap mulus:
   // setState tidak pernah dipanggil per event scroll.
@@ -1082,8 +1115,27 @@ function ChatRoom() {
         </div>
       </div>
 
-      {!atBottom && (
-        <div className="pointer-events-none sticky bottom-24 z-10 flex justify-end px-4">
+      {(!atBottom || scrollLocked) && (
+        <div className="pointer-events-none sticky bottom-24 z-10 flex items-center justify-end gap-2 px-4">
+          <Button
+            size="sm"
+            variant={scrollLocked ? "default" : "secondary"}
+            aria-pressed={scrollLocked}
+            aria-label={
+              scrollLocked
+                ? "Scroll terkunci — ketuk untuk mengikuti pesan terbaru"
+                : "Kunci scroll agar tidak terseret ke pesan terbaru"
+            }
+            className="pointer-events-auto h-8 rounded-full px-3 text-xs shadow-md"
+            onClick={toggleScrollLock}
+          >
+            {scrollLocked ? (
+              <Lock className="mr-1 size-3.5" />
+            ) : (
+              <LockOpen className="mr-1 size-3.5" />
+            )}
+            {scrollLocked ? "Scroll terkunci" : "Kunci scroll"}
+          </Button>
           <Button
             size="icon"
             variant="secondary"
