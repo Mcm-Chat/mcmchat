@@ -19,6 +19,7 @@ import { startCall, CALL_PROVIDER_NOTICE } from "@/lib/api/calls";
 import { getCallConfig } from "@/lib/calls/calls.functions";
 
 type Kind = "audio" | "video";
+import { CallSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/call/prepare/$conversationId")({
   head: () => ({
