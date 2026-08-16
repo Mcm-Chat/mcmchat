@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { PinCard } from "@/components/mcm/pin-card";
-import { QrScannerDialog } from "@/components/mcm/qr-scanner";
+import { QrScannerDialog } from "@/components/mcm/lazy-heavy";
 import { ScanResultSheet } from "@/components/mcm/scan-result-sheet";
 import { PinField } from "@/components/mcm/pin-picker";
 import { Camera } from "lucide-react";

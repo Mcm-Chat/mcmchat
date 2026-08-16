@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { MCMAvatar, StatusBadge } from "./primitives";
 import { UserAvatar } from "./user-avatar";
-import { PhotoEditorDialog } from "./photo-editor";
+import { PhotoEditorDialog } from "./lazy-heavy";
 import { compressImage, dataUrlToBlob, koordinat, useGeolocation } from "@/lib/mcm/geo";
 import type { MessageLocation } from "@/lib/mcm/types";
 import type { ConversationView } from "@/lib/api/chat";

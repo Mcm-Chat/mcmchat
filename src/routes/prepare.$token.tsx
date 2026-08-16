@@ -31,7 +31,7 @@ import {
   sendPrepareResult,
 } from "@/lib/prepare.functions";
 import { fileToDataUrl, koordinat, mapsUrlFor } from "@/lib/mcm/geo";
-import { PhotoEditorDialog } from "@/components/mcm/photo-editor";
+import { PhotoEditorDialog } from "@/components/mcm/lazy-heavy";
 import { PrepareSaleDialog } from "@/components/mcm/prepare-sale-dialog";
 import type { PrepItem, PrepTask } from "@/lib/prepare.server.types";
 

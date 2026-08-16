@@ -310,6 +310,30 @@ function ChatRoom() {
     return (uid: string) => map.get(uid) ?? "Pengguna";
   }, [conv, userId, profile]);
 
+  // Indeks O(1): tanpa ini setiap bubble melakukan find/filter linear sehingga
+  // render daftar panjang menjadi kuadratik dan terasa berat di ponsel.
+  const messageById = useMemo(() => {
+    const map = new Map<string, MessageRow>();
+    for (const m of messages) map.set(m.id, m);
+    return map;
+  }, [messages]);
+  const reactionsByMessage = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const r of reactions ?? []) {
+      const list = map.get(r.message_id);
+      if (list) list.push(r.emoji);
+      else map.set(r.message_id, [r.emoji]);
+    }
+    return map;
+  }, [reactions]);
+  const EMPTY_REACTIONS = useMemo<string[]>(() => [], []);
+
+  // Handler stabil supaya React.memo pada MessageBubble benar-benar bekerja.
+  const actionRef = useRef<(a: MessageAction, m: MessageRow, p?: string) => void>(() => {});
+  const handleAction = useCallback((a: MessageAction, m: MessageRow, p?: string) => {
+    actionRef.current(a, m, p);
+  }, []);
+
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: qk.messages(id) });
     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
@@ -326,6 +350,7 @@ function ChatRoom() {
   );
 
   const blocked = block?.iBlocked ?? false;
+  actionRef.current = (a, m, p) => void onAction(a, m, p);
   const blockedByOther = block?.blockedMe ?? false;
   // Kapabilitas berasal dari server dan dipecah per aksi: percakapan yang
   // hanya bisa dibaca tetap menampilkan riwayat, tetapi komposer dimatikan.
@@ -816,7 +841,7 @@ function ChatRoom() {
           const showDay = day !== lastDay;
           lastDay = day;
           const mine = m.sender_id === userId;
-          const replyTo = m.reply_to_id ? messages.find((x) => x.id === m.reply_to_id) : undefined;
+          const replyTo = m.reply_to_id ? messageById.get(m.reply_to_id) : undefined;
           const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
           const prev = messages[idx - 1];
           const grouped =
@@ -841,15 +866,13 @@ function ChatRoom() {
                 senderName={nameOf(m.sender_id)}
                 mine={mine}
                 showSender={conv.type !== "direct"}
-                reactions={(reactions ?? [])
-                  .filter((r) => r.message_id === m.id)
-                  .map((r) => r.emoji)}
+                reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
                 status={status}
                 grouped={grouped}
                 selectable={selection.length > 0}
                 selected={selection.includes(m.id)}
                 highlighted={search.hl === m.id}
-                onAction={(a, msg, p) => void onAction(a, msg, p)}
+                onAction={handleAction}
               />
             </div>
           );
