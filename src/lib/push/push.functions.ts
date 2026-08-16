@@ -204,31 +204,6 @@ export const notifyContactRequest = createServerFn({ method: "POST" })
     return { configured: res.configured, sent: res.sent };
   });
 
-const notifyIncomingCallLegacy = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ callId: z.string().uuid() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { data: call } = await context.supabase
-      .from("calls")
-      .select("id, kind, initiator_id, status")
-      .eq("id", data.callId)
-      .maybeSingle();
-    // Hanya pemanggil yang boleh memicu notifikasi panggilannya sendiri.
-    if (!call || call.initiator_id !== context.userId || call.status !== "ringing") {
-      return { configured: false, sent: 0 };
-    }
-    // Baca profil sendiri lewat RPC; tabel profiles tertutup untuk klien.
-    const { data: me } = await context.supabase.rpc("my_profile");
-    // Fan-out panggilan memakai token aksi sekali-pakai + TTL sependek dering.
-    const { dispatchCallPush } = await import("./dispatch.server");
-    const res = await dispatchCallPush({
-      callId: call.id,
-      callerName: me?.display_name ?? "Panggilan MCM",
-      kind: call.kind === "video" ? "video" : "audio",
-    });
-    return { configured: res.configured, sent: res.sent };
-  });
-
 /**
  * Panggilan sudah berakhir (dijawab di perangkat lain, ditolak, ditutup,
  * dibatalkan, atau timeout): kirim `call_terminal` best-effort ke semua
