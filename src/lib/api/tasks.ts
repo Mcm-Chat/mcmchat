@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { shareUrl } from "@/lib/site";
 import { friendly, unwrap } from "./db";
 import { fetchProfileCards } from "./profiles";
 import type { Tables } from "@/integrations/supabase/types";

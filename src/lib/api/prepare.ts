@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { scopedKey } from "@/lib/session-scope";
+import { shareUrl } from "@/lib/site";
 import { friendly, unwrap } from "./db";
 import { notifyTaskAssigned } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
