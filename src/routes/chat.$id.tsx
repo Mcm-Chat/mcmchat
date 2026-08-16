@@ -404,7 +404,7 @@ function ChatRoom() {
           created_at: m.created_at,
           kind: m.kind,
         })),
-        userId,
+        userId ?? null,
         readBaselineRef.current ?? null,
       ),
     [messages, userId],
