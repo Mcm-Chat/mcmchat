@@ -25,6 +25,7 @@ import { contactSummary, dailySummary } from "@/lib/api/ledger-summary";
 import { updateOrderStatus, type OrderRow, type SalesRecordRow } from "@/lib/api/sales";
 import { rupiah, tanggal } from "@/lib/mcm/format";
 import { supabase } from "@/integrations/supabase/client";
+import { LedgerSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/finance/")({
   head: () => ({
@@ -43,6 +44,7 @@ export const Route = createFileRoute("/finance/")({
     ],
   }),
   component: FinancePage,
+  pendingComponent: () => <LedgerSkeleton />,
 });
 
 function FinancePage() {
