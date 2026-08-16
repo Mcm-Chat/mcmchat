@@ -314,6 +314,30 @@ function ChatRoom() {
   });
   const virtualItems = virtualizer.getVirtualItems();
 
+  // Jangkar posisi baca: baris pertama yang terlihat. Saat tinggi baris di atas
+  // viewport berubah (gambar selesai dimuat, balasan terbuka), scrollTop
+  // dikoreksi sebesar perubahannya supaya daftar tidak loncat.
+  const anchorRef = useRef<import("@/lib/chat/scroll").ScrollAnchor | null>(null);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const anchor = anchorRef.current;
+    if (!el) return;
+    if (isNearBottom(el)) {
+      anchorRef.current = null;
+      return;
+    }
+    if (!anchor) {
+      anchorRef.current = pickScrollAnchor(virtualItems, el.scrollTop);
+      return;
+    }
+    const next = virtualizer.measurementsCache[anchor.index]?.start;
+    const delta = anchorScrollDelta(anchor, next);
+    if (delta !== 0) {
+      el.scrollTop += delta;
+      anchor.start = next as number;
+    }
+  });
+
   // Pesan yang disorot dari pencarian bisa berada di luar jendela virtual —
   // gulirkan ke indeksnya begitu pesan tersedia.
   const hl = search.hl;
