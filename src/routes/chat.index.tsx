@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { clearConversationForMe, createGroup, getOrCreateDirect, markRead } from "@/lib/api/chat";
+import { overviewUnread } from "@/lib/chat/unread-overview";
 import { updateMyConversationPreferences } from "@/lib/api/conversations";
 import { sendProductCard } from "@/lib/api/product-card";
 import { useRequireAuth } from "@/lib/api/guard";
