@@ -77,3 +77,63 @@ export function installChunkRecovery(): () => void {
     window.removeEventListener("error", onError);
   };
 }
+
+/** Tahapan pemulihan yang ditampilkan pada tombol "Muat ulang". */
+export type RecoveryStage = "idle" | "membersihkan" | "mengunduh" | "menampilkan" | "gagal";
+
+type MinimalRouter = {
+  preloadRoute: (opts: { to: string }) => Promise<unknown>;
+  invalidate: () => Promise<unknown> | unknown;
+};
+
+/** Buang cache aset lama agar unduhan berikutnya mengambil versi terbaru. */
+async function purgeStaleAssets(): Promise<void> {
+  if (typeof caches === "undefined") return;
+  try {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+  } catch {
+    /* cache tidak tersedia: lanjut saja */
+  }
+  try {
+    const regs = await navigator.serviceWorker?.getRegistrations?.();
+    await Promise.all((regs ?? []).map((r) => r.update()));
+  } catch {
+    /* abaikan */
+  }
+}
+
+/**
+ * Pemulihan bertahap tanpa reload buta.
+ *
+ * Dipakai tombol "Muat ulang": membersihkan cache aset basi, mengunduh ulang
+ * (prefetch) modul rute yang gagal — misalnya Katalog — lalu menyegarkan data
+ * rute sehingga halaman benar-benar tampil. Setiap tahap dilaporkan lewat
+ * `onStage` supaya tombol bisa menunjukkan progres. Bila prefetch tetap gagal,
+ * barulah aplikasi dimuat ulang penuh sebagai jalan terakhir.
+ */
+export async function retryRouteLoad(
+  router: MinimalRouter,
+  target: string,
+  onStage: (stage: RecoveryStage) => void,
+): Promise<boolean> {
+  onStage("membersihkan");
+  await purgeStaleAssets();
+
+  onStage("mengunduh");
+  try {
+    await router.preloadRoute({ to: target });
+  } catch {
+    onStage("gagal");
+    if (typeof window !== "undefined") window.location.reload();
+    return false;
+  }
+
+  onStage("menampilkan");
+  try {
+    await router.invalidate();
+  } catch {
+    /* data akan dimuat ulang oleh rute itu sendiri */
+  }
+  return true;
+}
