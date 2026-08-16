@@ -172,6 +172,64 @@ export const notifyIncomingCall = createServerFn({ method: "POST" })
   });
 
 /**
+ * Push permintaan kontak masuk.
+ *
+ * Klien hanya mengirim id permintaan. Server memverifikasi bahwa pemanggil
+ * memang pengirim permintaan itu dan statusnya masih `pending`, lalu
+ * menentukan sendiri penerima (target permintaan), judul, isi, dan rute.
+ */
+export const notifyContactRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ requestId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: req } = await context.supabase
+      .from("contact_requests")
+      .select("id, requester_id, target_id, status")
+      .eq("id", data.requestId)
+      .maybeSingle();
+    if (!req || req.requester_id !== context.userId || String(req.status) !== "pending") {
+      return NONE;
+    }
+    const { data: me } = await context.supabase.rpc("my_profile");
+    const name = me?.display_name?.trim() || "Seseorang";
+    const { dispatchEventPush } = await import("./dispatch.server");
+    const res = await dispatchEventPush({
+      kind: "contact_request",
+      category: "chat",
+      userId: req.target_id,
+      title: "Permintaan kontak baru",
+      body: `${name} ingin terhubung dengan Anda`,
+      route: "/contacts",
+    });
+    return { configured: res.configured, sent: res.sent };
+  });
+
+const notifyIncomingCallLegacy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ callId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: call } = await context.supabase
+      .from("calls")
+      .select("id, kind, initiator_id, status")
+      .eq("id", data.callId)
+      .maybeSingle();
+    // Hanya pemanggil yang boleh memicu notifikasi panggilannya sendiri.
+    if (!call || call.initiator_id !== context.userId || call.status !== "ringing") {
+      return { configured: false, sent: 0 };
+    }
+    // Baca profil sendiri lewat RPC; tabel profiles tertutup untuk klien.
+    const { data: me } = await context.supabase.rpc("my_profile");
+    // Fan-out panggilan memakai token aksi sekali-pakai + TTL sependek dering.
+    const { dispatchCallPush } = await import("./dispatch.server");
+    const res = await dispatchCallPush({
+      callId: call.id,
+      callerName: me?.display_name ?? "Panggilan MCM",
+      kind: call.kind === "video" ? "video" : "audio",
+    });
+    return { configured: res.configured, sent: res.sent };
+  });
+
+/**
  * Panggilan sudah berakhir (dijawab di perangkat lain, ditolak, ditutup,
  * dibatalkan, atau timeout): kirim `call_terminal` best-effort ke semua
  * perangkat peserta supaya notifikasi basi dibatalkan. Hanya peserta panggilan
