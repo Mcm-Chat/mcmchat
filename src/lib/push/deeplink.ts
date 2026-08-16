@@ -24,6 +24,8 @@ export function routeFromPush(data: Partial<PushData> | null | undefined): strin
       return data.orderId ? `/catalog/${data.orderId}` : "/finance";
     case "ledger":
       return data.ledgerId ? `/ledger/${data.ledgerId}` : "/finance";
+    case "contact_request":
+      return "/contacts";
     default:
       return "/chat";
   }
