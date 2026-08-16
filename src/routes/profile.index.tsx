@@ -521,6 +521,8 @@ function ProfilePage() {
 
         <PinCard pin={profile.pin} name={profile.display_name} subtitle={profile.bio} />
 
+        <QRCard pin={profile.pin} label={profile.display_name} />
+
         <div className="card-soft space-y-2 p-4">
           <div className="space-y-1">
             <Label htmlFor="nm">Nama</Label>
