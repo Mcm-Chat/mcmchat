@@ -333,51 +333,51 @@ function ContactsPage() {
             {filteredIncoming.map((r) => {
               const status = requestStatusLabel(r, "incoming");
               return (
-              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-                {r.profile ? (
-                  <UserAvatar
-                    userId={r.requester_id}
-                    path={r.profile.avatar_url}
-                    version={r.profile.avatar_version}
-                    name={r.profile.display_name}
-                    color={r.profile.avatar_color}
-                  />
-                ) : (
-                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {r.profile?.display_name ?? "Pengguna"}
-                  </p>
-                  <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
-                  <p className="truncate text-xs text-muted-foreground">{r.message}</p>
-                  <StatusBadge tone={status.tone} className="mt-1">
-                    {status.label}
-                  </StatusBadge>
-                </div>
-                {r.status === "pending" && (
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    size="icon"
-                    className="size-9 rounded-xl"
-                    aria-label="Terima"
-                    disabled={busy === r.id}
-                    onClick={() => void respond(r, "accepted")}
-                  >
-                    <Check className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Tolak"
-                    disabled={busy === r.id}
-                    onClick={() => void respond(r, "rejected")}
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </div>
-                )}
-              </li>
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  {r.profile ? (
+                    <UserAvatar
+                      userId={r.requester_id}
+                      path={r.profile.avatar_url}
+                      version={r.profile.avatar_version}
+                      name={r.profile.display_name}
+                      color={r.profile.avatar_color}
+                    />
+                  ) : (
+                    <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {r.profile?.display_name ?? "Pengguna"}
+                    </p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
+                    <p className="truncate text-xs text-muted-foreground">{r.message}</p>
+                    <StatusBadge tone={status.tone} className="mt-1">
+                      {status.label}
+                    </StatusBadge>
+                  </div>
+                  {r.status === "pending" && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        size="icon"
+                        className="size-9 rounded-xl"
+                        aria-label="Terima"
+                        disabled={busy === r.id}
+                        onClick={() => void respond(r, "accepted")}
+                      >
+                        <Check className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Tolak"
+                        disabled={busy === r.id}
+                        onClick={() => void respond(r, "rejected")}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                </li>
               );
             })}
           </ul>
@@ -394,26 +394,26 @@ function ContactsPage() {
             {filteredOutgoing.map((r) => {
               const status = requestStatusLabel(r, "outgoing");
               return (
-              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-                {r.profile ? (
-                  <UserAvatar
-                    userId={r.target_id}
-                    path={r.profile.avatar_url}
-                    version={r.profile.avatar_version}
-                    name={r.profile.display_name}
-                    color={r.profile.avatar_color}
-                  />
-                ) : (
-                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {r.profile?.display_name ?? "Pengguna"}
-                  </p>
-                  <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
-                </div>
-                <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
-              </li>
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  {r.profile ? (
+                    <UserAvatar
+                      userId={r.target_id}
+                      path={r.profile.avatar_url}
+                      version={r.profile.avatar_version}
+                      name={r.profile.display_name}
+                      color={r.profile.avatar_color}
+                    />
+                  ) : (
+                    <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {r.profile?.display_name ?? "Pengguna"}
+                    </p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
+                  </div>
+                  <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                </li>
               );
             })}
           </ul>
