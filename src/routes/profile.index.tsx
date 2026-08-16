@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { PinCard } from "@/components/mcm/pin-card";
 import { NotificationBell } from "@/components/mcm/notification-parts";
+import { NotificationPermissionRow } from "@/components/mcm/notification-permission-row";
 import {
   ConfirmDialog,
   LoadingSkeleton,
@@ -749,6 +750,7 @@ function ProfilePage() {
                 }
               />
 
+              <NotificationPermissionRow userId={userId} />
               <button
                 type="button"
                 onClick={() => void navigate({ to: "/settings/notifications" })}
