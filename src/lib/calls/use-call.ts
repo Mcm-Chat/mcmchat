@@ -46,6 +46,14 @@ import {
   describeConnectFailure,
 } from "./failure-messages";
 import { HANDSHAKE_ATTEMPTS, handshakeProgressText, withHandshakeRetry } from "./handshake";
+import {
+  CONNECT_MAX_RECOVERIES,
+  CONNECT_RECOVERY_DELAY_MS,
+  CONNECT_SLOW_MS,
+  canAutoRecover,
+  connectStageMessage,
+  connectTimeoutMs,
+} from "./connect-watchdog";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
@@ -184,6 +192,11 @@ export type UseCallResult = {
   retry: () => void;
   /** Percobaan sambung ulang manual sedang berjalan. */
   retrying: boolean;
+  /**
+   * Tahap "Menyambungkan…" melewati batas waktu dan pemulihan otomatis sudah
+   * habis. Layar panggilan tetap terbuka dengan tombol coba lagi.
+   */
+  connectStalled: boolean;
   /** Daftar mic/kamera yang bisa dipilih saat panggilan berlangsung. */
   devices: CallDevices;
   micDeviceId: string | null;
@@ -232,6 +245,12 @@ export function useCall(opts: {
   /** Preferensi kamera tersimpan hanya dipulihkan sekali per sesi panggilan. */
   const cameraRestoredRef = useRef(false);
   const [retrying, setRetrying] = useState(false);
+  const [connectStalled, setConnectStalled] = useState(false);
+  /** Ronde pemulihan otomatis yang sudah dipakai pada tahap menyambungkan. */
+  const recoverRoundRef = useRef(0);
+  /** Penanda untuk me-restart watchdog dan memaksa re-subscribe realtime. */
+  const [recoverTick, setRecoverTick] = useState(0);
+  const recoverRef = useRef<(round: number) => void>(() => undefined);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
