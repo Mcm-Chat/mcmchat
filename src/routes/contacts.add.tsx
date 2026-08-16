@@ -315,7 +315,7 @@ function AddContactPage() {
                     path={h.avatarUrl ?? null}
                     version={h.avatarVersion ?? undefined}
                     name={h.name}
-                    color={h.avatarColor ?? undefined}
+                    color={h.avatarColor ?? ""}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{h.name}</p>
