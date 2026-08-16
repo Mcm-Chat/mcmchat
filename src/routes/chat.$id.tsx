@@ -673,8 +673,6 @@ function ChatRoom() {
     );
   }
 
-  let lastDay = "";
-
   return (
     <AppShell
       nav={false}
