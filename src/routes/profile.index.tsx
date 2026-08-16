@@ -620,7 +620,7 @@ function ProfilePage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-0">
                     <Label className="text-xs">Pesan sapaan</Label>
                     <Textarea
                       value={bizForm.greeting}
@@ -629,7 +629,7 @@ function ProfilePage() {
                       onChange={(e) => setBizForm((p) => ({ ...p, greeting: e.target.value }))}
                     />
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-0">
                     <Label className="text-xs">Pesan tidak aktif</Label>
                     <Textarea
                       value={bizForm.away_message}
