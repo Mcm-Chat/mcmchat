@@ -22,6 +22,7 @@ import { installImportantToastFocus } from "@/lib/a11y/toast-focus";
 import { installEscapeDismiss } from "@/lib/a11y/escape-dismiss";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import { ReduceMotionProvider, MOTION_BOOTSTRAP_SCRIPT } from "@/lib/a11y/reduce-motion";
+import { DEVICE_TIER_BOOTSTRAP_SCRIPT, installScrollPerf } from "@/lib/perf/device-tier";
 
 // Modul berat/opsional dipisah dari bundel awal dan baru diunduh setelah
 // aplikasi terpasang di browser (atau, untuk overlay debug, saat diaktifkan).
@@ -159,6 +160,7 @@ function RootShell({ children }: { children: ReactNode }) {
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: MOTION_BOOTSTRAP_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: DEVICE_TIER_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background text-foreground">
         {children}
@@ -193,12 +195,14 @@ function RootComponent() {
     const offViewport = installViewportMetrics();
     const offToastFocus = installImportantToastFocus();
     const offEscape = installEscapeDismiss();
+    const offScrollPerf = installScrollPerf();
     return () => {
       offConn();
       offOutbox();
       offViewport();
       offToastFocus();
       offEscape();
+      offScrollPerf();
     };
   }, []);
 

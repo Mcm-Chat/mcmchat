@@ -281,7 +281,9 @@ function ChatRoom() {
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 84,
     getItemKey: (index) => rows[index]?.message.id ?? index,
-    overscan: 10,
+    // Tiap baris dipasangi ResizeObserver oleh measureElement; overscan besar
+    // berarti puluhan observer aktif dan biaya ukur ulang tiap frame gulir.
+    overscan: 6,
   });
   const virtualItems = virtualizer.getVirtualItems();
 
@@ -897,6 +899,7 @@ function ChatRoom() {
               <div
                 key={virtualRow.key}
                 data-index={virtualRow.index}
+                data-virtual-row=""
                 ref={virtualizer.measureElement}
                 className="absolute top-0 left-0 w-full"
                 style={{ transform: `translateY(${virtualRow.start}px)` }}
