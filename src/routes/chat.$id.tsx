@@ -695,6 +695,14 @@ function ChatRoom() {
     void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
   };
 
+  const openNextUnread = useCallback(() => {
+    if (!nextUnread) {
+      toast.info("Tidak ada chat belum dibaca lainnya");
+      return;
+    }
+    void navigate({ to: "/chat/$id", params: { id: nextUnread.id } });
+  }, [nextUnread, navigate]);
+
   // Saat entri outbox berhasil terkirim, muat ulang halaman pesan percakapan itu.
   useEffect(
     () =>
