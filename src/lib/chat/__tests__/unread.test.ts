@@ -43,3 +43,20 @@ describe("summarizeUnread", () => {
     expect(summarizeUnread(list, null, null).count).toBe(0);
   });
 });
+
+describe("id pesan belum dibaca", () => {
+  it("mengumpulkan semua id untuk sorotan visual", () => {
+    const base = "2026-01-01T00:00:00.000Z";
+    const s = summarizeUnread(
+      [
+        { id: "a", sender_id: "other", created_at: "2026-01-01T00:00:01.000Z" },
+        { id: "b", sender_id: "me", created_at: "2026-01-01T00:00:02.000Z" },
+        { id: "c", sender_id: "other", created_at: "2026-01-01T00:00:03.000Z" },
+      ],
+      "me",
+      base,
+    );
+    expect(s.ids).toEqual(["a", "c"]);
+    expect(s.firstId).toBe("a");
+  });
+});

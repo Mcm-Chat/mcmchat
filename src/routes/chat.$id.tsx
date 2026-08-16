@@ -181,6 +181,8 @@ function ChatRoom() {
   // menandai pesan sebagai dibaca — supaya penanda pertama-belum-dibaca stabil.
   const readBaselineRef = useRef<string | null | undefined>(undefined);
   const [unreadDismissed, setUnreadDismissed] = useState(false);
+  /** Sorotan sementara pada pesan belum dibaca setelah tombol ditekan. */
+  const [unreadMarked, setUnreadMarked] = useState(false);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
   // Pemulihan posisi baca & fokus komposer saat chat yang sama dibuka lagi.
   const restoreRef = useRef<ReturnType<typeof loadChatView> | null | undefined>(undefined);
@@ -412,9 +414,21 @@ function ChatRoom() {
   const jumpToFirstUnread = useCallback(() => {
     if (unread.firstIndex < 0) return;
     setUnreadDismissed(true);
+    // Sorotan visual: pesan belum dibaca ditandai sementara agar posisinya jelas.
+    setUnreadMarked(true);
     virtualizer.scrollToIndex(unread.firstIndex, { align: "start" });
     requestAnimationFrame(() => virtualizer.scrollToIndex(unread.firstIndex, { align: "start" }));
   }, [unread.firstIndex, virtualizer]);
+  // Sorotan memudar sendiri agar tidak mengganggu pembacaan selanjutnya.
+  useEffect(() => {
+    if (!unreadMarked) return;
+    const t = setTimeout(() => setUnreadMarked(false), 8000);
+    return () => clearTimeout(t);
+  }, [unreadMarked]);
+  const markedIds = useMemo(
+    () => (unreadMarked ? new Set(unread.ids) : null),
+    [unreadMarked, unread.ids],
+  );
   useEffect(() => {
     const lastId = messages.at(-1)?.id ?? null;
     const grew = lastId !== null && lastId !== lastMessageIdRef.current;
@@ -1141,6 +1155,15 @@ function ChatRoom() {
                     </span>
                   </div>
                 )}
+                {markedIds && m.id === unread.firstId && (
+                  <div className="my-2 flex items-center gap-2 px-3" aria-hidden="true">
+                    <span className="h-px flex-1 bg-primary/40" />
+                    <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                      Belum dibaca
+                    </span>
+                    <span className="h-px flex-1 bg-primary/40" />
+                  </div>
+                )}
                 <MessageBubble
                   message={m}
                   replyTo={replyTo}
@@ -1154,7 +1177,7 @@ function ChatRoom() {
                   animateIn={virtualRow.index === rows.length - 1}
                   selectable={selection.length > 0}
                   selected={selection.includes(m.id)}
-                  highlighted={search.hl === m.id}
+                  highlighted={search.hl === m.id || markedIds?.has(m.id) === true}
                   onAction={handleAction}
                 />
               </div>
@@ -1200,6 +1223,11 @@ function ChatRoom() {
           </div>
         ))}
         <div ref={bottomRef} />
+        {unreadMarked && (
+          <p role="status" aria-live="polite" className="sr-only">
+            {unread.count} pesan belum dibaca disorot, mulai dari pesan pertama.
+          </p>
+        )}
         </div>
       </div>
 
