@@ -252,6 +252,9 @@ export function useCall(opts: {
   const [mediaLive, setMediaLive] = useState(false);
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const [quality, setQuality] = useState<UseCallResult["quality"]>("unknown");
+  const [metrics, setMetrics] = useState<QualityMetrics | null>(null);
+  /** Cuplikan stats sebelumnya — metrik hanya berarti sebagai selisih. */
+  const lastSnapRef = useRef<QualitySnapshot | null>(null);
   const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
@@ -291,6 +294,8 @@ export function useCall(opts: {
     }
     sessionRef.current = null;
     setMediaLive(false);
+    setMetrics(null);
+    lastSnapRef.current = null;
     await pipeRef.current?.dispose();
     pipeRef.current = null;
     micRef.current?.getTracks().forEach((t) => t.stop());
