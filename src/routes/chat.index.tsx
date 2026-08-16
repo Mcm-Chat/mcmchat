@@ -118,8 +118,7 @@ function ChatIndex() {
           if (c.title_resolved.toLowerCase().includes(needle)) return true;
           return c.members.some(
             (m) =>
-              m.display_name.toLowerCase().includes(needle) ||
-              m.pin.toLowerCase().includes(needle),
+              m.display_name.toLowerCase().includes(needle) || m.pin.toLowerCase().includes(needle),
           );
         })
       : all;
@@ -592,6 +591,7 @@ function ChatIndex() {
                 <ChatListItem
                   conv={c}
                   time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
+                  query={q}
                   outgoingStatus={
                     c.lastMessage && c.lastMessage.sender_id === userId
                       ? deriveStatus(

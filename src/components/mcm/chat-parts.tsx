@@ -120,10 +120,34 @@ const initialsOf = (name: string) =>
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("") || "MC";
 
+/** Menyoroti substring yang cocok dengan kata kunci pencarian. */
+function Highlight({ text, query }: { text: string; query: string | undefined }) {
+  const needle = (query ?? "").trim();
+  if (!needle) return <>{text}</>;
+  const lower = text.toLowerCase();
+  const q = needle.toLowerCase();
+  const parts: React.ReactNode[] = [];
+  let i = 0;
+  let idx = lower.indexOf(q);
+  while (idx !== -1) {
+    if (idx > i) parts.push(text.slice(i, idx));
+    parts.push(
+      <mark key={`${idx}-${needle}`} className="rounded-sm bg-primary/15 px-0.5 text-primary">
+        {text.slice(idx, idx + needle.length)}
+      </mark>,
+    );
+    i = idx + needle.length;
+    idx = lower.indexOf(q, i);
+  }
+  if (i < text.length) parts.push(text.slice(i));
+  return <>{parts}</>;
+}
+
 export function ChatListItem({
   conv,
   time,
   outgoingStatus,
+  query,
   onTogglePin,
   onToggleMute,
   onToggleArchive,
@@ -131,11 +155,24 @@ export function ChatListItem({
   conv: ConversationView;
   time: string;
   outgoingStatus?: MessageStatus | undefined;
+  query?: string;
   onTogglePin: () => void;
   onToggleMute: () => void;
   onToggleArchive: () => void;
 }) {
   const name = conv.title_resolved;
+  const needle = (query ?? "").trim().toLowerCase();
+  const titleMatches = needle.length > 0 && name.toLowerCase().includes(needle);
+  const matchedMember =
+    needle.length > 0
+      ? conv.members.find(
+          (m) =>
+            m.display_name.toLowerCase().includes(needle) || m.pin.toLowerCase().includes(needle),
+        )
+      : undefined;
+  const matchedPin = matchedMember?.pin.toLowerCase().includes(needle)
+    ? matchedMember.pin
+    : undefined;
   return (
     <div className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 active:bg-muted/60">
       <Link
@@ -157,7 +194,7 @@ export function ChatListItem({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <p className="truncate text-[15px] leading-5 font-semibold tracking-[-0.01em]">
-              {name}
+              <Highlight text={name} query={query} />
             </p>
             {conv.me.is_pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
             {conv.me.is_muted && <BellOff className="size-3 shrink-0 text-muted-foreground" />}
@@ -181,7 +218,20 @@ export function ChatListItem({
                 conv.unread > 0 ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              {previewOf(conv.lastMessage)}
+              {!titleMatches && matchedMember ? (
+                matchedMember.display_name.toLowerCase().includes(needle) ? (
+                  <Highlight text={matchedMember.display_name} query={query} />
+                ) : matchedPin ? (
+                  <>
+                    <span className="text-muted-foreground">PIN:</span>{" "}
+                    <Highlight text={matchedPin} query={query} />
+                  </>
+                ) : (
+                  previewOf(conv.lastMessage)
+                )
+              ) : (
+                previewOf(conv.lastMessage)
+              )}
             </p>
             {conv.unread > 0 && (
               <span className="ml-auto min-w-5 shrink-0 rounded-full bg-primary px-1.5 text-center text-[10px] leading-5 font-bold text-primary-foreground">
@@ -319,7 +369,9 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
           <MediaSkeleton className="size-full rounded-lg" />
         )}
       </div>
-      {open && url && <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />}
+      {open && url && (
+        <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />
+      )}
       {mapsUrl && (
         <a
           href={mapsUrl}
