@@ -469,14 +469,28 @@ function SalesCard({ message }: { message: MessageRow }) {
 
 function ImageBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
+  const [open, setOpen] = useState(false);
   return url ? (
-    <img
-      src={url}
-      alt={message.body || "Foto terkirim"}
-      loading="lazy"
-      decoding="async"
-      className="max-h-56 w-52 max-w-full rounded-xl object-cover"
-    />
+    <>
+      <button
+        type="button"
+        aria-label="Lihat foto"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <img
+          src={url}
+          alt={message.body || "Foto terkirim"}
+          loading="lazy"
+          decoding="async"
+          className="max-h-56 w-52 max-w-full rounded-xl object-cover"
+        />
+      </button>
+      {open && <PhotoViewer url={url} caption={message.body} onClose={() => setOpen(false)} />}
+    </>
   ) : (
     <div className="flex h-28 w-44 items-center justify-center rounded-xl bg-black/15">
       <ImageIcon className="size-7 opacity-70" />
