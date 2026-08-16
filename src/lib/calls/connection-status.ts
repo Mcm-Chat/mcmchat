@@ -13,6 +13,8 @@ export type CallConnectionTone = "live" | "pending" | "warn" | "down";
 export type CallConnectionInput = {
   phase: string;
   retrying?: boolean;
+  /** Tahap menyambungkan melewati batas waktu; pemulihan otomatis habis. */
+  stalled?: boolean;
   quality?: "excellent" | "good" | "fair" | "poor" | "unknown" | undefined;
   audioBlocked?: boolean;
   permission?: MediaPermissionState | undefined;
@@ -54,6 +56,12 @@ export function callConnectionStatus(input: CallConnectionInput): CallConnection
   if (input.phase === "unconfigured")
     return { tone: "down", label: "Belum siap", hint: "Layanan panggilan belum terhubung." };
   if (input.phase === "ended") return { tone: "down", label: "Panggilan selesai", hint: null };
+  if (input.stalled && input.phase === "connecting")
+    return {
+      tone: "warn",
+      label: "Sambungan tertahan",
+      hint: "Panggilan masih terbuka — tekan “Coba lagi” atau tutup panggilan.",
+    };
   if (input.retrying || input.phase === "connecting")
     return {
       tone: "pending",

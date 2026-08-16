@@ -46,6 +46,13 @@ import {
   describeConnectFailure,
 } from "./failure-messages";
 import { HANDSHAKE_ATTEMPTS, handshakeProgressText, withHandshakeRetry } from "./handshake";
+import {
+  CONNECT_RECOVERY_DELAY_MS,
+  CONNECT_SLOW_MS,
+  canAutoRecover,
+  connectStageMessage,
+  connectTimeoutMs,
+} from "./connect-watchdog";
 import { MIC_CONSTRAINTS, VoicePipeline, type PipelineState } from "@/lib/voice/pipeline";
 import { effectiveParams, type VoicePrefs } from "@/lib/voice/presets";
 
@@ -184,6 +191,11 @@ export type UseCallResult = {
   retry: () => void;
   /** Percobaan sambung ulang manual sedang berjalan. */
   retrying: boolean;
+  /**
+   * Tahap "Menyambungkan…" melewati batas waktu dan pemulihan otomatis sudah
+   * habis. Layar panggilan tetap terbuka dengan tombol coba lagi.
+   */
+  connectStalled: boolean;
   /** Daftar mic/kamera yang bisa dipilih saat panggilan berlangsung. */
   devices: CallDevices;
   micDeviceId: string | null;
@@ -232,6 +244,12 @@ export function useCall(opts: {
   /** Preferensi kamera tersimpan hanya dipulihkan sekali per sesi panggilan. */
   const cameraRestoredRef = useRef(false);
   const [retrying, setRetrying] = useState(false);
+  const [connectStalled, setConnectStalled] = useState(false);
+  /** Ronde pemulihan otomatis yang sudah dipakai pada tahap menyambungkan. */
+  const recoverRoundRef = useRef(0);
+  /** Penanda untuk me-restart watchdog dan memaksa re-subscribe realtime. */
+  const [recoverTick, setRecoverTick] = useState(0);
+  const recoverRef = useRef<(round: number) => void>(() => undefined);
 
   const sessionRef = useRef<CallSessionHandle | null>(null);
   const pipeRef = useRef<VoicePipeline | null>(null);
@@ -379,6 +397,8 @@ export function useCall(opts: {
             setPhase("connected");
             startedRef.current ??= Date.now();
             rejoinRef.current = 0;
+            recoverRoundRef.current = 0;
+            setConnectStalled(false);
             // Reconnected/Connected tanpa alasan membersihkan pesan lama
             // seperti "Menyambung ulang…" agar tidak basi di layar.
             setReason(s.reason ?? null);
@@ -389,16 +409,26 @@ export function useCall(opts: {
         // Handshake pertama sering gagal di jaringan seluler; ulangi otomatis
         // dengan jeda menaik sebelum menyerah ke layar gagal.
         const session = await withHandshakeRetry(
-          () =>
-            provider.connect({
-              url: t.url,
-              token: t.token,
+          async (attempt) => {
+            // Percobaan ulang selalu memakai token baru: token lama bisa sudah
+            // kedaluwarsa atau ditolak server saat handshake pertama tertahan.
+            let cred = { url: t.url, token: t.token };
+            if (attempt > 1) {
+              const fresh = await token({ data: { callId: row.id } }).catch(() => null);
+              if (fresh && fresh.configured && "allowed" in fresh && fresh.allowed) {
+                cred = { url: fresh.url, token: fresh.token };
+              }
+            }
+            return provider.connect({
+              url: cred.url,
+              token: cred.token,
               // Tanpa izin kamera, sesi dibuka sebagai panggilan suara supaya
               // penyedia tidak pernah mencoba menerbitkan track video.
               kind: videoDisabled ? "audio" : row.kind,
               audioTrack: audio,
               onState,
-            }),
+            });
+          },
           {
             attempts: HANDSHAKE_ATTEMPTS,
             isAborted: () => endedRef.current,
@@ -440,6 +470,16 @@ export function useCall(opts: {
         devLog("join_failed", e instanceof Error ? e.message : "unknown");
         if (endedRef.current) return;
         const info = describeConnectFailure(e);
+        // Kegagalan sementara tidak melempar pengguna ke layar error selama
+        // masih ada jatah pemulihan otomatis: tetap di layar panggilan.
+        if (info.outcome !== "ended" && canAutoRecover(recoverRoundRef.current)) {
+          recoverRoundRef.current += 1;
+          setPhase("connecting");
+          setReason(connectStageMessage("recovering", recoverRoundRef.current));
+          const round = recoverRoundRef.current;
+          setTimeout(() => recoverRef.current(round), CONNECT_RECOVERY_DELAY_MS);
+          return;
+        }
         setPhase(info.outcome === "ended" ? "ended" : "error");
         setReason(`${info.message} ${info.action}`);
       }
@@ -596,7 +636,7 @@ export function useCall(opts: {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [callId, userId]);
+  }, [callId, userId, recoverTick]);
 
   // Timer durasi — satu render per detik dan hanya bila detiknya berubah.
   useEffect(() => {
@@ -732,6 +772,9 @@ export function useCall(opts: {
     setRetrying(true);
     setReason("Mencoba menyambungkan ulang…");
     setPhase("connecting");
+    setConnectStalled(false);
+    recoverRoundRef.current = 0;
+    setRecoverTick((t) => t + 1);
     rejoinRef.current = 0;
     void cleanup()
       .then(() => {
@@ -741,10 +784,83 @@ export function useCall(opts: {
       .finally(() => setRetrying(false));
   }, [call, cleanup, join]);
 
+  /**
+   * Pemulihan otomatis tahap "Menyambungkan…": bongkar sesi setengah jadi,
+   * ambil baris panggilan terbaru, paksa langganan realtime dibuat ulang, lalu
+   * bergabung lagi dengan token baru. Pengguna tetap di layar panggilan.
+   */
+  const recoverConnect = useCallback(
+    (round: number) => {
+      if (endedRef.current) return;
+      const known = call;
+      setRetrying(true);
+      setPhase("connecting");
+      setReason(connectStageMessage("recovering", round));
+      void cleanup()
+        .then(async () => {
+          joinedRef.current = false;
+          if (endedRef.current) return;
+          const fresh = await getCall(callId).catch(() => null);
+          const row = fresh ?? known;
+          if (!row || endedRef.current) return;
+          if (fresh) setCall(fresh);
+          if (
+            row.status === "ended" ||
+            row.status === "missed" ||
+            row.status === "declined" ||
+            row.status === "failed"
+          ) {
+            endedRef.current = true;
+            setPhase("ended");
+            return;
+          }
+          await join(row);
+        })
+        .catch((e: unknown) => devLog("connect_recover_failed", e))
+        .finally(() => {
+          setRetrying(false);
+          // Restart watchdog + langganan realtime untuk ronde berikutnya.
+          setRecoverTick((t) => t + 1);
+        });
+    },
+    [call, callId, cleanup, join],
+  );
+  recoverRef.current = recoverConnect;
+
+  /**
+   * Watchdog terukur: beri kabar saat lambat, pulihkan sendiri saat lewat
+   * batas, dan berhenti pada status "macet" (tetap di layar panggilan).
+   */
+  useEffect(() => {
+    if (phase !== "connecting") {
+      if (phase === "connected" || phase === "ended") setConnectStalled(false);
+      return;
+    }
+    const round = recoverRoundRef.current;
+    const slow = setTimeout(() => {
+      if (!endedRef.current) setReason(connectStageMessage("slow", round));
+    }, CONNECT_SLOW_MS);
+    const hard = setTimeout(() => {
+      if (endedRef.current) return;
+      if (!canAutoRecover(recoverRoundRef.current)) {
+        setConnectStalled(true);
+        setReason(connectStageMessage("stalled", recoverRoundRef.current));
+        return;
+      }
+      recoverRoundRef.current += 1;
+      recoverRef.current(recoverRoundRef.current);
+    }, connectTimeoutMs(round));
+    return () => {
+      clearTimeout(slow);
+      clearTimeout(hard);
+    };
+  }, [phase, recoverTick]);
+
   return useMemo<UseCallResult>(
     () => ({
       phase,
       reason,
+      connectStalled,
       call,
       remotes,
       durationSec,
@@ -831,6 +947,7 @@ export function useCall(opts: {
     [
       phase,
       reason,
+      connectStalled,
       call,
       remotes,
       durationSec,

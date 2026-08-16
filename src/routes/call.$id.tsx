@@ -499,12 +499,24 @@ function CallScreen() {
             <CallConnectionBadge
               phase={session.phase}
               retrying={session.retrying}
+              stalled={session.connectStalled}
               quality={session.quality}
               audioBlocked={session.audioBlocked}
               permission={permission.state}
               className="mt-1"
             />
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
+            {session.connectStalled && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="mt-2 rounded-xl"
+                disabled={session.retrying}
+                onClick={session.retry}
+              >
+                {session.retrying ? "Menyambungkan…" : "Coba lagi"}
+              </Button>
+            )}
             <VoicePrivacyBadge active={voiceActive} className="mt-1" />
             {voiceFallback ? (
               <p className="mt-1 text-xs text-navy-foreground/70">
