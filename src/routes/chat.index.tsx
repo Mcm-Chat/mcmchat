@@ -592,6 +592,7 @@ function ChatIndex() {
                 <ChatListItem
                   conv={c}
                   time={c.lastMessage ? waktuRelatif(c.lastMessage.created_at) : ""}
+                  query={q}
                   outgoingStatus={
                     c.lastMessage && c.lastMessage.sender_id === userId
                       ? deriveStatus(
