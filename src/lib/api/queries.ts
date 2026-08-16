@@ -15,6 +15,7 @@ import {
   MESSAGE_PAGE_SIZE,
   type MessageCursor,
   type MessageRow,
+  type ConversationView,
 } from "./chat";
 import { listCalls } from "./calls";
 import { listLedgers } from "./ledger";
