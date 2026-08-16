@@ -84,6 +84,12 @@ import {
   shouldAutoScroll,
   USER_SCROLL_GRACE_MS,
 } from "@/lib/chat/scroll";
+import {
+  clearChatView,
+  loadChatView,
+  saveChatView,
+  shouldRestoreScroll,
+} from "@/lib/chat/scroll-restore";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
@@ -165,6 +171,11 @@ function ChatRoom() {
   const [missedCount, setMissedCount] = useState(0);
   const lastMessageIdRef = useRef<string | null>(null);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
+  // Pemulihan posisi baca & fokus komposer saat chat yang sama dibuka lagi.
+  const restoreRef = useRef<ReturnType<typeof loadChatView> | null | undefined>(undefined);
+  const restoredRef = useRef(false);
+  const composerFocusedRef = useRef(false);
+  if (restoreRef.current === undefined) restoreRef.current = loadChatView(id);
 
   // Tombol Back Android menutup lapisan teratas lebih dulu (sheet/dialog/
   // mode pilih), bukan langsung meninggalkan percakapan.
@@ -324,6 +335,8 @@ function ChatRoom() {
     const lastId = messages.at(-1)?.id ?? null;
     const grew = lastId !== null && lastId !== lastMessageIdRef.current;
     lastMessageIdRef.current = lastId;
+    // Selama posisi tersimpan belum dipulihkan, jangan paksa turun ke dasar.
+    if (!restoredRef.current && shouldRestoreScroll(restoreRef.current ?? null)) return;
     const auto = shouldAutoScroll({
       atBottom,
       lastSenderId,
@@ -357,6 +370,60 @@ function ChatRoom() {
       if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
     });
   }, [hasOlder, isFetchingOlder, fetchOlder]);
+
+  // Pulihkan posisi baca terakhir sekali daftar pertama sudah terpasang.
+  useEffect(() => {
+    if (restoredRef.current) return;
+    const saved = restoreRef.current ?? null;
+    if (!shouldRestoreScroll(saved)) {
+      restoredRef.current = true;
+      return;
+    }
+    if (messages.length === 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    restoredRef.current = true;
+    const apply = () => {
+      const node = scrollRef.current;
+      if (!node) return;
+      node.scrollTop = Math.min(saved.top, node.scrollHeight - node.clientHeight);
+      setAtBottom(isNearBottom(node));
+    };
+    apply();
+    // Ulangi setelah tinggi baris virtual terukur agar posisi tidak melenceng.
+    const t = window.setTimeout(apply, 120);
+    if (saved.composerFocused) window.setTimeout(() => composerRef.current?.focus(), 200);
+    return () => window.clearTimeout(t);
+  }, [messages.length]);
+
+  // Simpan posisi & fokus saat meninggalkan layar (pindah rute, tab ke latar,
+  // atau aplikasi ditutup) supaya bisa dipulihkan saat chat dibuka lagi.
+  useEffect(() => {
+    const persist = () => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const bottom = isNearBottom(el);
+      if (bottom && !composerFocusedRef.current) {
+        clearChatView(id);
+        return;
+      }
+      saveChatView(id, {
+        top: el.scrollTop,
+        atBottom: bottom,
+        composerFocused: composerFocusedRef.current,
+      });
+    };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") persist();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", persist);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", persist);
+      persist();
+    };
+  }, [id]);
 
   // Keyboard (IME) muncul/hilang: pertahankan posisi baca. Hanya menempel ke
   // dasar bila pengguna memang sedang di pesan terbaru — saat membaca riwayat
@@ -1130,6 +1197,9 @@ function ChatRoom() {
       ) : (
         <ComposerHost
           ref={composerRef}
+          onFocusChange={(focused) => {
+            composerFocusedRef.current = focused;
+          }}
           draftKey={draftKey}
           onTyping={notifyTyping}
           onSend={doSend}

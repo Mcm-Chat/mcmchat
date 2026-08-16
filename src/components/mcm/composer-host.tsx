@@ -14,6 +14,8 @@ export type ComposerHandle = {
   setText: (v: string) => void;
   /** Bersihkan komposer. */
   clear: () => void;
+  /** Kembalikan fokus ke kolom tulis (pemulihan saat membuka ulang chat). */
+  focus: () => void;
 };
 
 type Props = {
@@ -32,6 +34,8 @@ type Props = {
   replyPreview?: MessageRow | undefined;
   replySenderName?: string | undefined;
   onCancelReply?: (() => void) | undefined;
+  /** Dipanggil saat fokus komposer berubah, untuk disimpan/dipulihkan. */
+  onFocusChange?: ((focused: boolean) => void) | undefined;
 };
 
 export const ComposerHost = forwardRef<ComposerHandle, Props>(function ComposerHost(
@@ -51,14 +55,34 @@ export const ComposerHost = forwardRef<ComposerHandle, Props>(function ComposerH
     replyPreview,
     replySenderName,
     onCancelReply,
+    onFocusChange,
   },
   ref,
 ) {
   const [text, setText] = useState("");
   const textRef = useRef("");
   textRef.current = text;
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useImperativeHandle(ref, () => ({ setText, clear: () => setText("") }), []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      setText,
+      clear: () => setText(""),
+      focus: () => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.focus({ preventScroll: true });
+        const end = el.value.length;
+        try {
+          el.setSelectionRange(end, end);
+        } catch {
+          /* beberapa browser menolak saat elemen belum siap */
+        }
+      },
+    }),
+    [],
+  );
 
   // Muat draf saat percakapan berganti.
   useEffect(() => {
@@ -79,6 +103,8 @@ export const ComposerHost = forwardRef<ComposerHandle, Props>(function ComposerH
   return (
     <ChatComposer
       value={text}
+      inputRef={inputRef}
+      onFocusChange={onFocusChange}
       onChange={(v) => {
         setText(v);
         if (v) onTyping();
