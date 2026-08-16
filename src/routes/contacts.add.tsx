@@ -124,8 +124,16 @@ function AddContactPage() {
     if (!userId || !found) return;
     setSending(true);
     try {
-      await sendContactRequest(userId, found.id, message.trim());
-      toast.success("Permintaan kontak terkirim");
+      const res = await sendContactRequest(userId, found.id, message.trim());
+      if (res.code === "accepted_incoming") {
+        toast.success("Kontak tersimpan — permintaan mereka langsung diterima.");
+      } else if (res.code === "incoming_pending") {
+        toast.info("Mereka sudah mengirim permintaan. Buka Kontak → Permintaan untuk menerima.");
+      } else if (res.code === "already_pending") {
+        toast.info("Permintaan sebelumnya masih menunggu jawaban.");
+      } else {
+        toast.success("Permintaan kontak terkirim");
+      }
       setConfirmOpen(false);
       setFound(null);
       setSearched(false);
