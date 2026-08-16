@@ -166,14 +166,45 @@ const REQUEST_ERROR: Record<string, string> = {
   not_authenticated: "Sesi berakhir. Masuk kembali.",
 };
 
+/**
+ * Terima permintaan masuk yang masih menunggu dari `otherId` (jika ada).
+ * Dipakai saat kedua sisi saling menambahkan: alih-alih gagal/senyap,
+ * permintaan lawan langsung diterima sehingga kontak benar-benar terhubung.
+ */
+async function acceptIncomingFrom(otherId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("contact_requests")
+    .select("id")
+    .eq("requester_id", otherId)
+    .eq("status", "pending")
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return false;
+  const { error: rpcError } = await supabase.rpc("respond_contact_request", {
+    _request: data.id,
+    _action: "accepted",
+  });
+  return !rpcError;
+}
+
 /** Kirim permintaan kontak lewat RPC atomik (anti-duplikat + cooldown). */
-export async function sendContactRequest(_userId: string, targetId: string, message: string) {
+export async function sendContactRequest(
+  _userId: string,
+  targetId: string,
+  message: string,
+): Promise<{ status?: string; code?: string }> {
   const { data, error } = await supabase.rpc("send_contact_request", {
     _target: targetId,
     _message: message,
   });
   if (error) throw new Error(mapRpcError(error.message, "Permintaan gagal dikirim", REQUEST_ERROR));
-  return (data ?? {}) as { status?: string; code?: string };
+  const result = (data ?? {}) as { status?: string; code?: string };
+  // Lawan sudah lebih dulu mengirim permintaan: terima langsung agar kontak
+  // tersimpan, bukan berhenti diam-diam tanpa perubahan apa pun.
+  if (result.code === "incoming_pending" && (await acceptIncomingFrom(targetId))) {
+    return { status: "accepted", code: "accepted_incoming" };
+  }
+  return result;
 }
 
 export async function respondToRequest(
