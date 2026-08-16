@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Search, Send } from "lucide-react";
+import { History, Search, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -24,6 +24,14 @@ import {
 import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
+import {
+  clearScanHistory,
+  readScanHistory,
+  recordScan,
+  removeScan,
+  scanAgeLabel,
+  type ScanHistoryEntry,
+} from "@/lib/contacts/scan-history";
 
 type StatusBadge = { label: string; className: string };
 
@@ -87,6 +95,12 @@ function AddContactPage() {
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [relation, setRelation] = useState<ContactRelation | null>(null);
+  const [history, setHistory] = useState<ScanHistoryEntry[]>([]);
+
+  // Riwayat pindai 7 hari terakhir (lokal per akun).
+  useEffect(() => {
+    if (userId) setHistory(readScanHistory(userId));
+  }, [userId]);
 
   // Status relasi selalu disegarkan setiap profil hasil pencarian berubah agar
   // badge yang tampil benar-benar mencerminkan kondisi di server.
@@ -144,6 +158,17 @@ function AddContactPage() {
         return;
       }
       setScanned(result);
+      if (userId)
+        setHistory(
+          recordScan(userId, {
+            id: result.id,
+            pin: result.pin,
+            name: result.display_name,
+            avatarUrl: result.avatar_url ?? null,
+            avatarColor: result.avatar_color ?? null,
+            avatarVersion: result.avatar_version ?? null,
+          }),
+        );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Pengguna tidak ditemukan.");
     }
@@ -262,6 +287,64 @@ function AddContactPage() {
             Kamera hanya dipakai untuk membaca QR; tidak ada foto yang disimpan.
           </p>
         </div>
+
+        {history.length > 0 && (
+          <div className="card-soft space-y-2 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold">
+                <History className="size-4" /> Riwayat pindai (7 hari)
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-lg text-xs text-muted-foreground"
+                onClick={() => {
+                  if (!userId) return;
+                  clearScanHistory(userId);
+                  setHistory([]);
+                }}
+              >
+                Bersihkan
+              </Button>
+            </div>
+            <ul className="divide-y divide-border/60">
+              {history.map((h) => (
+                <li key={h.id} className="flex items-center gap-3 py-2">
+                  <UserAvatar
+                    userId={h.id}
+                    path={h.avatarUrl ?? null}
+                    version={h.avatarVersion ?? undefined}
+                    name={h.name}
+                    color={h.avatarColor ?? ""}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{h.name}</p>
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">
+                      {h.pin} · {scanAgeLabel(h.scannedAt)}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-9 rounded-lg"
+                    onClick={() => void handleScan(h.pin)}
+                  >
+                    <Send className="size-3.5" /> Kirim ulang
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Hapus ${h.name} dari riwayat pindai`}
+                    className="size-9 rounded-lg text-muted-foreground"
+                    onClick={() => userId && setHistory(removeScan(userId, h.id))}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {searched && !found && !error && (
           <div className="card-soft p-4 text-center text-sm text-muted-foreground">
