@@ -520,9 +520,11 @@ function ChatRoom() {
       anchorRef.current = isNearBottom(el)
         ? null
         : pickScrollAnchor(virtualizer.getVirtualItems(), el.scrollTop);
+      // Tandai dibaca hanya setelah gulir benar-benar berhenti di area ini.
+      scheduleReadSettle();
       if (el.scrollTop < 80 && hasOlder && !isFetchingOlder) void fetchOlder();
     });
-  }, [hasOlder, isFetchingOlder, fetchOlder, virtualizer]);
+  }, [hasOlder, isFetchingOlder, fetchOlder, virtualizer, scheduleReadSettle]);
 
   // Pulihkan posisi baca terakhir sekali daftar pertama sudah terpasang.
   useEffect(() => {
