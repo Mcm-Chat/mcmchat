@@ -840,7 +840,7 @@ function ChatRoom() {
           const showDay = day !== lastDay;
           lastDay = day;
           const mine = m.sender_id === userId;
-          const replyTo = m.reply_to_id ? messages.find((x) => x.id === m.reply_to_id) : undefined;
+          const replyTo = m.reply_to_id ? messageById.get(m.reply_to_id) : undefined;
           const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
           const prev = messages[idx - 1];
           const grouped =
@@ -865,15 +865,13 @@ function ChatRoom() {
                 senderName={nameOf(m.sender_id)}
                 mine={mine}
                 showSender={conv.type !== "direct"}
-                reactions={(reactions ?? [])
-                  .filter((r) => r.message_id === m.id)
-                  .map((r) => r.emoji)}
+                reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
                 status={status}
                 grouped={grouped}
                 selectable={selection.length > 0}
                 selected={selection.includes(m.id)}
                 highlighted={search.hl === m.id}
-                onAction={(a, msg, p) => void onAction(a, msg, p)}
+                onAction={handleAction}
               />
             </div>
           );
