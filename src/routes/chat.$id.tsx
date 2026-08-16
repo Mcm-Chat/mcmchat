@@ -397,6 +397,12 @@ function ChatRoom() {
   if (readBaselineRef.current === undefined && conv) {
     readBaselineRef.current = conv.me.last_read_at ?? null;
   }
+  // Baseline maju sendiri saat pengguna benar-benar selesai membaca satu area.
+  const [settledBaselineAt, setSettledBaselineAt] = useState<string | null>(null);
+  const effectiveBaseline = advanceReadBaseline(
+    readBaselineRef.current ?? null,
+    settledBaselineAt,
+  );
   const unread = useMemo(
     () =>
       summarizeUnread(
@@ -407,18 +413,47 @@ function ChatRoom() {
           kind: m.kind,
         })),
         userId ?? null,
-        readBaselineRef.current ?? null,
+        effectiveBaseline,
       ),
-    [messages, userId],
+    [messages, userId, effectiveBaseline],
   );
+  // Pemicu 1: berhenti menggulir → area yang terlihat dianggap terbaca.
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markVisibleAsRead = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const idx = lastVisibleIndex(virtualizer.getVirtualItems(), el.scrollTop, el.clientHeight);
+    setSettledBaselineAt((prev) =>
+      settledBaseline(
+        messages,
+        idx,
+        advanceReadBaseline(readBaselineRef.current ?? null, prev),
+      ),
+    );
+  }, [messages, virtualizer]);
+  const scheduleReadSettle = useCallback(() => {
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(markVisibleAsRead, READ_SETTLE_MS);
+  }, [markVisibleAsRead]);
+  useEffect(() => {
+    scheduleReadSettle();
+    return () => {
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    };
+  }, [scheduleReadSettle, messages.length]);
   const jumpToFirstUnread = useCallback(() => {
     if (unread.firstIndex < 0) return;
+    // Pemicu 2: melompat ke blok belum dibaca = blok itu dianggap terbaca.
+    const lastUnreadAt = messages.at(-1)?.created_at ?? null;
     setUnreadDismissed(true);
     // Sorotan visual: pesan belum dibaca ditandai sementara agar posisinya jelas.
     setUnreadMarked(true);
     virtualizer.scrollToIndex(unread.firstIndex, { align: "start" });
     requestAnimationFrame(() => virtualizer.scrollToIndex(unread.firstIndex, { align: "start" }));
-  }, [unread.firstIndex, virtualizer]);
+    setSettledBaselineAt((prev) =>
+      advanceReadBaseline(advanceReadBaseline(readBaselineRef.current ?? null, prev), lastUnreadAt),
+    );
+  }, [unread.firstIndex, virtualizer, messages]);
   // Sorotan memudar sendiri agar tidak mengganggu pembacaan selanjutnya.
   useEffect(() => {
     if (!unreadMarked) return;
