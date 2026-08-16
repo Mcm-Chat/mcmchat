@@ -115,6 +115,12 @@ export function metricsSummary(m: QualityMetrics | null): string {
   if (!m) return "Kualitas panggilan belum terukur.";
   const grade = gradeMetrics(m);
   const label =
-    grade === "good" ? "Kualitas baik" : grade === "fair" ? "Kualitas sedang" : grade === "poor" ? "Kualitas buruk" : "Kualitas belum terukur";
+    grade === "good"
+      ? "Kualitas baik"
+      : grade === "fair"
+        ? "Kualitas sedang"
+        : grade === "poor"
+          ? "Kualitas buruk"
+          : "Kualitas belum terukur";
   return `${label}. Paket hilang ${formatMetric(m.lossPct, "%")}, jitter ${formatMetric(m.jitterMs, "ms")}, unduh ${formatMetric(m.kbpsDown, "kbps")}, unggah ${formatMetric(m.kbpsUp, "kbps")}.`;
 }

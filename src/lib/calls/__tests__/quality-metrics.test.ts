@@ -23,7 +23,13 @@ describe("quality-metrics", () => {
     const snap = snapshotFromStats(
       [
         [
-          { type: "inbound-rtp", packetsReceived: 100, packetsLost: 5, bytesReceived: 2000, jitter: 0.02 },
+          {
+            type: "inbound-rtp",
+            packetsReceived: 100,
+            packetsLost: 5,
+            bytesReceived: 2000,
+            jitter: 0.02,
+          },
           { type: "outbound-rtp", bytesSent: 1000 },
           { type: "candidate-pair", currentRoundTripTime: 0.12 },
         ],
@@ -37,7 +43,14 @@ describe("quality-metrics", () => {
   });
 
   it("menghitung loss dan bitrate dari selisih dua cuplikan", () => {
-    const prev = { ...base, ts: 0, packetsReceived: 100, packetsLost: 0, bytesReceived: 1000, bytesSent: 500 };
+    const prev = {
+      ...base,
+      ts: 0,
+      packetsReceived: 100,
+      packetsLost: 0,
+      bytesReceived: 1000,
+      bytesSent: 500,
+    };
     const next = {
       ...base,
       ts: 2000,
@@ -60,9 +73,15 @@ describe("quality-metrics", () => {
 
   it("memberi nilai kualitas sesuai ambang", () => {
     expect(gradeMetrics(null)).toBe("unknown");
-    expect(gradeMetrics({ lossPct: 0.2, jitterMs: 8, rttMs: 80, kbpsDown: 40, kbpsUp: 30 })).toBe("good");
-    expect(gradeMetrics({ lossPct: 3, jitterMs: 10, rttMs: 90, kbpsDown: 40, kbpsUp: 30 })).toBe("fair");
-    expect(gradeMetrics({ lossPct: 9, jitterMs: 10, rttMs: 90, kbpsDown: 40, kbpsUp: 30 })).toBe("poor");
+    expect(gradeMetrics({ lossPct: 0.2, jitterMs: 8, rttMs: 80, kbpsDown: 40, kbpsUp: 30 })).toBe(
+      "good",
+    );
+    expect(gradeMetrics({ lossPct: 3, jitterMs: 10, rttMs: 90, kbpsDown: 40, kbpsUp: 30 })).toBe(
+      "fair",
+    );
+    expect(gradeMetrics({ lossPct: 9, jitterMs: 10, rttMs: 90, kbpsDown: 40, kbpsUp: 30 })).toBe(
+      "poor",
+    );
   });
 
   it("memformat angka dan ringkasan", () => {
@@ -70,6 +89,8 @@ describe("quality-metrics", () => {
     expect(formatMetric(2.34, "%")).toBe("2.3%");
     expect(formatMetric(120.6, "kbps")).toBe("121 kbps");
     expect(metricsSummary(null)).toMatch(/belum terukur/);
-    expect(metricsSummary({ lossPct: 0, jitterMs: 5, rttMs: 50, kbpsDown: 30, kbpsUp: 20 })).toMatch(/Kualitas baik/);
+    expect(
+      metricsSummary({ lossPct: 0, jitterMs: 5, rttMs: 50, kbpsDown: 30, kbpsUp: 20 }),
+    ).toMatch(/Kualitas baik/);
   });
 });

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { CallStatusLive } from "@/components/mcm/call-status-live";
 import { CallConnectionBadge } from "@/components/mcm/call-connection-badge";
 import { CallProviderStatus } from "@/components/mcm/call-provider-status";
+import { CallQualityMetrics } from "@/components/mcm/call-quality-metrics";
 import { useProviderHealth } from "@/lib/calls/use-provider-health";
 import { CallDurationLive } from "@/components/mcm/call-duration-live";
 import { setCallReturnFocus } from "@/lib/calls/return-focus";
@@ -517,6 +518,9 @@ function CallScreen() {
               className="mt-1"
             />
             <CallProviderStatus status={providerHealth} className="mt-1" />
+            {session.phase === "connected" && (
+              <CallQualityMetrics metrics={session.metrics} className="mt-2" />
+            )}
             {session.reason && <p className="text-xs text-navy-foreground/60">{session.reason}</p>}
             {session.connectStalled && (
               <Button
