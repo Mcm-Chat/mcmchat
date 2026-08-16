@@ -57,6 +57,7 @@ import { ChatOrderCard } from "@/components/mcm/chat-order-card";
 import { cn } from "@/lib/utils";
 import { LinkifiedText } from "@/components/mcm/linkified-text";
 import { LinkPreviewCard, firstUrlOf } from "@/components/mcm/link-preview-card";
+import { PhotoViewer } from "@/components/mcm/photo-viewer";
 import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import type { ConversationView, MessageRow } from "@/lib/api/chat";
