@@ -175,6 +175,11 @@ export type UseCallResult = {
   /** Autoplay audio diblokir; UI wajib menampilkan tombol "Aktifkan suara". */
   audioBlocked: boolean;
   /**
+   * Media benar-benar berjalan: room penyedia tersambung DAN track mikrofon
+   * lokal masih hidup. Label "Panggilan berjalan" hanya boleh memakai ini.
+   */
+  mediaLive: boolean;
+  /**
    * Panggilan video berjalan tanpa kamera karena izin kamera tidak tersedia;
    * audio tetap normal dan tombol kamera dinonaktifkan.
    */
