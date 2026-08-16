@@ -1,3 +1,4 @@
+import { uniqueTopic } from "@/lib/realtime/topic";
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import type { Tables } from "@/integrations/supabase/types";
@@ -33,7 +34,7 @@ export async function markAllRead(userId: string) {
 /** Berlangganan notifikasi baru/berubah untuk pengguna, mengembalikan fungsi unsubscribe. */
 export function subscribeNotifications(userId: string, onChange: () => void) {
   const channel = supabase
-    .channel(`mcm-notifications-${userId}`)
+    .channel(uniqueTopic(`mcm-notifications-${userId}`))
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
