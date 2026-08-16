@@ -18,6 +18,8 @@ export type UnreadSummary = {
   count: number;
   /** Id pesan pertama yang belum dibaca. */
   firstId: string | null;
+  /** Id semua pesan belum dibaca (dipakai untuk sorotan visual). */
+  ids: string[];
 };
 
 export function summarizeUnread(
@@ -25,12 +27,13 @@ export function summarizeUnread(
   userId: string | null,
   lastReadAt: string | null,
 ): UnreadSummary {
-  const empty: UnreadSummary = { firstIndex: -1, count: 0, firstId: null };
+  const empty: UnreadSummary = { firstIndex: -1, count: 0, firstId: null, ids: [] };
   if (!userId || messages.length === 0) return empty;
   const baseline = lastReadAt ? new Date(lastReadAt).getTime() : 0;
   if (Number.isNaN(baseline)) return empty;
   let firstIndex = -1;
   let count = 0;
+  const ids: string[] = [];
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i]!;
     if (m.sender_id === userId) continue;
@@ -39,6 +42,7 @@ export function summarizeUnread(
     if (Number.isNaN(t) || t <= baseline) continue;
     if (firstIndex < 0) firstIndex = i;
     count++;
+    ids.push(m.id);
   }
-  return { firstIndex, count, firstId: firstIndex >= 0 ? messages[firstIndex]!.id : null };
+  return { firstIndex, count, firstId: firstIndex >= 0 ? messages[firstIndex]!.id : null, ids };
 }
