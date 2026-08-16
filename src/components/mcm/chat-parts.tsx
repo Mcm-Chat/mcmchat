@@ -57,6 +57,7 @@ import { ChatOrderCard } from "@/components/mcm/chat-order-card";
 import { cn } from "@/lib/utils";
 import { LinkifiedText } from "@/components/mcm/linkified-text";
 import { LinkPreviewCard, firstUrlOf } from "@/components/mcm/link-preview-card";
+import { PhotoViewer } from "@/components/mcm/photo-viewer";
 import { jam, rupiah } from "@/lib/mcm/format";
 import { useSignedUrl } from "@/lib/api/use-signed-url";
 import type { ConversationView, MessageRow } from "@/lib/api/chat";
@@ -283,6 +284,7 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
     "product-photos",
     (photo as { image_path?: string }).image_path ?? photo.id,
   );
+  const [open, setOpen] = useState(false);
   const mapsUrl =
     photo.location_url ||
     (photo.location_lat != null && photo.location_lng != null
@@ -292,11 +294,22 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
     <div className="w-20 shrink-0 space-y-1">
       <div className="size-20 overflow-hidden rounded-lg bg-black/10">
         {url ? (
-          <img src={url} alt="Foto produk" className="size-full object-cover" />
+          <button
+            type="button"
+            aria-label="Lihat foto produk"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+            className="size-full"
+          >
+            <img src={url} alt="Foto produk" className="size-full object-cover" />
+          </button>
         ) : (
           <div className="size-full animate-pulse" />
         )}
       </div>
+      {open && url && <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />}
       {mapsUrl && (
         <a
           href={mapsUrl}
@@ -469,14 +482,28 @@ function SalesCard({ message }: { message: MessageRow }) {
 
 function ImageBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
+  const [open, setOpen] = useState(false);
   return url ? (
-    <img
-      src={url}
-      alt={message.body || "Foto terkirim"}
-      loading="lazy"
-      decoding="async"
-      className="max-h-56 w-52 max-w-full rounded-xl object-cover"
-    />
+    <>
+      <button
+        type="button"
+        aria-label="Lihat foto"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <img
+          src={url}
+          alt={message.body || "Foto terkirim"}
+          loading="lazy"
+          decoding="async"
+          className="max-h-56 w-52 max-w-full rounded-xl object-cover"
+        />
+      </button>
+      {open && <PhotoViewer url={url} caption={message.body} onClose={() => setOpen(false)} />}
+    </>
   ) : (
     <div className="flex h-28 w-44 items-center justify-center rounded-xl bg-black/15">
       <ImageIcon className="size-7 opacity-70" />
