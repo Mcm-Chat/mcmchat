@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { PinCard } from "@/components/mcm/pin-card";
+import { PinCard, QRCard } from "@/components/mcm/pin-card";
 import { NotificationBell } from "@/components/mcm/notification-parts";
 import { NotificationPermissionRow } from "@/components/mcm/notification-permission-row";
 import {
@@ -520,6 +520,8 @@ function ProfilePage() {
         </div>
 
         <PinCard pin={profile.pin} name={profile.display_name} subtitle={profile.bio} />
+
+        <QRCard pin={profile.pin} label={profile.display_name} />
 
         <div className="card-soft space-y-2 p-4">
           <div className="space-y-1">
