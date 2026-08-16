@@ -132,10 +132,7 @@ function Highlight({ text, query }: { text: string; query: string | undefined })
   while (idx !== -1) {
     if (idx > i) parts.push(text.slice(i, idx));
     parts.push(
-      <mark
-        key={`${idx}-${needle}`}
-        className="rounded-sm bg-primary/15 px-0.5 text-primary"
-      >
+      <mark key={`${idx}-${needle}`} className="rounded-sm bg-primary/15 px-0.5 text-primary">
         {text.slice(idx, idx + needle.length)}
       </mark>,
     );
@@ -166,13 +163,13 @@ export function ChatListItem({
   const name = conv.title_resolved;
   const needle = (query ?? "").trim().toLowerCase();
   const titleMatches = needle.length > 0 && name.toLowerCase().includes(needle);
-  const matchedMember = needle.length > 0
-    ? conv.members.find(
-        (m) =>
-          m.display_name.toLowerCase().includes(needle) ||
-          m.pin.toLowerCase().includes(needle),
-      )
-    : undefined;
+  const matchedMember =
+    needle.length > 0
+      ? conv.members.find(
+          (m) =>
+            m.display_name.toLowerCase().includes(needle) || m.pin.toLowerCase().includes(needle),
+        )
+      : undefined;
   const matchedPin = matchedMember?.pin.toLowerCase().includes(needle)
     ? matchedMember.pin
     : undefined;
@@ -366,7 +363,9 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
           <MediaSkeleton className="size-full rounded-lg" />
         )}
       </div>
-      {open && url && <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />}
+      {open && url && (
+        <PhotoViewer url={url} caption="Foto produk" onClose={() => setOpen(false)} />
+      )}
       {mapsUrl && (
         <a
           href={mapsUrl}

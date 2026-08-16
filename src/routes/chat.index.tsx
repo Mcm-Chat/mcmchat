@@ -118,8 +118,7 @@ function ChatIndex() {
           if (c.title_resolved.toLowerCase().includes(needle)) return true;
           return c.members.some(
             (m) =>
-              m.display_name.toLowerCase().includes(needle) ||
-              m.pin.toLowerCase().includes(needle),
+              m.display_name.toLowerCase().includes(needle) || m.pin.toLowerCase().includes(needle),
           );
         })
       : all;
