@@ -26,7 +26,6 @@ import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
 
 export const Route = createFileRoute("/contacts/add")({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   validateSearch: (
     search: Record<string, unknown>,
   ): { conv?: string; reason?: string; scan?: boolean } => {
