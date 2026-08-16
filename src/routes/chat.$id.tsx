@@ -84,6 +84,12 @@ import {
   shouldAutoScroll,
   USER_SCROLL_GRACE_MS,
 } from "@/lib/chat/scroll";
+import {
+  clearChatView,
+  loadChatView,
+  saveChatView,
+  shouldRestoreScroll,
+} from "@/lib/chat/scroll-restore";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
