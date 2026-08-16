@@ -153,19 +153,35 @@ function AddContactPage() {
     setSending(true);
     try {
       const res = await sendContactRequest(userId, found.id, message.trim());
-      if (res.code === "accepted_incoming") {
+      const code = res.code ?? res.status ?? "created";
+      // Form hanya dikosongkan bila kontak benar-benar tersimpan/terhubung.
+      const savedForReal = code === "accepted_incoming" || code === "accepted";
+      if (savedForReal) {
         toast.success("Kontak tersimpan — permintaan mereka langsung diterima.");
-      } else if (res.code === "incoming_pending") {
-        toast.info("Mereka sudah mengirim permintaan. Buka Kontak → Permintaan untuk menerima.");
-      } else if (res.code === "already_pending") {
-        toast.info("Permintaan sebelumnya masih menunggu jawaban.");
+      } else if (code === "incoming_pending") {
+        toast.info("Mereka sudah mengirim permintaan. Buka Kontak → Masuk untuk menerima.");
+      } else if (code === "already_pending" || code === "pending") {
+        toast.info("Permintaan sebelumnya masih menunggu jawaban. Belum tersimpan sebagai kontak.");
+      } else if (code === "already_connected") {
+        toast.info("Kalian sudah terhubung.");
       } else {
-        toast.success("Permintaan kontak terkirim");
+        toast.success("Permintaan kontak terkirim — menunggu jawaban mereka.");
       }
       setConfirmOpen(false);
-      setFound(null);
-      setSearched(false);
-      setPin("");
+      if (savedForReal) {
+        setFound(null);
+        setSearched(false);
+        setRelation(null);
+        setPin("");
+      } else {
+        // Pertahankan form dan segarkan badge status supaya pengguna tahu
+        // posisi permintaan tanpa kehilangan pesan yang sudah diketik.
+        try {
+          setRelation(await getContactRelation(userId, found.id));
+        } catch {
+          /* badge dibiarkan apa adanya bila status gagal dimuat */
+        }
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Permintaan gagal dikirim");
     } finally {
