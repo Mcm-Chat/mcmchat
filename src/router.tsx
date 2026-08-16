@@ -10,6 +10,11 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Rute diunduh lebih awal begitu pengguna menunjukkan niat (hover,
+    // fokus keyboard, atau jari menyentuh tab) sehingga transisi terasa
+    // instan tanpa membebani muatan awal.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 40,
     defaultPreloadStaleTime: 0,
     // Tidak pernah layar kosong saat rute berat diunduh: kerangka halaman
     // standar tampil hampir seketika dan bertahan minimal sesaat.
