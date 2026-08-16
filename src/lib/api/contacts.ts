@@ -132,6 +132,42 @@ export async function listContacts(userId: string): Promise<ContactWithProfile[]
     .sort((a, b) => a.profile.display_name.localeCompare(b.profile.display_name));
 }
 
+/**
+ * Label status permintaan kontak untuk ditampilkan apa adanya di UI.
+ *
+ * `accepted` yang terjadi <60 detik setelah dibuat berarti permintaan itu
+ * langsung diterima (kedua sisi saling menambahkan), bukan lewat tombol.
+ */
+export function requestStatusLabel(
+  r: Tables<"contact_requests">,
+  direction: "incoming" | "outgoing",
+): { label: string; tone: "warning" | "success" | "danger" | "neutral" } {
+  switch (r.status) {
+    case "pending":
+      return direction === "incoming"
+        ? { label: "Menunggu jawaban Anda", tone: "warning" }
+        : { label: "Terkirim · menunggu", tone: "warning" };
+    case "accepted": {
+      const gap = new Date(r.updated_at).getTime() - new Date(r.created_at).getTime();
+      return {
+        label: gap >= 0 && gap < 60_000 ? "Langsung diterima" : "Diterima",
+        tone: "success",
+      };
+    }
+    case "rejected":
+      return { label: "Ditolak", tone: "danger" };
+    case "blocked":
+      return { label: "Diblokir", tone: "danger" };
+    case "cancelled":
+      return { label: "Dibatalkan", tone: "neutral" };
+    default:
+      return { label: String(r.status), tone: "neutral" };
+  }
+}
+
+/** Riwayat permintaan yang sudah selesai tetap ditampilkan selama 7 hari. */
+const REQUEST_HISTORY_MS = 7 * 24 * 60 * 60 * 1000;
+
 export async function listRequests(
   userId: string,
 ): Promise<{ incoming: RequestRow[]; outgoing: RequestRow[] }> {
@@ -147,12 +183,22 @@ export async function listRequests(
     ...r,
     profile: map.get(other) ?? null,
   });
+  const cutoff = Date.now() - REQUEST_HISTORY_MS;
+  // Pending selalu tampil; yang sudah direspons tampil sebagai riwayat singkat
+  // supaya statusnya (diterima/ditolak/dibatalkan) terlihat, bukan hilang diam.
+  const visible = (r: Tables<"contact_requests">) =>
+    r.status === "pending" || new Date(r.updated_at).getTime() >= cutoff;
+  const byRecency = (a: Tables<"contact_requests">, b: Tables<"contact_requests">) =>
+    (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1) ||
+    new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
   return {
     incoming: rows
-      .filter((r) => r.target_id === userId && r.status === "pending")
+      .filter((r) => r.target_id === userId && visible(r))
+      .sort(byRecency)
       .map((r) => decorate(r, r.requester_id)),
     outgoing: rows
-      .filter((r) => r.requester_id === userId && r.status === "pending")
+      .filter((r) => r.requester_id === userId && visible(r))
+      .sort(byRecency)
       .map((r) => decorate(r, r.target_id)),
   };
 }
