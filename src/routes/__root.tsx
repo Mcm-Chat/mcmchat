@@ -23,6 +23,11 @@ import { installEscapeDismiss } from "@/lib/a11y/escape-dismiss";
 import { ThemeProvider, THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import { ReduceMotionProvider, MOTION_BOOTSTRAP_SCRIPT } from "@/lib/a11y/reduce-motion";
 import { DEVICE_TIER_BOOTSTRAP_SCRIPT, installScrollPerf } from "@/lib/perf/device-tier";
+import {
+  installChunkRecovery,
+  isChunkLoadError,
+  recoverFromChunkError,
+} from "@/lib/chunk-recovery";
 
 // Modul berat/opsional dipisah dari bundel awal dan baru diunduh setelah
 // aplikasi terpasang di browser (atau, untuk overlay debug, saat diaktifkan).
@@ -56,34 +61,43 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const chunk = isChunkLoadError(error);
   useEffect(() => {
+    // Modul rute basi (rilis baru / sinyal putus): muat ulang otomatis.
+    if (chunk && recoverFromChunkError()) return;
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+  }, [error, chunk]);
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          {chunk ? "Versi aplikasi perlu dimuat ulang" : "Halaman gagal dimuat"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          {chunk
+            ? "Sebagian aplikasi tidak berhasil diunduh, biasanya karena ada versi baru atau koneksi terputus. Muat ulang untuk melanjutkan."
+            : "Terjadi kesalahan. Coba lagi atau kembali ke beranda."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
+              if (chunk) {
+                window.location.reload();
+                return;
+              }
               router.invalidate();
               reset();
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            {chunk ? "Muat ulang" : "Coba lagi"}
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Ke beranda
           </a>
         </div>
       </div>
@@ -196,6 +210,7 @@ function RootComponent() {
     const offToastFocus = installImportantToastFocus();
     const offEscape = installEscapeDismiss();
     const offScrollPerf = installScrollPerf();
+    const offChunk = installChunkRecovery();
     return () => {
       offConn();
       offOutbox();
@@ -203,6 +218,7 @@ function RootComponent() {
       offToastFocus();
       offEscape();
       offScrollPerf();
+      offChunk();
     };
   }, []);
 
