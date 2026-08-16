@@ -286,6 +286,41 @@ export function useCall(opts: {
 
   const voiceApplied = premium && prefs.enabled && prefs.preset !== "off";
 
+  /**
+   * Metrik kualitas real-time: RTCStatsReport bersifat kumulatif, jadi nilai
+   * yang berarti dihitung dari selisih dua cuplikan tiap 2 detik. Polling
+   * hanya berjalan saat panggilan benar-benar tersambung.
+   */
+  useEffect(() => {
+    if (phase !== "connected") {
+      lastSnapRef.current = null;
+      setMetrics(null);
+      return;
+    }
+    let alive = true;
+    const sample = async () => {
+      const session = sessionRef.current;
+      if (!session?.getRtcStats) return;
+      const reports = await session.getRtcStats().catch(() => []);
+      if (!alive || reports.length === 0) return;
+      const snap = snapshotFromStats(
+        reports.map((r) => Array.from(r.values()) as Record<string, unknown>[]),
+        Date.now(),
+      );
+      const prev = lastSnapRef.current;
+      lastSnapRef.current = snap;
+      if (!prev) return;
+      const next = diffSnapshots(prev, snap);
+      if (next) setMetrics(next);
+    };
+    void sample();
+    const id = setInterval(() => void sample(), 2000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, [phase]);
+
   const cleanup = useCallback(async () => {
     try {
       await sessionRef.current?.disconnect();
@@ -982,6 +1017,7 @@ export function useCall(opts: {
       controls,
       pipelineState,
       quality,
+      metrics,
       voiceActive,
       voiceFallback,
       speakerSupported,
