@@ -1,4 +1,4 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ClipboardList,
@@ -50,6 +50,13 @@ export function BottomNavigation({
   // tidak bisa ditekan, tidak bisa di-Tab, dan disembunyikan dari pembaca
   // layar — agar fokus tetap pada tombol Jawab/Tolak.
   const callLocked = useIncomingCallActive();
+  const router = useRouter();
+  // Di ponsel tidak ada hover: sentuhan pertama pada tab langsung memicu
+  // pengunduhan rute tujuan, jadi saat jari diangkat halaman sudah siap.
+  const prefetch = (to: string) => {
+    if (callLocked) return;
+    void router.preloadRoute({ to }).catch(() => {});
+  };
   return (
     <>
       {callLocked && (
@@ -76,6 +83,10 @@ export function BottomNavigation({
               <li key={item.to}>
                 <Link
                   to={item.to}
+                  preload="intent"
+                  onPointerDown={() => prefetch(item.to)}
+                  onTouchStart={() => prefetch(item.to)}
+                  onFocus={() => prefetch(item.to)}
                   tabIndex={callLocked ? -1 : 0}
                   aria-disabled={callLocked ? "true" : undefined}
                   onClick={(e) => {
