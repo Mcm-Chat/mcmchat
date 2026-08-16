@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bell, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import {
   subscribeNotifications,
   type NotificationRow,
 } from "@/lib/api/notifications";
+import { getSettings, notificationsOf, type NotificationsPrefs } from "@/lib/api/settings";
+import { categoryOfKind } from "@/lib/notifications/categories";
 
 function useNotifications(userId?: string) {
   const [items, setItems] = useState<NotificationRow[]>([]);
@@ -39,7 +41,24 @@ function useNotifications(userId?: string) {
 }
 
 export function NotificationBell({ userId }: { userId?: string | undefined }) {
-  const { items, loading, error, reload } = useNotifications(userId);
+  const { items: all, loading, error, reload } = useNotifications(userId);
+  const [prefs, setPrefs] = useState<NotificationsPrefs | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    void getSettings(userId)
+      .then((row) => setPrefs(notificationsOf(row)))
+      .catch(() => setPrefs(null));
+  }, [userId]);
+
+  // Preferensi per akun juga mengatur daftar di dalam aplikasi, bukan hanya push.
+  const items = useMemo(() => {
+    if (!prefs) return all;
+    return all.filter((n) => {
+      const cat = categoryOfKind(n.kind);
+      return cat ? prefs[cat] !== false : true;
+    });
+  }, [all, prefs]);
   const unread = items.filter((n) => !n.is_read).length;
   return (
     <Sheet>
