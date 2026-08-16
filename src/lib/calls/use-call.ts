@@ -382,6 +382,65 @@ export function useCall(opts: {
     [prefs, voiceApplied],
   );
 
+  /**
+   * Fallback media: penyedia sudah "connected" tetapi track mikrofon tidak
+   * pernah hidup. Coba ambil ulang mikrofon; pada panggilan video, ronde kedua
+   * menurunkan diri ke suara saja karena kamera adalah penyebab getUserMedia
+   * gagal yang paling umum di ponsel kelas bawah.
+   */
+  useEffect(() => {
+    if (phase !== "connected" || mediaLive) {
+      if (phase !== "connected" || mediaLive) mediaRoundRef.current = 0;
+      return;
+    }
+    let alive = true;
+    const kind = call?.kind === "video" ? "video" : "audio";
+    const delay = mediaRoundRef.current === 0 ? MEDIA_START_GRACE_MS : MEDIA_RETRY_DELAY_MS;
+    const id = setTimeout(() => {
+      void (async () => {
+        const session = sessionRef.current;
+        if (!alive || endedRef.current || !session) return;
+        // Media sempat hidup sendiri di sela jeda: tidak perlu diutak-atik.
+        if (hasLiveAudio(micRef.current)) {
+          setMediaLive(true);
+          return;
+        }
+        const round = mediaRoundRef.current + 1;
+        mediaRoundRef.current = round;
+        const plan = planMediaRecovery(round, kind);
+        setReason(plan.message);
+        devLog("media_recovery", { round, action: plan.action });
+        if (plan.action === "give-up") return;
+        if (plan.action === "downgrade-audio") {
+          setCameraBlocked(true);
+          setControls((c) => ({ ...c, cameraOn: false }));
+          await session.setCameraEnabled(false).catch(() => undefined);
+        }
+        try {
+          micRef.current?.getTracks().forEach((t) => t.stop());
+          micRef.current = null;
+          await pipeRef.current?.dispose();
+          pipeRef.current = null;
+          const track = await buildOutgoingAudio(micDeviceId);
+          if (!alive || endedRef.current || !track) return;
+          await session.replaceAudioTrack(track);
+          await session.setMicEnabled(!controls.muted).catch(() => undefined);
+          if (hasLiveAudio(micRef.current)) {
+            mediaRoundRef.current = 0;
+            setMediaLive(true);
+            setReason(null);
+          }
+        } catch (e) {
+          devLog("media_recovery_failed", e instanceof Error ? e.message : "unknown");
+        }
+      })();
+    }, delay);
+    return () => {
+      alive = false;
+      clearTimeout(id);
+    };
+  }, [phase, mediaLive, call?.kind, buildOutgoingAudio, micDeviceId, controls.muted]);
+
   const join = useCallback(
     async (row: CallRow, opts?: { videoDisabled?: boolean }) => {
       const videoDisabled = opts?.videoDisabled === true;
