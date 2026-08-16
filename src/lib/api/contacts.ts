@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
 import { pinsFor } from "./pins";
+import { notifyContactRequest } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
 export type ContactRow = Tables<"contacts">;
@@ -250,7 +251,35 @@ export async function sendContactRequest(
   if (result.code === "incoming_pending" && (await acceptIncomingFrom(targetId))) {
     return { status: "accepted", code: "accepted_incoming" };
   }
+  // Permintaan benar-benar baru/terkirim ulang → beri tahu target lewat push
+  // (best-effort; kegagalan push tidak boleh menggagalkan permintaan).
+  if (result.code === "sent" || result.code === "resent") {
+    void pushContactRequest(targetId);
+  }
   return result;
+}
+
+/**
+ * Kirim push "permintaan kontak baru" ke target. Server memverifikasi ulang
+ * kepemilikan permintaan; klien hanya menyerahkan id-nya.
+ */
+async function pushContactRequest(targetId: string) {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const me = auth.user?.id;
+    if (!me) return;
+    const { data: row } = await supabase
+      .from("contact_requests")
+      .select("id")
+      .eq("requester_id", me)
+      .eq("target_id", targetId)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (!row?.id) return;
+    await notifyContactRequest({ data: { requestId: row.id } });
+  } catch {
+    /* push bersifat tambahan; permintaan kontak tetap tersimpan */
+  }
 }
 
 export async function respondToRequest(

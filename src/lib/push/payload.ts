@@ -27,7 +27,8 @@ export type PushKind =
   | "task_completed"
   | "sale"
   | "order"
-  | "ledger";
+  | "ledger"
+  | "contact_request";
 
 export type PushData = {
   kind: PushKind;
