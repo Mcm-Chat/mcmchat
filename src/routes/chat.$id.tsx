@@ -97,6 +97,12 @@ import {
   shouldRestoreScroll,
 } from "@/lib/chat/scroll-restore";
 import { summarizeUnread } from "@/lib/chat/unread";
+import {
+  READ_SETTLE_MS,
+  advanceReadBaseline,
+  lastVisibleIndex,
+  settledBaseline,
+} from "@/lib/chat/read-settle";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
