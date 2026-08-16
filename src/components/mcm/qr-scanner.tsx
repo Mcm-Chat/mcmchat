@@ -4,6 +4,7 @@ import {
   Camera,
   CameraOff,
   Image as ImageIcon,
+  Keyboard,
   Loader2,
   RefreshCw,
   Settings,
@@ -29,9 +30,19 @@ export function extractPin(raw: string): string | null {
   return parseContactScan(raw);
 }
 
-type CamPhase = "idle" | "requesting" | "streaming" | "denied" | "missing" | "busy" | "unsupported";
+type CamPhase =
+  | "idle"
+  | "prompt"
+  | "requesting"
+  | "streaming"
+  | "denied"
+  | "missing"
+  | "busy"
+  | "unsupported";
 
-const PHASE_COPY: Record<Exclude<CamPhase, "idle" | "requesting" | "streaming">, string> = {
+type BlockedPhase = Exclude<CamPhase, "idle" | "prompt" | "requesting" | "streaming">;
+
+const PHASE_COPY: Record<BlockedPhase, string> = {
   denied:
     "Izin kamera ditolak. Aktifkan izin kamera untuk aplikasi ini, lalu tekan Coba lagi — atau pindai QR dari galeri foto.",
   missing: "Tidak ada kamera yang terdeteksi di perangkat ini. Gunakan pindai dari galeri foto.",
@@ -40,14 +51,42 @@ const PHASE_COPY: Record<Exclude<CamPhase, "idle" | "requesting" | "streaming">,
     "Peramban ini tidak mendukung akses kamera. Buka lewat aplikasi MCM atau pindai dari galeri foto.",
 };
 
+/** Status izin kamera sebelum stream diminta (bila Permissions API tersedia). */
+async function readCameraPermission(): Promise<"granted" | "denied" | "prompt" | "unknown"> {
+  try {
+    const perms = navigator.permissions as
+      | { query?: (d: { name: string }) => Promise<PermissionStatus> }
+      | undefined;
+    if (!perms?.query) return "unknown";
+    const status = await perms.query({ name: "camera" });
+    return status.state as "granted" | "denied" | "prompt";
+  } catch {
+    return "unknown";
+  }
+}
+
+/** Cek keberadaan kamera di perangkat (label kosong sebelum izin diberikan). */
+async function hasCameraDevice(): Promise<boolean> {
+  try {
+    if (!navigator.mediaDevices?.enumerateDevices) return true;
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.some((d) => d.kind === "videoinput");
+  } catch {
+    return true;
+  }
+}
+
 export function QrScannerDialog({
   open,
   onOpenChange,
   onResult,
+  onManualPin,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onResult: (pin: string) => void;
+  /** Fallback saat kamera tidak tersedia atau izin ditolak: isi PIN manual. */
+  onManualPin?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
