@@ -1132,9 +1132,9 @@ function ChatRoom() {
             onClick={toggleScrollLock}
           >
             {scrollLocked ? (
-              <Lock className="mr-1 size-3.5" />
+              <LockIcon className="mr-1 size-3.5" />
             ) : (
-              <LockOpen className="mr-1 size-3.5" />
+              <LockOpenIcon className="mr-1 size-3.5" />
             )}
             {scrollLocked ? "Scroll terkunci" : "Kunci scroll"}
           </Button>
