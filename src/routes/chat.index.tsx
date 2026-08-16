@@ -128,6 +128,10 @@ function ChatIndex() {
     () => overviewUnread((conversations ?? []).filter((c) => !c.me.is_archived)),
     [conversations],
   );
+  const unreadActiveCount = useMemo(
+    () => (conversations ?? []).filter((c) => !c.me.is_archived && c.unread > 0).length,
+    [conversations],
+  );
 
   const selectedConvs = useMemo(
     () => list.filter((c) => selected.includes(c.id)),
