@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Info,
   MailOpen,
+  CheckCheck,
   Phone,
   RotateCw,
   Users,
@@ -460,6 +461,22 @@ function ChatRoom() {
       advanceReadBaseline(advanceReadBaseline(readBaselineRef.current ?? null, prev), lastUnreadAt),
     );
   }, [unread.firstIndex, virtualizer, messages]);
+  // Tandai semua sebagai dibaca: badge hilang seketika (lokal) lalu server
+  // menyusul menulis receipt agar pengirim ikut melihat centang biru.
+  const markAllAsRead = useCallback(() => {
+    const latest = messages.at(-1)?.created_at ?? new Date().toISOString();
+    setSettledBaselineAt((prev) =>
+      advanceReadBaseline(advanceReadBaseline(readBaselineRef.current ?? null, prev), latest),
+    );
+    setUnreadDismissed(true);
+    setUnreadMarked(false);
+    setMissedCount(0);
+    if (!id) return;
+    void markRead(id).then(() => {
+      if (userId) void qc.invalidateQueries({ queryKey: qk.conversations(userId) });
+      void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === "receipts" });
+    });
+  }, [messages, id, userId, qc]);
   // Sorotan memudar sendiri agar tidak mengganggu pembacaan selanjutnya.
   useEffect(() => {
     if (!unreadMarked) return;
@@ -1276,6 +1293,18 @@ function ChatRoom() {
 
       {(!atBottom || scrollLocked || (unread.count > 0 && !unreadDismissed)) && (
         <div className="pointer-events-none sticky bottom-24 z-10 flex items-center justify-end gap-2 px-4">
+          {unread.count > 0 && !unreadDismissed && (
+            <Button
+              size="sm"
+              variant="secondary"
+              aria-label="Tandai semua pesan sebagai dibaca"
+              className="pointer-events-auto h-8 rounded-full px-3 text-xs shadow-md"
+              onClick={markAllAsRead}
+            >
+              <CheckCheck className="mr-1 size-3.5" />
+              Tandai semua dibaca
+            </Button>
+          )}
           {unread.count > 0 && !unreadDismissed && (
             <Button
               size="sm"
