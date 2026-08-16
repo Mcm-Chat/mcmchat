@@ -24,10 +24,14 @@ import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
 
 export const Route = createFileRoute("/contacts/add")({
-  validateSearch: (search: Record<string, unknown>): { conv?: string; reason?: string } => {
-    const out: { conv?: string; reason?: string } = {};
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { conv?: string; reason?: string; scan?: boolean } => {
+    const out: { conv?: string; reason?: string; scan?: boolean } = {};
     if (typeof search['conv'] === "string") out.conv = search['conv'];
     if (typeof search['reason'] === "string") out.reason = search['reason'];
+    if (search['scan'] === true || search['scan'] === "1" || search['scan'] === "true")
+      out.scan = true;
     return out;
   },
   head: () => ({
@@ -46,7 +50,7 @@ export const Route = createFileRoute("/contacts/add")({
 
 function AddContactPage() {
   const { userId, profile } = useRequireAuth();
-  const { conv, reason } = Route.useSearch();
+  const { conv, reason, scan } = Route.useSearch();
   const [pin, setPin] = useState("");
   const [message, setMessage] = useState("Halo, saya ingin terhubung di MCM.");
   const [searching, setSearching] = useState(false);
@@ -58,6 +62,11 @@ function AddContactPage() {
   const [scanned, setScanned] = useState<ProfileLite | null>(null);
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // Buka pemindai QR langsung saat masuk lewat pintasan "Pindai QR".
+  useEffect(() => {
+    if (scan) setScannerOpen(true);
+  }, [scan]);
 
   // Prefill dari CTA "Minta akses ke kontak": identitas percakapan diisi
   // otomatis sehingga tombol kirim langsung tersedia.
