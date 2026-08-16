@@ -5,6 +5,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   ArrowDown,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Search as SearchIcon,
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
   BellOff,
@@ -384,6 +387,44 @@ function ChatRoom() {
     const idx = rows.findIndex((r) => r.message.id === hl);
     if (idx >= 0) virtualizer.scrollToIndex(idx, { align: "center" });
   }, [hl, rows, virtualizer]);
+
+  // ——— Pencarian di dalam percakapan ———
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [matchCursor, setMatchCursor] = useState(0);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const matchIndexes = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (q.length < 2) return [] as number[];
+    const out: number[] = [];
+    rows.forEach((r, idx) => {
+      const body = (r.message.body ?? "").toLowerCase();
+      if (body.includes(q)) out.push(idx);
+    });
+    return out;
+  }, [rows, searchTerm]);
+
+  useEffect(() => {
+    setMatchCursor(matchIndexes.length > 0 ? matchIndexes.length - 1 : 0);
+  }, [matchIndexes.length, searchTerm]);
+
+  const activeMatchIndex = matchIndexes[matchCursor];
+  const activeMatchId =
+    activeMatchIndex === undefined ? null : (rows[activeMatchIndex]?.message.id ?? null);
+
+  useEffect(() => {
+    if (!searchOpen || activeMatchIndex === undefined) return;
+    virtualizer.scrollToIndex(activeMatchIndex, { align: "center" });
+  }, [searchOpen, activeMatchIndex, virtualizer]);
+
+  const stepMatch = useCallback(
+    (dir: 1 | -1) => {
+      if (matchIndexes.length === 0) return;
+      setMatchCursor((c) => (c + dir + matchIndexes.length) % matchIndexes.length);
+    },
+    [matchIndexes.length],
+  );
 
   // Auto-scroll hanya bila pengguna di dekat pesan terbaru, atau pesan terakhir
   // memang miliknya sendiri.
@@ -1134,6 +1175,18 @@ function ChatRoom() {
                   variant="ghost"
                   size="icon"
                   className="size-9"
+                  aria-label="Cari pesan di percakapan ini"
+                  onClick={() => {
+                    setSearchOpen((v) => !v);
+                    requestAnimationFrame(() => searchInputRef.current?.focus());
+                  }}
+                >
+                  <SearchIcon className="size-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-9"
                   aria-label="Detail chat"
                   onClick={() => setDetailOpen(true)}
                 >
@@ -1182,6 +1235,61 @@ function ChatRoom() {
       {/* Pola kanvas dipasang di pembungkus yang TIDAK ikut menggulir: bila
           background bermotif menempel di elemen scroll, ponsel mengecat ulang
           seluruh pola tiap frame dan gulir terasa patah-patah. */}
+      {searchOpen && (
+        <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/60 bg-card/95 px-3 py-2 backdrop-blur">
+          <Input
+            ref={searchInputRef}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                stepMatch(e.shiftKey ? -1 : 1);
+              }
+              if (e.key === "Escape") setSearchOpen(false);
+            }}
+            placeholder="Cari pesan di percakapan ini…"
+            aria-label="Cari pesan"
+            className="h-9 flex-1"
+          />
+          <span className="min-w-14 text-center text-[11px] font-medium text-muted-foreground">
+            {searchTerm.trim().length < 2
+              ? "≥2 huruf"
+              : matchIndexes.length === 0
+                ? "0 hasil"
+                : `${matchCursor + 1}/${matchIndexes.length}`}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Hasil sebelumnya"
+            disabled={matchIndexes.length === 0}
+            onClick={() => stepMatch(-1)}
+          >
+            <ChevronUp className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Hasil berikutnya"
+            disabled={matchIndexes.length === 0}
+            onClick={() => stepMatch(1)}
+          >
+            <ChevronDown className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            aria-label="Tutup pencarian"
+            onClick={() => setSearchOpen(false)}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      )}
       <div className="chat-canvas relative flex min-h-0 flex-1 flex-col">
         <div
           ref={scrollRef}
@@ -1288,7 +1396,9 @@ function ChatRoom() {
                   animateIn={virtualRow.index === rows.length - 1}
                   selectable={selection.length > 0}
                   selected={selection.includes(m.id)}
-                  highlighted={search.hl === m.id || markedIds?.has(m.id) === true}
+                  highlighted={
+                    search.hl === m.id || markedIds?.has(m.id) === true || activeMatchId === m.id
+                  }
                   onAction={handleAction}
                 />
               </div>
