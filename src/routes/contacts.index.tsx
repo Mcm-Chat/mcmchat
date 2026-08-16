@@ -21,6 +21,7 @@ import {
   respondToRequest,
   sendContactRequest,
   setBlocked,
+  requestStatusLabel,
   type ContactWithProfile,
   type RequestRow,
 } from "@/lib/api/contacts";
@@ -81,6 +82,8 @@ function ContactsPage() {
   const blocked = (contacts ?? []).filter((c) => c.is_blocked);
   const incoming = requests?.incoming ?? [];
   const outgoing = requests?.outgoing ?? [];
+  const incomingPending = incoming.filter((r) => r.status === "pending");
+  const outgoingPending = outgoing.filter((r) => r.status === "pending");
 
   const term = q.trim().toLowerCase();
   const matches = (name: string, pin: string) =>
@@ -192,10 +195,10 @@ function ContactsPage() {
                   Disimpan{savedOnly.length > 0 ? ` (${savedOnly.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="masuk" className="flex-1 rounded-lg text-xs">
-                  Masuk{incoming.length > 0 ? ` (${incoming.length})` : ""}
+                  Masuk{incomingPending.length > 0 ? ` (${incomingPending.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="terkirim" className="flex-1 rounded-lg text-xs">
-                  Terkirim
+                  Terkirim{outgoingPending.length > 0 ? ` (${outgoingPending.length})` : ""}
                 </TabsTrigger>
                 <TabsTrigger value="blokir" className="flex-1 rounded-lg text-xs">
                   Blokir
@@ -327,48 +330,56 @@ function ContactsPage() {
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">
-            {filteredIncoming.map((r) => (
-              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-                {r.profile ? (
-                  <UserAvatar
-                    userId={r.requester_id}
-                    path={r.profile.avatar_url}
-                    version={r.profile.avatar_version}
-                    name={r.profile.display_name}
-                    color={r.profile.avatar_color}
-                  />
-                ) : (
-                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {r.profile?.display_name ?? "Pengguna"}
-                  </p>
-                  <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
-                  <p className="truncate text-xs text-muted-foreground">{r.message}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    size="icon"
-                    className="size-9 rounded-xl"
-                    aria-label="Terima"
-                    disabled={busy === r.id}
-                    onClick={() => void respond(r, "accepted")}
-                  >
-                    <Check className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Tolak"
-                    disabled={busy === r.id}
-                    onClick={() => void respond(r, "rejected")}
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </div>
-              </li>
-            ))}
+            {filteredIncoming.map((r) => {
+              const status = requestStatusLabel(r, "incoming");
+              return (
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  {r.profile ? (
+                    <UserAvatar
+                      userId={r.requester_id}
+                      path={r.profile.avatar_url}
+                      version={r.profile.avatar_version}
+                      name={r.profile.display_name}
+                      color={r.profile.avatar_color}
+                    />
+                  ) : (
+                    <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {r.profile?.display_name ?? "Pengguna"}
+                    </p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
+                    <p className="truncate text-xs text-muted-foreground">{r.message}</p>
+                    <StatusBadge tone={status.tone} className="mt-1">
+                      {status.label}
+                    </StatusBadge>
+                  </div>
+                  {r.status === "pending" && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        size="icon"
+                        className="size-9 rounded-xl"
+                        aria-label="Terima"
+                        disabled={busy === r.id}
+                        onClick={() => void respond(r, "accepted")}
+                      >
+                        <Check className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Tolak"
+                        disabled={busy === r.id}
+                        onClick={() => void respond(r, "rejected")}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )
       ) : tab === "terkirim" ? (
@@ -380,28 +391,31 @@ function ContactsPage() {
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">
-            {filteredOutgoing.map((r) => (
-              <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-                {r.profile ? (
-                  <UserAvatar
-                    userId={r.target_id}
-                    path={r.profile.avatar_url}
-                    version={r.profile.avatar_version}
-                    name={r.profile.display_name}
-                    color={r.profile.avatar_color}
-                  />
-                ) : (
-                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {r.profile?.display_name ?? "Pengguna"}
-                  </p>
-                  <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
-                </div>
-                <StatusBadge tone="warning">Menunggu</StatusBadge>
-              </li>
-            ))}
+            {filteredOutgoing.map((r) => {
+              const status = requestStatusLabel(r, "outgoing");
+              return (
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  {r.profile ? (
+                    <UserAvatar
+                      userId={r.target_id}
+                      path={r.profile.avatar_url}
+                      version={r.profile.avatar_version}
+                      name={r.profile.display_name}
+                      color={r.profile.avatar_color}
+                    />
+                  ) : (
+                    <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {r.profile?.display_name ?? "Pengguna"}
+                    </p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{r.profile?.pin}</p>
+                  </div>
+                  <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
+                </li>
+              );
+            })}
           </ul>
         )
       ) : filteredBlocked.length === 0 ? (
