@@ -71,6 +71,31 @@ function ContactDetailPage() {
   const card = profile.data?.card;
   const full = profile.data?.full;
 
+  // Ringkasan percakapan langsung yang sudah ada (tanpa membuat percakapan baru).
+  const summary = useQuery({
+    queryKey: ["contact-conv-summary", userId, id],
+    enabled: !!userId && !!rel?.connected,
+    queryFn: async () => {
+      const convs = await listConversations(userId!);
+      return convs.find((c) => c.type === "direct" && c.other?.id === id) ?? null;
+    },
+  });
+  const conv = summary.data ?? null;
+
+  const openChat = async () => {
+    const convId = conv?.id ?? (await getOrCreateDirect(id));
+    await navigate({ to: "/chat/$id", params: { id: convId } });
+  };
+
+  const startCallWith = async (kind: "audio" | "video") => {
+    const convId = conv?.id ?? (await getOrCreateDirect(id));
+    await navigate({
+      to: "/call/prepare/$conversationId",
+      params: { conversationId: convId },
+      search: { kind },
+    });
+  };
+
   const run = async (fn: () => Promise<unknown>, done: string) => {
     setBusy(true);
     try {
@@ -140,21 +165,57 @@ function ContactDetailPage() {
             </p>
           )}
 
+          {rel?.connected && (
+            <section className="space-y-3 rounded-2xl border bg-card p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">Ringkasan percakapan</p>
+                  <p className="mt-0.5 truncate text-sm">
+                    {summary.isLoading
+                      ? "Memuat…"
+                      : conv?.lastMessage
+                        ? previewOf(conv.lastMessage)
+                        : "Belum ada pesan"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {conv?.lastMessage
+                      ? waktuStatus(conv.lastMessage.created_at)
+                      : "Mulai obrolan pertama kalian"}
+                  </p>
+                </div>
+                {conv && conv.unread > 0 && (
+                  <StatusBadge tone="warning">{conv.unread} belum dibaca</StatusBadge>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  className="h-11 rounded-xl"
+                  disabled={busy}
+                  onClick={() => void run(openChat, "Membuka chat")}
+                >
+                  <MessageSquare className="size-4" /> Chat
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-xl"
+                  disabled={busy}
+                  onClick={() => void run(() => startCallWith("audio"), "Menyiapkan panggilan")}
+                >
+                  <Phone className="size-4" /> Suara
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-11 rounded-xl"
+                  disabled={busy}
+                  onClick={() => void run(() => startCallWith("video"), "Menyiapkan panggilan")}
+                >
+                  <Video className="size-4" /> Video
+                </Button>
+              </div>
+            </section>
+          )}
+
           <div className="grid gap-2">
-            {rel?.connected && (
-              <Button
-                className="h-12 rounded-xl"
-                disabled={busy}
-                onClick={() =>
-                  void run(async () => {
-                    const conv = await getOrCreateDirect(id);
-                    await navigate({ to: "/chat/$id", params: { id: conv } });
-                  }, "Membuka chat")
-                }
-              >
-                <MessageSquare className="size-4" /> Buka chat
-              </Button>
-            )}
 
             {!rel?.connected && !rel?.blockedByMe && !rel?.outgoingPending && (
               <Button
