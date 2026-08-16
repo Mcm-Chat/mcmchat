@@ -305,7 +305,46 @@ export function QrScannerDialog({
               Meminta izin kamera… setujui permintaan izin yang muncul.
             </div>
           )}
-          {phase !== "idle" && phase !== "requesting" && phase !== "streaming" && (
+          {phase === "prompt" && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
+              <Camera className="size-6 text-primary" />
+              <p className="text-xs text-muted-foreground">
+                MCM butuh izin kamera untuk membaca QR PIN. Kamera hanya aktif di layar ini dan
+                tidak ada foto yang disimpan.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="rounded-xl"
+                  onClick={() => {
+                    setArmed(true);
+                    setAttempt((a) => a + 1);
+                  }}
+                >
+                  <Camera className="size-4" /> Izinkan kamera
+                </Button>
+                {onManualPin && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onManualPin();
+                    }}
+                  >
+                    <Keyboard className="size-4" /> Masukkan PIN manual
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+          {phase !== "idle" &&
+            phase !== "prompt" &&
+            phase !== "requesting" &&
+            phase !== "streaming" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
               <CameraOff className="size-6 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">{PHASE_COPY[phase]}</p>
@@ -314,7 +353,10 @@ export function QrScannerDialog({
                   type="button"
                   size="sm"
                   className="rounded-xl"
-                  onClick={() => setAttempt((a) => a + 1)}
+                  onClick={() => {
+                    setArmed(true);
+                    setAttempt((a) => a + 1);
+                  }}
                 >
                   <RefreshCw className="size-4" /> Coba lagi
                 </Button>
@@ -334,6 +376,20 @@ export function QrScannerDialog({
                     }}
                   >
                     <Settings className="size-4" /> Buka setelan
+                  </Button>
+                )}
+                {onManualPin && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onManualPin();
+                    }}
+                  >
+                    <Keyboard className="size-4" /> Masukkan PIN manual
                   </Button>
                 )}
               </div>
