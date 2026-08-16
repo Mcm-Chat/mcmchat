@@ -1139,6 +1139,27 @@ function ChatRoom() {
                 >
                   <Info className="size-5" />
                 </Button>
+                {unreadQueue.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative size-9"
+                    aria-label={
+                      nextUnread
+                        ? `Unread berikutnya: ${nextUnread.title_resolved}`
+                        : "Tidak ada unread berikutnya"
+                    }
+                    disabled={!nextUnread}
+                    onClick={() => void openNextUnread()}
+                  >
+                    <ArrowRight className="size-5" />
+                    {remainingUnreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
+                        {remainingUnreadCount > 99 ? "99+" : remainingUnreadCount}
+                      </span>
+                    )}
+                  </Button>
+                )}
               </>
             }
           />
