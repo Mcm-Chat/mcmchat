@@ -481,33 +481,45 @@ function SalesCard({ message }: { message: MessageRow }) {
 }
 
 function ImageBubble({ message }: { message: MessageRow }) {
-  const url = useSignedUrl("chat-media", message.attachment_path);
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const url = useSignedUrl("chat-media", message.attachment_path, inView);
   const [open, setOpen] = useState(false);
-  return url ? (
+  const [loaded, setLoaded] = useState(false);
+  return (
     <>
       <button
         type="button"
         aria-label="Lihat foto"
+        disabled={!url}
         onClick={(e) => {
           e.stopPropagation();
           setOpen(true);
         }}
         className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <img
-          src={url}
-          alt={message.body || "Foto terkirim"}
-          loading="lazy"
-          decoding="async"
-          className="max-h-56 w-52 max-w-full rounded-xl object-cover"
-        />
+        <div ref={ref} className="relative h-56 w-52 max-w-full overflow-hidden rounded-xl">
+          {!loaded && (
+            <MediaSkeleton className="absolute inset-0 size-full rounded-xl">
+              <ImageIcon className="size-7 opacity-70" />
+            </MediaSkeleton>
+          )}
+          {url && (
+            <img
+              src={url}
+              alt={message.body || "Foto terkirim"}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => setLoaded(true)}
+              onError={() => setLoaded(true)}
+              className={`size-full rounded-xl object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+            />
+          )}
+        </div>
       </button>
-      {open && <PhotoViewer url={url} caption={message.body} onClose={() => setOpen(false)} />}
+      {open && url && (
+        <PhotoViewer url={url} caption={message.body} onClose={() => setOpen(false)} />
+      )}
     </>
-  ) : (
-    <div className="flex h-28 w-44 items-center justify-center rounded-xl bg-black/15">
-      <ImageIcon className="size-7 opacity-70" />
-    </div>
   );
 }
 
@@ -522,17 +534,14 @@ function DocumentBubble({ message }: { message: MessageRow }) {
 }
 
 function StickerBubble({ message }: { message: MessageRow }) {
-  const url = useSignedUrl("chat-media", message.attachment_path);
-  return url ? (
-    <img
-      src={url}
+  return (
+    <LazyStorageImage
+      bucket="chat-media"
+      path={message.attachment_path}
       alt={message.body || "Stiker"}
-      loading="lazy"
-      decoding="async"
-      className="size-32 object-contain"
+      frameClassName="size-32 rounded-2xl"
+      className="object-contain"
     />
-  ) : (
-    <div className="size-32 rounded-2xl bg-black/10" />
   );
 }
 
