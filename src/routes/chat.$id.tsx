@@ -1223,6 +1223,11 @@ function ChatRoom() {
           </div>
         ))}
         <div ref={bottomRef} />
+        {unreadMarked && (
+          <p role="status" aria-live="polite" className="sr-only">
+            {unread.count} pesan belum dibaca disorot, mulai dari pesan pertama.
+          </p>
+        )}
         </div>
       </div>
 
