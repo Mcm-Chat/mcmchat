@@ -65,14 +65,19 @@ const CATEGORY_ROWS: { key: keyof NotificationsPrefs; label: string; desc: strin
     desc: "Channel: Pesan • prioritas tinggi, balas cepat dari notifikasi",
   },
   {
-    key: "group",
-    label: "Pesan grup",
-    desc: "Channel: Grup • diringkas jadi satu tumpukan per grup",
-  },
-  {
     key: "calls",
     label: "Panggilan",
     desc: "Channel: Panggilan • dering penuh dan tampil di layar kunci",
+  },
+  {
+    key: "ledger",
+    label: "Catatan (hutang & pembayaran)",
+    desc: "Channel: Keuangan • pembayaran, jatuh tempo, dan persetujuan catatan",
+  },
+  {
+    key: "group",
+    label: "Pesan grup",
+    desc: "Channel: Grup • diringkas jadi satu tumpukan per grup",
   },
   {
     key: "tasks",
@@ -80,11 +85,6 @@ const CATEGORY_ROWS: { key: keyof NotificationsPrefs; label: string; desc: strin
     desc: "Channel: Tugas • perintah baru dan tugas selesai",
   },
   { key: "sales", label: "Penjualan", desc: "Channel: Penjualan • nota dan pesanan baru" },
-  {
-    key: "ledger",
-    label: "Hutang & pembayaran",
-    desc: "Channel: Keuangan • pembayaran dan jatuh tempo",
-  },
 ];
 
 function stateTone(state: PermState) {
