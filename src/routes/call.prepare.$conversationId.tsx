@@ -42,6 +42,7 @@ export const Route = createFileRoute("/call/prepare/$conversationId")({
     kind: s["kind"] === "video" ? "video" : s["kind"] === "audio" ? "audio" : undefined,
   }),
   component: PreCallScreen,
+  pendingComponent: () => <CallSkeleton label="Menyiapkan perangkat…" />,
 });
 
 type MediaState = "idle" | "processing" | "ready" | "error";
