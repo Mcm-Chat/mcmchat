@@ -25,8 +25,29 @@ import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
 
+type StatusBadge = { label: string; className: string };
+
+/** Badge status relasi yang akurat untuk kartu hasil pencarian PIN. */
+function relationBadges(r: ContactRelation): StatusBadge[] {
+  const out: StatusBadge[] = [];
+  if (r.blockedMe)
+    out.push({ label: "Anda diblokir", className: "bg-destructive/10 text-destructive" });
+  if (r.blockedByMe)
+    out.push({ label: "Anda memblokir", className: "bg-destructive/10 text-destructive" });
+  if (r.connected)
+    out.push({ label: "Sudah terhubung", className: "bg-emerald-500/15 text-emerald-600" });
+  if (r.incomingRequest)
+    out.push({ label: "Menunggu jawaban Anda", className: "bg-primary/10 text-primary" });
+  if (r.outgoingPending)
+    out.push({ label: "Menunggu jawaban mereka", className: "bg-amber-500/15 text-amber-600" });
+  if (r.saved && !r.connected)
+    out.push({ label: "Tersimpan (belum terhubung)", className: "bg-muted text-muted-foreground" });
+  if (out.length === 0)
+    out.push({ label: "Belum terhubung", className: "bg-muted text-muted-foreground" });
+  return out;
+}
+
 export const Route = createFileRoute("/contacts/add")({
-  // Badge status relasi ditampilkan di kartu hasil pencarian.
   validateSearch: (
     search: Record<string, unknown>,
   ): { conv?: string; reason?: string; scan?: boolean } => {
