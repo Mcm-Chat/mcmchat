@@ -181,6 +181,8 @@ function ChatRoom() {
   // menandai pesan sebagai dibaca — supaya penanda pertama-belum-dibaca stabil.
   const readBaselineRef = useRef<string | null | undefined>(undefined);
   const [unreadDismissed, setUnreadDismissed] = useState(false);
+  /** Sorotan sementara pada pesan belum dibaca setelah tombol ditekan. */
+  const [unreadMarked, setUnreadMarked] = useState(false);
   const [connBannerHidden, setConnBannerHidden] = useState(false);
   // Pemulihan posisi baca & fokus komposer saat chat yang sama dibuka lagi.
   const restoreRef = useRef<ReturnType<typeof loadChatView> | null | undefined>(undefined);
