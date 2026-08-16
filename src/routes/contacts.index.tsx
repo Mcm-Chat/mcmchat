@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Check, MessageSquare, Search, UserPlus, UserX, X } from "lucide-react";
+import { Ban, Check, MessageSquare, ScanLine, Search, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -167,11 +167,18 @@ function ContactsPage() {
           title="Kontak"
           subtitle={`${active.length} terhubung · ${savedOnly.length} disimpan`}
           actions={
-            <Button variant="ghost" size="icon" aria-label="Tambah kontak" asChild>
-              <Link to="/contacts/add">
-                <UserPlus className="size-5" />
-              </Link>
-            </Button>
+            <div className="flex items-center">
+              <Button variant="ghost" size="icon" aria-label="Pindai QR kontak" asChild>
+                <Link to="/contacts/add" search={{ scan: true }}>
+                  <ScanLine className="size-5" />
+                </Link>
+              </Button>
+              <Button variant="ghost" size="icon" aria-label="Tambah kontak" asChild>
+                <Link to="/contacts/add">
+                  <UserPlus className="size-5" />
+                </Link>
+              </Button>
+            </div>
           }
         >
           <div className="px-3 pb-3">
