@@ -7,6 +7,7 @@ import type { NotifCategory } from "@/lib/push/payload";
  */
 export function categoryOfKind(kind: string | null | undefined): NotifCategory | null {
   const k = (kind ?? "").toLowerCase();
+  if (k.includes("contact") || k.includes("kontak")) return "chat";
   if (k.includes("call") || k.includes("panggil")) return "calls";
   if (k.includes("group") || k.includes("grup")) return "group";
   if (k.includes("ledger") || k.includes("hutang") || k.includes("payment") || k.includes("bayar"))
