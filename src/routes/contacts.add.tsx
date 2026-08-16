@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Search, Send } from "lucide-react";
+import { History, Search, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -24,6 +24,14 @@ import {
 import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
+import {
+  clearScanHistory,
+  readScanHistory,
+  recordScan,
+  removeScan,
+  scanAgeLabel,
+  type ScanHistoryEntry,
+} from "@/lib/contacts/scan-history";
 
 type StatusBadge = { label: string; className: string };
 
@@ -87,6 +95,12 @@ function AddContactPage() {
   const [temporary, setTemporary] = useState<ProfileLite | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [relation, setRelation] = useState<ContactRelation | null>(null);
+  const [history, setHistory] = useState<ScanHistoryEntry[]>([]);
+
+  // Riwayat pindai 7 hari terakhir (lokal per akun).
+  useEffect(() => {
+    if (userId) setHistory(readScanHistory(userId));
+  }, [userId]);
 
   // Status relasi selalu disegarkan setiap profil hasil pencarian berubah agar
   // badge yang tampil benar-benar mencerminkan kondisi di server.
@@ -144,6 +158,17 @@ function AddContactPage() {
         return;
       }
       setScanned(result);
+      if (userId)
+        setHistory(
+          recordScan(userId, {
+            id: result.id,
+            pin: result.pin,
+            name: result.display_name,
+            avatarUrl: result.avatar_url ?? null,
+            avatarColor: result.avatar_color ?? null,
+            avatarVersion: result.avatar_version ?? null,
+          }),
+        );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Pengguna tidak ditemukan.");
     }
