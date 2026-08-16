@@ -78,7 +78,12 @@ import { discardEntry, enqueueText, retryEntry, onOutboxSent, useOutbox } from "
 import { useConnectionState } from "@/lib/realtime/connection";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
 import { useTyping } from "@/lib/api/presence";
-import { isNearBottom, isUserScrolling, shouldAutoScroll } from "@/lib/chat/scroll";
+import {
+  isNearBottom,
+  isUserScrolling,
+  shouldAutoScroll,
+  USER_SCROLL_GRACE_MS,
+} from "@/lib/chat/scroll";
 
 export const Route = createFileRoute("/chat/$id")({
   validateSearch: (search: Record<string, unknown>) =>
