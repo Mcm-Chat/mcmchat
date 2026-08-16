@@ -288,9 +288,6 @@ function AddContactPage() {
           </p>
         </div>
 
-        {searched && !found && !error && (
-          <></>
-        )}
         {history.length > 0 && (
           <div className="card-soft space-y-2 p-4">
             <div className="flex items-center justify-between gap-2">
@@ -316,9 +313,9 @@ function AddContactPage() {
                   <UserAvatar
                     userId={h.id}
                     path={h.avatarUrl ?? null}
-                    version={h.avatarVersion ?? null}
+                    version={h.avatarVersion ?? undefined}
                     name={h.name}
-                    color={h.avatarColor ?? null}
+                    color={h.avatarColor ?? undefined}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{h.name}</p>
