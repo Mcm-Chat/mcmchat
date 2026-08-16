@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { scopedKey } from "@/lib/session-scope";
+import { shareUrl } from "@/lib/site";
 import { friendly, unwrap } from "./db";
 import { notifyTaskAssigned } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
@@ -239,8 +240,7 @@ export async function reopenJob(jobId: string) {
   if (error) throw new Error(friendly(error.message, "Gagal membuka ulang tugas"));
 }
 
-export const prepareUrl = (token: string) =>
-  `${typeof window === "undefined" ? "" : window.location.origin}/prepare/${token}`;
+export const prepareUrl = (token: string) => shareUrl(`/prepare/${token}`);
 
 /**
  * Token plaintext tidak bisa dibaca ulang dari database (hanya hash yang disimpan),

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { shareUrl } from "@/lib/site";
 import { friendly, unwrap } from "./db";
 import { fetchProfileCards } from "./profiles";
 import type { Tables } from "@/integrations/supabase/types";
@@ -89,8 +90,7 @@ export async function rotateTaskToken(
   return data as unknown as { id: string; token: string };
 }
 
-export const taskUrl = (token: string) =>
-  `${typeof window === "undefined" ? "" : window.location.origin}/prepare/${token}`;
+export const taskUrl = (token: string) => shareUrl(`/prepare/${token}`);
 
 export async function listBusinessEmployees(businessId: string) {
   const rows = unwrap(

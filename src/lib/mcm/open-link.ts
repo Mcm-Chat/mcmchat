@@ -8,6 +8,15 @@ const INTERNAL_HOSTS = new Set(
 );
 
 /**
+ * Host hosting Lovable (pratinjau/terbit). Tautan lama yang terlanjur dikirim
+ * dari host pratinjau tetap dibuka DI DALAM aplikasi, bukan di browser luar
+ * yang meminta login Lovable dan berakhir "Halaman gagal dimuat".
+ */
+function isAppHost(host: string): boolean {
+  return host.endsWith(".lovable.app");
+}
+
+/**
  * Kembalikan path internal (`/chat?x=1#y`) bila URL menunjuk ke aplikasi ini,
  * atau `null` bila link tersebut eksternal / bukan http(s).
  */
@@ -21,7 +30,7 @@ export function internalPathOf(href: string): string | null {
   if (u.protocol !== "http:" && u.protocol !== "https:") return null;
   const host = u.hostname.toLowerCase();
   const sameOrigin = typeof window !== "undefined" && host === window.location.hostname;
-  if (!sameOrigin && !INTERNAL_HOSTS.has(host)) return null;
+  if (!sameOrigin && !INTERNAL_HOSTS.has(host) && !isAppHost(host)) return null;
   return `${u.pathname}${u.search}${u.hash}` || "/";
 }
 

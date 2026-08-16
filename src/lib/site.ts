@@ -17,6 +17,24 @@ export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+/**
+ * URL yang dibagikan ke orang lain (tautan perintah penyiapan, QR, dsb).
+ *
+ * Selalu memakai domain produksi, KECUALI saat dijalankan di localhost
+ * (pengembangan) agar tautan tetap bisa dibuka di mesin yang sama. Tanpa ini,
+ * tautan yang dibuat dari host pratinjau ikut tersimpan di riwayat chat dan
+ * penerima mendapat halaman gagal dimuat.
+ */
+export function shareUrl(path: string): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1" || host.endsWith(".local")) {
+      return `${window.location.origin}${path.startsWith("/") ? path : `/${path}`}`;
+    }
+  }
+  return absoluteUrl(path);
+}
+
 /** Gambar pratinjau sosial (absolut, https). */
 export const OG_IMAGE = absoluteUrl("/icon-512.png");
 
