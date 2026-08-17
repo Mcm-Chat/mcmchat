@@ -54,10 +54,9 @@ export function PhotoViewer({
         : scale <= MIN_SCALE
           ? ", ukuran asli"
           : "";
-    // Spasi berganti agar pengumuman berulang dengan nilai sama tetap terbaca.
-    setAnnouncement((prev) =>
-      `Zoom ${pct} persen${limit}`.padEnd(prev.endsWith(" ") ? 0 : 1, " "),
-    );
+    // Spasi berselang agar pengumuman dengan teks sama tetap dibacakan ulang.
+    const text = `Zoom ${pct} persen${limit}`;
+    setAnnouncement((prev) => (prev.endsWith("\u00a0") ? text : `${text}\u00a0`));
   }, [pct, scale]);
   // State terbaru untuk listener wheel non-passive yang dipasang sekali.
   const view = useRef({ scale: 1, offset: { x: 0, y: 0 } });
