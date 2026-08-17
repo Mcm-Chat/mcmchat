@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Download, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MIN_SCALE = 1;
@@ -38,6 +38,27 @@ export function PhotoViewer({
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ dist: number; scale: number } | null>(null);
   const lastTap = useRef(0);
+  const pct = Math.round(scale * 100);
+  // Teks yang diumumkan pembaca layar setiap level zoom berubah (termasuk saat
+  // batas minimum/maksimum tercapai) agar status selalu terdengar.
+  const [announcement, setAnnouncement] = useState("");
+  const firstAnnounce = useRef(true);
+  useEffect(() => {
+    if (firstAnnounce.current) {
+      firstAnnounce.current = false;
+      return;
+    }
+    const limit =
+      scale >= MAX_SCALE
+        ? ", zoom maksimum"
+        : scale <= MIN_SCALE
+          ? ", ukuran asli"
+          : "";
+    // Spasi berganti agar pengumuman berulang dengan nilai sama tetap terbaca.
+    setAnnouncement((prev) =>
+      `Zoom ${pct} persen${limit}`.padEnd(prev.endsWith(" ") ? 0 : 1, " "),
+    );
+  }, [pct, scale]);
   // State terbaru untuk listener wheel non-passive yang dipasang sekali.
   const view = useRef({ scale: 1, offset: { x: 0, y: 0 } });
   view.current = { scale, offset };
