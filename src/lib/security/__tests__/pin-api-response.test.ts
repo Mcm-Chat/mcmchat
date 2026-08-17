@@ -20,7 +20,18 @@ const ANON =
 const USER_TOKEN = process.env["LOVABLE_BROWSER_SUPABASE_ACCESS_TOKEN"] ?? "";
 
 const HAS_API = Boolean(URL_BASE && ANON);
+/** Di CI (PIN_GATE_STRICT=1) tes API ini WAJIB jalan; skip diperlakukan sebagai gagal. */
+const STRICT = process.env["PIN_GATE_STRICT"] === "1";
 const d = HAS_API ? describe : describe.skip;
+
+describe("gate API PIN wajib aktif di CI", () => {
+  it("kredensial Data API tersedia saat PIN_GATE_STRICT=1", () => {
+    expect(
+      HAS_API || !STRICT,
+      "PIN_GATE_STRICT=1 tetapi SUPABASE_URL/PUBLISHABLE_KEY tidak diset: gate respons API PIN tidak dieksekusi",
+    ).toBe(true);
+  });
+});
 
 /**
  * Rahasia PIN: `pin`, `staff_pin`, `delivered_pin`, `pinCode`, `pin_hash`.

@@ -13,7 +13,18 @@ import { describe, expect, it } from "vitest";
  */
 
 const HAS_DB = Boolean(process.env["PGHOST"]);
+/** Di CI (PIN_GATE_STRICT=1) tes ini WAJIB jalan; skip diperlakukan sebagai gagal. */
+const STRICT = process.env["PIN_GATE_STRICT"] === "1";
 const d = HAS_DB ? describe : describe.skip;
+
+describe("gate PIN wajib aktif di CI", () => {
+  it("kredensial DB tersedia saat PIN_GATE_STRICT=1", () => {
+    expect(
+      HAS_DB || !STRICT,
+      "PIN_GATE_STRICT=1 tetapi PGHOST tidak diset: gate GRANT/SELECT PIN tidak dieksekusi",
+    ).toBe(true);
+  });
+});
 
 function q(sql: string): string[] {
   const out = execFileSync("psql", ["-At", "-c", sql], { encoding: "utf8" });
