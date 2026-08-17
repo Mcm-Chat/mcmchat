@@ -79,7 +79,7 @@ async def run(state):
                 errors.append(f"console: {msg.text[:200]}")
 
         page.on("console", on_console)
-        page.on("response", lambda r: (r.status >= 400 and print("HTTP", r.status, r.url[:200])))
+        page.on("response", lambda r: r.status >= 400 and errors.append(f"http {r.status}: {r.url[:160]}") if r.status >= 400 and not any(k in r.url for k in IGNORE) else None)
         page.on("pageerror", lambda e: errors.append(f"pageerror: {str(e)[:200]}"))
 
         try:
