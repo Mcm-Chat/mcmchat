@@ -15,6 +15,7 @@
     "test:security": "vitest run src/lib/security/__tests__",
     "test:e2e:calls-a11y": "python3 e2e/calls_focus_a11y.py",
     "test:e2e:chat-swipe": "python3 e2e/chat_swipe_scroll.py",
+    "test:e2e:chat-media": "python3 e2e/chat_media_overflow.py",
     "typecheck": "tsgo --noEmit",
     "verify:assetlinks": "node scripts/verify-assetlinks.mjs",
     "verify:aab": "node scripts/verify-aab.mjs",
