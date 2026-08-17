@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useInView } from "@/lib/perf/use-in-view";
-import { LazyStorageImage, MediaSkeleton } from "@/components/mcm/lazy-media";
+import { LazyStorageImage, MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
 import {
   Archive,
   BellOff,
@@ -365,12 +365,11 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
             }}
             className="size-full"
           >
-            <img
+            <RemoteImage
               src={url}
               alt="Foto produk"
-              loading="lazy"
-              decoding="async"
-              className="size-full object-cover"
+              frameClassName="size-full rounded-lg"
+              className="object-cover"
             />
           </button>
         ) : (
@@ -405,11 +404,7 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
   if (p.type !== "status_reply") return null;
   return (
     <div className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]">
-      {url ? (
-        <img src={url} alt="" className="size-8 rounded object-cover" />
-      ) : (
-        <div className="size-8 rounded bg-black/20" />
-      )}
+      <RemoteImage src={url} alt="" frameClassName="size-8 shrink-0 rounded" className="object-cover" />
       <span className="min-w-0">
         <span className="block font-medium">Membalas status</span>
         <span className="line-clamp-1 opacity-80">{p.preview}</span>

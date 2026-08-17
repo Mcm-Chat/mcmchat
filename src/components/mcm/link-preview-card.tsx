@@ -4,6 +4,9 @@ import { Link2 } from "lucide-react";
 import { fetchLinkPreview } from "@/lib/api/link-preview.functions";
 import { cn } from "@/lib/utils";
 import { useLinkOpener } from "@/lib/mcm/use-link-opener";
+import { MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
+
+const CARD_CLS = "mt-1.5 block w-56 max-w-[68vw] overflow-hidden rounded-xl border text-left";
 
 const URL_RE = /(?:https?:\/\/|www\.)[^\s<>"']+/gi;
 
@@ -28,13 +31,31 @@ export function firstUrlOf(text?: string | null): string | null {
 export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boolean }) {
   const unfurl = useServerFn(fetchLinkPreview);
   const openLink = useLinkOpener();
-  const { data } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["link-preview", url],
     queryFn: () => unfurl({ data: { url } }),
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 24,
     retry: false,
   });
+  if (isPending) {
+    return (
+      <div
+        aria-hidden
+        className={cn(
+          CARD_CLS,
+          onBubble ? "border-current/25 bg-black/10" : "border-border/70 bg-background/70",
+        )}
+      >
+        <MediaSkeleton className="h-28 w-full rounded-none" />
+        <div className="space-y-1.5 px-2.5 py-2">
+          <MediaSkeleton className="h-2.5 w-20 rounded" />
+          <MediaSkeleton className="h-3 w-full rounded" />
+          <MediaSkeleton className="h-3 w-3/4 rounded" />
+        </div>
+      </div>
+    );
+  }
   if (!data) return null;
   const host = (() => {
     try {
@@ -55,19 +76,17 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
       }}
       onPointerDown={(e) => e.stopPropagation()}
       className={cn(
-        "mt-1.5 block w-56 max-w-[68vw] overflow-hidden rounded-xl border text-left transition-opacity active:opacity-80",
+        CARD_CLS,
+        "transition-opacity active:opacity-80",
         onBubble ? "border-current/25 bg-black/10" : "border-border/70 bg-background/70",
       )}
     >
       {data.image && (
-        <img
+        <RemoteImage
           src={data.image}
           alt={data.title ?? "Pratinjau link"}
-          loading="lazy"
-          className="h-28 w-full bg-muted object-cover"
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
+          frameClassName="h-28 w-full"
+          className="object-cover"
         />
       )}
       <div className="space-y-0.5 px-2.5 py-2">
