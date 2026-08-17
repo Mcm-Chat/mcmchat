@@ -69,6 +69,18 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
+      # Cek dulu: kalau secret PG*/Data API belum diset, gagal dengan pesan
+      # jelas (nama secret + langkah perbaikan) sebelum tes menabrak error koneksi.
+      - name: Verifikasi secret database (PG*) tersedia
+        run: bun run verify:db-secrets
+        env:
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
       # PIN_GATE_STRICT=1 membuat tes gagal (bukan skip) bila kredensial DB /
       # Data API tidak tersedia, sehingga setiap PR benar-benar dievaluasi
       # terhadap jalur GRANT/SELECT dan respons API yang bisa membocorkan PIN.
