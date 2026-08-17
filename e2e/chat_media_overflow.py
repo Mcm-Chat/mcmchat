@@ -212,8 +212,13 @@ MEASURE_JS = """
         });
       }
     }
-    const br = bubble.getBoundingClientRect();
-    if (br.width > inner * 0.88 + tol) wide.push({ kind, width: Math.round(br.width), inner: Math.round(inner) });
+    // Baris pembungkus memang selebar kontainer; yang dibatasi adalah kolom isi bubble.
+    const content = bubble.querySelector('[data-message-body]');
+    if (content) {
+      const br = content.getBoundingClientRect();
+      if (br.width > inner * 0.88 + tol)
+        wide.push({ kind, width: Math.round(br.width), inner: Math.round(inner) });
+    }
   }
   return {
     count: bubbles.length,
