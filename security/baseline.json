@@ -1,0 +1,555 @@
+{
+  "migrations": [
+    {
+      "file": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "sha256": "f415772c0db13297edde4da152c05c1131364e733c01892dc1d7d3336acd91fd"
+    },
+    {
+      "file": "20260812123605_049cddda-be4c-45dc-a991-e29c9e5fbe09.sql",
+      "sha256": "031563b9cae3fccd44c267206aa29405fcf39d7218ec4fcea4cdab05cb9d9311"
+    },
+    {
+      "file": "20260812123650_bee838b4-4b22-40bf-a86c-740a2c0ad681.sql",
+      "sha256": "4d501065bf7166003fd37f150620ff5e7ff32292e34c893f52181a483ea514e8"
+    },
+    {
+      "file": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "sha256": "da7b809068e41d4751783825a8cb4fab172f07cf49e3aa32858a09bfa4a94b3d"
+    },
+    {
+      "file": "20260812125334_ef29249d-712d-4c32-ad97-0b826b896719.sql",
+      "sha256": "422654aada7761bb070849d1704f5f149542f2eb80be9c65381e89ff08472d5c"
+    },
+    {
+      "file": "20260812125545_4cd377db-afc1-4ec3-ac04-927e478ae5f1.sql",
+      "sha256": "ff8e8f68d2983368c3e92fd8d60ce899dbe7f1fea76a926eecfd57954245798f"
+    },
+    {
+      "file": "20260812130058_61455fcf-d686-429f-8aea-7c77dc2e5f6f.sql",
+      "sha256": "5461bd8a15b0934c0131317efb57d5ef79555f25795222c643a2df03fd251c40"
+    },
+    {
+      "file": "20260812130133_31fc8305-e4d6-47eb-9225-f008f8d3e0f8.sql",
+      "sha256": "15afd710d93befa6be17f648883ff355721d889c67819dbcc5e4a72b3115ff88"
+    },
+    {
+      "file": "20260812131706_d35775c0-1ebc-498c-917f-ffcbba064756.sql",
+      "sha256": "f2e1b44689eacebc156c11d43cfbfa9a99ac7b4c15a845145c2cf0d586153f6c"
+    },
+    {
+      "file": "20260812132545_34e83352-a726-4148-b9cc-c1c81fd63b3c.sql",
+      "sha256": "b01a9625c45edf6002711da484e4a9d2939ac58488b620361e915ab1ce51ae23"
+    },
+    {
+      "file": "20260812133146_93588323-d375-48cf-ad2e-f0d199b7df3b.sql",
+      "sha256": "5653c1a76ad66a91cc7613c20656c4a3858dad62fc1fcb52c4d29dc127c7e9b6"
+    },
+    {
+      "file": "20260812134028_88c5be26-d834-4380-85cf-6f33b80001a4.sql",
+      "sha256": "36811aae6832ff2ef3d183c61e8670ca9b86525a651f55855172eca24e8a7606"
+    },
+    {
+      "file": "20260812134905_772d4d6f-e709-4e0e-b196-d6ce09c06e55.sql",
+      "sha256": "71ba9bc8235859d8e17ec8c0862e39da0f50be15c75c8665f3b50b4f7164ff82"
+    },
+    {
+      "file": "20260812145023_9b187943-5cee-4dc9-b3c1-61db826b90ed.sql",
+      "sha256": "b3ae06535f38916c9c98fdce4761a50dc9b4bc5d69aba47579198c521b7ee656"
+    },
+    {
+      "file": "20260812150829_7b1de060-3608-4f5a-977c-4de9b4192235.sql",
+      "sha256": "991809603ed326ad7d63e913e5954565787d9b86ccbcab2564539cc23119f0d9"
+    },
+    {
+      "file": "20260812151817_039e2377-1d64-4c5d-80fe-4a6b10f9a7f5.sql",
+      "sha256": "78151fa656dc58308f0d0b5e958fd613fe16ac69b86ba6d4038d42aba507f537"
+    },
+    {
+      "file": "20260812152903_d1b9e09e-7dee-41c7-9f3f-13d908ceabdf.sql",
+      "sha256": "1a7f45b137dff657b2acb2b795b1effe8e0fe2c8b1fbbc5ad852ee015dafab9e"
+    },
+    {
+      "file": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "sha256": "ba3f436d1e549e3e76e170b2adc93bdce410e3b410ff7a02d5a3f104e1daaf69"
+    },
+    {
+      "file": "20260812154414_a4cd3b4d-e088-46e3-8a63-649300b14571.sql",
+      "sha256": "9ca70a0eabf8e8d4edfc1541a0e608688d1e3724e7d03d0d36232a83625a8c35"
+    },
+    {
+      "file": "20260812154445_e260d727-80ff-4e5f-968d-26f7c9eaf061.sql",
+      "sha256": "7be9073f53427aedfcff70f94d04128e6e32d6755734de5f408e209a7c53b5db"
+    },
+    {
+      "file": "20260812211216_c1e953b4-d375-4c5d-84e4-12dc4967a2ad.sql",
+      "sha256": "b46993fd7fdd4b94b9042d95ea50bacaac5c38356d42314159134d67da65d33a"
+    },
+    {
+      "file": "20260813013741_6af850fc-023a-42ad-a4e2-7a0df780ef58.sql",
+      "sha256": "b55361c2bab78d4a4305eb16c0a2f06e6ca40f404554515279b19da98fb7445f"
+    },
+    {
+      "file": "20260813014951_0f7e808e-546b-4f87-a47a-838d39eb0bad.sql",
+      "sha256": "8b774896f75347d30d38f5006833411a8d52cbc3f8fcd2e0d3c458d69398d4af"
+    },
+    {
+      "file": "20260813055218_2067a82a-e202-4a62-b087-38d43f0f31f5.sql",
+      "sha256": "b53c6047cc55d3c7d30f00fcf9dd44bd60d7dc1272a7f792e44821ab78901f1e"
+    },
+    {
+      "file": "20260813062142_c4b9086e-5e08-4687-a9d6-8b1b37deb14a.sql",
+      "sha256": "0bd91abddd3f1324e46fca304d5d577ef12f896d04d0f37b7d5035bbaf9f39a9"
+    },
+    {
+      "file": "20260813062737_ac5391a1-fa9d-45d2-b48f-036b7eabe37e.sql",
+      "sha256": "2c2eec51235d462f8e42789e5e3435b863f2f6078abe9bf89d8c842ff485fdf0"
+    },
+    {
+      "file": "20260813065204_f61282de-8887-45cf-97f9-dbdb04b2acc3.sql",
+      "sha256": "1adeefdefb3634bb31e30f4de5cd32a6a5ace9380b34ecc72a9710b055a9fae9"
+    },
+    {
+      "file": "20260813065934_8724ad0e-d5e7-4aa4-8240-870d8cf20bca.sql",
+      "sha256": "c27cad1f333b09e5a1957c19922c30a064151b4eb92ca7e3585c4000e00de0e5"
+    },
+    {
+      "file": "20260813070219_e43074b5-134e-4825-99a1-c97c4b3e0ba8.sql",
+      "sha256": "d226e4bc1ef576f9085b0deb19f8bdecaf6cf475bcd766e2339444f84eccb5ce"
+    },
+    {
+      "file": "20260813071949_eb6afa66-3252-4cc0-9102-bb9cb3b106c6.sql",
+      "sha256": "8268b81c554417dde51bbad0490244b5a1a42b69ce5178884656502ab7924298"
+    },
+    {
+      "file": "20260813072813_c42efeb4-77f9-4163-9541-328446291536.sql",
+      "sha256": "fa278e830e15ea3716e966829e68a8bfaa7f5177169d4ff1660d721c136ed203"
+    },
+    {
+      "file": "20260813092105_82ede115-9516-4aa5-8ab4-13b5f9757fdc.sql",
+      "sha256": "a26edfceca96ad175b3eb7232dd98fe5b37265bc7c5a5f9757b74669fad57a63"
+    },
+    {
+      "file": "20260813103512_9c2db53b-f5fa-4a8d-9f75-a25f109707dd.sql",
+      "sha256": "ecf748015234ee0fafffe477e259d0a15ee6fe34841e3ba5f54eb43ab17562e3"
+    },
+    {
+      "file": "20260813103941_cce2bf79-fd54-4c38-9bd8-1b62f8e6d293.sql",
+      "sha256": "6a6a1a6a80c831568589a3f824c76f8cb5d16a1680aacb5bc49b1da2ab18bba0"
+    },
+    {
+      "file": "20260813104013_2f96495d-7bea-45b1-b460-9d7ca59e12cc.sql",
+      "sha256": "fb6c18ed97283017f98cfca7fde2a9831fc7d6d3b96ee5e3ac7d5340776a2ff5"
+    },
+    {
+      "file": "20260813113404_3e4aa4f7-026b-46af-bb77-7caab8441de4.sql",
+      "sha256": "549a71fed2fd8e3b8f7c3d29d9fabe5ea76ae25ea86ba4d9919d65528ce380f8"
+    },
+    {
+      "file": "20260813172544_c453d329-c6bb-489c-8c03-2c91f2120649.sql",
+      "sha256": "72ae971963bfb30934b638c95cd49e0a9acd276055daca52b8ed5871fd86884b"
+    },
+    {
+      "file": "20260813175238_9a7187da-a68d-4af0-bcd2-e1db70f81ee0.sql",
+      "sha256": "d1fbea4d7e0e4b5427bd8870da42336a4aae13e1f07dc35fc07627a40205432c"
+    },
+    {
+      "file": "20260814012111_9cb8ec9d-4dbc-4889-b8e7-85965455654d.sql",
+      "sha256": "5bcd280dc44ce6d7918bd2ee85a3551dd9a126c1b08f9900b1a17629d4234a57"
+    },
+    {
+      "file": "20260814013230_5244b94c-f36e-4ea8-aae7-99a728653e89.sql",
+      "sha256": "852a0805a2a1083e0a0ad5adba330aab3964345239384417c4ce282d8c498aba"
+    },
+    {
+      "file": "20260814014225_5472a45c-0790-423e-9ffe-cfb41714c749.sql",
+      "sha256": "42fb1432b707f3d9313b5e3922ae12b00be189fd2f90250342d3c9f035e57ba5"
+    },
+    {
+      "file": "20260814015355_d4956b68-fde0-4702-a67e-c25cd50a1eb6.sql",
+      "sha256": "c4ec07f13a94115aeac410e65ca109e032ef2993dfe584d6a83222d826b0ac45"
+    },
+    {
+      "file": "20260814015743_5c0a4c86-2de2-4519-a0b7-e810ae76d39d.sql",
+      "sha256": "fd0f0162998978b657937e4758f063c5ddac6dda5d4b8c2e040e0c03bcb860d4"
+    },
+    {
+      "file": "20260814020240_d1120027-e5c7-4eab-8198-507560aaa344.sql",
+      "sha256": "cd38fe6e1aad6105f341fa4cd38e30a2ea910ef8fe3147db5cb52ddd168e3ce7"
+    },
+    {
+      "file": "20260814020853_a3da2c3a-4bb3-4ac5-b327-709486b964ec.sql",
+      "sha256": "ecdd315e0ddfd16ea4457abc14b2757fecb34e9b380ff9d07e436b38a4edd577"
+    },
+    {
+      "file": "20260814021707_1ac5a11b-b422-45c8-9b0b-764d76cb5a7f.sql",
+      "sha256": "ce43dea1adc9cbc47a9c48d868e1cf6372bbff1c8a350fff4fc8a3ab23a050d7"
+    },
+    {
+      "file": "20260814032644_17b050f4-26b3-49a8-a845-4b735ceac44f.sql",
+      "sha256": "3ad17d32ca29a6a759093f2018c7a6ff1f95e8af83e5a0b405bce4d108a62290"
+    },
+    {
+      "file": "20260814032713_84c7f5f0-be57-49c0-8c66-a789f1060075.sql",
+      "sha256": "485c1e229521f44d1b05bc20581c37044022b593b6bad6eacfab72f43c79381c"
+    },
+    {
+      "file": "20260814034142_1ef4404d-9b8a-45e9-89c7-1d847e25b5d8.sql",
+      "sha256": "3c78993db4131d60ffeb8128e9aee404ff1bc437cefbeef416b727da71db010b"
+    },
+    {
+      "file": "20260814034305_18c3b774-705d-41b7-a815-5da73b01070b.sql",
+      "sha256": "fc986e4a610aa0cf9a48f6679e9132f3fbb758e940d17180adc2916b64cdfa72"
+    },
+    {
+      "file": "20260814034358_9bad95f6-dc6c-4b72-9a90-c2a97a3a48e1.sql",
+      "sha256": "3e08f35dfd6d80f3baea9517ae3fce901dcfb65e595f93fd30d66586c565d4af"
+    },
+    {
+      "file": "20260814034444_33b60628-c4fa-46ae-b669-c8d6141444c5.sql",
+      "sha256": "164defe957f863a9c8d5dbd2cd72d938de479eb59448367187d803b650df86bf"
+    },
+    {
+      "file": "20260814035347_032e8c7a-5e23-4ead-a5a4-111f362ee1ba.sql",
+      "sha256": "2119c0a41ce75068bef9969ad0aff4636ae39a0a5813f7629153c2fd73f2ce37"
+    },
+    {
+      "file": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "sha256": "1acf176dadcaf6aa31941dc2db924cf157873b6859bc3073a7ef8ca0a60270da"
+    },
+    {
+      "file": "20260814051520_f7f15189-47bf-43e6-a9ef-e3afc97fb855.sql",
+      "sha256": "e7e93fece0c683044bc506748f3a0343682b0a26c8d819debf5407100b1adb80"
+    },
+    {
+      "file": "20260814051712_b2afbc1d-1680-4da0-9fef-c8d76f365b7b.sql",
+      "sha256": "6601fc2b8c8101cdc7301997b49a37540e351a5a844d65e3f152c220f3f44b9c"
+    },
+    {
+      "file": "20260814052319_47026321-5d3f-4ea7-801a-202d9e267236.sql",
+      "sha256": "d162692b3da9478775ec1abdbaedebb99eee61f3521c97d385f3f17e4495e4a9"
+    },
+    {
+      "file": "20260814053335_66d0e0ed-ce87-409d-b8eb-424cfdedc6bb.sql",
+      "sha256": "2122501507aa5fb545bae0c89b3c0570ced4f354cff3c7836c4ee2c4727a639b"
+    },
+    {
+      "file": "20260814053957_d64dfaee-6047-4287-97b5-8432ad419199.sql",
+      "sha256": "e48d1c50deaaa68106ea9b8e3fa90a0f56189a76a81c1ef5b971df146df018f5"
+    },
+    {
+      "file": "20260814084450_f3b5935d-a8b0-4dfc-a2a4-5e03dc39b3fc.sql",
+      "sha256": "d81a2819d6ba88e305fe918c0f448f55307ebf045a92bfc6e4e9deaf1c364be6"
+    },
+    {
+      "file": "20260814084727_a74c5242-efea-4ee2-a0c2-0b3416a10a80.sql",
+      "sha256": "e9eb834b7ccc7adede1170fc062b829ad87b04f78dc0d41acbe199ca2e737126"
+    },
+    {
+      "file": "20260814092748_9b1b6e7d-77ee-44d8-b2d9-f6fb4066a0f9.sql",
+      "sha256": "7d6ae852cb97f232a6886afb540648706d7e3cf6ecc686a6e4a4d2ac2cb750ea"
+    },
+    {
+      "file": "20260814094433_9ecd7d82-78b7-44c3-b612-6573932433b7.sql",
+      "sha256": "ce2d38f7567aff56d2a062a6f568c0638c5512e54375dea347099f69e79bb0a4"
+    },
+    {
+      "file": "20260814095426_b94ea73d-291b-4531-bebe-9f4d0bafc73d.sql",
+      "sha256": "28c2c3f6a8052308fe9515c511dd08845eb0ce959f1de446dba30e7be8d5a2d8"
+    },
+    {
+      "file": "20260814101052_7d72cf32-2b61-46a5-831a-0d67072a211d.sql",
+      "sha256": "0c0204e87abc129085a074296cd9cc97066e6f81356a1103f4f58af85e6bc320"
+    },
+    {
+      "file": "20260814101750_1a448442-cd41-48ca-b2b0-541db4333be4.sql",
+      "sha256": "89a9e8959bf4f0a156fe4b1e107c5957b56ae1f85aac8610688a443b252ff9de"
+    },
+    {
+      "file": "20260814102151_3bc310b5-ea36-4978-b2b5-66b22a9ec02e.sql",
+      "sha256": "7cae54771486141f95c9f5b37436c0d7b9870de72dd8ef4725da47f369be24c1"
+    },
+    {
+      "file": "20260814102610_9b342dc5-a216-4289-b2e2-925adf09cc42.sql",
+      "sha256": "21f4ac6793246f0f6e4c60f18be340c0d0cc360681d6b13eb3be5105ca4adb33"
+    },
+    {
+      "file": "20260814102929_7d5a29f6-79c5-4e0c-ab92-6da32c02bb81.sql",
+      "sha256": "763e8c702f30cf497046f8b1eb0355125ca41b87c268a6525b88e2c3b66dfef8"
+    },
+    {
+      "file": "20260815013048_5fdf7fd5-3f10-4d82-873c-ada1e01b1745.sql",
+      "sha256": "0c47d93847b5b76e35f277167432c93c44d53d5776c60961f81154c11d4e92c3"
+    },
+    {
+      "file": "20260815032219_1bb5417d-2d43-4a0b-99d0-096873dd700d.sql",
+      "sha256": "cf9fa52392de3b437e3442d00fceaa3e9eac2dc9c0ee8c6b76e511db5c572579"
+    },
+    {
+      "file": "20260815095057_2afea56c-35e6-4c55-84a0-822431ce38d8.sql",
+      "sha256": "0c927f4d98eb3ae46d808ccbf804654bc23b09cfb479c94727e1880cbae96ded"
+    },
+    {
+      "file": "20260815102820_067475da-7ec0-46ad-bf28-b39943b659f2.sql",
+      "sha256": "99303816100b6bb46071ec96212b99f2606f477a7462f3908a5d7b21da897680"
+    },
+    {
+      "file": "20260815164301_6936b9b4-16ed-407e-9b99-e560de7d1fe6.sql",
+      "sha256": "4b052e8d5435291c91493a3a282d9ff2b6ca92dbf5eb4803cc607c9e6a426d83"
+    },
+    {
+      "file": "20260815171001_031c92c2-7778-4a82-a61d-9933ee4b572f.sql",
+      "sha256": "5a6cc72ab0cd305842e6888580669285842596fe4a9b0938d83b3a274df9f8ce"
+    },
+    {
+      "file": "20260815193432_82ae5b94-6d81-4a7d-9d70-109783fbe1f6.sql",
+      "sha256": "c0b987560173368dde6e054b578719ed0a8ef633ef6be9476d9943fb13fa2c83"
+    },
+    {
+      "file": "20260817022009_8286727f-4cfd-4925-8c7e-e09232ea29ca.sql",
+      "sha256": "4579f9bee04eee3e875ff9742a6bfc8ce57152d443012002be41116ecf90ddcc"
+    },
+    {
+      "file": "20260817022121_b04c3014-67d3-4d25-ace2-681b4c4595d9.sql",
+      "sha256": "a8991a35d3531fdbdd117572bb8541ea6a6fc013fcbc22f7cbc46e82eb77a791"
+    },
+    {
+      "file": "20260817095856_da2c45e4-25ee-4d55-9358-132a0b3674d1.sql",
+      "sha256": "450737614a563106ceffee6ea696989764be18ac8efeed7532ce1cfd2e19b357"
+    }
+  ],
+  "combinedSha256": "c8d05ea1b43a788eac94899c2235c7ffcf2b83fad3b42774d6c297d23ad5dc6c",
+  "stats": {
+    "migrationFiles": 79,
+    "createPolicy": 249,
+    "dropPolicy": 154,
+    "grant": 334,
+    "revoke": 252,
+    "securityDefiner": 249,
+    "enableRls": 62
+  },
+  "rlsTables": [
+    "avatar_audience",
+    "background_action_log",
+    "business_conversations",
+    "business_members",
+    "businesses",
+    "call_diagnostic_runs",
+    "call_log_hides",
+    "call_participants",
+    "call_reminders",
+    "calls",
+    "chat_order_items",
+    "chat_order_unit_slots",
+    "chat_orders",
+    "contact_connections",
+    "contact_requests",
+    "contacts",
+    "conversation_members",
+    "conversations",
+    "customers",
+    "device_action_rate",
+    "devices",
+    "direct_conversations",
+    "entitlements",
+    "inventory_balances",
+    "inventory_movements",
+    "ledger_events",
+    "ledger_payments",
+    "ledgers",
+    "message_hides",
+    "message_reactions",
+    "message_receipts",
+    "messages",
+    "notification_actions",
+    "notifications",
+    "order_items",
+    "orders",
+    "pin_search_log",
+    "preparation_item_photos",
+    "preparation_job_items",
+    "preparation_jobs",
+    "product_photos",
+    "product_stock_balances",
+    "product_variants",
+    "products",
+    "profiles",
+    "purchases",
+    "push_action_tokens",
+    "quick_replies",
+    "sales_records",
+    "status_audience",
+    "status_items",
+    "status_mutes",
+    "status_preferences",
+    "status_reactions",
+    "status_views",
+    "statuses",
+    "stickers",
+    "user_settings",
+    "variant_stock_units"
+  ],
+  "definerFunctions": [
+    "_answer_call_as",
+    "_decline_call_as",
+    "accept_legacy_direct_conversation",
+    "activate_stock_unit",
+    "add_group_members",
+    "adjust_inventory",
+    "adjust_warehouse",
+    "answer_call",
+    "apply_unit_balance",
+    "approve_chat_order",
+    "are_connected",
+    "assert_group_manager",
+    "assign_pin",
+    "bg_call_action",
+    "bg_mark_delivered",
+    "bg_mark_read",
+    "bg_rate_ok",
+    "bg_reply_message",
+    "blocked_between",
+    "build_product_card",
+    "bump_conversation",
+    "business_preparation_staff",
+    "business_role_of",
+    "business_staff_directory",
+    "call_answer_tx",
+    "call_decline_tx",
+    "can_manage_business",
+    "can_read_avatar_object",
+    "can_read_status_object",
+    "can_see_ledger",
+    "can_see_prep_job",
+    "can_sell_business",
+    "can_use_conversation",
+    "can_view_avatar",
+    "can_view_full_profile",
+    "can_view_status",
+    "cancel_chat_order",
+    "cancel_contact_request",
+    "catalog_product_indicators",
+    "chat_order_actor_can_manage",
+    "chat_order_actor_can_read",
+    "claim_legacy_direct_conversation",
+    "cleanup_expired_notification_actions",
+    "cleanup_notification_actions",
+    "commit_my_avatar",
+    "complete_preparation_job",
+    "confirm_chat_order",
+    "confirm_staff_pin",
+    "consume_notification_action",
+    "contact_relation",
+    "conv_role_of",
+    "conversation_capability",
+    "conversation_overview",
+    "convert_to_base",
+    "create_call_tx",
+    "create_chat_order",
+    "create_chat_order_with_message",
+    "create_group",
+    "create_prep_sale_tx",
+    "create_preparation_job",
+    "create_sale_tx",
+    "create_stock_unit",
+    "current_user_business_role",
+    "current_user_can_call_conversation",
+    "current_user_can_manage_business",
+    "current_user_can_manage_chat_order",
+    "current_user_can_manage_conversation",
+    "current_user_can_read_chat_order",
+    "current_user_can_read_conversation",
+    "current_user_can_read_stock_unit",
+    "current_user_can_sell_business",
+    "current_user_can_send_conversation",
+    "current_user_is_business_member",
+    "current_user_is_call_participant",
+    "current_user_is_conv_member",
+    "customer_pin",
+    "decline_call",
+    "deliver_preparation_job",
+    "device_from_action_token",
+    "disconnect_contact",
+    "dispatch_chat_order",
+    "end_call",
+    "ensure_product_stock_balance",
+    "expire_stale_calls",
+    "finalize_chat_order_delivery",
+    "find_profile_by_pin",
+    "get_or_create_business_conversation",
+    "get_or_create_direct",
+    "handle_new_user",
+    "has_entitlement",
+    "i_am_connected_to",
+    "is_business_member",
+    "is_call_participant",
+    "is_conv_admin",
+    "is_conv_member",
+    "join_call",
+    "leave_call",
+    "leave_conversation",
+    "lock_contact_pair",
+    "lock_conversation_pair",
+    "mark_conversation_read",
+    "mark_messages_delivered",
+    "mark_messages_read",
+    "mint_notification_action",
+    "mint_push_action_token",
+    "my_chat_order_capability",
+    "my_connected_contacts",
+    "my_conversation_capability",
+    "my_direct_relation_state",
+    "my_pin",
+    "my_profile",
+    "my_push_devices",
+    "pair_blocked",
+    "pins_for_me",
+    "prep_job_id_by_token",
+    "profile_cards",
+    "profile_full",
+    "profiles_guard",
+    "push_targets_for_call",
+    "push_targets_for_call_terminal",
+    "push_targets_for_conversation",
+    "push_targets_for_user",
+    "record_ledger_payment",
+    "record_purchase",
+    "register_push_device",
+    "reject_legacy_direct_conversation",
+    "remove_group_member",
+    "remove_my_avatar",
+    "remove_saved_contact",
+    "rename_product_category",
+    "request_chat_order_changes",
+    "resolve_push_action_token",
+    "respond_contact_request",
+    "revoke_my_push_device",
+    "revoke_my_push_devices",
+    "revoke_my_push_installation",
+    "revoke_notification_actions",
+    "revoke_push_device",
+    "rotate_preparation_token",
+    "save_contact_card",
+    "search_profile_by_pin",
+    "seed_business_owner",
+    "send_contact_request",
+    "set_avatar_privacy_audience",
+    "set_contact_blocked",
+    "set_conversation_assignee",
+    "set_conversation_inbox_status",
+    "set_group_member_role",
+    "set_my_avatar_privacy",
+    "set_my_presence",
+    "status_owner_of",
+    "transfer_group_ownership",
+    "update_group_settings",
+    "update_my_contact",
+    "update_my_conversation_preferences",
+    "update_my_profile",
+    "variant_display_factor",
+    "variant_unit_quantity",
+    "void_stock_unit",
+    "vsu_guard",
+    "vsu_no_hard_delete",
+    "warehouse_apply"
+  ]
+}

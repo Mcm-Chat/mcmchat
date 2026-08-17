@@ -24,7 +24,9 @@
     "android:bundle": "cd android && ./gradlew bundleRelease",
     "android:debug-apk": "cd android && ./gradlew assembleDebug",
     "test:e2e:pwa": "python3 e2e/pwa_smoke.py",
-    "check:bundle": "node scripts/check-bundle-size.mjs"
+    "check:bundle": "node scripts/check-bundle-size.mjs",
+    "security:report": "node scripts/security-report.mjs",
+    "security:baseline": "node scripts/security-report.mjs --update-baseline"
   },
   "dependencies": {
     "@capacitor/android": "7.6.8",
