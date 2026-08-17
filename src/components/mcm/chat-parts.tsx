@@ -294,8 +294,9 @@ export function MessageLocationCard({
       href={url}
       target="_blank"
       rel="noreferrer"
+      aria-label={`Buka ${message.location_label || "lokasi terlampir"} di Google Maps`}
       className={cn(
-        "mt-1 flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5 text-foreground",
+        "mt-1 flex min-h-11 items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         compact ? "text-[11px]" : "text-xs",
       )}
     >
