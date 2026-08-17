@@ -123,7 +123,7 @@ export function isBlockedIPv6(host: string): boolean {
     const [p, q] = v4FromTail();
     return isPrivateIPv4(p, q); // NAT64
   }
-  if ((a & 0xff00) === 0x0100 && (g[1] || g[2] || g[3]) === 0) return true; // 100::/64 discard
+  if ((a & 0xff00) === 0x0100 && g[1] === 0 && g[2] === 0 && g[3] === 0) return true; // 100::/64
   if ((a & 0xfe00) === 0xfc00) return true; // unique-local fc00::/7
   if ((a & 0xffc0) === 0xfe80) return true; // link-local fe80::/10
   if ((a & 0xffc0) === 0xfec0) return true; // site-local fec0::/10
@@ -131,6 +131,46 @@ export function isBlockedIPv6(host: string): boolean {
   if (a === 0x2001 && b <= 0x01ff) return true; // teredo/orchid/benchmark
   if ((a & 0xff00) === 0xff00) return true; // multicast
   return false;
+}
+
+const ALLOWED_PORTS = new Set(["", "80", "443"]);
+
+/**
+ * Validasi URL sebelum diambil server: hanya http(s) publik, port standar,
+ * tanpa kredensial, dan bukan host internal/IP privat (v4 maupun v6).
+ */
+export function safeUrl(raw: string): URL | null {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+  if (u.username || u.password) return null;
+  if (!ALLOWED_PORTS.has(u.port)) return null;
+  let host = u.hostname.toLowerCase();
+  // Host ter-encode (%6c%6f%63%61%6c%68%6f%73%74) dan trailing dot dinormalkan
+  // agar tidak melewati daftar blokir.
+  try {
+    host = decodeURIComponent(host);
+  } catch {
+    return null;
+  }
+  host = host.replace(/\.+$/, "");
+  if (!host) return null;
+  if (/\s/.test(host)) return null;
+  if (host.includes(":") || host.startsWith("[")) {
+    return isBlockedIPv6(host) ? null : u;
+  }
+  const v4 = parseIPv4(host);
+  if (v4) {
+    if (isPrivateIPv4(v4[0], v4[1])) return null;
+    return u;
+  }
+  if (!host.includes(".")) return null;
+  if (BLOCKED_SUFFIX.test(host)) return null;
+  return u;
 }
 
 const decode = (s: string) =>
@@ -155,17 +195,75 @@ function metaOf(html: string, keys: string[]): string | null {
   return null;
 }
 
+const CACHE_TTL_OK = 1000 * 60 * 60 * 6;
+const CACHE_TTL_FAIL = 1000 * 60 * 10;
+const CACHE_MAX = 300;
+const MAX_HOPS = 4;
+
+type CacheEntry = { value: LinkPreview | null; expires: number };
+const cache = new Map<string, CacheEntry>();
+
+/** Kunci cache = URL yang sudah dinormalkan lewat safeUrl, bukan input mentah. */
+function cacheKey(u: URL): string {
+  const c = new URL(u.toString());
+  c.hash = "";
+  return c.toString();
+}
+
+function readCache(key: string): CacheEntry | null {
+  const hit = cache.get(key);
+  if (!hit) return null;
+  if (hit.expires <= Date.now()) {
+    cache.delete(key);
+    return null;
+  }
+  // Entri lama tetap divalidasi ulang: aturan blokir bisa berubah, dan URL
+  // hasil redirect yang tersimpan tidak boleh lolos hanya karena di-cache.
+  if (hit.value && (!safeUrl(hit.value.url) || (hit.value.image && !safeUrl(hit.value.image)))) {
+    cache.delete(key);
+    return null;
+  }
+  cache.delete(key);
+  cache.set(key, hit); // LRU refresh
+  return hit;
+}
+
+function writeCache(key: string, value: LinkPreview | null): void {
+  cache.set(key, { value, expires: Date.now() + (value ? CACHE_TTL_OK : CACHE_TTL_FAIL) });
+  while (cache.size > CACHE_MAX) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+}
+
+/** Hanya untuk pengujian: kosongkan cache pratinjau. */
+export function __clearPreviewCache(): void {
+  cache.clear();
+}
+
 /** Ambil HTML halaman (dibatasi ukuran & waktu) lalu baca meta OG/Twitter. */
 export async function unfurl(rawUrl: string): Promise<LinkPreview | null> {
-  let u = safeUrl(rawUrl);
-  if (!u) return null;
+  const first = safeUrl(rawUrl);
+  if (!first) return null;
+  const key = cacheKey(first);
+  const cached = readCache(key);
+  if (cached) return cached.value;
+  const result = await unfurlUncached(first);
+  writeCache(key, result);
+  return result;
+}
+
+async function unfurlUncached(start: URL): Promise<LinkPreview | null> {
+  let u = start;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 6000);
+  const visited = new Set<string>([cacheKey(u)]);
   try {
     // Redirect ditangani manual: setiap hop divalidasi ulang agar tujuan
-    // internal tidak bisa dicapai lewat pengalihan.
+    // internal tidak bisa dicapai lewat pengalihan (termasuk rantai panjang).
     let res: Response | null = null;
-    for (let hop = 0; hop < 4; hop++) {
+    for (let hop = 0; hop <= MAX_HOPS; hop++) {
       const r: Response = await fetch(u.toString(), {
         redirect: "manual",
         signal: controller.signal,
@@ -176,10 +274,21 @@ export async function unfurl(rawUrl: string): Promise<LinkPreview | null> {
         },
       });
       if (r.status >= 300 && r.status < 400) {
+        if (hop === MAX_HOPS) return null; // rantai redirect terlalu panjang
         const loc = r.headers.get("location");
-        if (!loc) return null;
-        const next = safeUrl(new URL(loc, u).toString());
+        if (!loc || loc.length > 2000) return null;
+        let resolved: string;
+        try {
+          resolved = new URL(loc, u).toString();
+        } catch {
+          return null;
+        }
+        const next = safeUrl(resolved);
         if (!next) return null;
+        if (u.protocol === "https:" && next.protocol === "http:") return null; // downgrade
+        const nextKey = cacheKey(next);
+        if (visited.has(nextKey)) return null; // loop redirect
+        visited.add(nextKey);
         u = next;
         continue;
       }
@@ -187,6 +296,9 @@ export async function unfurl(rawUrl: string): Promise<LinkPreview | null> {
       break;
     }
     if (!res || !res.ok) return null;
+    const finalUrl = safeUrl(res.url || u.toString());
+    if (!finalUrl) return null;
+    u = finalUrl;
     const type = res.headers.get("content-type") ?? "";
     if (!type.includes("html")) return null;
     const declared = Number(res.headers.get("content-length") ?? "0");
