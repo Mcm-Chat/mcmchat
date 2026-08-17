@@ -6,6 +6,7 @@
  */
 import { useAuth } from "@/lib/auth";
 import { usePushSession } from "@/lib/push/use-push";
+import { useAppLinks } from "@/lib/deeplink/use-app-links";
 import { IncomingCallListener } from "@/components/mcm/incoming-call";
 import { PushDeniedDialog } from "@/components/mcm/push-denied-dialog";
 import { ScreenPrivacyGuard } from "@/components/mcm/screen-privacy-guard";
@@ -16,10 +17,16 @@ function PushSession() {
   return null;
 }
 
+function AppLinks() {
+  useAppLinks();
+  return null;
+}
+
 export default function RootExtras() {
   return (
     <>
       <PushSession />
+      <AppLinks />
       <IncomingCallListener />
       <PushDeniedDialog />
       <ScreenPrivacyGuard />
