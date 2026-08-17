@@ -359,7 +359,9 @@ export function PhotoViewer({
           className="max-h-full max-w-full select-none object-contain"
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-            transition: dragging || pinch.current ? "none" : "transform 160ms ease-out",
+            // Zoom/pan langsung "snap" saat pengguna meminta pengurangan gerakan.
+            transition:
+              reduceMotion || dragging || pinch.current ? "none" : "transform 160ms ease-out",
           }}
         />
       </div>
