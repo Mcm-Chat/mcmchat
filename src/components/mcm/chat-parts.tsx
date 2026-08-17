@@ -820,13 +820,13 @@ function MessageBubbleBase({
                 <LinkifiedText
                   text={message.body}
                   onBubble={mine}
-                  className="block w-40 max-w-full break-words text-[13.5px] sm:w-48"
+                  className={cn("block break-words text-[13.5px]", MEDIA_W)}
                 />
               )}
               {firstUrlOf(message.body) && (
                 <LinkPreviewCard url={firstUrlOf(message.body)!} onBubble={mine} />
               )}
-              <div className="w-40 max-w-full sm:w-48">
+              <div className={MEDIA_W}>
                 <MessageLocationCard message={message} compact />
               </div>
             </div>
@@ -839,12 +839,12 @@ function MessageBubbleBase({
           ) : message.kind === "order" && chatOrderIdOf(message) ? (
             <ChatOrderCard orderId={chatOrderIdOf(message)!} />
           ) : message.kind === "ledger" ? (
-            <div className="flex w-52 items-center gap-2">
+            <div className={cn("flex items-center gap-2", MEDIA_W)}>
               <Wallet className="size-5 shrink-0" />
-              <span>{message.body}</span>
+              <span className="min-w-0 break-words">{message.body}</span>
             </div>
           ) : message.kind === "location" ? (
-            <div className="w-52">
+            <div className={MEDIA_W}>
               <MessageLocationCard message={message} />
             </div>
           ) : (
