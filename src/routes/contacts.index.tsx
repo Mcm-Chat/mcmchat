@@ -513,6 +513,22 @@ function ContactsPage() {
           setToRemove(null);
         }}
       />
+
+      <ConfirmDialog
+        open={!!toDelete}
+        onOpenChange={(v) => !v && setToDelete(null)}
+        title="Hapus kontak?"
+        description={
+          toDelete
+            ? `Kontak ${toDelete.profile.display_name} akan dihapus dari daftar Anda. Riwayat chat tetap ada di perangkat, tapi Anda tidak bisa mengirim pesan baru kecuali mengirim permintaan lagi.`
+            : ""
+        }
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => {
+          if (toDelete) void deleteContact(toDelete);
+        }}
+      />
     </AppShell>
   );
 }
