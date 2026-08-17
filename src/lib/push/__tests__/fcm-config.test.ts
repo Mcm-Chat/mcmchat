@@ -65,4 +65,14 @@ describe("konfigurasi FCM", () => {
     expect(res.sent).toBe(0);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("menerima service account yang nama field & penanda PEM-nya ikut diterjemahkan", () => {
+    process.env[KEY] = JSON.stringify({
+      tipe: "akun_layanan",
+      "ID proyek": "mcm-demo",
+      email_klien: "push@mcm-demo.iam.gserviceaccount.com",
+      kunci_pribadi: "-----MULAI KUNCI PRIVAT-----\nQUJD\n-----AKHIR KUNCI PRIVAT-----\n",
+    });
+    expect(pushConfigStatus()).toEqual({ configured: true });
+  });
 });

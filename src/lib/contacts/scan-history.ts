@@ -16,7 +16,7 @@ export type ScanHistoryEntry = {
 export const SCAN_HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_ENTRIES = 20;
 
-const key = (userId: string) => `mcm.scan-history.${userId}`;
+const scopedKey = (userId: string) => `mcm:${userId}:scan-history.v1`;
 
 const fresh = (list: ScanHistoryEntry[], now: number) =>
   list.filter((e) => e && typeof e.pin === "string" && now - e.scannedAt < SCAN_HISTORY_TTL_MS);
@@ -24,7 +24,7 @@ const fresh = (list: ScanHistoryEntry[], now: number) =>
 export function readScanHistory(userId: string, now: number = Date.now()): ScanHistoryEntry[] {
   if (typeof window === "undefined" || !userId) return [];
   try {
-    const raw = window.localStorage.getItem(key(userId));
+    const raw = window.localStorage.getItem(scopedKey(userId));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as ScanHistoryEntry[];
     if (!Array.isArray(parsed)) return [];
@@ -36,7 +36,7 @@ export function readScanHistory(userId: string, now: number = Date.now()): ScanH
 
 function write(userId: string, list: ScanHistoryEntry[]) {
   try {
-    window.localStorage.setItem(key(userId), JSON.stringify(list.slice(0, MAX_ENTRIES)));
+    window.localStorage.setItem(scopedKey(userId), JSON.stringify(list.slice(0, MAX_ENTRIES)));
   } catch {
     /* kuota penuh: riwayat bersifat opsional */
   }
@@ -66,7 +66,7 @@ export function removeScan(userId: string, id: string): ScanHistoryEntry[] {
 export function clearScanHistory(userId: string): void {
   if (typeof window === "undefined" || !userId) return;
   try {
-    window.localStorage.removeItem(key(userId));
+    window.localStorage.removeItem(scopedKey(userId));
   } catch {
     /* diabaikan */
   }
