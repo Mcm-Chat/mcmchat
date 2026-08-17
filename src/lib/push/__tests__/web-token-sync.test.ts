@@ -4,8 +4,10 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const rpc = vi.fn(async () => ({ error: null }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...a: unknown[]) => rpc(...(a as [])) } }));
+const rpc = vi.fn(async (_fn: string, _args: Record<string, unknown>) => ({ error: null }));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { rpc: (fn: string, args: Record<string, unknown>) => rpc(fn, args) },
+}));
 
 let currentToken: string | null = "tok-1";
 vi.mock("firebase/app", () => ({ initializeApp: () => ({}), getApps: () => [], getApp: () => ({}) }));
