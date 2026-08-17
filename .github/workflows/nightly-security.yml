@@ -1,0 +1,77 @@
+name: Nightly security (PIN gate + scan)
+
+# Drift GRANT/SELECT bisa muncul dari perubahan di database tanpa PR sama
+# sekali, jadi gate PIN dan security scan dijalankan terjadwal setiap malam.
+on:
+  schedule:
+    # 19:00 UTC = 02:00 WIB (Asia/Jakarta) setiap hari.
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-security
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    name: Gate eksposur PIN + security scan (nightly)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+
+      - name: Verifikasi secret database (PG*) tersedia
+        run: bun run verify:db-secrets
+        env:
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      # PIN_GATE_STRICT=1: skip diperlakukan sebagai gagal supaya nightly
+      # benar-benar mengevaluasi jalur GRANT/SELECT dan respons Data API.
+      - name: Uji jalur PIN (live DB + Data API)
+        run: bun run test:security:pin
+        env:
+          PIN_GATE_STRICT: "1"
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
+      - name: Unggah laporan eksposur PIN (HTML/JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pin-exposure-report-nightly-${{ github.run_id }}
+          path: pin-exposure-report/
+          if-no-files-found: warn
+          retention-days: 30
+
+      # Selalu jalan walau gate PIN gagal, supaya satu run nightly memberi
+      # gambaran lengkap drift skema/policy.
+      - name: Security scan
+        if: always()
+        run: bun run security:report
+
+      - name: Unggah laporan keamanan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report-nightly-${{ github.run_id }}
+          path: security-report/
+          if-no-files-found: error
+          retention-days: 90
