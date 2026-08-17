@@ -400,10 +400,16 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
     preview?: string;
     thumbPath?: string | null;
   };
-  const { data: url } = useStatusMedia(p.type === "status_reply" ? p.thumbPath : null);
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const { data: url } = useStatusMedia(
+    p.type === "status_reply" && inView ? p.thumbPath : null,
+  );
   if (p.type !== "status_reply") return null;
   return (
-    <div className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]">
+    <div
+      ref={ref}
+      className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]"
+    >
       <RemoteImage src={url} alt="" frameClassName="size-8 shrink-0 rounded" className="object-cover" />
       <span className="min-w-0">
         <span className="block font-medium">Membalas status</span>
@@ -590,16 +596,20 @@ function ImageBubble({ message }: { message: MessageRow }) {
 }
 
 function DocumentBubble({ message }: { message: MessageRow }) {
-  const url = useSignedUrl("chat-media", message.attachment_path);
+  const { ref, inView } = useInView<HTMLAnchorElement>();
+  const url = useSignedUrl("chat-media", message.attachment_path, inView);
   return (
     <a
+      ref={ref}
       href={url ?? undefined}
+      aria-busy={!url}
       target="_blank"
       rel="noreferrer"
       className={cn("flex items-center gap-2", MEDIA_W)}
     >
       <FileText className="size-5 shrink-0" />
       <span className="min-w-0 flex-1 break-words">{message.attachment_name ?? message.body}</span>
+      {!url && <MediaSkeleton className="h-3 w-10 shrink-0 rounded" />}
     </a>
   );
 }
@@ -617,14 +627,15 @@ function StickerBubble({ message }: { message: MessageRow }) {
 }
 
 function VoiceBubble({ message }: { message: MessageRow }) {
-  const url = useSignedUrl("chat-media", message.attachment_path);
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const url = useSignedUrl("chat-media", message.attachment_path, inView);
   return (
-    <div className={cn("flex items-center gap-2", MEDIA_W)}>
+    <div ref={ref} className={cn("flex items-center gap-2", MEDIA_W)} aria-busy={!url}>
       <Mic className="size-4 shrink-0" />
       {url ? (
         <audio controls src={url} className="h-8 min-w-0 flex-1" />
       ) : (
-        <span className="text-[11px]">Memuat suara…</span>
+        <MediaSkeleton className="h-8 min-w-0 flex-1 rounded-full" />
       )}
     </div>
   );
