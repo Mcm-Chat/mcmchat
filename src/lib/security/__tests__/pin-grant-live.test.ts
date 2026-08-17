@@ -123,7 +123,7 @@ d("fungsi — satu-satunya jalur PIN, dan tetap tertutup untuk anon", () => {
            or p.prosrc ilike '% pin %' or p.prosrc ilike '%pin =%')
   `).map((r) => {
     const [name, secdef, anon] = r.split("|");
-    return { name: name ?? "", secdef: secdef === "t", anon: anon === "t" };
+    return { name: name ?? "", secdef: secdef === "true" || secdef === "t", anon: anon === "true" || anon === "t" };
   });
 
   it("setiap fungsi yang menyentuh PIN ada di allowlist", () => {
