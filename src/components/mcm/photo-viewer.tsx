@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Download, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MIN_SCALE = 1;
@@ -38,6 +38,26 @@ export function PhotoViewer({
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ dist: number; scale: number } | null>(null);
   const lastTap = useRef(0);
+  const pct = Math.round(scale * 100);
+  // Teks yang diumumkan pembaca layar setiap level zoom berubah (termasuk saat
+  // batas minimum/maksimum tercapai) agar status selalu terdengar.
+  const [announcement, setAnnouncement] = useState("");
+  const firstAnnounce = useRef(true);
+  useEffect(() => {
+    if (firstAnnounce.current) {
+      firstAnnounce.current = false;
+      return;
+    }
+    const limit =
+      scale >= MAX_SCALE
+        ? ", zoom maksimum"
+        : scale <= MIN_SCALE
+          ? ", ukuran asli"
+          : "";
+    // Spasi berselang agar pengumuman dengan teks sama tetap dibacakan ulang.
+    const text = `Zoom ${pct} persen${limit}`;
+    setAnnouncement((prev) => (prev.endsWith("\u00a0") ? text : `${text}\u00a0`));
+  }, [pct, scale]);
   // State terbaru untuk listener wheel non-passive yang dipasang sekali.
   const view = useRef({ scale: 1, offset: { x: 0, y: 0 } });
   view.current = { scale, offset };
@@ -234,8 +254,12 @@ export function PhotoViewer({
       </h2>
       <p id={helpId} className="sr-only">
         Esc untuk menutup, tombol plus dan minus untuk memperbesar dan memperkecil, 0 untuk
-        mengembalikan ukuran asli, tombol panah untuk menggeser saat gambar diperbesar.
+        mengembalikan ukuran asli, tombol panah untuk menggeser saat gambar diperbesar. Setiap
+        perubahan level zoom akan diumumkan.
       </p>
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
       <div className="flex items-center justify-between gap-2 px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2">
         <button
           type="button"
@@ -250,17 +274,15 @@ export function PhotoViewer({
         </button>
         <div className="flex items-center gap-1">
           <span
-            aria-live="polite"
-            aria-atomic="true"
-            aria-label={`Tingkat zoom ${Math.round(scale * 100)} persen`}
+            aria-hidden="true"
             className="mr-1 min-w-11 rounded-full bg-muted/70 px-2 py-1 text-center text-[11px] font-semibold tabular-nums text-muted-foreground"
           >
-            {Math.round(scale * 100)}%
+            {pct}%
           </span>
           <button
             type="button"
             onClick={() => zoomAt(scale / 1.4)}
-            aria-label="Perkecil foto"
+            aria-label={`Perkecil foto, zoom saat ini ${pct} persen`}
             title="Perkecil (−)"
             disabled={scale <= MIN_SCALE}
             className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
@@ -270,12 +292,22 @@ export function PhotoViewer({
           <button
             type="button"
             onClick={() => zoomAt(scale * 1.4)}
-            aria-label="Perbesar foto"
+            aria-label={`Perbesar foto, zoom saat ini ${pct} persen`}
             title="Perbesar (+)"
             disabled={scale >= MAX_SCALE}
             className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
           >
             <ZoomIn className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={reset}
+            aria-label={`Kembalikan zoom ke 100 persen, zoom saat ini ${pct} persen`}
+            title="Ukuran asli (0 atau Home)"
+            disabled={scale <= MIN_SCALE}
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
+          >
+            <RotateCcw className="size-5" />
           </button>
           <a
             href={url}
