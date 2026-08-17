@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MessageCircle, ScanLine, Trash2, UserPlus, UserRound } from "lucide-react";
+import { MessageCircle, ScanLine, Send, Trash2, UserPlus, UserRound } from "lucide-react";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
