@@ -35,6 +35,22 @@ Supabase (Postgres + RLS + Realtime + Storage) dan pembungkus Android (Capacitor
 - Screenshot **tidak** terblokir di browser/PWA.
 - Belum ada AAB rilis yang benar-benar dibangun & ditandatangani di lingkungan ini.
 
+## Catatan keamanan: `message_reactions` tanpa policy UPDATE
+Temuan pemindai `message_reactions_no_update_policy_review` **ditutup sebagai tidak berlaku**
+(bukan diabaikan tanpa alasan). Ketiadaan policy UPDATE adalah desain, bukan celah:
+
+- Reaksi bersifat imutabel. Mengubah reaksi dilakukan dengan pola **hapus lalu insert**
+  (`own reaction delete` + `own reaction insert`), keduanya terikat `user_id = auth.uid()`
+  dan insert masih diverifikasi `current_user_can_send_conversation(...)`.
+- Menambah policy UPDATE justru membuka jalur memindahkan baris reaksi ke `user_id` atau
+  `message_id` lain dalam satu operasi — persis kelas serangan yang ingin dicegah.
+- Karena tidak ada policy UPDATE, PATCH dari user login **tidak pernah** mengenai satu baris pun
+  (PostgREST mengembalikan daftar kosong), sehingga tidak ada perilaku aplikasi yang rusak.
+
+Bukti otomatis: `src/lib/security/__tests__/message-reactions-update.test.ts` memverifikasi
+skema (RLS aktif, hanya SELECT/INSERT/DELETE) sekaligus perilaku nyata lewat Data API —
+PATCH nol baris, PATCH pemindahan ke user lain nol baris, dan pembaruan hapus+insert tetap sukses.
+
 ## Script
 | Perintah | Arti sebenarnya |
 | --- | --- |
