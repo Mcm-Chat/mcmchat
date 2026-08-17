@@ -556,15 +556,17 @@ function ImageBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path, inView);
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const label = message.body ? `Lihat foto: ${message.body}` : "Lihat foto terkirim";
   return (
     <>
       <button
         type="button"
-        aria-label="Lihat foto"
-        disabled={!url}
+        aria-label={label}
+        aria-busy={!url}
+        aria-disabled={!url}
         onClick={(e) => {
           e.stopPropagation();
-          setOpen(true);
+          if (url) setOpen(true);
         }}
         title="Ketuk untuk perbesar"
         className="block cursor-zoom-in rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
