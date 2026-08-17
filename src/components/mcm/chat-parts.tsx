@@ -565,7 +565,8 @@ function ImageBubble({ message }: { message: MessageRow }) {
           e.stopPropagation();
           setOpen(true);
         }}
-        className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        title="Ketuk untuk perbesar"
+        className="block cursor-zoom-in rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <div ref={ref} className={cn("relative aspect-[4/3] overflow-hidden rounded-xl", MEDIA_W)}>
           {!loaded && (
