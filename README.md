@@ -60,6 +60,7 @@ PATCH nol baris, PATCH pemindahan ke user lain nol baris, dan pembaruan hapus+in
 | `bun run test` / `test:security` | seluruh Vitest / hanya invariant keamanan |
 | `bun run lint` | ESLint |
 | `bun run verify:assetlinks` | gagal bila fingerprint App Links masih placeholder |
+| `bun run test:e2e:chat-media` | regresi tampilan: semua jenis media chat tidak meluber di 320–1440px |
 | `bun run android:sync` / `android:bundle` / `android:debug-apk` | Capacitor sync, AAB rilis, APK debug |
 | `bun run verify:aab` | cek manifest bundle (SKIP jujur bila bundletool/AAB tidak ada) |
 
