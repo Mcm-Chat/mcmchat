@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { scopedKey } from "@/lib/session-scope";
 import { shareUrl } from "@/lib/site";
 import { friendly, unwrap } from "./db";
+// Kolom eksplisit (tanpa delivered_pin) — select("*") ditolak 403 oleh PostgREST.
+import { JOB_SELECT } from "./tasks";
 import { notifyTaskAssigned } from "@/lib/push/push.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -202,7 +204,7 @@ export async function listJobsForConversation(conversationId: string): Promise<J
   const rows = unwrap(
     await supabase
       .from("preparation_jobs")
-      .select("*, items:preparation_job_items(*)")
+      .select(JOB_SELECT)
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false }),
     "Gagal memuat daftar penyiapan",
@@ -214,7 +216,7 @@ export async function getJob(jobId: string): Promise<JobWithItems> {
   const row = unwrap(
     await supabase
       .from("preparation_jobs")
-      .select("*, items:preparation_job_items(*)")
+      .select(JOB_SELECT)
       .eq("id", jobId)
       .single(),
     "Tugas tidak ditemukan",
