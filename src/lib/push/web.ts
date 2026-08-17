@@ -12,8 +12,42 @@ import type { PushData } from "./payload";
 import { announceGuardResult, guardPushRoute } from "./route-guard";
 
 const installationKey = "mcm.web.installation";
+/** Token terakhir yang sudah tersimpan di server + kapan disegarkan. */
+const tokenKey = "mcm.web.push-token";
+/** Token FCM web bisa berotasi diam-diam; segarkan minimal sekali sehari. */
+const REFRESH_MS = 24 * 60 * 60 * 1000;
 
 export type WebRegisterResult = { registered: boolean; reason?: string };
+
+type TokenRecord = { token: string; at: number };
+
+function readTokenRecord(): TokenRecord | null {
+  try {
+    const raw = localStorage.getItem(tokenKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<TokenRecord>;
+    if (typeof parsed.token !== "string" || typeof parsed.at !== "number") return null;
+    return { token: parsed.token, at: parsed.at };
+  } catch {
+    return null;
+  }
+}
+
+function writeTokenRecord(token: string) {
+  try {
+    localStorage.setItem(tokenKey, JSON.stringify({ token, at: Date.now() } satisfies TokenRecord));
+  } catch {
+    /* penyimpanan penuh/diblokir: registrasi tetap jalan, hanya kehilangan cache */
+  }
+}
+
+function clearTokenRecord() {
+  try {
+    localStorage.removeItem(tokenKey);
+  } catch {
+    /* abaikan */
+  }
+}
 
 /** Browser mendukung service worker + Push API. */
 export function webPushSupported(): boolean {
@@ -47,9 +81,11 @@ async function swRegistration(): Promise<ServiceWorkerRegistration> {
   return reg;
 }
 
-async function messagingToken(): Promise<string | null> {
-  const [{ initializeApp, getApps, getApp }, { getMessaging, getToken, isSupported }] =
-    await Promise.all([import("firebase/app"), import("firebase/messaging")]);
+async function messagingInstance() {
+  const [{ initializeApp, getApps, getApp }, { getMessaging, isSupported }] = await Promise.all([
+    import("firebase/app"),
+    import("firebase/messaging"),
+  ]);
   if (!(await isSupported())) return null;
   const app = getApps().length
     ? getApp()
@@ -59,8 +95,32 @@ async function messagingToken(): Promise<string | null> {
         messagingSenderId: WEB_PUSH.senderId,
         appId: WEB_PUSH.appId,
       });
+  return getMessaging(app);
+}
+
+async function messagingToken(): Promise<string | null> {
+  const messaging = await messagingInstance();
+  if (!messaging) return null;
+  const { getToken } = await import("firebase/messaging");
   const registration = await swRegistration();
-  return await getToken(getMessaging(app), { vapidKey: WEB_PUSH.vapidKey, serviceWorkerRegistration: registration });
+  return await getToken(messaging, {
+    vapidKey: WEB_PUSH.vapidKey,
+    serviceWorkerRegistration: registration,
+  });
+}
+
+/** Simpan/perbarui baris perangkat memakai installation id sebagai kunci dedupe. */
+async function upsertDevice(deviceName: string, token: string): Promise<boolean> {
+  const { error } = await supabase.rpc("register_push_device", {
+    _installation_id: installationId(),
+    _name: deviceName,
+    _platform: "web",
+    _push_token: token,
+    _app_version: "",
+  });
+  if (error) return false;
+  writeTokenRecord(token);
+  return true;
 }
 
 /** Minta izin (harus dari gestur pengguna), ambil token, daftarkan perangkat. */
@@ -77,17 +137,33 @@ export async function registerWebPush(deviceName: string): Promise<WebRegisterRe
     const token = await messagingToken();
     if (!token) return { registered: false, reason: "token push web tidak tersedia" };
 
-    const { error } = await supabase.rpc("register_push_device", {
-      _installation_id: installationId(),
-      _name: deviceName,
-      _platform: "web",
-      _push_token: token,
-      _app_version: "",
-    });
-    if (error) return { registered: false, reason: "gagal mendaftar perangkat" };
+    if (!(await upsertDevice(deviceName, token)))
+      return { registered: false, reason: "gagal mendaftar perangkat" };
     return { registered: true };
   } catch {
     return { registered: false, reason: "pendaftaran push web gagal" };
+  }
+}
+
+/**
+ * Sinkronisasi token perangkat asli: dipanggil saat aplikasi dibuka kembali dan
+ * saat tab kembali aktif. TIDAK pernah memunculkan dialog izin — hanya berjalan
+ * bila izin sudah diberikan. Menulis ke server hanya bila token berubah atau
+ * cache sudah lebih tua dari 24 jam, supaya baris perangkat tetap segar
+ * (token FCM web bisa dicabut/berotasi tanpa pemberitahuan).
+ */
+export async function syncWebPushToken(deviceName: string): Promise<boolean> {
+  if (!webPushReady().ok) return false;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return false;
+  try {
+    const token = await messagingToken();
+    if (!token) return false;
+    const cached = readTokenRecord();
+    const fresh = cached && cached.token === token && Date.now() - cached.at < REFRESH_MS;
+    if (fresh) return true;
+    return await upsertDevice(deviceName, token);
+  } catch {
+    return false;
   }
 }
 
@@ -100,6 +176,18 @@ export async function revokeWebPush() {
       () => undefined,
       () => undefined,
     );
+  }
+  clearTokenRecord();
+  // Token lama dibatalkan di sisi FCM supaya perangkat ini benar-benar berhenti
+  // menerima kiriman, bukan sekadar hilang dari daftar.
+  try {
+    const messaging = await messagingInstance();
+    if (messaging) {
+      const { deleteToken } = await import("firebase/messaging");
+      await deleteToken(messaging);
+    }
+  } catch {
+    /* browser tanpa dukungan/izin: cukup pencabutan sisi server */
   }
 }
 
