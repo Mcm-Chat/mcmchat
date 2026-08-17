@@ -213,6 +213,82 @@ const REQUEST_ERROR: Record<string, string> = {
   not_authenticated: "Sesi berakhir. Masuk kembali.",
 };
 
+/** Kode kegagalan spesifik untuk pengiriman permintaan kontak. */
+export type ContactRequestErrorCode =
+  | "already_connected"
+  | "blocked"
+  | "cooldown"
+  | "rate_limited"
+  | "invalid_target"
+  | "not_authenticated"
+  | "offline"
+  | "network"
+  | "permission"
+  | "unknown";
+
+/** Error permintaan kontak dengan kode + instruksi tindak lanjut yang jelas. */
+export class ContactRequestError extends Error {
+  code: ContactRequestErrorCode;
+  hint: string;
+  /** true bila pengguna masuk akal mencoba lagi setelah menunggu/memperbaiki. */
+  retryable: boolean;
+  constructor(code: ContactRequestErrorCode, message: string, hint: string, retryable: boolean) {
+    super(message);
+    this.name = "ContactRequestError";
+    this.code = code;
+    this.hint = hint;
+    this.retryable = retryable;
+  }
+}
+
+const REQUEST_HINT: Record<ContactRequestErrorCode, string> = {
+  already_connected: "Buka daftar Kontak → Terhubung untuk mulai chat atau menelepon.",
+  blocked: "Akun ini memblokir permintaan. Minta mereka membuka blokir lebih dulu.",
+  cooldown: "Tunggu 10 menit, lalu tekan Kirim ulang dari halaman ini.",
+  rate_limited: "Jeda beberapa menit sebelum mengirim permintaan berikutnya.",
+  invalid_target: "Periksa kembali PIN tujuan, lalu cari ulang.",
+  not_authenticated: "Keluar lalu masuk kembali, kemudian ulangi permintaan.",
+  offline: "Perangkat sedang offline. Sambungkan internet lalu coba lagi.",
+  network: "Koneksi terputus saat mengirim. Periksa sinyal lalu coba lagi.",
+  permission: "Akun Anda tidak berwenang. Muat ulang aplikasi atau masuk kembali.",
+  unknown: "Coba lagi. Bila tetap gagal, muat ulang aplikasi.",
+};
+
+function classifyRequestError(raw: string): ContactRequestErrorCode {
+  const m = (raw || "").toLowerCase();
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return "offline";
+  for (const code of Object.keys(REQUEST_ERROR) as ContactRequestErrorCode[])
+    if (m.includes(code)) return code;
+  if (m.includes("failed to fetch") || m.includes("network") || m.includes("timeout"))
+    return "network";
+  if (m.includes("row-level security") || m.includes("permission denied") || m.includes("jwt"))
+    return "permission";
+  return "unknown";
+}
+
+function toContactRequestError(rawMessage: string): ContactRequestError {
+  const code = classifyRequestError(rawMessage);
+  const message =
+    code === "offline"
+      ? "Tidak ada koneksi internet."
+      : mapRpcError(rawMessage, "Permintaan gagal dikirim", REQUEST_ERROR);
+  const retryable = code !== "already_connected" && code !== "blocked";
+  return new ContactRequestError(code, message, REQUEST_HINT[code], retryable);
+}
+
+/** Ambil pesan + instruksi tindak lanjut dari error apa pun. */
+export function describeContactRequestError(err: unknown): {
+  code: ContactRequestErrorCode;
+  message: string;
+  hint: string;
+  retryable: boolean;
+} {
+  if (err instanceof ContactRequestError)
+    return { code: err.code, message: err.message, hint: err.hint, retryable: err.retryable };
+  const e = toContactRequestError(err instanceof Error ? err.message : String(err ?? ""));
+  return { code: e.code, message: e.message, hint: e.hint, retryable: e.retryable };
+}
+
 /**
  * Terima permintaan masuk yang masih menunggu dari `otherId` (jika ada).
  * Dipakai saat kedua sisi saling menambahkan: alih-alih gagal/senyap,
@@ -244,7 +320,7 @@ export async function sendContactRequest(
     _target: targetId,
     _message: message,
   });
-  if (error) throw new Error(mapRpcError(error.message, "Permintaan gagal dikirim", REQUEST_ERROR));
+  if (error) throw toContactRequestError(error.message);
   const result = (data ?? {}) as { status?: string; code?: string };
   // Lawan sudah lebih dulu mengirim permintaan: terima langsung agar kontak
   // tersimpan, bukan berhenti diam-diam tanpa perubahan apa pun.
