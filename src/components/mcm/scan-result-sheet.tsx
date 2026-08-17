@@ -121,6 +121,25 @@ export function ScanResultSheet({
       setConfirmOpen(false);
     }, "Kontak berhasil disimpan");
 
+  const resendRequest = async () => {
+    setBusy(true);
+    try {
+      const result = await sendContactRequest(userId, profile.id, "Halo, saya ingin terhubung di MCM.");
+      if (result.code === "resent" || result.code === "sent") {
+        toast.success("Permintaan dikirim ulang");
+      } else if (result.code === "accepted_incoming") {
+        toast.success("Kontak langsung diterima");
+      } else {
+        toast.success("Status permintaan diperbarui");
+      }
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengirim ulang permintaan.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-8">
