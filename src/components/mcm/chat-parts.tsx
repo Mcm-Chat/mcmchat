@@ -600,17 +600,22 @@ function ImageBubble({ message }: { message: MessageRow }) {
 function DocumentBubble({ message }: { message: MessageRow }) {
   const { ref, inView } = useInView<HTMLAnchorElement>();
   const url = useSignedUrl("chat-media", message.attachment_path, inView);
+  const name = message.attachment_name ?? message.body ?? "Dokumen";
   return (
     <a
       ref={ref}
       href={url ?? undefined}
       aria-busy={!url}
+      aria-label={url ? `Buka dokumen ${name}` : `Menyiapkan dokumen ${name}`}
       target="_blank"
       rel="noreferrer"
-      className={cn("flex items-center gap-2", MEDIA_W)}
+      className={cn(
+        "flex min-h-11 items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        MEDIA_W,
+      )}
     >
       <FileText className="size-5 shrink-0" />
-      <span className="min-w-0 flex-1 break-words">{message.attachment_name ?? message.body}</span>
+      <span className="min-w-0 flex-1 break-words">{name}</span>
       {!url && <MediaSkeleton className="h-3 w-10 shrink-0 rounded" />}
     </a>
   );
@@ -622,7 +627,7 @@ function StickerBubble({ message }: { message: MessageRow }) {
       bucket="chat-media"
       path={message.attachment_path}
       alt={message.body || "Stiker"}
-      frameClassName="aspect-square w-28 max-w-[45vw] rounded-2xl sm:w-32"
+      frameClassName="aspect-square w-28 max-w-[45vw] rounded-2xl sm:w-32 md:w-36"
       className="object-contain"
     />
   );
@@ -635,9 +640,17 @@ function VoiceBubble({ message }: { message: MessageRow }) {
     <div ref={ref} className={cn("flex items-center gap-2", MEDIA_W)} aria-busy={!url}>
       <Mic className="size-4 shrink-0" />
       {url ? (
-        <audio controls src={url} className="h-8 min-w-0 flex-1" />
+        <audio
+          controls
+          src={url}
+          aria-label={message.body ? `Pesan suara: ${message.body}` : "Pesan suara"}
+          className="h-8 min-w-0 flex-1 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        />
       ) : (
-        <MediaSkeleton className="h-8 min-w-0 flex-1 rounded-full" />
+        <>
+          <MediaSkeleton className="h-8 min-w-0 flex-1 rounded-full" />
+          <span className="sr-only">Memuat pesan suara…</span>
+        </>
       )}
     </div>
   );
