@@ -55,7 +55,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
       }}
       onPointerDown={(e) => e.stopPropagation()}
       className={cn(
-        "mt-1.5 block w-56 max-w-full overflow-hidden rounded-xl border text-left transition-opacity active:opacity-80",
+        "mt-1.5 block w-56 max-w-[68vw] overflow-hidden rounded-xl border text-left transition-opacity active:opacity-80",
         onBubble ? "border-current/25 bg-black/10" : "border-border/70 bg-background/70",
       )}
     >
