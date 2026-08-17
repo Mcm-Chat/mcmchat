@@ -72,6 +72,7 @@ function ContactsPage() {
   const [tab, setTab] = useState("kontak");
   const [q, setQ] = useState("");
   const [toRemove, setToRemove] = useState<ContactWithProfile | null>(null);
+  const [toDelete, setToDelete] = useState<ContactWithProfile | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const refreshAll = () => {
