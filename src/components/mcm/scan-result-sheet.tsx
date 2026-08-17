@@ -254,19 +254,29 @@ export function ScanResultSheet({
               )}
 
               {relation?.outgoingPending && (
-                <Button
-                  variant="outline"
-                  className="h-12 rounded-xl"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(
-                      () => cancelContactRequest(userId, profile.id),
-                      "Permintaan dibatalkan",
-                    )
-                  }
-                >
-                  Batalkan Permintaan
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="default"
+                    className="h-12 rounded-xl"
+                    disabled={busy}
+                    onClick={() => void resendRequest()}
+                  >
+                    <Send className="size-4" /> Kirim Ulang
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 rounded-xl"
+                    disabled={busy}
+                    onClick={() =>
+                      void run(
+                        () => cancelContactRequest(userId, profile.id),
+                        "Permintaan dibatalkan",
+                      )
+                    }
+                  >
+                    Batalkan
+                  </Button>
+                </div>
               )}
 
               {(relation?.saved || saved) && !relation?.blockedByMe && (
