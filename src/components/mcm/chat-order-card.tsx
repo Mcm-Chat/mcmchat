@@ -110,7 +110,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
 
   if (isLoading || !order) {
     return (
-      <div className="w-60 rounded-xl border border-border bg-card/60 p-3 text-xs text-muted-foreground">
+      <div className="w-60 max-w-[72vw] rounded-xl border border-border bg-card/60 p-3 text-xs text-muted-foreground sm:w-64">
         Memuat pesanan…
       </div>
     );
@@ -148,7 +148,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   };
 
   return (
-    <div className="w-64 space-y-2 rounded-xl border border-border bg-card p-3 text-foreground">
+    <div className="w-60 max-w-[72vw] space-y-2 rounded-xl border border-border bg-card p-3 text-foreground sm:w-64">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold">
           <ClipboardList className="size-4 text-primary" /> Pesanan
