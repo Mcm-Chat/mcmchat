@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Download, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const clampScale = (v: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, v));
+const PAN_STEP = 48; // px geser per tekan panah saat gambar diperbesar
+const FOCUSABLE =
+  'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Lightbox foto layar penuh.
@@ -25,6 +28,9 @@ export function PhotoViewer({
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const titleId = useId();
+  const captionId = `${titleId}-caption`;
+  const helpId = `${titleId}-help`;
   const stageRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -66,20 +72,44 @@ export function PhotoViewer({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key === "+" || e.key === "=") zoomAt(view.current.scale * 1.4);
       if (e.key === "-" || e.key === "_") zoomAt(view.current.scale / 1.4);
-      if (e.key === "0") reset();
+      if (e.key === "0" || e.key === "Home") reset();
+      // Panah menggeser gambar saat diperbesar (setara seret dengan mouse).
+      if (view.current.scale > MIN_SCALE && e.key.startsWith("Arrow")) {
+        const target = e.target as HTMLElement | null;
+        const typing =
+          target?.tagName === "INPUT" ||
+          target?.tagName === "TEXTAREA" ||
+          target?.isContentEditable;
+        if (!typing) {
+          e.preventDefault();
+          const dx = e.key === "ArrowLeft" ? -PAN_STEP : e.key === "ArrowRight" ? PAN_STEP : 0;
+          const dy = e.key === "ArrowUp" ? -PAN_STEP : e.key === "ArrowDown" ? PAN_STEP : 0;
+          setOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
+        }
+      }
       if (e.key === "Tab") {
         // Kurung fokus di dalam lightbox selama terbuka.
-        const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-        );
-        if (!nodes || nodes.length === 0) return;
+        const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE);
+        if (!nodes || nodes.length === 0) {
+          e.preventDefault();
+          return;
+        }
         const first = nodes[0]!;
         const last = nodes[nodes.length - 1]!;
         const active = document.activeElement as HTMLElement | null;
-        if (e.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+        const outside = !dialogRef.current?.contains(active);
+        if (outside) {
+          // Fokus sempat lepas (mis. diklik latar): tarik kembali ke dalam.
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+        } else if (e.shiftKey && active === first) {
           e.preventDefault();
           last.focus();
         } else if (!e.shiftKey && active === last) {
@@ -93,9 +123,23 @@ export function PhotoViewer({
     document.body.style.overflow = "hidden";
     const previouslyFocused = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
+    // Sembunyikan sisa halaman dari pembaca layar & tab selama lightbox terbuka.
+    const inerted: HTMLElement[] = [];
+    for (const el of Array.from(document.body.children)) {
+      if (!(el instanceof HTMLElement)) continue;
+      if (el.contains(dialogRef.current)) continue;
+      if (el.hasAttribute("inert")) continue;
+      el.setAttribute("inert", "");
+      el.setAttribute("aria-hidden", "true");
+      inerted.push(el);
+    }
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      for (const el of inerted) {
+        el.removeAttribute("inert");
+        el.removeAttribute("aria-hidden");
+      }
       previouslyFocused?.focus?.();
     };
   }, [onClose, reset, zoomAt]);
@@ -181,22 +225,34 @@ export function PhotoViewer({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Pratinjau foto"
+      aria-labelledby={titleId}
+      aria-describedby={helpId}
       className="fixed inset-0 z-[100] flex flex-col bg-background/98 backdrop-blur-sm"
     >
+      <h2 id={titleId} className="sr-only">
+        {caption ? `Pratinjau foto: ${caption}` : "Pratinjau foto"}
+      </h2>
+      <p id={helpId} className="sr-only">
+        Esc untuk menutup, tombol plus dan minus untuk memperbesar dan memperkecil, 0 untuk
+        mengembalikan ukuran asli, tombol panah untuk menggeser saat gambar diperbesar.
+      </p>
       <div className="flex items-center justify-between gap-2 px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2">
         <button
           type="button"
           ref={closeRef}
           onClick={onClose}
           aria-label="Tutup pratinjau foto"
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          title="Tutup (Esc)"
+          className="flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-3 text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <X className="size-6" />
+          <span className="hidden text-sm font-medium sm:inline">Tutup</span>
         </button>
         <div className="flex items-center gap-1">
           <span
             aria-live="polite"
+            aria-atomic="true"
+            aria-label={`Tingkat zoom ${Math.round(scale * 100)} persen`}
             className="mr-1 min-w-11 rounded-full bg-muted/70 px-2 py-1 text-center text-[11px] font-semibold tabular-nums text-muted-foreground"
           >
             {Math.round(scale * 100)}%
@@ -204,18 +260,20 @@ export function PhotoViewer({
           <button
             type="button"
             onClick={() => zoomAt(scale / 1.4)}
-            aria-label="Perkecil"
+            aria-label="Perkecil foto"
+            title="Perkecil (−)"
             disabled={scale <= MIN_SCALE}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted disabled:opacity-40"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
           >
             <ZoomOut className="size-5" />
           </button>
           <button
             type="button"
             onClick={() => zoomAt(scale * 1.4)}
-            aria-label="Perbesar"
+            aria-label="Perbesar foto"
+            title="Perbesar (+)"
             disabled={scale >= MAX_SCALE}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted disabled:opacity-40"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-40"
           >
             <ZoomIn className="size-5" />
           </button>
@@ -225,7 +283,8 @@ export function PhotoViewer({
             target="_blank"
             rel="noreferrer"
             aria-label="Unduh foto"
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted"
+            title="Unduh foto"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <Download className="size-5" />
           </a>
@@ -234,11 +293,24 @@ export function PhotoViewer({
 
       <div
         ref={stageRef}
+        tabIndex={0}
+        role="group"
+        aria-label={
+          caption
+            ? `Area foto: ${caption}. Enter untuk memperbesar atau mengembalikan ukuran.`
+            : "Area foto. Enter untuk memperbesar atau mengembalikan ukuran."
+        }
         className={cn(
-          "flex flex-1 touch-none items-center justify-center overflow-hidden",
+          "flex flex-1 touch-none items-center justify-center overflow-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset",
           scale > 1 ? (dragging ? "cursor-grabbing" : "cursor-grab") : "cursor-zoom-in",
         )}
         onClick={handleTap}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            zoomAt(view.current.scale > MIN_SCALE ? MIN_SCALE : 2.5);
+          }
+        }}
         onDoubleClick={(e) => e.preventDefault()}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -259,7 +331,10 @@ export function PhotoViewer({
       </div>
 
       {caption ? (
-        <p className="px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-[13px] break-words text-muted-foreground">
+        <p
+          id={captionId}
+          className="px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-[13px] break-words text-muted-foreground"
+        >
           {caption}
         </p>
       ) : (
