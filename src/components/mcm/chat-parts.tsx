@@ -809,13 +809,13 @@ function MessageBubbleBase({
                 <LinkifiedText
                   text={message.body}
                   onBubble={mine}
-                  className="block w-52 max-w-full break-words"
+                  className="block w-40 max-w-full break-words text-[13.5px] sm:w-48"
                 />
               )}
               {firstUrlOf(message.body) && (
                 <LinkPreviewCard url={firstUrlOf(message.body)!} onBubble={mine} />
               )}
-              <div className="w-52 max-w-full">
+              <div className="w-40 max-w-full sm:w-48">
                 <MessageLocationCard message={message} compact />
               </div>
             </div>
