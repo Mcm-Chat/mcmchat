@@ -152,6 +152,9 @@ async def run(state):
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+        http_errors = []
+        page.on("response", lambda r: http_errors.append(f"{r.status} {r.url}")
+                if r.status >= 400 else None)
 
         await page.goto(f"{BASE}/login", wait_until="networkidle")
         await page.wait_for_selector("#email")
@@ -234,6 +237,7 @@ async def run(state):
 
         real_errors = [e for e in errors if "favicon" not in e.lower()]
         check("Tidak ada error konsol", not real_errors, str(real_errors[:3]))
+        check("Tidak ada respons HTTP >=400", not http_errors, str(http_errors[:5]))
         await browser.close()
 
 
