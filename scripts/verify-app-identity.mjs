@@ -26,6 +26,10 @@ const SKIP_DIRS = new Set([
   ".nitro",
   "capacitor/www",
   ".lovable",
+  // Artefak build (gitignored): SBOM & laporan keamanan per build hanya
+  // memuat kembali teks dari sumber yang sudah dipindai di atas.
+  "sbom",
+  "security-report",
   "android/.gradle",
   "android/build",
 ]);
