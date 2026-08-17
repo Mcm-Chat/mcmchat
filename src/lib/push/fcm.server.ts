@@ -52,7 +52,13 @@ function normalizePrivateKey(key: string): string {
   const lines = raw.split("\n");
   if (lines.length > 2 && !/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(raw)) {
     const first = lines[0] ?? "";
-    const lastIdx = lines.findLastIndex((l) => l.trim().startsWith("-----"));
+    let lastIdx = -1;
+    for (let i = lines.length - 1; i > 0; i -= 1) {
+      if ((lines[i] ?? "").trim().startsWith("-----")) {
+        lastIdx = i;
+        break;
+      }
+    }
     if (first.startsWith("-----") && lastIdx > 0) {
       lines[0] = "-----BEGIN PRIVATE KEY-----";
       lines[lastIdx] = "-----END PRIVATE KEY-----";
