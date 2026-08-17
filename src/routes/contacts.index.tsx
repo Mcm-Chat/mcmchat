@@ -305,6 +305,16 @@ function ContactsPage() {
                   >
                     <Ban className="size-5" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive"
+                    aria-label={`Hapus ${c.profile.display_name}`}
+                    disabled={busy === c.contact_id}
+                    onClick={() => setToDelete(c)}
+                  >
+                    <Trash2 className="size-5" />
+                  </Button>
                 </div>
               </li>
             ))}
