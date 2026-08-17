@@ -37,3 +37,4 @@ android/app/google-services.json
 android/keystore.properties
 sbom/
 security-report/
+pin-exposure-report/
