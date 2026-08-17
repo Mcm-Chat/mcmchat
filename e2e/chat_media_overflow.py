@@ -131,7 +131,10 @@ def seed():
         assert s in (200, 201), (s, body)
 
     rows = media_rows(conv, a, b)
-    s, body = qa.rest("POST", "messages", body=rows)
+    # PostgREST batch insert menuntut set kunci identik di semua baris.
+    keys = sorted({k for r in rows for k in r})
+    payload = [{k: r.get(k) for k in keys} for r in rows]
+    s, body = qa.rest("POST", "messages", body=payload)
     assert s in (200, 201), (s, body)
     # Balasan terhadap pesan teks terpanjang: bubble kutipan juga wajib tidak meluber.
     quoted = rows[1]
