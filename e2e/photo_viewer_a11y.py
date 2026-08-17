@@ -25,11 +25,14 @@ os.makedirs(SHOTS, exist_ok=True)
 RESULTS = []
 TAB_LIMIT = 12
 BUCKET = "chat-media"
-PHOTO_PATH = f"e2e-a11y/{secrets.token_hex(6)}.jpg"
+# Policy storage chat-media memakai prefix folder = id percakapan.
+PHOTO_PATH = ""
 
 
-def upload_photo():
+def upload_photo(conv):
     """Unggah JPEG kecil sungguhan supaya bubble foto benar-benar bisa dibuka."""
+    global PHOTO_PATH
+    PHOTO_PATH = f"{conv}/{secrets.token_hex(6)}.jpg"
     from PIL import Image
     buf = io.BytesIO()
     Image.new("RGB", (640, 480), (32, 96, 160)).save(buf, format="JPEG")
@@ -56,7 +59,6 @@ def check(name, cond, note=""):
 
 # ---------------------------------------------------------------- seeding
 def seed():
-    upload_photo()
     run = secrets.token_hex(4)
     pw = secrets.token_urlsafe(18)
     email_a = f"pv-a-{run}@example.invalid"
@@ -78,6 +80,7 @@ def seed():
     qa.rest("POST", "contact_connections", body={"user_low": lo, "user_high": hi})
     for owner, other in ((a, b), (b, a)):
         qa.rest("POST", "contacts", body={"owner_id": owner, "contact_id": other})
+    upload_photo(conv)
     now = datetime.now(timezone.utc)
     s, body = qa.rest("POST", "messages", body=[{
         "id": str(uuid.uuid4()), "conversation_id": conv, "sender_id": b,
