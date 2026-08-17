@@ -4,7 +4,7 @@ import { Link2 } from "lucide-react";
 import { fetchLinkPreview } from "@/lib/api/link-preview.functions";
 import { cn } from "@/lib/utils";
 import { useLinkOpener } from "@/lib/mcm/use-link-opener";
-import { MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
+import { MediaError, MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
 import { useInView } from "@/lib/perf/use-in-view";
 
 const CARD_CLS = "mt-1.5 block w-56 max-w-[68vw] overflow-hidden rounded-xl border text-left";
@@ -35,7 +35,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
   // Unfurl hanya dijalankan saat kartu mendekati viewport agar daftar pesan
   // panjang tidak menembak puluhan permintaan pratinjau sekaligus.
   const { ref, inView } = useInView<HTMLDivElement>();
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError, isFetching, refetch } = useQuery({
     queryKey: ["link-preview", url],
     queryFn: () => unfurl({ data: { url } }),
     staleTime: 1000 * 60 * 60 * 24,
@@ -43,6 +43,18 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
     retry: false,
     enabled: inView,
   });
+  if (isError) {
+    return (
+      <div ref={ref} className={cn(CARD_CLS, "border-transparent")}>
+        <MediaError
+          compact
+          icon={<Link2 className="size-5" />}
+          label="Pratinjau tautan gagal dimuat"
+          onRetry={isFetching ? undefined : () => void refetch()}
+        />
+      </div>
+    );
+  }
   if (!inView || isPending) {
     return (
       <div
