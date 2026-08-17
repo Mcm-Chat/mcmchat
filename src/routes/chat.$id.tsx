@@ -368,15 +368,26 @@ function ChatRoom() {
       anchorRef.current = null;
       return;
     }
+    // Selama jari/momentum masih menggerakkan daftar, jangan pernah
+    // mengoreksi scrollTop: koreksi jangkar akan melawan gulir pengguna dan
+    // menarik daftar balik ke atas.
+    if (isUserScrolling(lastInteractionRef.current)) {
+      anchorRef.current = pickScrollAnchor(virtualItems, el.scrollTop);
+      return;
+    }
     if (!anchor) {
       anchorRef.current = pickScrollAnchor(virtualItems, el.scrollTop);
       return;
     }
     const next = virtualizer.measurementsCache[anchor.index]?.start;
     const delta = anchorScrollDelta(anchor, next);
-    if (delta !== 0) {
+    // Koreksi hanya untuk perubahan tinggi yang wajar; lompatan besar berarti
+    // jangkar sudah basi (mis. daftar dipangkas) dan harus diambil ulang.
+    if (delta !== 0 && Math.abs(delta) <= 2000) {
       el.scrollTop += delta;
       anchor.start = next as number;
+    } else if (delta !== 0) {
+      anchorRef.current = pickScrollAnchor(virtualItems, el.scrollTop);
     }
   });
 
