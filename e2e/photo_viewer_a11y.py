@@ -12,7 +12,7 @@ Menjalankan: python3 e2e/photo_viewer_a11y.py
 Butuh SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY dan dev server di
 http://localhost:8080 (atur E2E_BASE_URL bila berbeda).
 """
-import asyncio, os, secrets, sys, uuid
+import asyncio, io, os, secrets, sys, urllib.request, uuid
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -24,6 +24,24 @@ SHOTS = "/tmp/browser/photo-viewer-a11y"
 os.makedirs(SHOTS, exist_ok=True)
 RESULTS = []
 TAB_LIMIT = 12
+BUCKET = "chat-media"
+PHOTO_PATH = f"e2e-a11y/{secrets.token_hex(6)}.jpg"
+
+
+def upload_photo():
+    """Unggah JPEG kecil sungguhan supaya bubble foto benar-benar bisa dibuka."""
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.new("RGB", (640, 480), (32, 96, 160)).save(buf, format="JPEG")
+    req = urllib.request.Request(
+        f"{qa.URL}/storage/v1/object/{BUCKET}/{PHOTO_PATH}",
+        data=buf.getvalue(),
+        headers={"apikey": qa.KEY, "Authorization": "Bearer " + qa.KEY,
+                 "Content-Type": "image/jpeg", "x-upsert": "true"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=40) as r:
+        assert r.status in (200, 201), r.status
 
 
 def record(name, status, note=""):
@@ -38,6 +56,7 @@ def check(name, cond, note=""):
 
 # ---------------------------------------------------------------- seeding
 def seed():
+    upload_photo()
     run = secrets.token_hex(4)
     pw = secrets.token_urlsafe(18)
     email_a = f"pv-a-{run}@example.invalid"
@@ -63,7 +82,7 @@ def seed():
     s, body = qa.rest("POST", "messages", body=[{
         "id": str(uuid.uuid4()), "conversation_id": conv, "sender_id": b,
         "kind": "image", "body": "Foto uji aksesibilitas",
-        "attachment_path": "chat-media/e2e/a11y-photo.jpg",
+        "attachment_path": PHOTO_PATH,
         "attachment_mime": "image/jpeg", "attachment_name": "a11y-photo.jpg",
         "attachment_size": 120000,
         "created_at": (now - timedelta(minutes=2)).isoformat(),
@@ -73,6 +92,7 @@ def seed():
 
 
 def cleanup(state):
+    qa._req("DELETE", f"/storage/v1/object/{BUCKET}/{PHOTO_PATH}")
     lo, hi = sorted([state["a"], state["b"]])
     qa.rest("DELETE", "contacts", f"?owner_id=in.({state['a']},{state['b']})")
     qa.rest("DELETE", "contact_connections", f"?user_low=eq.{lo}&user_high=eq.{hi}")
