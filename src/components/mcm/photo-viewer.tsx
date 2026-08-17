@@ -26,6 +26,8 @@ export function PhotoViewer({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinch = useRef<{ dist: number; scale: number } | null>(null);
@@ -68,13 +70,33 @@ export function PhotoViewer({
       if (e.key === "+" || e.key === "=") zoomAt(view.current.scale * 1.4);
       if (e.key === "-" || e.key === "_") zoomAt(view.current.scale / 1.4);
       if (e.key === "0") reset();
+      if (e.key === "Tab") {
+        // Kurung fokus di dalam lightbox selama terbuka.
+        const nodes = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+        );
+        if (!nodes || nodes.length === 0) return;
+        const first = nodes[0]!;
+        const last = nodes[nodes.length - 1]!;
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      previouslyFocused?.focus?.();
     };
   }, [onClose, reset, zoomAt]);
 
@@ -156,6 +178,7 @@ export function PhotoViewer({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="Pratinjau foto"
@@ -164,9 +187,10 @@ export function PhotoViewer({
       <div className="flex items-center justify-between gap-2 px-3 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2">
         <button
           type="button"
+          ref={closeRef}
           onClick={onClose}
           aria-label="Tutup pratinjau foto"
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <X className="size-6" />
         </button>
