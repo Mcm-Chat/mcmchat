@@ -75,6 +75,20 @@ function assertNoPin(label: string, body: unknown) {
 
 const CALLERS: Caller[] = USER_TOKEN ? ["anon", "member"] : ["anon"];
 
+/** Daftar tabel Data API diambil dari tipe hasil generate (sumber kebenaran skema). */
+function tablesFromTypes(): string[] {
+  const src = readFileSync("src/integrations/supabase/types.ts", "utf8");
+  const start = src.indexOf("Tables: {");
+  const end = src.indexOf("\n      Views: {", start);
+  const block = src.slice(start, end === -1 ? undefined : end);
+  const names = new Set<string>();
+  for (const m of block.matchAll(/^      ([a-z0-9_]+): \{$/gm)) names.add(m[1]!);
+  return [...names].sort();
+}
+
+const tables = tablesFromTypes();
+
+d("Data API — tidak ada field PIN pada respons tabel", () => {
   it("daftar tabel Data API tersedia untuk diuji", () => {
     expect(tables.length).toBeGreaterThan(10);
   });
