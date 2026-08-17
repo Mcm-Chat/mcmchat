@@ -83,7 +83,7 @@ export function RemoteImage({
   frameClassName,
   fallback,
 }: {
-  src?: string | null;
+  src?: string | null | undefined;
   alt: string;
   className?: string;
   frameClassName?: string;
