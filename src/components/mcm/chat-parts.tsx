@@ -400,10 +400,16 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
     preview?: string;
     thumbPath?: string | null;
   };
-  const { data: url } = useStatusMedia(p.type === "status_reply" ? p.thumbPath : null);
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const { data: url } = useStatusMedia(
+    p.type === "status_reply" && inView ? p.thumbPath : null,
+  );
   if (p.type !== "status_reply") return null;
   return (
-    <div className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]">
+    <div
+      ref={ref}
+      className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]"
+    >
       <RemoteImage src={url} alt="" frameClassName="size-8 shrink-0 rounded" className="object-cover" />
       <span className="min-w-0">
         <span className="block font-medium">Membalas status</span>
