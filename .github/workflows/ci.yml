@@ -56,6 +56,34 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+  pin-exposure-gate:
+    name: Gate eksposur kolom PIN (GRANT/SELECT + respons API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      # PIN_GATE_STRICT=1 membuat tes gagal (bukan skip) bila kredensial DB /
+      # Data API tidak tersedia, sehingga setiap PR benar-benar dievaluasi
+      # terhadap jalur GRANT/SELECT dan respons API yang bisa membocorkan PIN.
+      - name: Uji jalur PIN (live DB + Data API)
+        run: bun run test:security:pin
+        env:
+          PIN_GATE_STRICT: "1"
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+
   quality:
     name: Typecheck, test, build
     runs-on: ubuntu-latest
@@ -217,8 +245,17 @@ jobs:
   production-gate:
     name: Gate sebelum merge ke production
     if: github.event_name == 'pull_request' && github.base_ref == 'production'
-    needs: [db-security-regression, security-scan, quality, dependency-audit, sbom, pwa-smoke]
+    needs:
+      [
+        db-security-regression,
+        security-scan,
+        pin-exposure-gate,
+        quality,
+        dependency-audit,
+        sbom,
+        pwa-smoke,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Semua gate keamanan lolos
-        run: echo "Regresi keamanan DB, typecheck, test, build, audit dependensi, dan smoke PWA lolos."
+        run: echo "Regresi keamanan DB, gate eksposur PIN, typecheck, test, build, audit dependensi, dan smoke PWA lolos."
