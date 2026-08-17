@@ -6,6 +6,7 @@
       "name": "tanstack_start_ts",
       "dependencies": {
         "@capacitor/android": "7.6.8",
+        "@capacitor/app": "7.1.0",
         "@capacitor/browser": "7.0.3",
         "@capacitor/core": "7.6.8",
         "@hookform/resolvers": "^5.2.2",
@@ -159,6 +160,8 @@
     "@bufbuild/protobuf": ["@bufbuild/protobuf@1.10.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@bufbuild/protobuf/-/protobuf-1.10.1.tgz", {}, "sha512-wJ8ReQbHxsAfXhrf9ixl0aYbZorRuOWpBNzm8pL8ftmSxQx/wnJD5Eg861NwJU/czy2VXFIebCeZnZrI9rktIQ=="],
 
     "@capacitor/android": ["@capacitor/android@7.6.8", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/android/-/android-7.6.8.tgz", { "peerDependencies": { "@capacitor/core": "^7.6.0" } }, "sha512-N5LXe1ls+TA0mq+RhtyDdP1JISzAAI+OuLGL3G7OWQxfQQOZYkiEjEJMYqMV6JR421IqpRsYj08JOfC0PFC3NA=="],
+
+    "@capacitor/app": ["@capacitor/app@7.1.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/app/-/app-7.1.0.tgz", { "peerDependencies": { "@capacitor/core": ">=7.0.0" } }, "sha512-W7m09IWrUjZbo7AKeq+rc/KyucxrJekTBg0l4QCm/yDtCejE3hebxp/W2esU26KKCzMc7H3ClkUw32E9lZkwRA=="],
 
     "@capacitor/browser": ["@capacitor/browser@7.0.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/browser/-/browser-7.0.3.tgz", { "peerDependencies": { "@capacitor/core": ">=7.0.0" } }, "sha512-PTHG+rj6Sz/6xXOmCs5sQXYDDueD6uv7p/bXOpdNlvV6Dv6yAOlZ85cu0sEggcGzXRW4PZXx/PvCOZasznsTTg=="],
 
