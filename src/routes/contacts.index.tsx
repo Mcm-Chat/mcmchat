@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Check, MessageSquare, ScanLine, Search, UserPlus, UserX, X } from "lucide-react";
+import { Ban, Check, MessageSquare, ScanLine, Search, Trash2, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -21,6 +21,8 @@ import {
   respondToRequest,
   sendContactRequest,
   setBlocked,
+  disconnectContact,
+  removeSavedContact,
   requestStatusLabel,
   type ContactWithProfile,
   type RequestRow,
