@@ -27,7 +27,8 @@
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "test:security:pin": "vitest run src/lib/security/__tests__/pin-grant-live.test.ts src/lib/security/__tests__/pin-api-response.test.ts src/lib/security/__tests__/customer-pin-acl.test.ts src/lib/security/__tests__/pin-rpc-fuzz.test.ts",
     "security:report": "node scripts/security-report.mjs",
-    "security:baseline": "node scripts/security-report.mjs --update-baseline"
+    "security:baseline": "node scripts/security-report.mjs --update-baseline",
+    "verify:db-secrets": "node scripts/verify-db-secrets.mjs"
   },
   "dependencies": {
     "@capacitor/android": "7.6.8",
