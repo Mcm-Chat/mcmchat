@@ -45,7 +45,30 @@ export type FcmEachResult = FcmResult & { outcomes: PushOutcome[] };
  * blok PEM bisa dibaca Web Crypto.
  */
 function normalizePrivateKey(key: string): string {
-  return key.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
+  const raw = key.replace(/\\r/g, "").replace(/\\n/g, "\n").replace(/\r/g, "").trim();
+  // Sebagian pengguna menyalin JSON lewat halaman yang diterjemahkan otomatis,
+  // sehingga baris penanda PEM ikut berubah bahasa. Isi base64-nya utuh, jadi
+  // penanda dikembalikan ke bentuk baku daripada menolak kredensial yang sah.
+  const lines = raw.split("\n");
+  if (lines.length > 2 && !/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(raw)) {
+    const first = lines[0] ?? "";
+    const lastIdx = lines.findLastIndex((l) => l.trim().startsWith("-----"));
+    if (first.startsWith("-----") && lastIdx > 0) {
+      lines[0] = "-----BEGIN PRIVATE KEY-----";
+      lines[lastIdx] = "-----END PRIVATE KEY-----";
+      return lines.join("\n").trim();
+    }
+  }
+  return raw;
+}
+
+/** Ambil field service account, termasuk saat nama kuncinya ikut diterjemahkan. */
+function pickField(obj: Record<string, unknown>, aliases: string[]): string | undefined {
+  for (const key of aliases) {
+    const v = obj[key];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return undefined;
 }
 
 function parseServiceAccount(raw: string): ServiceAccount | { error: PushConfigStatus } {
@@ -61,24 +84,24 @@ function parseServiceAccount(raw: string): ServiceAccount | { error: PushConfigS
       };
     }
   }
-  let parsed: Partial<ServiceAccount>;
+  let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(text) as Partial<ServiceAccount>;
+    parsed = JSON.parse(text) as Record<string, unknown>;
   } catch {
     return {
       error: { configured: false, code: "invalid_json", reason: CONFIG_REASONS.invalid_json },
     };
   }
-  if (
-    !parsed ||
-    typeof parsed !== "object" ||
-    !parsed.client_email ||
-    !parsed.private_key ||
-    !parsed.project_id
-  ) {
+  if (!parsed || typeof parsed !== "object") {
     return { error: { configured: false, code: "incomplete", reason: CONFIG_REASONS.incomplete } };
   }
-  const private_key = normalizePrivateKey(String(parsed.private_key));
+  const clientEmail = pickField(parsed, ["client_email", "email_klien", "email klien"]);
+  const rawKey = pickField(parsed, ["private_key", "kunci_pribadi", "kunci pribadi"]);
+  const projectId = pickField(parsed, ["project_id", "ID proyek", "id_proyek", "id proyek"]);
+  if (!clientEmail || !rawKey || !projectId) {
+    return { error: { configured: false, code: "incomplete", reason: CONFIG_REASONS.incomplete } };
+  }
+  const private_key = normalizePrivateKey(rawKey);
   if (!/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(private_key)) {
     return {
       error: {
@@ -89,8 +112,8 @@ function parseServiceAccount(raw: string): ServiceAccount | { error: PushConfigS
     };
   }
   return {
-    client_email: String(parsed.client_email).trim(),
-    project_id: String(parsed.project_id).trim(),
+    client_email: clientEmail.trim(),
+    project_id: projectId.trim(),
     private_key,
   };
 }
