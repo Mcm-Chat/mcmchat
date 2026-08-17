@@ -236,3 +236,34 @@ export const notifyCallTerminal = createServerFn({ method: "POST" })
     const res = await dispatchCallTerminalPush({ callId: call.id, status: String(call.status) });
     return { configured: res.configured, sent: res.sent };
   });
+
+/**
+ * Kirim push uji ke perangkat milik pemanggil sendiri (tidak bisa menargetkan
+ * orang lain). Dipakai halaman /settings/push-test untuk membuktikan pesan dan
+ * panggilan benar-benar sampai saat aplikasi ditutup total.
+ */
+export const sendPushSelfTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ variant: z.enum(["message", "call"]) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const stamp = new Intl.DateTimeFormat("id-ID", {
+      timeStyle: "medium",
+      timeZone: "Asia/Jakarta",
+    }).format(new Date());
+    const { dispatchSelfTestPush } = await import("./dispatch.server");
+    const res = await dispatchSelfTestPush({
+      userId: context.userId,
+      variant: data.variant,
+      stamp,
+    });
+    return {
+      configured: res.configured,
+      sent: res.sent,
+      failed: res.failed,
+      devices: res.devices,
+      stamp,
+      reason: res.reason ?? null,
+    };
+  });

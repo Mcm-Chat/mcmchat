@@ -435,3 +435,59 @@ export async function dispatchEventPush(event: EventPush): Promise<FcmResult> {
   await pruneTokens(invalid);
   return { configured: true, sent, failed, invalidTokens: invalid };
 }
+
+/**
+ * Push uji ke perangkat MILIK PEMANGGIL SENDIRI.
+ *
+ * Tujuannya membuktikan jalur pengiriman nyata saat aplikasi force-quit, jadi
+ * ini benar-benar melewati FCM (bukan notifikasi lokal). Isinya ditandai
+ * "Uji" secara eksplisit: tidak pernah memalsukan panggilan masuk — varian
+ * `call` hanya memakai channel panggilan agar prioritas/dering ikut teruji.
+ */
+export async function dispatchSelfTestPush(input: {
+  userId: string;
+  variant: "message" | "call";
+  stamp: string;
+}): Promise<FcmResult & { devices: number }> {
+  if (!pushConfigured()) {
+    return {
+      configured: false,
+      sent: 0,
+      failed: 0,
+      invalidTokens: [],
+      reason: "FCM belum terhubung",
+      devices: 0,
+    };
+  }
+  const isCall = input.variant === "call";
+  const db = await admin();
+  const { data } = await db.rpc("push_targets_for_user", {
+    _user: input.userId,
+    _category: isCall ? "calls" : "chat",
+  });
+  const rows = (data ?? []) as unknown as Row[];
+  if (rows.length === 0) {
+    return { configured: true, sent: 0, failed: 0, invalidTokens: [], devices: 0 };
+  }
+
+  const payload: PushData = {
+    kind: "message",
+    channel: isCall ? CHANNELS.calls.id : CHANNELS.messages.id,
+    group: `self-test-${input.variant}`,
+    route: isCall ? "/calls" : "/settings/push-test",
+    title: isCall ? "Uji notifikasi panggilan" : "Uji notifikasi pesan",
+    body: `Jalur push berfungsi • ${input.stamp}`,
+  };
+
+  const res = await sendPush(
+    rows.map((r) => ({
+      token: String(r["push_token"]),
+      sound: Boolean(r["sound"]),
+      vibrate: Boolean(r["vibrate"]),
+    })),
+    payload,
+    { ttlSeconds: 300, collapseKey: `self-test-${input.variant}` },
+  );
+  await pruneTokens(res.invalidTokens);
+  return { ...res, devices: rows.length };
+}

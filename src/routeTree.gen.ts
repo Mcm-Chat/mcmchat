@@ -39,6 +39,7 @@ import { Route as PrepareTokenRouteImport } from './routes/prepare.$token'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as SettingsCallsRouteImport } from './routes/settings.calls'
 import { Route as SettingsNotificationsRouteImport } from './routes/settings.notifications'
+import { Route as SettingsPushTestRouteImport } from './routes/settings.push-test'
 import { Route as SettingsVoiceRouteImport } from './routes/settings.voice'
 import { Route as StatusIndexRouteImport } from './routes/status.index'
 import { Route as StatusNewRouteImport } from './routes/status.new'
@@ -199,6 +200,11 @@ const SettingsNotificationsRoute = SettingsNotificationsRouteImport.update({
   path: '/settings/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsPushTestRoute = SettingsPushTestRouteImport.update({
+  id: '/settings/push-test',
+  path: '/settings/push-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsVoiceRoute = SettingsVoiceRouteImport.update({
   id: '/settings/voice',
   path: '/settings/voice',
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/calls': typeof SettingsCallsRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/push-test': typeof SettingsPushTestRoute
   '/settings/voice': typeof SettingsVoiceRoute
   '/status/new': typeof StatusNewRoute
   '/tasks/$id': typeof TasksIdRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByTo {
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/calls': typeof SettingsCallsRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/push-test': typeof SettingsPushTestRoute
   '/settings/voice': typeof SettingsVoiceRoute
   '/status/new': typeof StatusNewRoute
   '/tasks/$id': typeof TasksIdRoute
@@ -352,6 +360,7 @@ export interface FileRoutesById {
   '/prepare/$token': typeof PrepareTokenRoute
   '/settings/calls': typeof SettingsCallsRoute
   '/settings/notifications': typeof SettingsNotificationsRoute
+  '/settings/push-test': typeof SettingsPushTestRoute
   '/settings/voice': typeof SettingsVoiceRoute
   '/status/new': typeof StatusNewRoute
   '/tasks/$id': typeof TasksIdRoute
@@ -395,6 +404,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/settings/calls'
     | '/settings/notifications'
+    | '/settings/push-test'
     | '/settings/voice'
     | '/status/new'
     | '/tasks/$id'
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/settings/calls'
     | '/settings/notifications'
+    | '/settings/push-test'
     | '/settings/voice'
     | '/status/new'
     | '/tasks/$id'
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/prepare/$token'
     | '/settings/calls'
     | '/settings/notifications'
+    | '/settings/push-test'
     | '/settings/voice'
     | '/status/new'
     | '/tasks/$id'
@@ -519,6 +531,7 @@ export interface RootRouteChildren {
   PrepareTokenRoute: typeof PrepareTokenRoute
   SettingsCallsRoute: typeof SettingsCallsRoute
   SettingsNotificationsRoute: typeof SettingsNotificationsRoute
+  SettingsPushTestRoute: typeof SettingsPushTestRoute
   SettingsVoiceRoute: typeof SettingsVoiceRoute
   StatusNewRoute: typeof StatusNewRoute
   TasksIdRoute: typeof TasksIdRoute
@@ -750,6 +763,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/push-test': {
+      id: '/settings/push-test'
+      path: '/settings/push-test'
+      fullPath: '/settings/push-test'
+      preLoaderRoute: typeof SettingsPushTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/voice': {
       id: '/settings/voice'
       path: '/settings/voice'
@@ -839,6 +859,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrepareTokenRoute: PrepareTokenRoute,
   SettingsCallsRoute: SettingsCallsRoute,
   SettingsNotificationsRoute: SettingsNotificationsRoute,
+  SettingsPushTestRoute: SettingsPushTestRoute,
   SettingsVoiceRoute: SettingsVoiceRoute,
   StatusNewRoute: StatusNewRoute,
   TasksIdRoute: TasksIdRoute,
