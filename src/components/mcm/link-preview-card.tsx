@@ -81,9 +81,10 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
         openLink(data.url, e);
       }}
       onPointerDown={(e) => e.stopPropagation()}
+      aria-label={`Buka tautan ${data.title ? `${data.title} — ` : ""}${host}`}
       className={cn(
         CARD_CLS,
-        "transition-opacity active:opacity-80",
+        "transition-opacity active:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         onBubble ? "border-current/25 bg-black/10" : "border-border/70 bg-background/70",
       )}
     >
@@ -91,7 +92,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
         <RemoteImage
           src={data.image}
           alt={data.title ?? "Pratinjau link"}
-          frameClassName="h-28 w-full"
+          frameClassName="h-28 w-full sm:h-32"
           className="object-cover"
         />
       )}

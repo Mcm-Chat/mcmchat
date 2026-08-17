@@ -73,7 +73,7 @@ import { MCMAvatar, StatusBadge } from "./primitives";
  * Lebar responsif seragam untuk semua media chat (foto, suara, stiker,
  * lokasi, ledger) agar bubble tidak pernah meluber di layar sempit.
  */
-export const MEDIA_W = "w-40 max-w-[68vw] sm:w-48";
+export const MEDIA_W = "w-44 max-w-[68vw] sm:w-56 md:w-64";
 /** Kartu terstruktur (produk/penjualan) sedikit lebih lebar, tetap dibatasi viewport. */
 export const CARD_W = "w-60 max-w-[72vw] sm:w-64";
 
@@ -294,8 +294,9 @@ export function MessageLocationCard({
       href={url}
       target="_blank"
       rel="noreferrer"
+      aria-label={`Buka ${message.location_label || "lokasi terlampir"} di Google Maps`}
       className={cn(
-        "mt-1 flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5 text-foreground",
+        "mt-1 flex min-h-11 items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-2 py-1.5 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         compact ? "text-[11px]" : "text-xs",
       )}
     >
@@ -353,17 +354,21 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
       ? `https://www.google.com/maps/search/?api=1&query=${photo.location_lat},${photo.location_lng}`
       : "");
   return (
-    <div className="w-20 shrink-0 space-y-1">
-      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-black/10">
+    <div className="w-20 shrink-0 space-y-1 sm:w-24">
+      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-black/10 sm:size-24">
         {url ? (
           <button
             type="button"
-            aria-label="Lihat foto produk"
+            aria-label={
+              photo.location_label
+                ? `Lihat foto produk di ${photo.location_label}`
+                : "Lihat foto produk"
+            }
             onClick={(e) => {
               e.stopPropagation();
               setOpen(true);
             }}
-            className="size-full"
+            className="size-full rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <RemoteImage
               src={url}
@@ -384,7 +389,8 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
           href={mapsUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-0.5 truncate text-[10px] font-semibold text-primary"
+          aria-label={`Buka lokasi foto produk${photo.location_label ? ` di ${photo.location_label}` : ""} di Maps`}
+          className="flex min-h-11 items-center gap-0.5 truncate rounded text-[10px] font-semibold text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <MapPin className="size-3 shrink-0" /> Buka Lokasi
         </a>
@@ -556,15 +562,17 @@ function ImageBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path, inView);
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const label = message.body ? `Lihat foto: ${message.body}` : "Lihat foto terkirim";
   return (
     <>
       <button
         type="button"
-        aria-label="Lihat foto"
-        disabled={!url}
+        aria-label={label}
+        aria-busy={!url}
+        aria-disabled={!url}
         onClick={(e) => {
           e.stopPropagation();
-          setOpen(true);
+          if (url) setOpen(true);
         }}
         title="Ketuk untuk perbesar"
         className="block cursor-zoom-in rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -598,17 +606,22 @@ function ImageBubble({ message }: { message: MessageRow }) {
 function DocumentBubble({ message }: { message: MessageRow }) {
   const { ref, inView } = useInView<HTMLAnchorElement>();
   const url = useSignedUrl("chat-media", message.attachment_path, inView);
+  const name = message.attachment_name ?? message.body ?? "Dokumen";
   return (
     <a
       ref={ref}
       href={url ?? undefined}
       aria-busy={!url}
+      aria-label={url ? `Buka dokumen ${name}` : `Menyiapkan dokumen ${name}`}
       target="_blank"
       rel="noreferrer"
-      className={cn("flex items-center gap-2", MEDIA_W)}
+      className={cn(
+        "flex min-h-11 items-center gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        MEDIA_W,
+      )}
     >
       <FileText className="size-5 shrink-0" />
-      <span className="min-w-0 flex-1 break-words">{message.attachment_name ?? message.body}</span>
+      <span className="min-w-0 flex-1 break-words">{name}</span>
       {!url && <MediaSkeleton className="h-3 w-10 shrink-0 rounded" />}
     </a>
   );
@@ -620,7 +633,7 @@ function StickerBubble({ message }: { message: MessageRow }) {
       bucket="chat-media"
       path={message.attachment_path}
       alt={message.body || "Stiker"}
-      frameClassName="aspect-square w-28 max-w-[45vw] rounded-2xl sm:w-32"
+      frameClassName="aspect-square w-28 max-w-[45vw] rounded-2xl sm:w-32 md:w-36"
       className="object-contain"
     />
   );
@@ -633,9 +646,17 @@ function VoiceBubble({ message }: { message: MessageRow }) {
     <div ref={ref} className={cn("flex items-center gap-2", MEDIA_W)} aria-busy={!url}>
       <Mic className="size-4 shrink-0" />
       {url ? (
-        <audio controls src={url} className="h-8 min-w-0 flex-1" />
+        <audio
+          controls
+          src={url}
+          aria-label={message.body ? `Pesan suara: ${message.body}` : "Pesan suara"}
+          className="h-8 min-w-0 flex-1 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        />
       ) : (
-        <MediaSkeleton className="h-8 min-w-0 flex-1 rounded-full" />
+        <>
+          <MediaSkeleton className="h-8 min-w-0 flex-1 rounded-full" />
+          <span className="sr-only">Memuat pesan suara…</span>
+        </>
       )}
     </div>
   );
