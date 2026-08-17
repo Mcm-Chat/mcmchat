@@ -5,6 +5,7 @@ import { fetchLinkPreview } from "@/lib/api/link-preview.functions";
 import { cn } from "@/lib/utils";
 import { useLinkOpener } from "@/lib/mcm/use-link-opener";
 import { MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
+import { useInView } from "@/lib/perf/use-in-view";
 
 const CARD_CLS = "mt-1.5 block w-56 max-w-[68vw] overflow-hidden rounded-xl border text-left";
 
@@ -31,16 +32,21 @@ export function firstUrlOf(text?: string | null): string | null {
 export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boolean }) {
   const unfurl = useServerFn(fetchLinkPreview);
   const openLink = useLinkOpener();
+  // Unfurl hanya dijalankan saat kartu mendekati viewport agar daftar pesan
+  // panjang tidak menembak puluhan permintaan pratinjau sekaligus.
+  const { ref, inView } = useInView<HTMLDivElement>();
   const { data, isPending } = useQuery({
     queryKey: ["link-preview", url],
     queryFn: () => unfurl({ data: { url } }),
     staleTime: 1000 * 60 * 60 * 24,
     gcTime: 1000 * 60 * 60 * 24,
     retry: false,
+    enabled: inView,
   });
-  if (isPending) {
+  if (!inView || isPending) {
     return (
       <div
+        ref={ref}
         aria-hidden
         className={cn(
           CARD_CLS,
@@ -56,7 +62,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
       </div>
     );
   }
-  if (!data) return null;
+  if (!data) return <div ref={ref} className="hidden" />;
   const host = (() => {
     try {
       return new URL(data.url).hostname.replace(/^www\./, "");
