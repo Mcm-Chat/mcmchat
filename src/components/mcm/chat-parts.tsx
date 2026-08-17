@@ -559,7 +559,10 @@ function ImageBubble({ message }: { message: MessageRow }) {
         }}
         className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div ref={ref} className="relative h-56 w-52 max-w-full overflow-hidden rounded-xl">
+        <div
+          ref={ref}
+          className="relative aspect-[4/3] w-40 max-w-full overflow-hidden rounded-xl sm:w-48"
+        >
           {!loaded && (
             <MediaSkeleton className="absolute inset-0 size-full rounded-xl">
               <ImageIcon className="size-7 opacity-70" />
@@ -766,6 +769,7 @@ function MessageBubbleBase({
         <div
           className={cn(
             "relative min-w-0 max-w-full rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45] [overflow-wrap:anywhere]",
+            message.kind === "image" && !isSticker && "px-1.5 py-1.5",
             isSticker
               ? "bg-transparent px-0 py-0 shadow-none"
               : mine
@@ -806,13 +810,13 @@ function MessageBubbleBase({
                 <LinkifiedText
                   text={message.body}
                   onBubble={mine}
-                  className="block w-52 max-w-full break-words"
+                  className="block w-40 max-w-full break-words text-[13.5px] sm:w-48"
                 />
               )}
               {firstUrlOf(message.body) && (
                 <LinkPreviewCard url={firstUrlOf(message.body)!} onBubble={mine} />
               )}
-              <div className="w-52 max-w-full">
+              <div className="w-40 max-w-full sm:w-48">
                 <MessageLocationCard message={message} compact />
               </div>
             </div>
