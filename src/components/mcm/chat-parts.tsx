@@ -71,6 +71,18 @@ import { MCMAvatar, StatusBadge } from "./primitives";
 
 export const EMOJIS = [
   "😀",
+];
+
+/**
+ * Lebar responsif seragam untuk semua media chat (foto, suara, stiker,
+ * lokasi, ledger) agar bubble tidak pernah meluber di layar sempit.
+ */
+export const MEDIA_W = "w-40 max-w-[68vw] sm:w-48";
+/** Kartu terstruktur (produk/penjualan) sedikit lebih lebar, tetap dibatasi viewport. */
+export const CARD_W = "w-60 max-w-[72vw] sm:w-64";
+
+const EMOJIS_LIST = [
+  "😀",
   "😁",
   "😂",
   "🥹",
