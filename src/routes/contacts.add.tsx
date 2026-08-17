@@ -256,7 +256,15 @@ function AddContactPage() {
         }
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Permintaan gagal dikirim");
+      const info = describeContactRequestError(err);
+      toast.error(info.message, { description: info.hint, duration: 7000 });
+      // Status relasi bisa saja sudah berubah di server (mis. sudah terhubung
+      // atau permintaan lawan masuk) — segarkan badge agar instruksinya akurat.
+      try {
+        setRelation(await getContactRelation(userId, found.id));
+      } catch {
+        /* badge dibiarkan apa adanya bila status gagal dimuat */
+      }
     } finally {
       setSending(false);
     }
