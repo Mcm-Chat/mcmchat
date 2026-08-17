@@ -80,10 +80,14 @@ async def run(state):
         page.on("pageerror", lambda e: errors.append(f"pageerror: {str(e)[:200]}"))
 
         try:
-            await page.goto(f"{BASE}/login", wait_until="domcontentloaded")
+            await page.goto(f"{BASE}/login", wait_until="networkidle")
             await page.wait_for_selector("#email", timeout=30000)
             await page.fill("#email", state["email"])
             await page.fill("#password", state["password"])
+            await page.wait_for_timeout(400)
+            if not await page.input_value("#email"):
+                await page.fill("#email", state["email"])
+                await page.fill("#password", state["password"])
             await page.get_by_role("button", name="Masuk").click()
             await page.wait_for_url("**/chat**", timeout=30000)
             check("login berhasil", True, page.url)
