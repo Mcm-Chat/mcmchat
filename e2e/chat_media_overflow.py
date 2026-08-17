@@ -239,7 +239,13 @@ async def run(state):
         for width in WIDTHS:
             await page.set_viewport_size({"width": width, "height": 900})
             await page.goto(f"{BASE}/chat/{state['conv']}", wait_until="domcontentloaded")
-            await page.wait_for_selector(".chat-scroll", timeout=20000)
+            try:
+                await page.wait_for_selector(".chat-scroll", timeout=25000)
+            except Exception:
+                await page.screenshot(path=f"{SHOTS}/w{width}-gagal.png")
+                body = (await page.inner_text("body"))[:200].replace("\n", " | ")
+                check(f"{width}px: halaman chat termuat", False, body)
+                continue
             await page.wait_for_timeout(2500)
             # Gulir dari atas ke bawah agar semua item virtual sempat dirender & diukur.
             worst = None
