@@ -8,7 +8,7 @@ describe("resolveAppLink", () => {
 
   it("membuka permintaan kontak dari tautan PIN", () => {
     expect(resolveAppLink("https://www.mcmchat.id/contact/A2B3-C4D5")).toBe(
-      "/contacts/add?pin=A2B3C4D5",
+      "/contacts/add?pin=A2B3-C4D5",
     );
   });
 
