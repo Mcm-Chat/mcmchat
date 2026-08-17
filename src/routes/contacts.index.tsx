@@ -162,6 +162,24 @@ function ContactsPage() {
     }
   };
 
+  const deleteContact = async (contact: ContactWithProfile) => {
+    if (!userId) return;
+    setBusy(contact.contact_id);
+    try {
+      if (contact.connected) {
+        await disconnectContact(userId, contact.contact_id);
+      }
+      await removeSavedContact(userId, contact.contact_id);
+      refreshAll();
+      toast.success("Kontak dihapus");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus kontak");
+    } finally {
+      setBusy(null);
+      setToDelete(null);
+    }
+  };
+
   return (
     <AppShell
       header={
