@@ -154,7 +154,8 @@ def cleanup(state):
 
 # ---------------------------------------------------------------- stabilisasi
 FREEZE_CLOCK = """
-(fixed) => {
+(() => {
+  const fixed = __FIXED__;
   const RealDate = Date;
   class FrozenDate extends RealDate {
     constructor(...args) { super(...(args.length ? args : [fixed])); }
@@ -162,8 +163,8 @@ FREEZE_CLOCK = """
   }
   // eslint-disable-next-line no-global-assign
   window.Date = FrozenDate;
-}
-"""
+})();
+""".replace("__FIXED__", str(FROZEN_MS))
 
 STABLE_CSS = """
 *, *::before, *::after {
@@ -226,7 +227,7 @@ async def run(state):
                 device_scale_factor=1, locale="id-ID",
                 timezone_id="Asia/Jakarta", reduced_motion="reduce",
                 is_mobile=width < 768, has_touch=width < 768)
-            await ctx.add_init_script(FREEZE_CLOCK, FROZEN_MS)
+            await ctx.add_init_script(FREEZE_CLOCK)
             page = await ctx.new_page()
             try:
                 await page.goto(f"{BASE}/login", wait_until="networkidle")
