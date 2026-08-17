@@ -353,17 +353,21 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
       ? `https://www.google.com/maps/search/?api=1&query=${photo.location_lat},${photo.location_lng}`
       : "");
   return (
-    <div className="w-20 shrink-0 space-y-1">
-      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-black/10">
+    <div className="w-20 shrink-0 space-y-1 sm:w-24">
+      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-black/10 sm:size-24">
         {url ? (
           <button
             type="button"
-            aria-label="Lihat foto produk"
+            aria-label={
+              photo.location_label
+                ? `Lihat foto produk di ${photo.location_label}`
+                : "Lihat foto produk"
+            }
             onClick={(e) => {
               e.stopPropagation();
               setOpen(true);
             }}
-            className="size-full"
+            className="size-full rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <RemoteImage
               src={url}
@@ -384,7 +388,8 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
           href={mapsUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-0.5 truncate text-[10px] font-semibold text-primary"
+          aria-label={`Buka lokasi foto produk${photo.location_label ? ` di ${photo.location_label}` : ""} di Maps`}
+          className="flex min-h-11 items-center gap-0.5 truncate rounded text-[10px] font-semibold text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <MapPin className="size-3 shrink-0" /> Buka Lokasi
         </a>
