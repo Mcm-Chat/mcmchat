@@ -113,11 +113,14 @@ beforeAll(async () => {
   if (messageId) ctx = { messageId, userId };
 });
 
-afterAll(() => {
-  if (ctx && HAS_DB) {
-    q(
-      `delete from public.message_reactions where message_id='${ctx.messageId}' and user_id='${ctx.userId}' and emoji in ('👍','😀')`,
-    );
+afterAll(async () => {
+  // Bersih-bersih lewat REST sebagai user uji: peran psql CI tidak punya DELETE.
+  if (!ctx || !LIVE) return;
+  for (const emoji of ["%F0%9F%91%8D", "%F0%9F%98%80"]) {
+    await rest(
+      `message_reactions?message_id=eq.${ctx.messageId}&user_id=eq.${ctx.userId}&emoji=eq.${emoji}`,
+      { method: "DELETE" },
+    ).catch(() => undefined);
   }
 });
 
