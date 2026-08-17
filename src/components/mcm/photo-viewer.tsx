@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Download, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useReduceMotion } from "@/lib/a11y/reduce-motion";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
@@ -28,6 +29,7 @@ export function PhotoViewer({
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const { reduced: reduceMotion } = useReduceMotion();
   const titleId = useId();
   const captionId = `${titleId}-caption`;
   const helpId = `${titleId}-help`;
