@@ -769,6 +769,7 @@ function MessageBubbleBase({
         <div
           className={cn(
             "relative min-w-0 max-w-full rounded-2xl px-3 py-2 text-[14.5px] leading-[1.45] [overflow-wrap:anywhere]",
+            message.kind === "image" && !isSticker && "px-1.5 py-1.5",
             isSticker
               ? "bg-transparent px-0 py-0 shadow-none"
               : mine
