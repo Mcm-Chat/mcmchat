@@ -26,6 +26,7 @@ Object.defineProperty(navigator, "serviceWorker", {
   configurable: true,
   value: { register: async () => reg, ready: Promise.resolve(reg) },
 });
+vi.stubGlobal("PushManager", class {});
 vi.stubGlobal("Notification", { permission: "granted" });
 
 const { syncWebPushToken } = await import("../web");
@@ -74,6 +75,7 @@ describe("syncWebPushToken", () => {
     vi.stubGlobal("Notification", { permission: "default" });
     expect(await syncWebPushToken("Pixel")).toBe(false);
     expect(rpc).not.toHaveBeenCalled();
-    vi.stubGlobal("Notification", { permission: "granted" });
+    vi.stubGlobal("PushManager", class {});
+vi.stubGlobal("Notification", { permission: "granted" });
   });
 });
