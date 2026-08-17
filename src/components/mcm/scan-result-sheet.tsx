@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MessageCircle, ScanLine, Trash2, UserPlus, UserRound } from "lucide-react";
+import { MessageCircle, ScanLine, Send, Trash2, UserPlus, UserRound } from "lucide-react";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,6 +121,25 @@ export function ScanResultSheet({
       setConfirmOpen(false);
     }, "Kontak berhasil disimpan");
 
+  const resendRequest = async () => {
+    setBusy(true);
+    try {
+      const result = await sendContactRequest(userId, profile.id, "Halo, saya ingin terhubung di MCM.");
+      if (result.code === "resent" || result.code === "sent") {
+        toast.success("Permintaan dikirim ulang");
+      } else if (result.code === "accepted_incoming") {
+        toast.success("Kontak langsung diterima");
+      } else {
+        toast.success("Status permintaan diperbarui");
+      }
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengirim ulang permintaan.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-8">
@@ -235,19 +254,29 @@ export function ScanResultSheet({
               )}
 
               {relation?.outgoingPending && (
-                <Button
-                  variant="outline"
-                  className="h-12 rounded-xl"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(
-                      () => cancelContactRequest(userId, profile.id),
-                      "Permintaan dibatalkan",
-                    )
-                  }
-                >
-                  Batalkan Permintaan
-                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="default"
+                    className="h-12 rounded-xl"
+                    disabled={busy}
+                    onClick={() => void resendRequest()}
+                  >
+                    <Send className="size-4" /> Kirim Ulang
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 rounded-xl"
+                    disabled={busy}
+                    onClick={() =>
+                      void run(
+                        () => cancelContactRequest(userId, profile.id),
+                        "Permintaan dibatalkan",
+                      )
+                    }
+                  >
+                    Batalkan
+                  </Button>
+                </div>
               )}
 
               {(relation?.saved || saved) && !relation?.blockedByMe && (
