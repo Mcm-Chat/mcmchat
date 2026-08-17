@@ -18,6 +18,7 @@ import {
   isValidPin,
   normalizePin,
   sendContactRequest,
+  describeContactRequestError,
   type ContactRelation,
   type ProfileLite,
 } from "@/lib/api/contacts";
