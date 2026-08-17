@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Check, MessageSquare, ScanLine, Search, UserPlus, UserX, X } from "lucide-react";
+import { Ban, Check, MessageSquare, ScanLine, Search, Trash2, UserPlus, UserX, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -21,6 +21,8 @@ import {
   respondToRequest,
   sendContactRequest,
   setBlocked,
+  disconnectContact,
+  removeSavedContact,
   requestStatusLabel,
   type ContactWithProfile,
   type RequestRow,
@@ -70,6 +72,7 @@ function ContactsPage() {
   const [tab, setTab] = useState("kontak");
   const [q, setQ] = useState("");
   const [toRemove, setToRemove] = useState<ContactWithProfile | null>(null);
+  const [toDelete, setToDelete] = useState<ContactWithProfile | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const refreshAll = () => {
@@ -156,6 +159,24 @@ function ContactsPage() {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui blokir");
     } finally {
       setBusy(null);
+    }
+  };
+
+  const deleteContact = async (contact: ContactWithProfile) => {
+    if (!userId) return;
+    setBusy(contact.contact_id);
+    try {
+      if (contact.connected) {
+        await disconnectContact(userId, contact.contact_id);
+      }
+      await removeSavedContact(userId, contact.contact_id);
+      refreshAll();
+      toast.success("Kontak dihapus");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menghapus kontak");
+    } finally {
+      setBusy(null);
+      setToDelete(null);
     }
   };
 
@@ -284,6 +305,16 @@ function ContactsPage() {
                   >
                     <Ban className="size-5" />
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive"
+                    aria-label={`Hapus ${c.profile.display_name}`}
+                    disabled={busy === c.contact_id}
+                    onClick={() => setToDelete(c)}
+                  >
+                    <Trash2 className="size-5" />
+                  </Button>
                 </div>
               </li>
             ))}
@@ -323,6 +354,16 @@ function ContactsPage() {
                   onClick={() => void askConnect(c.contact_id)}
                 >
                   Kirim permintaan
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive"
+                  aria-label={`Hapus ${c.profile.display_name}`}
+                  disabled={busy === c.contact_id}
+                  onClick={() => setToDelete(c)}
+                >
+                  <Trash2 className="size-5" />
                 </Button>
               </li>
             ))}
@@ -470,6 +511,22 @@ function ContactsPage() {
         onConfirm={() => {
           if (toRemove) void toggleBlock(toRemove.contact_id, true);
           setToRemove(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!toDelete}
+        onOpenChange={(v) => !v && setToDelete(null)}
+        title="Hapus kontak?"
+        description={
+          toDelete
+            ? `Kontak ${toDelete.profile.display_name} akan dihapus dari daftar Anda. Riwayat chat tetap ada di perangkat, tapi Anda tidak bisa mengirim pesan baru kecuali mengirim permintaan lagi.`
+            : ""
+        }
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => {
+          if (toDelete) void deleteContact(toDelete);
         }}
       />
     </AppShell>
