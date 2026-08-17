@@ -147,7 +147,8 @@ async def run(state):
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         ctx = await browser.new_context(viewport={"width": 390, "height": 844},
-                                        is_mobile=True, has_touch=True)
+                                        is_mobile=True, has_touch=True,
+                                        service_workers="block")
         page = await ctx.new_page()
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
