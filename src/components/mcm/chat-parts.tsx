@@ -740,6 +740,8 @@ function MessageBubbleBase({
   }
   return (
     <div
+      data-message-id={message.id}
+      data-message-kind={message.kind}
       className={cn(
         "group relative flex w-full gap-1 rounded-2xl px-1 transition-colors",
         animateIn && "animate-bubble-in",
