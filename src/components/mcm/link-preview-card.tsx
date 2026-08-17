@@ -50,7 +50,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
           compact
           icon={<Link2 className="size-5" />}
           label="Pratinjau tautan gagal dimuat"
-          onRetry={isFetching ? undefined : () => void refetch()}
+          {...(isFetching ? {} : { onRetry: () => void refetch() })}
         />
       </div>
     );
