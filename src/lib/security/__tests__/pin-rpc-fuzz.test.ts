@@ -135,7 +135,7 @@ function pinColumnVariants(column: string): fc.Arbitrary<string> {
 }
 
 const RUNS = Number(process.env["PIN_FUZZ_RUNS"] ?? 12);
-const cfg: fc.Parameters = { numRuns: RUNS, verbose: false };
+const cfg = { numRuns: RUNS, verbose: false };
 
 d("fuzz: RPC bersentuhan PIN menolak anon/anggota tanpa izin", () => {
   for (const caller of CALLERS) {
