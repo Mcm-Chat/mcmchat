@@ -21,7 +21,7 @@ import {
   syncRotatedToken,
 } from "./native";
 import { checkPermission, requestPermission } from "./permissions";
-import { attachWebPushListeners, registerWebPush, webPushReady } from "./web";
+import { attachWebPushListeners, registerWebPush, syncWebPushToken, webPushReady } from "./web";
 
 export type PushState = {
   /** Berjalan di wadah Android/Capacitor, bukan tab browser. */
@@ -90,8 +90,14 @@ async function registerOnce(userId: string) {
  * sudah pernah terdaftar pada sesi ini (registeredForUser sudah true).
  */
 async function drainRotatedToken() {
-  if (!isNative()) return;
   const name = typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 60) : "Android";
+  if (!isNative()) {
+    // Web/PWA: token FCM bisa berotasi atau dicabut browser tanpa event apa pun,
+    // jadi token aktif dibandingkan dengan yang tersimpan setiap kali sesi hidup.
+    const ok = await syncWebPushToken(name).catch(() => false);
+    if (ok) emit({ registered: true, reason: undefined });
+    return;
+  }
   const synced = await syncRotatedToken(name).catch(() => false);
   if (synced) emit({ registered: true, reason: undefined });
 }
@@ -142,11 +148,25 @@ export function usePushSession(userId?: string) {
       // Browser/PWA: token web hanya didaftarkan bila izin sudah diberikan.
       if (userId && !isNative() && perm === "granted" && webPushReady().ok) {
         await registerOnce(userId);
+        await drainRotatedToken();
       }
     })();
     return () => {
       alive = false;
     };
+  }, [userId]);
+
+  // Perangkat asli sering menutup lalu membuka kembali aplikasi. Setiap kali tab
+  // kembali terlihat, token diverifikasi ulang agar baris perangkat di server
+  // tidak basi saat notifikasi dikirim ketika aplikasi ditutup.
+  useEffect(() => {
+    if (!userId || typeof document === "undefined") return;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      void drainRotatedToken();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [userId]);
 
   useEffect(() => {
