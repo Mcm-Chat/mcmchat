@@ -1,0 +1,1 @@
+REVOKE SELECT (delivered_pin) ON public.preparation_jobs FROM anon, authenticated;
