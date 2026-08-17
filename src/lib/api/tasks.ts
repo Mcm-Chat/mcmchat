@@ -9,6 +9,19 @@ export type PreparationJobItem = Tables<"preparation_job_items">;
 export type PreparationItemPhoto = Tables<"preparation_item_photos">;
 export type JobWithItems = PreparationJob & { items: PreparationJobItem[] };
 
+/**
+ * Kolom eksplisit tanpa `delivered_pin`: grant SELECT kolom itu memang dicabut
+ * (hardening PIN), jadi `select("*")` membuat PostgREST menolak dengan 403.
+ */
+const JOB_COLS = [
+  "id", "business_id", "assigned_user_id", "chat_order_id", "code",
+  "completed_at", "conversation_id", "created_at", "created_by", "customer_id",
+  "customer_name", "customer_user_id", "delivered_at", "delivered_message_id",
+  "expires_at", "notes", "opened_at", "order_id", "revoked_at", "status",
+  "token_hash", "token_prefix", "updated_at",
+].join(", ");
+const JOB_SELECT = `${JOB_COLS}, items:preparation_job_items(*)`;
+
 export const TASK_STATUS_LABEL: Record<string, string> = {
   draft: "Draf",
   sent: "Dikirim",
@@ -24,7 +37,7 @@ export async function listBusinessJobs(businessId: string): Promise<JobWithItems
   const rows = unwrap(
     await supabase
       .from("preparation_jobs")
-      .select("*, items:preparation_job_items(*)")
+      .select(JOB_SELECT)
       .eq("business_id", businessId)
       .order("created_at", { ascending: false }),
     "Gagal memuat daftar tugas",
@@ -37,7 +50,7 @@ export async function listAssignedJobs(userId: string): Promise<JobWithItems[]> 
   const rows = unwrap(
     await supabase
       .from("preparation_jobs")
-      .select("*, items:preparation_job_items(*)")
+      .select(JOB_SELECT)
       .eq("assigned_user_id", userId)
       .order("created_at", { ascending: false }),
     "Gagal memuat tugas saya",
@@ -49,7 +62,7 @@ export async function getJobDetail(jobId: string): Promise<JobWithItems> {
   const row = unwrap(
     await supabase
       .from("preparation_jobs")
-      .select("*, items:preparation_job_items(*)")
+      .select(JOB_SELECT)
       .eq("id", jobId)
       .single(),
     "Tugas tidak ditemukan",
