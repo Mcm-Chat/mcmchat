@@ -69,7 +69,8 @@ export function BottomNavigation({
     const sync = () => root.style.setProperty("--mcm-nav-h", `${Math.round(el.offsetHeight)}px`);
     sync();
     const ro = new ResizeObserver(sync);
-    ro.observe(el);
+    // border-box: perubahan padding safe-area/keyboard ikut terpantau.
+    ro.observe(el, { box: "border-box" });
     window.addEventListener("orientationchange", sync);
     return () => {
       ro.disconnect();
