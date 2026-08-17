@@ -26,7 +26,11 @@ function q(sql: string): string[] {
 /** Kolom apa pun yang bernama/berakhiran pin dan menyimpan rahasia. */
 const SECRET_PIN_COLUMNS = ["pin", "staff_pin"];
 
-/** Fungsi yang boleh menyentuh PIN — semuanya wajib SECURITY DEFINER & non-anon. */
+/**
+ * Fungsi yang boleh menyentuh PIN dan dapat dipanggil peran login.
+ * Trigger/helper internal (tanpa EXECUTE untuk `authenticated`) tidak termasuk
+ * karena bukan jalur baca yang bisa dipanggil klien.
+ */
 const ALLOWED_PIN_FUNCTIONS = [
   "business_staff_directory",
   "confirm_staff_pin",
@@ -37,8 +41,6 @@ const ALLOWED_PIN_FUNCTIONS = [
   "profile_full",
   "search_profile_by_pin",
   "find_profile_by_pin",
-  "assign_pin",
-  "gen_mcm_pin",
 ];
 
 d("kolom PIN — hak akses hasil query", () => {
@@ -116,6 +118,7 @@ d("fungsi — satu-satunya jalur PIN, dan tetap tertutup untuk anon", () => {
            || has_function_privilege('anon', p.oid, 'EXECUTE')::text
     from pg_proc p
     where p.pronamespace = 'public'::regnamespace
+      and has_function_privilege('authenticated', p.oid, 'EXECUTE')
       and (p.prosrc ilike '%.pin%' or p.prosrc ilike '%staff_pin%'
            or p.prosrc ilike '% pin %' or p.prosrc ilike '%pin =%')
   `).map((r) => {
