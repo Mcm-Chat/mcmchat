@@ -36,3 +36,4 @@ android/app/google-services.json
 *.keystore
 android/keystore.properties
 sbom/
+security-report/
