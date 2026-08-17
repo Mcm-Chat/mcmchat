@@ -223,6 +223,25 @@ function AddContactPage() {
     }
   };
 
+  // Deep link undangan (mcmchat.id/contact/<pin> atau QR): PIN langsung dicari
+  // sekali agar pengguna tiba di kartu profil, bukan form kosong.
+  useEffect(() => {
+    if (!pinParam || !userId) return;
+    const clean = normalizePin(pinParam);
+    if (!isValidPin(clean)) {
+      toast.error("Tautan undangan tidak sah: format PIN tidak valid.");
+      return;
+    }
+    setPin(clean);
+    if (profile && clean === normalizePin(profile.pin)) {
+      toast.info("Itu PIN Anda sendiri.");
+      return;
+    }
+    void search(clean);
+    // Hanya sekali per PIN pada tautan.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinParam, userId]);
+
   const send = async () => {
     if (!userId || !found) return;
     setSending(true);
