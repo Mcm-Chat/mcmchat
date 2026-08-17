@@ -173,7 +173,11 @@ function markdown(report) {
     ``,
     `## Drift terhadap baseline`,
     ``,
-    d.changed ? `Terdeteksi perubahan:` : `Tidak ada perubahan skema/policy terhadap baseline.`,
+    d.baseline === "absent"
+      ? `Baseline belum tersedia.`
+      : d.changed
+        ? `Terdeteksi perubahan:`
+        : `Tidak ada perubahan skema/policy terhadap baseline.`,
     ...(d.notes ?? []).map((n) => `- ${n}`),
   );
   return lines.join("\n") + "\n";

@@ -29,6 +29,33 @@ jobs:
       - name: Uji invariant keamanan DB
         run: bun run test:security
 
+  security-scan:
+    name: Security scan + laporan per build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Cache dependensi bun
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'package.json') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      # Menjalankan seluruh invariant keamanan, menghitung sidik jari
+      # skema/policy dari migration, dan membandingkannya dengan
+      # security/baseline.json agar drift terdeteksi pada build itu juga.
+      - name: Security scan
+        run: bun run security:report
+      - name: Unggah laporan keamanan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report-${{ github.sha }}
+          path: security-report/
+          if-no-files-found: error
+          retention-days: 90
+
   quality:
     name: Typecheck, test, build
     runs-on: ubuntu-latest
@@ -190,7 +217,7 @@ jobs:
   production-gate:
     name: Gate sebelum merge ke production
     if: github.event_name == 'pull_request' && github.base_ref == 'production'
-    needs: [db-security-regression, quality, dependency-audit, sbom, pwa-smoke]
+    needs: [db-security-regression, security-scan, quality, dependency-audit, sbom, pwa-smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Semua gate keamanan lolos
