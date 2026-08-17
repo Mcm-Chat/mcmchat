@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useInView } from "@/lib/perf/use-in-view";
-import { LazyStorageImage, MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
+import { LazyStorageImage, MediaError, MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
 import {
   Archive,
   BellOff,
@@ -61,7 +61,7 @@ import { LinkifiedText } from "@/components/mcm/linkified-text";
 import { LinkPreviewCard, firstUrlOf } from "@/components/mcm/link-preview-card";
 import { PhotoViewer } from "@/components/mcm/photo-viewer";
 import { jam, rupiah } from "@/lib/mcm/format";
-import { useSignedUrl } from "@/lib/api/use-signed-url";
+import { useSignedUrl, useSignedUrlState } from "@/lib/api/use-signed-url";
 import type { ConversationView, MessageRow } from "@/lib/api/chat";
 import { useStatusMedia } from "@/lib/status/hooks";
 import { previewOf } from "@/lib/api/chat";
@@ -559,10 +559,27 @@ function SalesCard({ message }: { message: MessageRow }) {
 
 function ImageBubble({ message }: { message: MessageRow }) {
   const { ref, inView } = useInView<HTMLDivElement>();
-  const url = useSignedUrl("chat-media", message.attachment_path, inView);
+  const { url, status, reload } = useSignedUrlState("chat-media", message.attachment_path, inView);
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+  const broken = status === "error" || imgFailed;
   const label = message.body ? `Lihat foto: ${message.body}` : "Lihat foto terkirim";
+  if (broken) {
+    return (
+      <div className={cn(MEDIA_W)}>
+        <MediaError
+          label="Foto gagal dimuat"
+          onRetry={() => {
+            setImgFailed(false);
+            setLoaded(false);
+            reload();
+          }}
+          className="aspect-[4/3]"
+        />
+      </div>
+    );
+  }
   return (
     <>
       <button
@@ -590,7 +607,7 @@ function ImageBubble({ message }: { message: MessageRow }) {
               loading="lazy"
               decoding="async"
               onLoad={() => setLoaded(true)}
-              onError={() => setLoaded(true)}
+              onError={() => setImgFailed(true)}
               className={`size-full rounded-xl object-cover transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
             />
           )}
@@ -605,8 +622,20 @@ function ImageBubble({ message }: { message: MessageRow }) {
 
 function DocumentBubble({ message }: { message: MessageRow }) {
   const { ref, inView } = useInView<HTMLAnchorElement>();
-  const url = useSignedUrl("chat-media", message.attachment_path, inView);
+  const { url, status, reload } = useSignedUrlState("chat-media", message.attachment_path, inView);
   const name = message.attachment_name ?? message.body ?? "Dokumen";
+  if (status === "error") {
+    return (
+      <div ref={ref as unknown as React.Ref<HTMLDivElement>} className={cn(MEDIA_W)}>
+        <MediaError
+          compact
+          icon={<FileText className="size-5" />}
+          label={`Dokumen ${name} gagal dimuat`}
+          onRetry={reload}
+        />
+      </div>
+    );
+  }
   return (
     <a
       ref={ref}
@@ -641,7 +670,23 @@ function StickerBubble({ message }: { message: MessageRow }) {
 
 function VoiceBubble({ message }: { message: MessageRow }) {
   const { ref, inView } = useInView<HTMLDivElement>();
-  const url = useSignedUrl("chat-media", message.attachment_path, inView);
+  const { url, status, reload } = useSignedUrlState("chat-media", message.attachment_path, inView);
+  const [audioFailed, setAudioFailed] = useState(false);
+  if (status === "error" || audioFailed) {
+    return (
+      <div ref={ref} className={cn(MEDIA_W)}>
+        <MediaError
+          compact
+          icon={<Mic className="size-5" />}
+          label="Pesan suara gagal dimuat"
+          onRetry={() => {
+            setAudioFailed(false);
+            reload();
+          }}
+        />
+      </div>
+    );
+  }
   return (
     <div ref={ref} className={cn("flex items-center gap-2", MEDIA_W)} aria-busy={!url}>
       <Mic className="size-4 shrink-0" />
@@ -649,6 +694,7 @@ function VoiceBubble({ message }: { message: MessageRow }) {
         <audio
           controls
           src={url}
+          onError={() => setAudioFailed(true)}
           aria-label={message.body ? `Pesan suara: ${message.body}` : "Pesan suara"}
           className="h-8 min-w-0 flex-1 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         />
