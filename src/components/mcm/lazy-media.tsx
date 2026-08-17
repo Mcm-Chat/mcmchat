@@ -71,3 +71,48 @@ export function LazyStorageImage({
     </div>
   );
 }
+
+/**
+ * Gambar dari URL publik (mis. pratinjau tautan) dengan bingkai berukuran tetap
+ * dan skeleton, agar tinggi bubble tidak berubah saat gambar selesai dimuat.
+ */
+export function RemoteImage({
+  src,
+  alt,
+  className,
+  frameClassName,
+  fallback,
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+  frameClassName?: string;
+  fallback?: ReactNode;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className={cn("relative overflow-hidden", frameClassName)}>
+      {(!loaded || failed) && (
+        <MediaSkeleton className="absolute inset-0 size-full rounded-[inherit]">
+          {fallback}
+        </MediaSkeleton>
+      )}
+      {src && !failed && (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          className={cn(
+            "size-full transition-opacity duration-200",
+            loaded ? "opacity-100" : "opacity-0",
+            className,
+          )}
+        />
+      )}
+    </div>
+  );
+}
