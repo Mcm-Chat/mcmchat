@@ -191,6 +191,9 @@ function NotificationSettingsPage() {
             <BellRing className="size-4 text-primary" />
             <h2 className="text-sm font-semibold">Status push perangkat</h2>
           </div>
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link to="/settings/push-test">Uji notifikasi saat aplikasi ditutup</Link>
+          </Button>
           {/* Tiga kapabilitas TERPISAH — tidak ada klaim gabungan yang menyesatkan. */}
           <ul className="space-y-2">
             {[
