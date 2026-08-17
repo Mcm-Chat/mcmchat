@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { MessageCircle, ScanLine, Send, Trash2, UserPlus, UserRound } from "lucide-react";
+import { Loader2, MessageCircle, ScanLine, Send, Trash2, UserPlus, UserRound } from "lucide-react";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,8 +37,52 @@ import {
 } from "@/lib/api/contacts";
 import { getOrCreateDirect } from "@/lib/api/chat";
 import { useBackDismiss } from "@/lib/mobile/back-guard";
+import { supabase } from "@/integrations/supabase/client";
+import { uniqueTopic } from "@/lib/realtime/topic";
 
 export type ScanUsage = { profile: ProfileLite };
+
+type BadgeTone = "danger" | "success" | "primary" | "warn" | "muted";
+
+const TONE_CLASS: Record<BadgeTone, string> = {
+  danger: "bg-destructive/10 text-destructive",
+  success: "bg-emerald-500/15 text-emerald-600",
+  primary: "bg-primary/10 text-primary",
+  warn: "bg-amber-500/15 text-amber-600",
+  muted: "bg-muted text-muted-foreground",
+};
+
+function relationBadge(relation: ContactRelation | null): { label: string; tone: BadgeTone } {
+  if (!relation) return { label: "Memuat status…", tone: "muted" };
+  if (relation.blockedMe) return { label: "Anda diblokir", tone: "danger" };
+  if (relation.blockedByMe) return { label: "Anda memblokir", tone: "danger" };
+  if (relation.connected) return { label: "Sudah terhubung", tone: "success" };
+  if (relation.incomingRequest) return { label: "Permintaan masuk menunggu", tone: "primary" };
+  if (relation.outgoingPending)
+    return {
+      label: relation.saved ? "Tersimpan — menunggu jawaban" : "Permintaan keluar menunggu",
+      tone: "warn",
+    };
+  if (relation.saved) return { label: "Tersimpan (belum terhubung)", tone: "muted" };
+  return { label: "Belum terhubung", tone: "muted" };
+}
+
+function RelationBadge({ relation }: { relation: ContactRelation | null }) {
+  const { label, tone } = relationBadge(relation);
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TONE_CLASS[tone]}`}>
+      {label}
+    </span>
+  );
+}
+
+const timeWib = (d: Date) =>
+  new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: "Asia/Jakarta",
+  }).format(d);
 
 /**
  * Hasil pindai QR kontak: menampilkan profil, status relasi, dan aksi
@@ -67,28 +111,55 @@ export function ScanResultSheet({
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useBackDismiss(open, () => onOpenChange(false));
 
+  const profileId = profile?.id ?? null;
+
+  const refresh = useCallback(async () => {
+    if (!profileId) return;
+    setRefreshing(true);
+    try {
+      const next = await getContactRelation(userId, profileId);
+      setRelation(next);
+      setUpdatedAt(new Date());
+    } finally {
+      setRefreshing(false);
+    }
+  }, [profileId, userId]);
+
   useEffect(() => {
-    if (!open || !profile) return;
+    if (!open || !profileId) return;
     setRelation(null);
     setAlias("");
     setSaved(false);
     setConfirmOpen(false);
-    let active = true;
-    void getContactRelation(userId, profile.id)
-      .then((r) => active && setRelation(r))
-      .catch(() => active && toast.error("Gagal memuat status kontak."));
-    return () => {
-      active = false;
-    };
-  }, [open, profile, userId]);
+    setUpdatedAt(null);
+    void refresh().catch(() => toast.error("Gagal memuat status kontak."));
+  }, [open, profileId, refresh]);
 
-  const refresh = async () => {
-    if (!profile) return;
-    setRelation(await getContactRelation(userId, profile.id));
-  };
+  // Sinkron realtime: perubahan permintaan/kontak langsung memperbarui badge status.
+  useEffect(() => {
+    if (!open || !profileId) return;
+    const channel = supabase
+      .channel(uniqueTopic(`mcm-scan-relation-${userId}-${profileId}`))
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contact_requests" },
+        () => void refresh().catch(() => undefined),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contacts" },
+        () => void refresh().catch(() => undefined),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [open, profileId, userId, refresh]);
 
   const run = async (fn: () => Promise<void>, done?: string) => {
     setBusy(true);
@@ -166,21 +237,32 @@ export function ScanResultSheet({
           </div>
         </div>
 
-        <p className="mt-3 rounded-xl bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
-          {blockedMe
-            ? "Pengguna tidak tersedia."
-            : relation?.blockedByMe
-              ? "Kontak ini Anda blokir."
-              : relation?.incomingRequest
-                ? "Pengguna ini meminta menjadi kontak."
-                : relation?.saved && relation.outgoingPending
-                  ? "Tersimpan — menunggu persetujuan"
-                  : relation?.saved
-                    ? "Sudah tersimpan"
+        <div className="mt-3 rounded-xl bg-muted/60 px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <RelationBadge relation={relation} />
+            {refreshing && (
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Loader2 className="size-3 animate-spin" /> Memperbarui…
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {blockedMe
+              ? "Pengguna tidak tersedia."
+              : relation?.blockedByMe
+                ? "Kontak ini Anda blokir."
+                : relation?.incomingRequest
+                  ? "Pengguna ini meminta menjadi kontak."
+                  : relation?.connected
+                    ? "Chat dan panggilan aktif."
                     : relation?.outgoingPending
-                      ? "Permintaan kontak sudah dikirim."
-                      : "Belum tersimpan di kontak Anda."}
-        </p>
+                      ? "Menunggu jawaban dari pengguna ini."
+                      : relation?.saved
+                        ? "Tersimpan satu arah."
+                        : "Belum tersimpan di kontak Anda."}
+            {updatedAt && ` · Diperbarui ${timeWib(updatedAt)} WIB`}
+          </p>
+        </div>
 
         {saved && <p className="mt-2 text-xs font-medium text-primary">Kontak berhasil disimpan</p>}
 
@@ -412,35 +494,7 @@ export function ScanResultSheet({
               </div>
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {relation?.blockedMe ? (
-                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                  Anda diblokir
-                </span>
-              ) : relation?.blockedByMe ? (
-                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                  Anda memblokir
-                </span>
-              ) : relation?.connected ? (
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600">
-                  Sudah terhubung
-                </span>
-              ) : relation?.incomingRequest ? (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  Permintaan masuk menunggu
-                </span>
-              ) : relation?.outgoingPending ? (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-600">
-                  Permintaan keluar menunggu
-                </span>
-              ) : relation?.saved ? (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  Tersimpan (belum terhubung)
-                </span>
-              ) : (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                  Belum terhubung
-                </span>
-              )}
+              <RelationBadge relation={relation} />
             </div>
           </div>
 
