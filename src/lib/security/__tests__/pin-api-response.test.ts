@@ -1,4 +1,5 @@
-import { describe, expect, it, beforeAll } from "vitest";
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
 
 /**
  * Tes tingkat API (bukan analisis skema): memanggil endpoint Data API sungguhan
@@ -21,12 +22,14 @@ const USER_TOKEN = process.env["LOVABLE_BROWSER_SUPABASE_ACCESS_TOKEN"] ?? "";
 const HAS_API = Boolean(URL_BASE && ANON);
 const d = HAS_API ? describe : describe.skip;
 
-/** `pin`, `staff_pin`, `delivered_pin`, `pinCode`, `pin_hash`, … tapi bukan `pinned_at`. */
-const PIN_KEY = /(^|_)pins?($|_)|pincode|pin_code|pin_hash/i;
+/**
+ * Rahasia PIN: `pin`, `staff_pin`, `delivered_pin`, `pinCode`, `pin_hash`.
+ * Bukan rahasia: `pinned_at`, `is_pinned`, `pin_confirmed_at` (metadata waktu).
+ */
+const PIN_KEY = /(^|_)pins?$|(^|_)pin_?(code|hash)$/;
 
 function isPinKey(key: string): boolean {
   const snake = key.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
-  if (/^pinned/.test(snake)) return false;
   return PIN_KEY.test(snake);
 }
 
@@ -72,21 +75,7 @@ function assertNoPin(label: string, body: unknown) {
 
 const CALLERS: Caller[] = USER_TOKEN ? ["anon", "member"] : ["anon"];
 
-let tables: string[] = [];
-
-d("Data API — tidak ada field PIN pada respons tabel", () => {
-  beforeAll(async () => {
-    const res = await fetch(`${URL_BASE}/rest/v1/`, {
-      headers: { apikey: ANON, Authorization: `Bearer ${ANON}`, Accept: "application/openapi+json" },
-    });
-    const spec = (await res.json()) as { paths?: Record<string, unknown> };
-    tables = Object.keys(spec.paths ?? {})
-      .filter((p) => p.startsWith("/") && p.length > 1 && !p.startsWith("/rpc/"))
-      .map((p) => p.slice(1))
-      .sort();
-  }, 30_000);
-
-  it("OpenAPI mengekspos daftar tabel yang bisa diuji", () => {
+  it("daftar tabel Data API tersedia untuk diuji", () => {
     expect(tables.length).toBeGreaterThan(10);
   });
 
