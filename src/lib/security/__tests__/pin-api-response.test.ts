@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { recordPinFinding, writePinReport } from "./helpers/pin-report";
 
 /**
  * Tes tingkat API (bukan analisis skema): memanggil endpoint Data API sungguhan
@@ -79,8 +80,13 @@ async function api(caller: Caller, path: string, init?: RequestInit) {
   return { status: res.status, body };
 }
 
-function assertNoPin(label: string, body: unknown) {
+function assertNoPin(
+  label: string,
+  body: unknown,
+  meta: { kind: string; endpoint: string; caller: string; status?: number },
+) {
   const leaks = pinKeysIn(body);
+  if (leaks.length) recordPinFinding({ ...meta, label, keys: leaks });
   expect(leaks, `${label} membocorkan field PIN: ${leaks.join(", ")}`).toEqual([]);
 }
 
@@ -113,7 +119,17 @@ d("Data API — tidak ada field PIN pada respons tabel", () => {
           const { status, body } = await api(caller, `${table}?select=*&limit=5`);
           if (status !== 200) continue; // ditolak RLS/grant = aman
           const found = pinKeysIn(body);
-          if (found.length) leaks.push(`${table}: ${found.join(", ")}`);
+          if (found.length) {
+            leaks.push(`${table}: ${found.join(", ")}`);
+            recordPinFinding({
+              kind: "table",
+              label: `${table} (select=*)`,
+              endpoint: `${table}?select=*&limit=5`,
+              caller,
+              status,
+              keys: found,
+            });
+          }
         }
         expect(leaks, `Field PIN bocor untuk ${caller}`).toEqual([]);
       },
@@ -127,9 +143,25 @@ d("Data API — tidak ada field PIN pada respons tabel", () => {
         ["business_members", "staff_pin"],
         ["preparation_jobs", "delivered_pin"],
       ] as const) {
-        const { status, body } = await api(caller, `${table}?select=id,${col}&limit=1`);
+        const path = `${table}?select=id,${col}&limit=1`;
+        const { status, body } = await api(caller, path);
+        if (status === 200) {
+          recordPinFinding({
+            kind: "explicit-column",
+            label: `${table}.${col} dapat diminta eksplisit`,
+            endpoint: path,
+            caller,
+            status,
+            keys: [col],
+          });
+        }
         expect(status, `${table}.${col} untuk ${caller} seharusnya ditolak`).not.toBe(200);
-        assertNoPin(`${table}.${col} (${caller})`, body);
+        assertNoPin(`${table}.${col} (${caller})`, body, {
+          kind: "explicit-column",
+          endpoint: path,
+          caller,
+          status,
+        });
       }
     });
   }
@@ -152,8 +184,8 @@ d("Payload join/embed chat, order & ledger bebas PIN", () => {
   for (const caller of CALLERS) {
     for (const [label, path] of EMBEDS) {
       it(`${label} (${caller})`, async () => {
-        const { body } = await api(caller, path);
-        assertNoPin(`${label} (${caller})`, body);
+        const { status, body } = await api(caller, path);
+        assertNoPin(`${label} (${caller})`, body, { kind: "embed", endpoint: path, caller, status });
       }, 30_000);
     }
   }
@@ -177,7 +209,12 @@ d("Endpoint RPC tidak membocorkan PIN ke anon", () => {
         body: JSON.stringify(args),
       });
       expect(status, `rpc ${fn} untuk anon seharusnya ditolak`).not.toBe(200);
-      assertNoPin(`rpc ${fn} (anon)`, body);
+      assertNoPin(`rpc ${fn} (anon)`, body, {
+        kind: "rpc",
+        endpoint: `rpc/${fn}`,
+        caller: "anon",
+        status,
+      });
     }, 30_000);
   }
 
@@ -188,6 +225,16 @@ d("Endpoint RPC tidak membocorkan PIN ke anon", () => {
       body: JSON.stringify({ _business: "00000000-0000-0000-0000-000000000000" }),
     });
     if (status === 200) expect(body).toEqual([]);
-    assertNoPin("business_staff_directory (bisnis asing)", body);
+    assertNoPin("business_staff_directory (bisnis asing)", body, {
+      kind: "rpc",
+      endpoint: "rpc/business_staff_directory",
+      caller: "member",
+      status,
+    });
   }, 30_000);
+});
+
+/** Selalu tulis artefak (juga saat bersih) agar CI punya bukti per build. */
+afterAll(() => {
+  writePinReport();
 });
