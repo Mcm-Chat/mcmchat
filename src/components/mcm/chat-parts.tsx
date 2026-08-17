@@ -559,7 +559,10 @@ function ImageBubble({ message }: { message: MessageRow }) {
         }}
         className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div ref={ref} className="relative h-56 w-52 max-w-full overflow-hidden rounded-xl">
+        <div
+          ref={ref}
+          className="relative aspect-[4/3] w-40 max-w-full overflow-hidden rounded-xl sm:w-48"
+        >
           {!loaded && (
             <MediaSkeleton className="absolute inset-0 size-full rounded-xl">
               <ImageIcon className="size-7 opacity-70" />
