@@ -30,7 +30,8 @@ TABS = [
     ("Keuangan", "/finance"),
     ("Profil", "/profile"),
 ]
-EXTRA_ROUTES = [("Bisnis", "/business")]
+# Rute Bisnis sengaja mengalihkan ke Katalog: (label, path, path akhir).
+EXTRA_ROUTES = [("Bisnis", "/business", "/catalog")]
 
 # Noise yang tidak menandakan kegagalan navigasi.
 IGNORE = ("favicon", "manifest.json", "firebase", "messaging", "service worker",
@@ -77,7 +78,6 @@ async def run(state):
                 errors.append(f"console: {msg.text[:200]}")
 
         page.on("console", on_console)
-        page.on("response", lambda r: (r.status >= 400 and print("HTTP", r.status, r.url[:160])))
         page.on("pageerror", lambda e: errors.append(f"pageerror: {str(e)[:200]}"))
 
         try:
@@ -115,7 +115,7 @@ async def run(state):
                       f"url={page.url} spa={mark == 'spa'} teks={body_len} "
                       f"error={errors[before:] or 'tidak ada'}")
 
-            for label, path in EXTRA_ROUTES:
+            for label, path, final in EXTRA_ROUTES:
                 before = len(errors)
                 await page.goto(f"{BASE}{path}", wait_until="domcontentloaded")
                 await page.wait_for_selector("main", timeout=20000)
@@ -123,7 +123,7 @@ async def run(state):
                 body_len = await page.evaluate(
                     "() => (document.querySelector('main')?.innerText || '').trim().length")
                 await page.screenshot(path=os.path.join(OUT, f"{path.strip('/')}.png"))
-                check(f"rute {label} ({path})", path in page.url and body_len > 0
+                check(f"rute {label} ({path} → {final})", final in page.url and body_len > 0
                       and len(errors) == before,
                       f"url={page.url} teks={body_len} error={errors[before:] or 'tidak ada'}")
         except Exception as e:  # noqa: BLE001
