@@ -20,7 +20,7 @@ const JOB_COLS = [
   "expires_at", "notes", "opened_at", "order_id", "revoked_at", "status",
   "token_hash", "token_prefix", "updated_at",
 ].join(", ");
-const JOB_SELECT = `${JOB_COLS}, items:preparation_job_items(*)`;
+export const JOB_SELECT = `${JOB_COLS}, items:preparation_job_items(*)`;
 
 export const TASK_STATUS_LABEL: Record<string, string> = {
   draft: "Draf",

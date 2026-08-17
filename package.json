@@ -27,6 +27,7 @@
     "android:bundle": "cd android && ./gradlew bundleRelease",
     "android:debug-apk": "cd android && ./gradlew assembleDebug",
     "test:e2e:mobile-nav": "python3 e2e/mobile_nav.py",
+    "test:e2e:photo-a11y": "python3 e2e/photo_viewer_a11y.py",
     "test:e2e:pwa": "python3 e2e/pwa_smoke.py",
     "check:bundle": "node scripts/check-bundle-size.mjs",
     "test:security:pin": "vitest run src/lib/security/__tests__/pin-grant-live.test.ts src/lib/security/__tests__/pin-api-response.test.ts src/lib/security/__tests__/customer-pin-acl.test.ts src/lib/security/__tests__/pin-rpc-fuzz.test.ts src/lib/security/__tests__/pin-realtime.test.ts src/lib/security/__tests__/pin-storage.test.ts",
