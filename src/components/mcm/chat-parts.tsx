@@ -448,7 +448,7 @@ function ProductCard({ message }: { message: MessageRow }) {
       : "";
   const availableUnits = Number(p.availableUnitCount ?? 0);
   return (
-    <div className="w-64 max-w-[78vw] space-y-2">
+    <div className={cn(CARD_W, "space-y-2")}>
       <p className="text-[10px] font-bold tracking-wide uppercase opacity-70">Produk</p>
       <div>
         <p className="text-sm font-bold break-words">{p.productName ?? message.body}</p>
@@ -494,7 +494,7 @@ function SalesCard({ message }: { message: MessageRow }) {
     items?: SalesCardItem[];
   };
   return (
-    <div className="w-64 max-w-[78vw] space-y-2">
+    <div className={cn(CARD_W, "space-y-2")}>
       <p className="text-xs font-bold">Rincian penjualan {p.number}</p>
       <ul className="space-y-2 text-[11px]">
         {(p.items ?? []).map((i, idx) => (
@@ -567,10 +567,7 @@ function ImageBubble({ message }: { message: MessageRow }) {
         }}
         className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div
-          ref={ref}
-          className="relative aspect-[4/3] w-40 max-w-full overflow-hidden rounded-xl sm:w-48"
-        >
+        <div ref={ref} className={cn("relative aspect-[4/3] overflow-hidden rounded-xl", MEDIA_W)}>
           {!loaded && (
             <MediaSkeleton className="absolute inset-0 size-full rounded-xl">
               <ImageIcon className="size-7 opacity-70" />
@@ -599,9 +596,14 @@ function ImageBubble({ message }: { message: MessageRow }) {
 function DocumentBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
   return (
-    <a href={url ?? undefined} target="_blank" rel="noreferrer" className="flex items-center gap-2">
+    <a
+      href={url ?? undefined}
+      target="_blank"
+      rel="noreferrer"
+      className={cn("flex items-center gap-2", MEDIA_W)}
+    >
       <FileText className="size-5 shrink-0" />
-      <span className="break-all">{message.attachment_name ?? message.body}</span>
+      <span className="min-w-0 flex-1 break-words">{message.attachment_name ?? message.body}</span>
     </a>
   );
 }
@@ -612,7 +614,7 @@ function StickerBubble({ message }: { message: MessageRow }) {
       bucket="chat-media"
       path={message.attachment_path}
       alt={message.body || "Stiker"}
-      frameClassName="size-32 rounded-2xl"
+      frameClassName="aspect-square w-28 max-w-[45vw] rounded-2xl sm:w-32"
       className="object-contain"
     />
   );
@@ -621,10 +623,10 @@ function StickerBubble({ message }: { message: MessageRow }) {
 function VoiceBubble({ message }: { message: MessageRow }) {
   const url = useSignedUrl("chat-media", message.attachment_path);
   return (
-    <div className="flex w-52 items-center gap-2">
+    <div className={cn("flex items-center gap-2", MEDIA_W)}>
       <Mic className="size-4 shrink-0" />
       {url ? (
-        <audio controls src={url} className="h-8 w-full" />
+        <audio controls src={url} className="h-8 min-w-0 flex-1" />
       ) : (
         <span className="text-[11px]">Memuat suara…</span>
       )}
