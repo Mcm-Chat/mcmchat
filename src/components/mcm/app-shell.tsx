@@ -9,6 +9,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -31,6 +32,7 @@ export function BottomNavigation({
   badges?: Partial<Record<string, number>> | undefined;
 }) {
   const { user } = useAuth();
+  const navRef = useRef<HTMLElement>(null);
   const { data: convs } = useConversations(user?.id);
   const { data: ledgers } = useLedgers(user?.id);
   const { data: calls } = useCalls(user?.id);
@@ -57,6 +59,24 @@ export function BottomNavigation({
     if (callLocked) return;
     void router.preloadRoute({ to }).catch(() => {});
   };
+  // Tinggi nyata bar (termasuk safe-area/keyboard) diekspor sebagai
+  // --mcm-nav-h agar area scroll bisa menyisakan ruang dan konten terakhir
+  // tidak pernah tertutup bar di perangkat ber-notch.
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const root = el.closest<HTMLElement>("[data-app-shell]") ?? document.documentElement;
+    const sync = () => root.style.setProperty("--mcm-nav-h", `${Math.round(el.offsetHeight)}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    window.addEventListener("orientationchange", sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("orientationchange", sync);
+      root.style.removeProperty("--mcm-nav-h");
+    };
+  }, []);
   return (
     <>
       {callLocked && (
@@ -65,15 +85,21 @@ export function BottomNavigation({
         </p>
       )}
       <nav
+        ref={navRef}
         aria-label="Navigasi utama"
         aria-hidden={callLocked ? "true" : undefined}
         data-locked={callLocked ? "" : undefined}
         className={cn(
-          "sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 pb-[max(env(safe-area-inset-bottom),var(--mcm-kb,0px))] backdrop-blur",
+          "sticky bottom-0 z-30 shrink-0 border-t border-border bg-card/95 backdrop-blur",
+          // Ruang aman: inset bawah dibatasi 2rem supaya bar tidak tumbuh
+          // berlebihan, dan diabaikan saat keyboard membuka (var --mcm-kb).
+          "pb-[max(min(env(safe-area-inset-bottom,0px),2rem),var(--mcm-kb,0px))]",
+          // Bar tidak boleh ikut menggulung/melebar di layar ber-notch.
+          "max-w-full overflow-x-clip overscroll-contain [contain:paint]",
           callLocked && "pointer-events-none opacity-40 select-none",
         )}
       >
-        <ul className="grid grid-cols-6">
+        <ul className="grid w-full grid-cols-6">
           {NAV.map((item) => {
             const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
             const badge = merged[item.match];
@@ -97,7 +123,7 @@ export function BottomNavigation({
                   }}
                   aria-label={`${item.label}${badgeText}${active ? " (halaman aktif)" : ""}`}
                   className={cn(
-                    "relative flex min-h-12 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
+                    "relative flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
                     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none focus-visible:rounded-xl",
                     active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
@@ -117,7 +143,9 @@ export function BottomNavigation({
                       </span>
                     )}
                   </span>
-                  <span aria-hidden="true">{item.label}</span>
+                  <span aria-hidden="true" className="max-w-full truncate px-0.5">
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             );
