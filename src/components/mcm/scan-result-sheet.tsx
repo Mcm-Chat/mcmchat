@@ -391,10 +391,59 @@ export function ScanResultSheet({
             <AlertDialogTitle>Kirim permintaan kontak?</AlertDialogTitle>
             <AlertDialogDescription>
               {willSendRequest
-                ? `Simpan ${profile.display_name} (${profile.pin}) sebagai kontak dan kirim permintaan agar bisa chat dan telepon.`
-                : `Simpan ${profile.display_name} (${profile.pin}) sebagai kontak. Permintaan yang sudah ada tidak dikirim ulang.`}
+                ? "Simpan sebagai kontak dan kirim permintaan agar bisa chat dan telepon."
+                : "Simpan sebagai kontak. Permintaan yang sudah ada tidak dikirim ulang."}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          <div className="rounded-2xl border bg-muted/40 p-3">
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                userId={profile.id}
+                path={profile.avatar_url}
+                version={profile.avatar_version}
+                name={profile.display_name}
+                color={profile.avatar_color}
+                size="lg"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-semibold">{profile.display_name}</p>
+                <p className="font-mono text-xs text-muted-foreground">{profile.pin}</p>
+              </div>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {relation?.blockedMe ? (
+                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                  Anda diblokir
+                </span>
+              ) : relation?.blockedByMe ? (
+                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                  Anda memblokir
+                </span>
+              ) : relation?.connected ? (
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                  Sudah terhubung
+                </span>
+              ) : relation?.incomingRequest ? (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  Permintaan masuk menunggu
+                </span>
+              ) : relation?.outgoingPending ? (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-600">
+                  Permintaan keluar menunggu
+                </span>
+              ) : relation?.saved ? (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  Tersimpan (belum terhubung)
+                </span>
+              ) : (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  Belum terhubung
+                </span>
+              )}
+            </div>
+          </div>
+
           {alias.trim() && (
             <p className="text-xs text-muted-foreground">
               Disimpan dengan nama panggilan: <span className="font-medium">{alias.trim()}</span>
