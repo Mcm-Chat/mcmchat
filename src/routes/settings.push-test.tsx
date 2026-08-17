@@ -106,7 +106,7 @@ function PushTestPage() {
     configured === false || devices.length === 0 || (perm !== null && perm !== "granted");
 
   return (
-    <AppShell header={<MobileHeader title="Uji notifikasi tertutup" back="/settings/notifications" />}>
+    <AppShell header={<MobileHeader title="Uji notifikasi tertutup" back />}>
       <div className="space-y-4 p-4 pb-24">
         <section className="rounded-xl border border-border bg-card p-4">
           <h1 className="text-base font-semibold text-foreground">
