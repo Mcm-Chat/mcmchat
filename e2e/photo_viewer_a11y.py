@@ -7,6 +7,7 @@ Diverifikasi:
   4. Esc menutup lightbox dan fokus kembali ke bubble foto pemicu.
   5. Tombol "Tutup" bisa dipicu dari keyboard (Enter dan Space).
   6. Kontrol zoom mengumumkan level lewat live region role="status".
+  7. Audit axe-core (WCAG 2.1 A/AA) saat lightbox terbuka: nol pelanggaran.
 
 Menjalankan: python3 e2e/photo_viewer_a11y.py
 Butuh SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY dan dev server di
@@ -25,6 +26,8 @@ os.makedirs(SHOTS, exist_ok=True)
 RESULTS = []
 TAB_LIMIT = 12
 BUCKET = "chat-media"
+AXE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "node_modules", "axe-core", "axe.min.js")
 # Policy storage chat-media memakai prefix folder = id percakapan.
 PHOTO_PATH = ""
 
@@ -142,6 +145,32 @@ async def open_viewer(page, trigger):
     await page.wait_for_timeout(350)
 
 
+AXE_RUN = """async () => {
+  const res = await window.axe.run(document, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+  });
+  return res.violations.map((v) => ({
+    id: v.id,
+    impact: v.impact,
+    help: v.help,
+    nodes: v.nodes.slice(0, 3).map((n) => n.target.join(' ') + ' :: ' +
+      (n.failureSummary || '').replace(/\\s+/g, ' ').slice(0, 200)),
+  }));
+}"""
+
+
+async def axe_audit(page, label):
+    with open(AXE_PATH, "r", encoding="utf-8") as fh:
+        await page.add_script_tag(content=fh.read())
+    violations = await page.evaluate(AXE_RUN)
+    for v in violations:
+        print(f"    axe[{label}] {v['id']} ({v['impact']}): {v['help']}")
+        for n in v["nodes"]:
+            print(f"      - {n}")
+    check(f"axe-core tanpa pelanggaran ({label})", not violations,
+          ", ".join(f"{v['id']}({v['impact']})" for v in violations))
+
+
 # ---------------------------------------------------------------- main
 async def run(state):
     async with async_playwright() as pw:
@@ -206,6 +235,9 @@ async def run(state):
         live = (await page.locator('[role="status"][aria-live="polite"]').first.inner_text()).strip()
         check("Live region mengumumkan level zoom", "Zoom" in live and "persen" in live, live)
         await page.screenshot(path=f"{SHOTS}/1_open.png")
+
+        # --- 7. Audit axe-core saat lightbox terbuka
+        await axe_audit(page, "lightbox terbuka")
 
         # --- 4. Esc menutup + fokus kembali ke pemicu
         await page.keyboard.press("Escape")
