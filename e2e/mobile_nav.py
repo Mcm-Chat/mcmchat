@@ -70,7 +70,8 @@ async def run(state):
         browser = await pw.chromium.launch(headless=True)
         ctx = await browser.new_context(viewport={"width": 390, "height": 844},
                                         locale="id-ID", timezone_id="Asia/Jakarta",
-                                        is_mobile=True, has_touch=True)
+                                        is_mobile=True, has_touch=True,
+                                        service_workers="block")
         page = await ctx.new_page()
 
         def on_console(msg):
