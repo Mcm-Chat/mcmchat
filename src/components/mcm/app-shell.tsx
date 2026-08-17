@@ -230,9 +230,19 @@ export function AppShell({
 }) {
   return (
     <div className="h-dvh bg-muted/40">
-      <div className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden bg-background pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] shadow-2xl">
+      <div
+        data-app-shell
+        className="mx-auto flex h-full w-full max-w-md flex-col overflow-hidden bg-background pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)] shadow-2xl"
+      >
         {header}
-        <main className={cn("min-h-0 flex-1 overflow-x-hidden overflow-y-auto", className)}>
+        <main
+          className={cn(
+            "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain",
+            // Elemen mengambang / konten terakhir tetap terjangkau di atas bar.
+            nav && "scroll-pb-[var(--mcm-nav-h,0px)]",
+            className,
+          )}
+        >
           {children}
         </main>
         {nav && <BottomNavigation badges={badges} />}
