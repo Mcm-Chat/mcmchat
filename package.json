@@ -25,7 +25,7 @@
     "android:debug-apk": "cd android && ./gradlew assembleDebug",
     "test:e2e:pwa": "python3 e2e/pwa_smoke.py",
     "check:bundle": "node scripts/check-bundle-size.mjs",
-    "test:security:pin": "vitest run src/lib/security/__tests__/pin-grant-live.test.ts src/lib/security/__tests__/pin-api-response.test.ts src/lib/security/__tests__/customer-pin-acl.test.ts",
+    "test:security:pin": "vitest run src/lib/security/__tests__/pin-grant-live.test.ts src/lib/security/__tests__/pin-api-response.test.ts src/lib/security/__tests__/customer-pin-acl.test.ts src/lib/security/__tests__/pin-rpc-fuzz.test.ts",
     "security:report": "node scripts/security-report.mjs",
     "security:baseline": "node scripts/security-report.mjs --update-baseline"
   },
@@ -114,6 +114,7 @@
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "fast-check": "^4.9.0",
     "globals": "^15.15.0",
     "happy-dom": "^20.11.2",
     "jsdom": "^30.0.1",
