@@ -29,6 +29,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/chat" />
+                <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/contact" />
+                <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/contacts" />
                 <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/call" />
                 <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/status" />
                 <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/tasks" />
@@ -36,6 +38,8 @@
                 <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/ledger" />
                 <data android:scheme="https" android:host="mcmchat.id" android:pathPrefix="/delete-account" />
                 <data android:scheme="https" android:host="www.mcmchat.id" android:pathPrefix="/chat" />
+                <data android:scheme="https" android:host="www.mcmchat.id" android:pathPrefix="/contact" />
+                <data android:scheme="https" android:host="www.mcmchat.id" android:pathPrefix="/contacts" />
                 <data android:scheme="https" android:host="www.mcmchat.id" android:pathPrefix="/call" />
                 <data android:scheme="https" android:host="www.mcmchat.id" android:pathPrefix="/status" />
                 <data android:scheme="https" android:host="www.mcmchat.id" android:pathPrefix="/tasks" />

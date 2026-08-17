@@ -59,10 +59,11 @@ function relationBadges(r: ContactRelation): StatusBadge[] {
 export const Route = createFileRoute("/contacts/add")({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { conv?: string; reason?: string; scan?: boolean } => {
-    const out: { conv?: string; reason?: string; scan?: boolean } = {};
+  ): { conv?: string; reason?: string; scan?: boolean; pin?: string } => {
+    const out: { conv?: string; reason?: string; scan?: boolean; pin?: string } = {};
     if (typeof search['conv'] === "string") out.conv = search['conv'];
     if (typeof search['reason'] === "string") out.reason = search['reason'];
+    if (typeof search['pin'] === "string" && search['pin']) out.pin = search['pin'];
     if (search['scan'] === true || search['scan'] === "1" || search['scan'] === "true")
       out.scan = true;
     return out;
@@ -83,7 +84,7 @@ export const Route = createFileRoute("/contacts/add")({
 
 function AddContactPage() {
   const { userId, profile } = useRequireAuth();
-  const { conv, reason, scan } = Route.useSearch();
+  const { conv, reason, scan, pin: pinParam } = Route.useSearch();
   const [pin, setPin] = useState("");
   const [message, setMessage] = useState("Halo, saya ingin terhubung di MCM.");
   const [searching, setSearching] = useState(false);
@@ -221,6 +222,25 @@ function AddContactPage() {
       setSearching(false);
     }
   };
+
+  // Deep link undangan (mcmchat.id/contact/<pin> atau QR): PIN langsung dicari
+  // sekali agar pengguna tiba di kartu profil, bukan form kosong.
+  useEffect(() => {
+    if (!pinParam || !userId) return;
+    const clean = normalizePin(pinParam);
+    if (!isValidPin(clean)) {
+      toast.error("Tautan undangan tidak sah: format PIN tidak valid.");
+      return;
+    }
+    setPin(clean);
+    if (profile && clean === normalizePin(profile.pin)) {
+      toast.info("Itu PIN Anda sendiri.");
+      return;
+    }
+    void search(clean);
+    // Hanya sekali per PIN pada tautan.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinParam, userId]);
 
   const send = async () => {
     if (!userId || !found) return;
