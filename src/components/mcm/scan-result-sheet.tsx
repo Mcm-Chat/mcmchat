@@ -31,6 +31,7 @@ import {
   respondToRequest,
   saveContact,
   sendContactRequest,
+  describeContactRequestError,
   setBlocked,
   type ContactRelation,
   type ProfileLite,
@@ -168,11 +169,9 @@ export function ScanResultSheet({
       if (done) toast.success(done);
       await refresh();
     } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Kontak gagal disimpan. Periksa koneksi lalu coba lagi.",
-      );
+      const info = describeContactRequestError(err);
+      toast.error(info.message, { description: info.hint, duration: 7000 });
+      await refresh().catch(() => undefined);
     } finally {
       setBusy(false);
     }
@@ -205,7 +204,9 @@ export function ScanResultSheet({
       }
       await refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal mengirim ulang permintaan.");
+      const info = describeContactRequestError(err);
+      toast.error(info.message, { description: info.hint, duration: 7000 });
+      await refresh().catch(() => undefined);
     } finally {
       setBusy(false);
     }
