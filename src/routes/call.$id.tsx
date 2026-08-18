@@ -419,8 +419,22 @@ function CallScreen() {
   // Sebelum panggilan tersambung tidak ada sesi media sama sekali: kontrol
   // mikrofon/kamera/speaker/perangkat tidak punya apa pun untuk diubah.
   // Ditampilkan nonaktif dengan alasan jujur, bukan tombol mati diam-diam.
-  const controlsLive = session.phase === "connected" || session.phase === "connecting";
-  const notLiveHint = "Aktif setelah panggilan tersambung";
+  const callOver =
+    session.phase === "ended" || session.phase === "error" || session.phase === "unconfigured";
+  // Aktif hanya ketika sesi media benar-benar hidup; mati lagi begitu
+  // panggilan berakhir/gagal.
+  const controlsLive = session.phase === "connected" && !callOver;
+  const notLiveHint = callOver
+    ? "Panggilan sudah berakhir"
+    : session.phase === "connecting"
+      ? "Menyambungkan… tombol aktif setelah tersambung"
+      : "Aktif setelah panggilan tersambung";
+
+  // Tutup sheet perangkat begitu panggilan berakhir supaya tidak ada kontrol
+  // yang tampak masih bisa dipakai.
+  useEffect(() => {
+    if (callOver) setDevicesOpen(false);
+  }, [callOver]);
 
   const phaseLabel =
     session.phase === "connected"
