@@ -47,3 +47,21 @@ export async function deleteCallNote(userId: string, callId: string): Promise<vo
     .eq("call_id", callId);
   if (error) throw new Error(friendly(error.message, "Gagal menghapus catatan panggilan"));
 }
+
+/**
+ * Realtime catatan panggilan milik saya (mis. diubah dari perangkat lain).
+ * RLS memastikan hanya baris milik pengguna yang terkirim.
+ */
+export function subscribeMyCallNotes(userId: string, onChange: () => void) {
+  const ch = supabase
+    .channel(`call-notes:${userId}:${Math.random().toString(36).slice(2)}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "call_notes", filter: `user_id=eq.${userId}` },
+      () => onChange(),
+    )
+    .subscribe();
+  return () => {
+    void supabase.removeChannel(ch);
+  };
+}
