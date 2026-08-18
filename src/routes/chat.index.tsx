@@ -473,10 +473,35 @@ function ChatIndex() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   maxLength={60}
-                  aria-label="Cari nama atau PIN"
-                  placeholder="Cari nama atau PIN"
+                  aria-label="Cari nama, PIN, atau isi pesan"
+                  placeholder="Cari nama, PIN, atau pesan"
                   className="h-11 rounded-xl pl-9"
                 />
+              </div>
+              <div
+                role="group"
+                aria-label="Filter jenis percakapan"
+                className="mt-2 flex items-center gap-2"
+              >
+                {(
+                  [
+                    { v: "all", label: "Semua" },
+                    { v: "direct", label: "Kontak" },
+                    { v: "group", label: "Grup" },
+                  ] as const
+                ).map((o) => (
+                  <Button
+                    key={o.v}
+                    type="button"
+                    size="sm"
+                    variant={kind === o.v ? "default" : "secondary"}
+                    aria-pressed={kind === o.v}
+                    className="h-8 rounded-full px-3 text-xs"
+                    onClick={() => setKind(o.v)}
+                  >
+                    {o.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </MobileHeader>
