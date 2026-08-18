@@ -36,7 +36,7 @@ export function QRCard({
 }) {
   return (
     <div className={cn("card-soft flex flex-col items-center gap-3 p-5", className)}>
-      <div className="rounded-2xl bg-white p-3">
+      <div className="rounded-2xl bg-qr-surface p-3">
         <QRCodeSVG
           value={`mcm://pin/${pin}`}
           size={168}
@@ -60,8 +60,8 @@ export function PinCard({ pin, name, subtitle }: { pin: string; name: string; su
   const [copied, setCopied] = useState(false);
   return (
     <div className="app-gradient relative overflow-hidden rounded-2xl p-5 text-navy-foreground shadow-soft">
-      <div className="absolute -top-10 -right-10 size-32 rounded-full bg-white/10" />
-      <div className="absolute -bottom-12 -left-6 size-28 rounded-full bg-white/5" />
+      <div className="absolute -top-10 -right-10 size-32 rounded-full bg-on-dark-surface" />
+      <div className="absolute -bottom-12 -left-6 size-28 rounded-full bg-on-dark-surface" />
       <div className="relative">
         <p className="text-[11px] tracking-widest text-navy-foreground/70 uppercase">PIN MCM</p>
         <p className="mt-1 font-mono text-3xl font-bold tracking-[0.18em]">{pin}</p>

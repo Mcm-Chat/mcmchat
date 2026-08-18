@@ -121,7 +121,7 @@ export function IncomingCallListener() {
           setIncoming((cur) =>
             cur?.call.id === row.id
               ? cur
-              : { call: row, name: "Pengguna MCM", color: "from-slate-500 to-slate-700" },
+              : { call: row, name: "Pengguna MCM", color: "from-navy to-primary" },
           );
           void fetchProfileCard(row.initiator_id)
             .catch(() => null)
@@ -165,7 +165,7 @@ export function IncomingCallListener() {
               : {
                   call,
                   name: data?.display_name ?? "Pengguna MCM",
-                  color: data?.avatar_color ?? "from-slate-500 to-slate-700",
+                  color: data?.avatar_color ?? "from-navy to-primary",
                 },
           ),
         );
@@ -239,7 +239,7 @@ export function IncomingCallListener() {
       aria-modal="true"
       aria-label={`${isVideo ? "Panggilan video" : "Panggilan suara"} masuk dari ${nameOf(incoming.call.initiator_id, incoming.name)}`}
       tabIndex={-1}
-      className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 rounded-2xl border border-white/15 bg-navy/95 p-4 text-navy-foreground shadow-xl outline-none backdrop-blur"
+      className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 rounded-2xl border border-on-dark-border bg-navy/95 p-4 text-navy-foreground shadow-xl outline-none backdrop-blur"
     >
       <CallStatusLive
         assertive
@@ -267,7 +267,7 @@ export function IncomingCallListener() {
           size="icon"
           aria-label="Jawab panggilan"
           disabled={asking}
-          className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-white"
+          className="order-2 size-11 rounded-full bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-2 focus-visible:ring-on-dark"
           onClick={answerFromBanner}
         >
           <Phone className="size-5" aria-hidden="true" />
@@ -275,7 +275,7 @@ export function IncomingCallListener() {
         <Button
           size="icon"
           aria-label="Tolak panggilan"
-          className="order-1 size-11 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-white"
+          className="order-1 size-11 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-on-dark"
           onClick={() => {
             const id = incoming.call.id;
             closeBanner("Panggilan masuk ditolak.");
@@ -286,7 +286,7 @@ export function IncomingCallListener() {
         </Button>
       </div>
       {permBlocked && permCopy ? (
-        <div role="alert" className="mt-3 rounded-xl bg-white/10 p-2.5">
+        <div role="alert" className="mt-3 rounded-xl bg-on-dark-surface p-2.5">
           <p className="text-xs font-semibold">{permCopy.title}</p>
           <p className="mt-0.5 text-[11px] text-navy-foreground/75">{permCopy.help}</p>
           {permCopy.action ? (

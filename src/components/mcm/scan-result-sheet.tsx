@@ -47,9 +47,9 @@ type BadgeTone = "danger" | "success" | "primary" | "warn" | "muted";
 
 const TONE_CLASS: Record<BadgeTone, string> = {
   danger: "bg-destructive/10 text-destructive",
-  success: "bg-emerald-500/15 text-emerald-600",
+  success: "bg-success/15 text-success",
   primary: "bg-primary/10 text-primary",
-  warn: "bg-amber-500/15 text-amber-600",
+  warn: "bg-warning/20 text-warning",
   muted: "bg-muted text-muted-foreground",
 };
 

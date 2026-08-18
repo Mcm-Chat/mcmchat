@@ -72,14 +72,14 @@ function PerfPanel() {
   }, []);
 
   const tone =
-    sample.fps >= 50 ? "text-emerald-400" : sample.fps >= 30 ? "text-amber-400" : "text-red-400";
+    sample.fps >= 50 ? "text-success" : sample.fps >= 30 ? "text-warning" : "text-destructive";
 
   return (
     <div
       role="status"
       aria-live="off"
       aria-label="Indikator performa mode debug"
-      className="pointer-events-auto fixed top-2 left-2 z-[120] rounded-lg bg-black/75 px-2 py-1 font-mono text-[10px] leading-tight text-white shadow-lg backdrop-blur"
+      className="pointer-events-auto fixed top-2 left-2 z-[120] rounded-lg bg-media-canvas/75 px-2 py-1 font-mono text-[10px] leading-tight text-on-dark shadow-lg backdrop-blur"
     >
       <button
         type="button"
@@ -94,7 +94,7 @@ function PerfPanel() {
         <dl className="mt-1 space-y-0.5">
           <div className="flex gap-2">
             <dt className="opacity-60">frame max</dt>
-            <dd className={sample.worstFrame > 50 ? "text-amber-400" : ""}>
+            <dd className={sample.worstFrame > 50 ? "text-warning" : ""}>
               {sample.worstFrame} ms
             </dd>
           </div>

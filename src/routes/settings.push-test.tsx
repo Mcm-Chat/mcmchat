@@ -221,7 +221,7 @@ function PushTestPage() {
               {log.map((row, i) => (
                 <li key={`${row.at}-${i}`} className="flex items-start gap-2 text-sm">
                   {row.ok ? (
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
                   ) : (
                     <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
                   )}
@@ -251,7 +251,7 @@ function StatusRow(props: { ok: boolean; pending: boolean; label: string; detail
       {props.pending ? (
         <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground" />
       ) : props.ok ? (
-        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
       ) : (
         <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
       )}

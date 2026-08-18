@@ -188,7 +188,7 @@ function TasksIndex() {
             <TabsTrigger value="selesai">Selesai</TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className="grid grid-cols-2 gap-2 p-3">
+        <div className="grid grid-cols-2 gap-2 p-4">
           <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
             <SelectTrigger>
               <SelectValue placeholder="Pegawai" />
@@ -237,7 +237,7 @@ function TasksIndex() {
             }
           />
         ) : (
-          <ul className="space-y-2 p-3">
+          <ul className="space-y-2 p-4">
             {filteredManagerJobs.map((job: JobWithItems) => (
               <li key={job.id}>
                 <ManagerTaskCard
@@ -296,7 +296,7 @@ function TasksIndex() {
           description="Tugas penyiapan yang ditugaskan kepada Anda akan muncul di sini."
         />
       ) : (
-        <ul className="space-y-2 p-3">
+        <ul className="space-y-2 p-4">
           {(myJobsQuery.data ?? []).map((job) => (
             <li key={job.id}>
               <EmployeeTaskCard job={job} />

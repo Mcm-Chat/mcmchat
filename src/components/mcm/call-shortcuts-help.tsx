@@ -34,12 +34,12 @@ export function CallShortcutsHelp({
       {open && (
         <ul
           id="call-shortcuts-list"
-          className="w-full max-w-xs space-y-1 rounded-2xl bg-white/10 p-3 text-xs text-navy-foreground/85"
+          className="w-full max-w-xs space-y-1 rounded-2xl bg-on-dark-surface p-3 text-xs text-navy-foreground/85"
         >
           {CALL_SHORTCUTS.map((s) => (
             <li key={s.keys} className="flex items-center justify-between gap-3">
               <span>{s.label}</span>
-              <kbd className="rounded-md border border-white/25 bg-white/15 px-1.5 py-0.5 font-mono text-[10px]">
+              <kbd className="rounded-md border border-on-dark-border bg-on-dark-surface px-1.5 py-0.5 font-mono text-[10px]">
                 {s.keys}
               </kbd>
             </li>

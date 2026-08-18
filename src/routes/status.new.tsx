@@ -238,7 +238,7 @@ function StatusNew() {
               style={{ background: bg }}
             >
               <p
-                className="text-xl font-semibold break-words whitespace-pre-wrap text-white"
+                className="text-xl font-semibold break-words whitespace-pre-wrap text-on-dark"
                 style={{ fontFamily: font }}
               >
                 {text || "Ketik status teks Anda…"}
@@ -305,7 +305,7 @@ function StatusNew() {
                     <img loading="lazy" decoding="async" src={s.preview} alt="" className="size-full object-cover" />
                   ) : (
                     <div
-                      className="grid size-full place-items-center px-1 text-center text-[9px] text-white"
+                      className="grid size-full place-items-center px-1 text-center text-[9px] text-on-dark"
                       style={{ background: s.textMeta?.background }}
                     >
                       {s.textMeta?.text?.slice(0, 40)}
@@ -314,7 +314,7 @@ function StatusNew() {
                   <button
                     type="button"
                     aria-label="Hapus slide"
-                    className="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white"
+                    className="absolute top-1 right-1 rounded-full bg-navy/70 p-1 text-on-dark"
                     onClick={() => setSlides((prev) => prev.filter((_, idx) => idx !== i))}
                   >
                     <Trash2 className="size-3" />

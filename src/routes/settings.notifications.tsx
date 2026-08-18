@@ -88,7 +88,7 @@ const CATEGORY_ROWS: { key: keyof NotificationsPrefs; label: string; desc: strin
 ];
 
 function stateTone(state: PermState) {
-  if (state === "granted") return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400";
+  if (state === "granted") return "bg-success/15 text-success";
   if (state === "denied" || state === "restricted") return "bg-destructive/15 text-destructive";
   return "bg-muted text-muted-foreground";
 }

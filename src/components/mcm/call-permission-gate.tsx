@@ -26,7 +26,7 @@ export function CallPermissionGate({
   return (
     <div
       role="alert"
-      className="mx-auto mb-4 w-full max-w-sm rounded-2xl border border-white/15 bg-white/10 p-3 text-left text-white"
+      className="mx-auto mb-4 w-full max-w-sm rounded-2xl border border-on-dark-border bg-on-dark-surface p-3 text-left text-on-dark"
     >
       <p className="flex items-center gap-2 text-sm font-semibold">
         {blocked ? (
@@ -38,7 +38,7 @@ export function CallPermissionGate({
         )}
         {copy.title}
       </p>
-      {copy.help ? <p className="mt-1 text-xs text-white/75">{copy.help}</p> : null}
+      {copy.help ? <p className="mt-1 text-xs text-on-dark-muted">{copy.help}</p> : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {copy.action ? (
           <Button

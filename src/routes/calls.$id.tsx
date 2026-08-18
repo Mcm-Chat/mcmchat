@@ -174,7 +174,7 @@ function CallDetailPage() {
                 size="lg"
               />
             ) : (
-              <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" size="lg" />
+              <MCMAvatar initials="MC" color="from-navy to-primary" size="lg" />
             )}
             <div>
               <h1 className="flex items-center justify-center gap-1 text-lg font-semibold">

@@ -288,7 +288,7 @@ export function StatusEditor({
         </Button>
       </header>
 
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black p-2">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-media-canvas p-2">
         <canvas
           ref={canvasRef}
           width={size.width}

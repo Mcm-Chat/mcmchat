@@ -362,7 +362,7 @@ function SalesCardPhotoThumb({ photo }: { photo: SalesCardPhoto }) {
       : "");
   return (
     <div className="w-20 shrink-0 space-y-1 sm:w-24">
-      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-black/10 sm:size-24">
+      <div ref={ref} className="size-20 overflow-hidden rounded-lg bg-foreground/10 sm:size-24">
         {url ? (
           <button
             type="button"
@@ -421,7 +421,7 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
   return (
     <div
       ref={ref}
-      className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-black/10 px-2 py-1 text-[11px]"
+      className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-foreground/10 px-2 py-1 text-[11px]"
     >
       <RemoteImage src={url} alt="" frameClassName="size-8 shrink-0 rounded" className="object-cover" />
       <span className="min-w-0">
@@ -888,7 +888,7 @@ function MessageBubbleBase({
             <div
               className={cn(
                 "mb-1.5 rounded-lg border-l-2 px-2 py-1 text-[11px]",
-                mine ? "border-current/50 bg-black/10" : "border-primary bg-muted",
+                mine ? "border-current/50 bg-foreground/10" : "border-primary bg-muted",
               )}
             >
               <span className="font-medium">{replySenderName ?? "Pesan"}</span>

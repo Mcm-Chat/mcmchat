@@ -103,7 +103,7 @@ function GroupRow({ group, onClick }: { group: StatusGroup; onClick: () => void 
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+      className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-left transition-colors hover:bg-muted/60"
     >
       <span
         className={cn(

@@ -22,7 +22,7 @@ vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { id: "me" } }) }));
 vi.mock("@/lib/api/profiles", () => ({
   fetchProfileCard: async () => ({
     display_name: "Can",
-    avatar_color: "from-slate-500 to-slate-700",
+    avatar_color: "from-navy to-primary",
   }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));

@@ -19,9 +19,9 @@ export function CallPermissionStatus({
   const { state, copy } = permission;
   const tone =
     state === "granted"
-      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+      ? "border-success/40 bg-success/10 text-success"
       : state === "audio_only"
-        ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+        ? "border-warning/40 bg-warning/10 text-warning"
         : state === "checking"
           ? "border-border bg-muted text-muted-foreground"
           : "border-destructive/40 bg-destructive/10 text-destructive";

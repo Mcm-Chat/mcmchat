@@ -34,8 +34,8 @@ export function CallControls({
 }) {
   const btn = (active: boolean) =>
     cn(
-      "size-14 rounded-full border border-white/20 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-navy",
-      active ? "bg-white text-navy hover:bg-white/90" : "bg-white/15 text-white hover:bg-white/25",
+      "size-14 rounded-full border border-on-dark-border focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-navy",
+      active ? "bg-on-dark text-navy hover:bg-on-dark/80" : "bg-on-dark-surface text-on-dark hover:bg-on-dark-surface",
     );
   const videoDisabled = kind === "audio";
   return (
@@ -60,7 +60,7 @@ export function CallControls({
               <Mic className="size-6" aria-hidden="true" />
             )}
           </Button>
-          <span aria-hidden="true" className="text-[10px] text-white/70">
+          <span aria-hidden="true" className="text-[10px] text-on-dark-muted">
             {state.muted ? "Suara mati" : "Mikrofon"}
           </span>
         </div>
@@ -85,7 +85,7 @@ export function CallControls({
               <VideoOff className="size-6" aria-hidden="true" />
             )}
           </Button>
-          <span aria-hidden="true" className="text-[10px] text-white/70">
+          <span aria-hidden="true" className="text-[10px] text-on-dark-muted">
             Kamera
           </span>
         </div>
@@ -103,7 +103,7 @@ export function CallControls({
               <VolumeX className="size-6" aria-hidden="true" />
             )}
           </Button>
-          <span aria-hidden="true" className="text-[10px] text-white/70">
+          <span aria-hidden="true" className="text-[10px] text-on-dark-muted">
             Speaker
           </span>
         </div>
@@ -123,7 +123,7 @@ export function CallControls({
           >
             <RefreshCcw className="size-6" aria-hidden="true" />
           </Button>
-          <span aria-hidden="true" className="text-[10px] text-white/70">
+          <span aria-hidden="true" className="text-[10px] text-on-dark-muted">
             {state.frontCamera ? "Depan" : "Belakang"}
           </span>
         </div>
@@ -138,20 +138,20 @@ export function CallControls({
           >
             <UserPlus className="size-6" aria-hidden="true" />
           </Button>
-          <span aria-hidden="true" className="text-[10px] text-white/70">
+          <span aria-hidden="true" className="text-[10px] text-on-dark-muted">
             Tambah
           </span>
         </div>
         <div className="flex flex-col items-center gap-1.5">
           <Button
             size="icon"
-            className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+            className="size-16 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
             aria-label="Akhiri panggilan"
             onClick={onEnd}
           >
             <PhoneOff className="size-7" aria-hidden="true" />
           </Button>
-          <span aria-hidden="true" className="text-[10px] text-white/70">
+          <span aria-hidden="true" className="text-[10px] text-on-dark-muted">
             Akhiri
           </span>
         </div>

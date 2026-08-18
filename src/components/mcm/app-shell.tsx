@@ -186,7 +186,7 @@ export function MobileHeader({
         "bg-card/95 text-foreground backdrop-blur",
       )}
     >
-      <div className="flex items-center gap-1 px-3 py-2.5">
+      <div className="flex items-center gap-1 px-4 py-2.5">
         {back && (
           <Button
             type="button"
@@ -206,7 +206,7 @@ export function MobileHeader({
           </Button>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base leading-tight font-semibold">{title}</h1>
+          <h1 className="screen-title truncate">{title}</h1>
           {subtitle && <div className="truncate text-xs text-muted-foreground">{subtitle}</div>}
         </div>
         {actions && <div className="flex shrink-0 items-center gap-0.5">{actions}</div>}

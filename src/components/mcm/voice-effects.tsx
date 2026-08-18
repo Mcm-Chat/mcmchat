@@ -41,7 +41,7 @@ export function VoicePrivacyBadge({ active, className }: { active: boolean; clas
   return (
     <Badge
       className={cn(
-        "gap-1 border-0 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+        "gap-1 border-0 bg-success/15 text-success",
         className,
       )}
       aria-live="polite"
@@ -247,7 +247,7 @@ export function VoiceEffectsPanel({
               aria-label="Level mikrofon"
             >
               <div
-                className="h-full rounded-full bg-emerald-500 transition-[width] duration-100"
+                className="h-full rounded-full bg-success transition-[width] duration-100"
                 style={{ width: `${Math.round(preview.level * 100)}%` }}
               />
             </div>
@@ -261,7 +261,7 @@ export function VoiceEffectsPanel({
         )}
         {preview.error && <p className="text-[11px] text-destructive">{preview.error}</p>}
         {failed && (
-          <p className="flex items-start gap-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+          <p className="flex items-start gap-1.5 text-[11px] text-warning">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
             {preview.pipeline.reason ?? "Perangkat kembali ke suara normal."}
           </p>
