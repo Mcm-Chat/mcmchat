@@ -121,7 +121,7 @@ function ChatIndex() {
           ? all.filter((c) => c.type === "group")
           : all.filter((c) => c.type !== "group");
     const filtered = needle
-      ? all.filter((c) => {
+      ? byKind.filter((c) => {
           if (c.title_resolved.toLowerCase().includes(needle)) return true;
           if ((c.lastMessage?.body ?? "").toLowerCase().includes(needle)) return true;
           return c.members.some(
