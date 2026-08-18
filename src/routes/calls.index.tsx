@@ -78,7 +78,7 @@ import {
   CallNoteIconButton,
   type CallNoteTarget,
 } from "@/components/mcm/call-note-dialog";
-import { listCallNotes, type CallNote } from "@/lib/api/call-notes";
+import { listCallNotes, subscribeMyCallNotes, type CallNote } from "@/lib/api/call-notes";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
