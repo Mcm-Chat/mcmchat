@@ -50,7 +50,11 @@ export type SpeakerCapability = "sinkId" | "system";
 
 /** Perangkat input yang bisa dipilih pengguna saat panggilan berjalan. */
 export type MediaDeviceOption = { deviceId: string; label: string };
-export type CallDevices = { mics: MediaDeviceOption[]; cameras: MediaDeviceOption[] };
+export type CallDevices = {
+  mics: MediaDeviceOption[];
+  cameras: MediaDeviceOption[];
+  speakers: MediaDeviceOption[];
+};
 
 export interface CallSessionHandle {
   readonly provider: string;
@@ -62,6 +66,8 @@ export interface CallSessionHandle {
   switchCamera(): Promise<void>;
   /** Ganti kamera aktif ke perangkat tertentu tanpa memutus panggilan. */
   setVideoInput(deviceId: string): Promise<boolean>;
+  /** Ganti perangkat keluaran audio (setSinkId); false bila tidak didukung. */
+  setAudioOutput(deviceId: string): Promise<boolean>;
   /** Ganti track audio keluar tanpa renegosiasi penuh (mis. efek suara on/off). */
   replaceAudioTrack(track: MediaStreamTrack): Promise<void>;
   attachLocalVideo(el: HTMLVideoElement | null): void;
@@ -391,6 +397,22 @@ export const liveKitProvider: CallProvider = {
         attachLocal();
       },
       speakerCapability,
+      async setAudioOutput(deviceId) {
+        if (!canSetSink || !deviceId) return false;
+        const prev = speakerSinkId;
+        speakerSinkId = deviceId;
+        try {
+          for (const el of audioEls.values()) {
+            await (el as unknown as { setSinkId: (id: string) => Promise<void> }).setSinkId(
+              deviceId,
+            );
+          }
+          return true;
+        } catch {
+          speakerSinkId = prev;
+          return false;
+        }
+      },
       async setSpeaker(on) {
         if (!canSetSink) return null;
         const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);

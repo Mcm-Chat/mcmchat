@@ -677,7 +677,7 @@ function CallScreen() {
                     label="Perangkat"
                     active={devicesOpen}
                     hint={!controlsLive ? notLiveHint : micGranted ? undefined : micHint}
-                    ariaLabel="Pilih mikrofon dan kamera"
+                    ariaLabel="Pilih mikrofon, kamera, dan speaker"
                     onClick={withPermission(micGranted, micHint, () => {
                       session.refreshDevices();
                       setDevicesOpen(true);
@@ -722,8 +722,11 @@ function CallScreen() {
           devices={session.devices}
           micDeviceId={session.micDeviceId}
           cameraDeviceId={session.cameraDeviceId}
+          speakerDeviceId={session.speakerDeviceId}
           onPickMic={session.setMicDevice}
           onPickCamera={session.setCameraDevice}
+          onPickSpeaker={session.setSpeakerDevice}
+          speakerSupported={session.speakerSupported}
           videoEnabled={isVideo}
         />
       </div>
@@ -822,8 +825,11 @@ function CallScreen() {
         devices={session.devices}
         micDeviceId={session.micDeviceId}
         cameraDeviceId={session.cameraDeviceId}
+        speakerDeviceId={session.speakerDeviceId}
         onPickMic={session.setMicDevice}
         onPickCamera={session.setCameraDevice}
+        onPickSpeaker={session.setSpeakerDevice}
+        speakerSupported={session.speakerSupported}
         videoEnabled={isVideo}
       />
 
