@@ -17,6 +17,20 @@ export async function myPin(): Promise<string> {
   return data ?? "";
 }
 
+/**
+ * Setelah pendaftaran, baris profil (dan PIN-nya) dibuat oleh trigger server.
+ * Kadang RPC pertama berjalan sepersekian detik sebelum baris itu ada, jadi
+ * kartu profil bisa tampil kosong. Ulangi beberapa kali sampai PIN terbit.
+ */
+export async function myPinWithRetry(attempts = 6, delayMs = 600): Promise<string> {
+  for (let i = 0; i < attempts; i += 1) {
+    const pin = await myPin().catch(() => "");
+    if (pin) return pin;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return "";
+}
+
 export async function pinsFor(ids: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(ids.filter(Boolean))];
   if (unique.length === 0) return new Map();
