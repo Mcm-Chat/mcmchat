@@ -269,6 +269,21 @@ export const useOutboxActions = () => ({
   discard: useCallback((id: string) => discardEntry(id), []),
 });
 
+/** Jumlah aksi yang masih menunggu terkirim (dipakai banner offline). */
+export function useOutboxSize(): number {
+  const [size, setSize] = useState<number>(() => queue.length);
+  useEffect(() => {
+    const update = () => setSize(queue.length);
+    listeners.add(update);
+    void hydrateOutbox();
+    update();
+    return () => {
+      listeners.delete(update);
+    };
+  }, []);
+  return size;
+}
+
 /** Hanya untuk pengujian. */
 export function __resetOutbox() {
   for (const t of timers.values()) clearTimeout(t);

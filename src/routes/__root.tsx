@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { OfflineBanner } from "@/components/mcm/offline-banner";
 import { isPerfOverlayEnabled } from "@/lib/debug/perf-flag";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { installViewportMetrics } from "@/lib/mobile/viewport";
@@ -258,6 +259,7 @@ function RootComponent() {
             <AccountCacheGuard />
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
             <Outlet />
+            {mounted ? <OfflineBanner /> : null}
             {mounted ? (
               <Suspense fallback={null}>
                 <RootExtrasLazy />
