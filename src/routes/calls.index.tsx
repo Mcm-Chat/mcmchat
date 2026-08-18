@@ -48,6 +48,7 @@ import { markMissedCallsSeen } from "@/lib/calls/missed-seen";
 import { toast } from "sonner";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import { callOutcome, OUTCOME_BADGE, OUTCOME_LABEL } from "@/lib/calls/outcome";
 import { PageSkeleton } from "@/components/mcm/route-skeletons";
 import {
   CALL_RETURN_FOCUS_NEW,
@@ -229,7 +230,10 @@ function CallsPage() {
 
   const list = (calls ?? [])
     .filter((c) => {
-      if (tab === "takterjawab") return c.status === "missed";
+      const outcome = callOutcome(c, userId);
+      if (tab === "takterjawab") return outcome === "missed";
+      if (tab === "terjawab") return outcome === "answered";
+      if (tab === "batal") return outcome === "cancelled" || outcome === "declined";
       if (tab === "masuk") return c.initiator_id !== userId;
       if (tab === "keluar") return c.initiator_id === userId;
       return true;
