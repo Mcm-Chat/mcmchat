@@ -417,6 +417,7 @@ function CallScreen() {
 
   const phaseLabel =
     session.phase === "connected"
+
       ? // Durasi hanya ditampilkan bila server panggilan terhubung dan media
         // benar-benar mulai; kalau tidak, layar jujur menyebut tahapannya.
         providerHealth.health === "offline"
