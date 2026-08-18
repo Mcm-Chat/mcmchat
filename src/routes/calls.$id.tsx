@@ -225,13 +225,13 @@ function CallDetailPage() {
               value={
                 isLiveCall(call.status)
                   ? liveStatusLabel(call)
-                  : (STATUS_LABEL[call.status] ?? call.status)
+                  : OUTCOME_LABEL[callOutcome(call, userId)]
               }
             />
             <Row
               label="Durasi"
               value={
-                call.status === "ended"
+                callOutcome(call, userId) === "answered"
                   ? durasi(call.duration_sec)
                   : isLiveCall(call.status)
                     ? (liveStatusLabel(call).split(" • ")[1] ?? "—")
