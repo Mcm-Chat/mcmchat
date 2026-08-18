@@ -50,7 +50,11 @@ export type SpeakerCapability = "sinkId" | "system";
 
 /** Perangkat input yang bisa dipilih pengguna saat panggilan berjalan. */
 export type MediaDeviceOption = { deviceId: string; label: string };
-export type CallDevices = { mics: MediaDeviceOption[]; cameras: MediaDeviceOption[] };
+export type CallDevices = {
+  mics: MediaDeviceOption[];
+  cameras: MediaDeviceOption[];
+  speakers: MediaDeviceOption[];
+};
 
 export interface CallSessionHandle {
   readonly provider: string;
@@ -62,6 +66,8 @@ export interface CallSessionHandle {
   switchCamera(): Promise<void>;
   /** Ganti kamera aktif ke perangkat tertentu tanpa memutus panggilan. */
   setVideoInput(deviceId: string): Promise<boolean>;
+  /** Ganti perangkat keluaran audio (setSinkId); false bila tidak didukung. */
+  setAudioOutput(deviceId: string): Promise<boolean>;
   /** Ganti track audio keluar tanpa renegosiasi penuh (mis. efek suara on/off). */
   replaceAudioTrack(track: MediaStreamTrack): Promise<void>;
   attachLocalVideo(el: HTMLVideoElement | null): void;
