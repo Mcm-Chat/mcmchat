@@ -434,11 +434,15 @@ function ContactsPage() {
                       <Button
                         size="icon"
                         className="size-9 rounded-xl"
-                        aria-label="Terima"
+                        aria-label={busy === r.id ? "Memproses permintaan" : "Terima"}
                         disabled={busy === r.id}
                         onClick={() => void respond(r, "accepted")}
                       >
-                        <Check className="size-4" />
+                        {busy === r.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Check className="size-4" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"
