@@ -583,6 +583,30 @@ function ProfilePage() {
         </div>
 
         <div className="card-soft divide-y divide-border">
+          <SettingRow
+            icon={CircleUserRound}
+            label="Status"
+            description="Lihat dan buat status harian"
+            right={<ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+            onClick={() => void navigate({ to: "/status" })}
+          />
+          <SettingRow
+            icon={Crown}
+            label="Premium"
+            description="Fitur lanjutan untuk bisnis kamu"
+            right={<ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+            onClick={() => void navigate({ to: "/premium" })}
+          />
+          <SettingRow
+            icon={Download}
+            label="Download aplikasi"
+            description="Pasang MCM di perangkat kamu"
+            right={<ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+            onClick={() => void navigate({ to: "/download" })}
+          />
+        </div>
+
+        <div className="card-soft divide-y divide-border">
           {settingsError ? (
             <div className="flex items-center justify-between gap-2 p-4">
               <p className="text-xs text-muted-foreground">{settingsError}</p>
