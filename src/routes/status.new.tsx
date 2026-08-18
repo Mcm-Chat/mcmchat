@@ -302,7 +302,7 @@ function StatusNew() {
                   className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-border"
                 >
                   {s.preview ? (
-                    <img src={s.preview} alt="" className="size-full object-cover" />
+                    <img loading="lazy" decoding="async" src={s.preview} alt="" className="size-full object-cover" />
                   ) : (
                     <div
                       className="grid size-full place-items-center px-1 text-center text-[9px] text-white"

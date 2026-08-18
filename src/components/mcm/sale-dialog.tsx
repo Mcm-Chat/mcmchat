@@ -64,7 +64,7 @@ function PhotoThumb({
       )}
     >
       {url ? (
-        <img src={url} alt="Foto produk" className="size-full object-cover" />
+        <img loading="lazy" decoding="async" src={url} alt="Foto produk" className="size-full object-cover" />
       ) : (
         <div className="size-full animate-pulse bg-muted" />
       )}

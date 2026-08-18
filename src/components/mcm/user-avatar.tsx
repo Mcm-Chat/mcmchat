@@ -55,6 +55,8 @@ export function UserAvatar({
         <img
           src={url}
           alt={name}
+          loading="lazy"
+          decoding="async"
           onError={() => setFailed(true)}
           className="absolute inset-0 size-full rounded-full object-cover"
         />

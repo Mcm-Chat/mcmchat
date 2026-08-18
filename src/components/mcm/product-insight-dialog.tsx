@@ -196,7 +196,7 @@ function PurchaseEvidence({
   if (!photoPath && !locationUrl) return null;
   return (
     <div className="mt-2 flex items-center gap-2">
-      {url && <img src={url} alt="Foto barang masuk" className="size-14 rounded-lg object-cover" />}
+      {url && <img loading="lazy" decoding="async" src={url} alt="Foto barang masuk" className="size-14 rounded-lg object-cover" />}
       {locationUrl && (
         <a
           href={locationUrl}

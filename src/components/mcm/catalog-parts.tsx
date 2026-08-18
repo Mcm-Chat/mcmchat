@@ -56,6 +56,8 @@ export function ProductThumb({
     <img
       src={url}
       alt="Foto produk"
+      loading="lazy"
+      decoding="async"
       className={`rounded-xl object-cover ${className ?? "size-16"}`}
     />
   );

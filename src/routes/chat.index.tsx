@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Camera,
@@ -230,6 +230,26 @@ function ChatIndex() {
     }
     void refresh();
   };
+
+  /**
+   * Handler stabil (identitas tetap antar render) supaya React.memo pada
+   * ChatListItem benar-benar memotong render ulang seluruh daftar saat user
+   * mengetik di pencarian atau state layar lain berubah.
+   */
+  const patchRef = useRef(patchMember);
+  patchRef.current = patchMember;
+  const onTogglePin = useCallback(
+    (id: string, next: boolean) => void patchRef.current(id, { is_pinned: next }),
+    [],
+  );
+  const onToggleMute = useCallback(
+    (id: string, next: boolean) => void patchRef.current(id, { is_muted: next }),
+    [],
+  );
+  const onToggleArchive = useCallback(
+    (id: string, next: boolean) => void patchRef.current(id, { is_archived: next }),
+    [],
+  );
 
   /** Kirim kartu produk terstruktur ke percakapan yang dipilih. */
   const sendCardTo = async (conversationId: string) => {
@@ -651,9 +671,9 @@ function ChatIndex() {
                         )
                       : undefined
                   }
-                  onTogglePin={() => void patchMember(c.id, { is_pinned: !c.me.is_pinned })}
-                  onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
-                  onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}
+                  onTogglePin={onTogglePin}
+                  onToggleMute={onToggleMute}
+                  onToggleArchive={onToggleArchive}
                 />
               </div>
             </li>

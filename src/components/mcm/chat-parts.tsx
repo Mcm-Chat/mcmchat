@@ -151,7 +151,7 @@ function Highlight({ text, query }: { text: string; query: string | undefined })
   return <>{parts}</>;
 }
 
-export function ChatListItem({
+function ChatListItemBase({
   conv,
   time,
   outgoingStatus,
@@ -164,9 +164,10 @@ export function ChatListItem({
   time: string;
   outgoingStatus?: MessageStatus | undefined;
   query?: string;
-  onTogglePin: () => void;
-  onToggleMute: () => void;
-  onToggleArchive: () => void;
+  /** Handler berbasis id supaya pemanggil bisa memakai callback stabil (memo). */
+  onTogglePin: (id: string, next: boolean) => void;
+  onToggleMute: (id: string, next: boolean) => void;
+  onToggleArchive: (id: string, next: boolean) => void;
 }) {
   const name = conv.title_resolved;
   const needle = (query ?? "").trim().toLowerCase();
@@ -261,13 +262,13 @@ export function ChatListItem({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onTogglePin}>
+          <DropdownMenuItem onClick={() => onTogglePin(conv.id, !conv.me.is_pinned)}>
             <Pin className="size-4" /> {conv.me.is_pinned ? "Lepas pin" : "Sematkan"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleMute}>
+          <DropdownMenuItem onClick={() => onToggleMute(conv.id, !conv.me.is_muted)}>
             <BellOff className="size-4" /> {conv.me.is_muted ? "Bunyikan" : "Bisukan"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleArchive}>
+          <DropdownMenuItem onClick={() => onToggleArchive(conv.id, !conv.me.is_archived)}>
             <Archive className="size-4" />{" "}
             {conv.me.is_archived ? "Keluarkan dari arsip" : "Arsipkan"}
           </DropdownMenuItem>
@@ -276,6 +277,12 @@ export function ChatListItem({
     </div>
   );
 }
+
+/**
+ * Dimemo: daftar percakapan panjang tidak ikut render ulang saat state layar
+ * (pencarian, mode pilih, dsb.) berubah — hanya baris yang datanya berubah.
+ */
+export const ChatListItem = memo(ChatListItemBase);
 
 /** Kartu lokasi yang menyatu dengan pesan foto/lokasi. */
 export function MessageLocationCard({

@@ -48,7 +48,7 @@ import {
   type BusinessMemberRow,
 } from "@/lib/api/business";
 import { useMyBusiness } from "@/lib/api/queries";
-import { AvatarEditor } from "@/components/mcm/avatar-editor";
+import { AvatarEditor } from "@/components/mcm/lazy-heavy";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { AvatarAudienceDialog } from "@/components/mcm/avatar-audience-dialog";
 
