@@ -43,17 +43,29 @@ export function verifyUrl(ledger: LedgerRow, receipt: string) {
   return absoluteUrl(`/support?${params.toString()}`);
 }
 
-export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
+export function paymentsToCsv(
+  ledger: LedgerRow,
+  payments: LedgerPaymentRow[],
+  receipt = receiptNumber(ledger),
+) {
   const meta = [
+    ["No. bukti", receipt],
     ["Catatan", ledger.counterpart_name ?? "-"],
     ["Jenis", ledger.type === "receivable" ? "Piutang" : "Utang"],
     ["Total tagihan", rupiah(Number(ledger.amount))],
     ["Sudah dibayar", rupiah(Number(ledger.paid_amount))],
     ["Sisa", rupiah(remaining(ledger))],
     ["Status", LEDGER_STATUS_LABEL[ledger.status]],
+    ["Dicetak", tanggal(new Date().toISOString())],
+    ["Verifikasi", verifyUrl(ledger, receipt)],
   ].map(([k, v]) => [escapeCsv(k ?? ""), escapeCsv(v ?? "")].join(","));
 
-  const lines = [...meta, "", HEADERS.join(",")];
+  const lines = [
+    escapeCsv(`Bukti Pembayaran — MCM (${receipt})`),
+    ...meta,
+    "",
+    [...HEADERS, "No. bukti"].join(","),
+  ];
   for (const p of payments) {
     lines.push(
       [
@@ -61,6 +73,7 @@ export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
         rupiah(Number(p.amount)),
         String(p.method ?? "-"),
         String(p.note ?? ""),
+        receipt,
       ]
         .map(escapeCsv)
         .join(","),
