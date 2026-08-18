@@ -15,6 +15,16 @@ import type { ComponentType, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
+/** Pesan error ramah di bawah field input. */
+export function FieldError({ id, message }: { id?: string; message?: string | null }) {
+  if (!message) return null;
+  return (
+    <p id={id} role="alert" className="text-[12px] leading-4 text-destructive">
+      {message}
+    </p>
+  );
+}
+
 /** State error seragam untuk semua daftar: penjelasan + tombol coba lagi. */
 export function ListErrorState({
   title = "Gagal memuat data",
