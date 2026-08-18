@@ -1,7 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, MessageSquare, ShieldAlert, Trash2, Wallet, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  Download,
+  FileText,
+  MessageSquare,
+  ShieldAlert,
+  Sheet as SheetIcon,
+  Trash2,
+  Wallet,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import {
@@ -45,6 +55,13 @@ import {
   optimisticDeletePayment,
   optimisticRecordPayment,
 } from "@/lib/api/ledger-optimistic";
+import { downloadPaymentsCsv, downloadPaymentsPdf } from "@/lib/ledger/export";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { qk } from "@/lib/api/queries";
 import { LedgerSkeleton } from "@/components/mcm/route-skeletons";
 
@@ -296,7 +313,52 @@ function LedgerDetail() {
         </div>
 
         <div className="card-soft p-4">
-          <p className="mb-2 text-sm font-semibold">Riwayat pembayaran</p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold">Riwayat pembayaran</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-xl"
+                  disabled={data.payments.length === 0}
+                >
+                  <Download className="mr-1.5 size-4" />
+                  Ekspor
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    try {
+                      downloadPaymentsCsv(ledger, data.payments);
+                      toast.success("Riwayat pembayaran diekspor ke CSV");
+                    } catch {
+                      toast.error("Gagal mengekspor CSV");
+                    }
+                  }}
+                >
+                  <SheetIcon className="mr-2 size-4" />
+                  Simpan CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    void (async () => {
+                      try {
+                        await downloadPaymentsPdf(ledger, data.payments);
+                        toast.success("Bukti pembayaran diekspor ke PDF");
+                      } catch {
+                        toast.error("Gagal mengekspor PDF");
+                      }
+                    })();
+                  }}
+                >
+                  <FileText className="mr-2 size-4" />
+                  Simpan PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           {data.payments.length === 0 ? (
             <p className="text-sm text-muted-foreground">Belum ada pembayaran yang dicatat.</p>
           ) : (
