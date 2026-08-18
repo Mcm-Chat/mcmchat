@@ -153,12 +153,19 @@ function CallsPage() {
   useEffect(() => {
     reloadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, calls]);
+
+  // Catatan yang diubah dari perangkat lain langsung tersinkron.
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeMyCallNotes(userId, reloadNotes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
     reloadReminders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, calls]);
 
   /**
    * Setelah panggilan berakhir/dibatalkan, kembalikan fokus keyboard ke tombol
