@@ -436,6 +436,13 @@ function CallScreen() {
     if (callOver) setDevicesOpen(false);
   }, [callOver]);
 
+  // Feedback instan tiap tombol ditekan: aksi dijalankan dulu, lalu toast
+  // menyebut keadaan barunya (bukan janji, tapi hasil toggle).
+  const withFeedback = (run: () => void, message: () => string) => () => {
+    run();
+    toast.success(message(), { duration: 1600 });
+  };
+
   const phaseLabel =
     session.phase === "connected"
       ? // Durasi hanya ditampilkan bila server panggilan terhubung dan media
