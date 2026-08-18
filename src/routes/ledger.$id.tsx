@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, MessageSquare, ShieldAlert, Wallet, XCircle } from "lucide-react";
+import { CheckCircle2, MessageSquare, ShieldAlert, Trash2, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import {
@@ -35,6 +35,7 @@ import { useRequireAuth } from "@/lib/api/guard";
 import {
   getLedger,
   LEDGER_STATUS_LABEL,
+  deleteLedgerPayment,
   recordPayment,
   remaining,
   updateStatus,
@@ -103,6 +104,7 @@ function LedgerDetail() {
 
   const [payOpen, setPayOpen] = useState(false);
   const [pay, setPay] = useState({ amount: "", method: "transfer", note: "" });
+  const [delPayment, setDelPayment] = useState<null | { id: string; amount: number }>(null);
   const [confirm, setConfirm] = useState<null | {
     status: LedgerRow["status"];
     title: string;
@@ -297,6 +299,15 @@ function LedgerDetail() {
                     </p>
                     {p.note && <p className="text-[11px] text-muted-foreground">{p.note}</p>}
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 shrink-0 rounded-xl text-destructive"
+                    aria-label={`Hapus pembayaran ${rupiah(Number(p.amount))}`}
+                    onClick={() => setDelPayment({ id: p.id, amount: Number(p.amount) })}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
                 </li>
               ))}
             </ul>
