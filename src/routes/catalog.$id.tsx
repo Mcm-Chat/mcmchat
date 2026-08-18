@@ -524,7 +524,7 @@ function CatalogDetail() {
             try {
               await deleteProduct(product.id);
               toast.success("Produk dihapus");
-              void navigate({ to: "/catalog" });
+              void navigate({ to: "/business" });
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Gagal menghapus produk");
             }

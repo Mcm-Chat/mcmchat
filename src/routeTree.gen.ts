@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BusinessRouteImport } from './routes/business'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -23,6 +24,8 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
+import { Route as BusinessKelolaRouteImport } from './routes/business.kelola'
+import { Route as BusinessTugasRouteImport } from './routes/business.tugas'
 import { Route as CallIdRouteImport } from './routes/call.$id'
 import { Route as CallsIndexRouteImport } from './routes/calls.index'
 import { Route as CallsIdRouteImport } from './routes/calls.$id'
@@ -56,6 +59,11 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessRoute = BusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeleteAccountRoute = DeleteAccountRouteImport.update({
@@ -119,9 +127,19 @@ const TermsRoute = TermsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessIndexRoute = BusinessIndexRouteImport.update({
-  id: '/business/',
-  path: '/business/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessKelolaRoute = BusinessKelolaRouteImport.update({
+  id: '/kelola',
+  path: '/kelola',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessTugasRoute = BusinessTugasRouteImport.update({
+  id: '/tugas',
+  path: '/tugas',
+  getParentRoute: () => BusinessRoute,
 } as any)
 const CallIdRoute = CallIdRouteImport.update({
   id: '/call/$id',
@@ -272,6 +290,7 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/business': typeof BusinessRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/download': typeof DownloadRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -284,6 +303,8 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/business/kelola': typeof BusinessKelolaRoute
+  '/business/tugas': typeof BusinessTugasRoute
   '/call/$id': typeof CallIdRoute
   '/calls/$id': typeof CallsIdRoute
   '/catalog/$id': typeof CatalogIdRoute
@@ -329,6 +350,8 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/business/kelola': typeof BusinessKelolaRoute
+  '/business/tugas': typeof BusinessTugasRoute
   '/call/$id': typeof CallIdRoute
   '/calls/$id': typeof CallsIdRoute
   '/catalog/$id': typeof CatalogIdRoute
@@ -363,6 +386,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/business': typeof BusinessRouteWithChildren
   '/delete-account': typeof DeleteAccountRoute
   '/download': typeof DownloadRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -375,6 +399,8 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/business/kelola': typeof BusinessKelolaRoute
+  '/business/tugas': typeof BusinessTugasRoute
   '/call/$id': typeof CallIdRoute
   '/calls/$id': typeof CallsIdRoute
   '/catalog/$id': typeof CatalogIdRoute
@@ -410,6 +436,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/business'
     | '/delete-account'
     | '/download'
     | '/forgot-password'
@@ -422,6 +449,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/business/kelola'
+    | '/business/tugas'
     | '/call/$id'
     | '/calls/$id'
     | '/catalog/$id'
@@ -467,6 +496,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/business/kelola'
+    | '/business/tugas'
     | '/call/$id'
     | '/calls/$id'
     | '/catalog/$id'
@@ -500,6 +531,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/business'
     | '/delete-account'
     | '/download'
     | '/forgot-password'
@@ -512,6 +544,8 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/business/kelola'
+    | '/business/tugas'
     | '/call/$id'
     | '/calls/$id'
     | '/catalog/$id'
@@ -546,6 +580,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BusinessRoute: typeof BusinessRouteWithChildren
   DeleteAccountRoute: typeof DeleteAccountRoute
   DownloadRoute: typeof DownloadRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -574,7 +609,6 @@ export interface RootRouteChildren {
   SettingsVoiceRoute: typeof SettingsVoiceRoute
   StatusNewRoute: typeof StatusNewRoute
   TasksIdRoute: typeof TasksIdRoute
-  BusinessIndexRoute: typeof BusinessIndexRoute
   CallsIndexRoute: typeof CallsIndexRoute
   CatalogIndexRoute: typeof CatalogIndexRoute
   ChatIndexRoute: typeof ChatIndexRoute
@@ -597,6 +631,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/delete-account': {
@@ -685,10 +726,24 @@ declare module '@tanstack/react-router' {
     }
     '/business/': {
       id: '/business/'
-      path: '/business'
+      path: '/'
       fullPath: '/business/'
       preLoaderRoute: typeof BusinessIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/kelola': {
+      id: '/business/kelola'
+      path: '/kelola'
+      fullPath: '/business/kelola'
+      preLoaderRoute: typeof BusinessKelolaRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/tugas': {
+      id: '/business/tugas'
+      path: '/tugas'
+      fullPath: '/business/tugas'
+      preLoaderRoute: typeof BusinessTugasRouteImport
+      parentRoute: typeof BusinessRoute
     }
     '/call/$id': {
       id: '/call/$id'
@@ -896,8 +951,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BusinessRouteChildren {
+  BusinessKelolaRoute: typeof BusinessKelolaRoute
+  BusinessTugasRoute: typeof BusinessTugasRoute
+  BusinessIndexRoute: typeof BusinessIndexRoute
+}
+
+const BusinessRouteChildren: BusinessRouteChildren = {
+  BusinessKelolaRoute: BusinessKelolaRoute,
+  BusinessTugasRoute: BusinessTugasRoute,
+  BusinessIndexRoute: BusinessIndexRoute,
+}
+
+const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
+  BusinessRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BusinessRoute: BusinessRouteWithChildren,
   DeleteAccountRoute: DeleteAccountRoute,
   DownloadRoute: DownloadRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
@@ -926,7 +998,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsVoiceRoute: SettingsVoiceRoute,
   StatusNewRoute: StatusNewRoute,
   TasksIdRoute: TasksIdRoute,
-  BusinessIndexRoute: BusinessIndexRoute,
   CallsIndexRoute: CallsIndexRoute,
   CatalogIndexRoute: CatalogIndexRoute,
   ChatIndexRoute: ChatIndexRoute,
