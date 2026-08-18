@@ -91,16 +91,6 @@ export const Route = createFileRoute("/calls/")({
   pendingComponent: () => <PageSkeleton rows={7} />,
 });
 
-const STATUS_LABEL: Record<string, string> = {
-  ringing: "Berdering",
-  ongoing: "Berlangsung",
-  ended: "Selesai",
-  missed: "Tak terjawab",
-  declined: "Ditolak",
-  failed: "Gagal",
-  unconfigured: "Tidak dikonfigurasi",
-};
-
 function counterpartOf(call: CallHistoryItem, userId?: string) {
   return call.participants.find((p) => p.user_id !== userId) ?? call.participants[0] ?? null;
 }

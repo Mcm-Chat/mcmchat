@@ -52,16 +52,6 @@ export const Route = createFileRoute("/calls/$id")({
   pendingComponent: () => <PageSkeleton rows={4} nav={false} />,
 });
 
-const STATUS_LABEL: Record<string, string> = {
-  ringing: "Berdering",
-  ongoing: "Berlangsung",
-  ended: "Selesai",
-  missed: "Tak terjawab",
-  declined: "Ditolak",
-  failed: "Gagal",
-  unconfigured: "Tidak dikonfigurasi",
-};
-
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3">
