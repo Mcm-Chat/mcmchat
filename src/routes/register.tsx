@@ -132,7 +132,7 @@ function RegisterPage() {
     await supabase
       .rpc("update_my_profile", {
         _display_name: form.name.trim(),
-        _bio: bio || null,
+        _bio: bio,
       })
       .then(({ error }) => {
         if (error) toast.error("Profil belum tersimpan, bisa diubah lagi di halaman Profil.");
