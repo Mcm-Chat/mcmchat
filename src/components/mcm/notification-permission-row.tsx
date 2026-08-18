@@ -82,7 +82,7 @@ export function NotificationPermissionRow({ userId }: { userId?: string | undefi
           <Button
             size="sm"
             variant="outline"
-            className="h-7 rounded-lg text-xs"
+            className="h-10 rounded-lg text-xs sm:h-7"
             disabled={busy}
             onClick={() => void ask()}
           >
