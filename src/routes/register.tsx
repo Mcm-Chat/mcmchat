@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -43,14 +43,24 @@ const schema = z.object({
   password: z.string().min(8, { message: "Kata sandi minimal 8 karakter" }).max(72),
 });
 
+const DEMO_OTP = "123456";
+const STEP_LABEL = ["Daftar", "Verifikasi", "Profil awal"];
+
 function RegisterPage() {
   const navigate = useNavigate();
   const { refresh } = useAuth();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({ name: "", email: "", password: "", bio: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
   const [pin, setPin] = useState("");
+  const otpRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === 2) otpRef.current?.focus();
+  }, [step]);
 
   const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -97,16 +107,38 @@ function RegisterPage() {
       }
       session = signIn.data.session;
     }
-    if (form.bio.trim())
-      await supabase.rpc("update_my_profile", {
-        _display_name: form.name.trim(),
-        _bio: form.bio.trim(),
-      });
-    const { myPin } = await import("@/lib/api/pins");
-    setPin(await myPin().catch(() => ""));
     await refresh();
     setLoading(false);
     setStep(2);
+  };
+
+  const verifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.trim() !== DEMO_OTP) {
+      setOtpError(`Kode salah. Untuk demo, gunakan ${DEMO_OTP}.`);
+      return;
+    }
+    setOtpError("");
+    setLoading(true);
+    const { myPin } = await import("@/lib/api/pins");
+    setPin(await myPin().catch(() => ""));
+    setLoading(false);
+    setStep(3);
+  };
+
+  const finishProfile = async () => {
+    setLoading(true);
+    const bio = form.bio.trim();
+    await supabase
+      .rpc("update_my_profile", {
+        _display_name: form.name.trim(),
+        _bio: bio || null,
+      })
+      .then(({ error }) => {
+        if (error) toast.error("Profil belum tersimpan, bisa diubah lagi di halaman Profil.");
+      });
+    await refresh();
+    void navigate({ to: "/chat", replace: true });
   };
 
   return (
@@ -115,13 +147,28 @@ function RegisterPage() {
         <div className="text-center">
           <img src={logo} alt="Logo MCM" width={512} height={512} className="mx-auto size-14" />
           <h1 className="mt-2 text-2xl font-bold">
-            {step === 1 ? "Buat akun MCM" : "PIN MCM Anda"}
+            {step === 1 ? "Buat akun MCM" : step === 2 ? "Verifikasi kode" : "Profil awal Anda"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {step === 1
               ? "Email hanya untuk masuk, tidak ditampilkan ke pengguna lain."
-              : "Ini identitas publik Anda. Bagikan PIN, bukan nomor telepon."}
+              : step === 2
+                ? `Mode demo: masukkan kode ${DEMO_OTP} untuk melanjutkan.`
+                : "Lengkapi profil, lalu Anda langsung masuk ke tab Chat."}
           </p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {STEP_LABEL.map((label, i) => (
+              <span
+                key={label}
+                className={
+                  i + 1 <= step
+                    ? "h-1.5 w-10 rounded-full bg-primary"
+                    : "h-1.5 w-6 rounded-full bg-muted"
+                }
+                aria-label={`Langkah ${i + 1}: ${label}`}
+              />
+            ))}
+          </div>
         </div>
 
         {step === 1 && (
@@ -168,7 +215,55 @@ function RegisterPage() {
                 <p className="text-xs text-destructive">{errors["password"]}</p>
               )}
             </div>
+            <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading ? "Membuat akun…" : "Lanjut"}
+            </Button>
+          </form>
+        )}
+
+        {step === 2 && (
+          <form className="card-soft space-y-4 p-5" onSubmit={(e) => void verifyOtp(e)} noValidate>
             <div className="space-y-1.5">
+              <Label htmlFor="otp">Kode verifikasi (demo)</Label>
+              <Input
+                id="otp"
+                ref={otpRef}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={otp}
+                placeholder="6 digit"
+                className="text-center text-lg tracking-[0.5em]"
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                aria-invalid={!!otpError}
+              />
+              {otpError && <p className="text-xs text-destructive">{otpError}</p>}
+            </div>
+            <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading ? "Memverifikasi…" : "Lanjut"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              disabled={loading}
+              onClick={() => setOtp(DEMO_OTP)}
+            >
+              Isi kode demo otomatis
+            </Button>
+          </form>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <PinCard
+              pin={pin}
+              name={form.name}
+              subtitle="PIN tidak mengandung karakter 0, O, I, atau 1"
+            />
+            <div className="card-soft space-y-2 p-5">
               <Label htmlFor="bio">Bio singkat (opsional)</Label>
               <Textarea
                 id="bio"
@@ -179,20 +274,6 @@ function RegisterPage() {
               />
               <p className="text-right text-[11px] text-muted-foreground">{form.bio.length}/140</p>
             </div>
-            <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
-              {loading && <Loader2 className="size-4 animate-spin" />}
-              {loading ? "Membuat akun…" : "Buat akun"}
-            </Button>
-          </form>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            <PinCard
-              pin={pin}
-              name={form.name}
-              subtitle="PIN tidak mengandung karakter 0, O, I, atau 1"
-            />
             <div className="card-soft flex items-start gap-2 p-4 text-xs text-muted-foreground">
               <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
               PIN dibuat otomatis dan unik. Anda bisa menyalin atau membagikan QR kapan saja dari
@@ -200,9 +281,11 @@ function RegisterPage() {
             </div>
             <Button
               className="h-11 w-full rounded-xl"
-              onClick={() => void navigate({ to: "/chat", replace: true })}
+              disabled={loading}
+              onClick={() => void finishProfile()}
             >
-              Mulai pakai MCM
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading ? "Menyiapkan aplikasi…" : "Selesai & mulai chat"}
             </Button>
           </div>
         )}
