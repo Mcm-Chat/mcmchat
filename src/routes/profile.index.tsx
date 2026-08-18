@@ -240,10 +240,8 @@ function ProfilePage() {
 
   const saveProfile = async () => {
     if (!userId) return;
-    if (name.trim().length < 3) {
-      toast.error("Nama minimal 3 karakter");
-      return;
-    }
+    setProfileTouched({ name: true, bio: true });
+    if (!profileValid) return;
     setSavingProfile(true);
     try {
       const { updateMyProfile } = await import("@/lib/api/profiles");
