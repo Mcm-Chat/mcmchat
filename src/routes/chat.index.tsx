@@ -572,11 +572,17 @@ function ChatIndex() {
           links={["contacts", "support"]}
         />
       ) : list.length === 0 ? (
-        q.trim() ? (
+        q.trim() || kind !== "all" ? (
           <EmptyState
             icon={Search}
             title="Tidak ada hasil"
-            description={`Tidak ditemukan percakapan untuk “${q.trim()}”. Coba nama lain atau PIN publik kontak.`}
+            description={
+              q.trim()
+                ? `Tidak ditemukan percakapan untuk “${q.trim()}”. Coba nama lain, PIN, atau ganti filter.`
+                : kind === "group"
+                  ? "Belum ada percakapan grup."
+                  : "Belum ada percakapan dengan kontak."
+            }
           />
         ) : (
           <EmptyState
