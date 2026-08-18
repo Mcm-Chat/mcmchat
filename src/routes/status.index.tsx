@@ -7,6 +7,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { EmptyState, LoadingSkeleton, MCMAvatar } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { StatusViewer } from "@/components/mcm/status-viewer";
+import { StatusOverview } from "@/components/mcm/status-overview";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -291,6 +292,8 @@ function StatusIndex() {
             <Ring key={g.ownerId} group={g} onClick={() => open(g)} />
           ))}
         </div>
+
+        {!isLoading && <StatusOverview groups={groups} />}
 
         {isLoading && <LoadingSkeleton rows={4} />}
 
