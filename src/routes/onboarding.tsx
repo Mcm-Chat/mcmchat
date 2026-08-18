@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { KeyRound, MessagesSquare, Wallet } from "lucide-react";
+import { KeyRound, Loader2, MessagesSquare, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/mcm-logo.png";
@@ -44,13 +44,21 @@ const SLIDES = [
 
 function Onboarding() {
   const [index, setIndex] = useState(0);
+  const [leaving, setLeaving] = useState<null | "register" | "login">(null);
   const navigate = useNavigate();
   const slide = SLIDES[index]!;
   const Icon = slide.icon;
 
   const finish = () => {
     localStorage.setItem("mcm-onboarded", "1");
+    setLeaving("register");
     void navigate({ to: "/register" });
+  };
+
+  const goLogin = () => {
+    localStorage.setItem("mcm-onboarded", "1");
+    setLeaving("login");
+    void navigate({ to: "/login" });
   };
 
   return (
@@ -68,6 +76,7 @@ function Onboarding() {
           <Button
             variant="ghost"
             className="text-navy-foreground hover:bg-white/10"
+            disabled={leaving !== null}
             onClick={finish}
           >
             Lewati
@@ -96,19 +105,23 @@ function Onboarding() {
         <div className="space-y-3">
           <Button
             className="h-12 w-full rounded-2xl text-base"
+            disabled={leaving !== null}
             onClick={() => (index < SLIDES.length - 1 ? setIndex(index + 1) : finish())}
           >
-            {index < SLIDES.length - 1 ? "Lanjut" : "Mulai sekarang"}
+            {leaving === "register" && <Loader2 className="size-4 animate-spin" />}
+            {leaving === "register"
+              ? "Menyiapkan pendaftaran…"
+              : index < SLIDES.length - 1
+                ? "Lanjut"
+                : "Mulai sekarang"}
           </Button>
           <Button
             variant="ghost"
             className="w-full text-navy-foreground hover:bg-white/10"
-            onClick={() => {
-              localStorage.setItem("mcm-onboarded", "1");
-              void navigate({ to: "/login" });
-            }}
+            disabled={leaving !== null}
+            onClick={goLogin}
           >
-            Saya sudah punya akun
+            {leaving === "login" ? "Membuka halaman masuk…" : "Saya sudah punya akun"}
           </Button>
         </div>
       </div>
