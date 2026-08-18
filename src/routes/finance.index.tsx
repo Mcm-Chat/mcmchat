@@ -285,7 +285,7 @@ function FinancePage() {
             <ul className="space-y-3">
               {filteredLedgers.map((l: LedgerRow) => (
                 <li key={l.id}>
-                  <LedgerListItem ledger={l} />
+                  <LedgerListItem ledger={l} {...(userId ? { actorId: userId } : {})} />
                 </li>
               ))}
             </ul>
