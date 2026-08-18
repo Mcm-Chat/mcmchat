@@ -22,6 +22,7 @@ import {
   Pin,
   Plus,
   Send,
+  Share2,
   ShoppingCart,
   Smile,
   Sticker,
@@ -33,6 +34,8 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent as ReactTouchEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { shareToApps } from "@/lib/mcm/share";
+import { SITE_URL } from "@/lib/site";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -271,6 +274,19 @@ function ChatListItemBase({
           <DropdownMenuItem onClick={() => onToggleArchive(conv.id, !conv.me.is_archived)}>
             <Archive className="size-4" />{" "}
             {conv.me.is_archived ? "Keluarkan dari arsip" : "Arsipkan"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              void shareToApps({
+                title: name,
+                text: conv.lastMessage
+                  ? `${name}: ${previewOf(conv.lastMessage)}`
+                  : `Ngobrol dengan ${name} di MCM`,
+                url: SITE_URL,
+              })
+            }
+          >
+            <Share2 className="size-4" /> Bagikan ke aplikasi lain
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
