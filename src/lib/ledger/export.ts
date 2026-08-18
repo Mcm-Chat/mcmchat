@@ -94,9 +94,10 @@ function download(blob: Blob, filename: string) {
 }
 
 export function downloadPaymentsCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
+  const receipt = receiptNumber(ledger);
   download(
-    new Blob([paymentsToCsv(ledger, payments)], { type: "text/csv;charset=utf-8" }),
-    paymentsFileName(ledger, "csv"),
+    new Blob([paymentsToCsv(ledger, payments, receipt)], { type: "text/csv;charset=utf-8" }),
+    paymentsFileName(ledger, "csv", receipt),
   );
 }
 
