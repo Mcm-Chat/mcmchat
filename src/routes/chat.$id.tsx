@@ -1175,23 +1175,6 @@ function ChatRoom() {
                 >
                   <Video className="size-5" />
                 </Button>
-                {business && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-9"
-                    aria-label="Buat perintah penyiapan"
-                    onClick={() => setPrepOpen(true)}
-                  >
-                    <ClipboardList className="size-5" />
-                  </Button>
-                )}
-                {conv.other && (
-                  <RenameContactButton
-                    contactId={conv.other.id}
-                    realName={conv.other.display_name}
-                  />
-                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -1204,35 +1187,62 @@ function ChatRoom() {
                 >
                   <SearchIcon className="size-5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-9"
-                  aria-label="Detail chat"
-                  onClick={() => setDetailOpen(true)}
-                >
-                  <Info className="size-5" />
-                </Button>
-                {unreadQueue.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative size-9"
-                    aria-label={
-                      nextUnread
-                        ? `Unread berikutnya: ${nextUnread.title_resolved}`
-                        : "Tidak ada unread berikutnya"
-                    }
-                    disabled={!nextUnread}
-                    onClick={() => void openNextUnread()}
-                  >
-                    <ArrowRight className="size-5" />
-                    {remainingUnreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
-                        {remainingUnreadCount > 99 ? "99+" : remainingUnreadCount}
-                      </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative size-9"
+                      aria-label="Menu percakapan"
+                    >
+                      <MoreVertical className="size-5" />
+                      {remainingUnreadCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold text-primary-foreground">
+                          {remainingUnreadCount > 99 ? "99+" : remainingUnreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                    <DropdownMenuItem onSelect={() => setDetailOpen(true)}>
+                      <Info className="size-4" />
+                      Detail chat
+                    </DropdownMenuItem>
+                    {conv.other && (
+                      <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
+                        <Pencil className="size-4" />
+                        Ubah nama kontak
+                      </DropdownMenuItem>
                     )}
-                  </Button>
+                    {business && (
+                      <DropdownMenuItem onSelect={() => setPrepOpen(true)}>
+                        <ClipboardList className="size-4" />
+                        Perintah penyiapan
+                      </DropdownMenuItem>
+                    )}
+                    {unreadQueue.length > 0 && (
+                      <DropdownMenuItem
+                        disabled={!nextUnread}
+                        onSelect={() => void openNextUnread()}
+                      >
+                        <ArrowRight className="size-4" />
+                        <span className="min-w-0 flex-1 truncate">Unread berikutnya</span>
+                        {remainingUnreadCount > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {remainingUnreadCount > 99 ? "99+" : remainingUnreadCount}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {conv.other && (
+                  <RenameContactDialog
+                    open={renameOpen}
+                    onOpenChange={setRenameOpen}
+                    contactId={conv.other.id}
+                    realName={conv.other.display_name}
+                  />
                 )}
               </>
             }
