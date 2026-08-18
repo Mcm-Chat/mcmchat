@@ -252,6 +252,34 @@ function CallDetailPage() {
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+            <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-1">
+              <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Catatan panggilan
+              </h2>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-xl"
+                onClick={() =>
+                  setNoteTarget({ callId: call.id, peerName, note: note?.note ?? "" })
+                }
+              >
+                <NotebookPen className="size-4" /> {note ? "Ubah" : "Tambah"}
+              </Button>
+            </div>
+            <p className="px-4 pb-3 text-sm whitespace-pre-wrap">
+              {note ? (
+                note.note
+              ) : (
+                <span className="text-muted-foreground">
+                  Belum ada catatan. Simpan poin singkat hasil panggilan ini — hanya Anda yang bisa
+                  melihatnya.
+                </span>
+              )}
+            </p>
+          </section>
+
+          <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
             <h2 className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Peserta
             </h2>
