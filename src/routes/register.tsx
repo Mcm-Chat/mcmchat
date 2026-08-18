@@ -92,7 +92,7 @@ function RegisterPage() {
       if (signIn.error || !signIn.data.session) {
         setLoading(false);
         toast.error("Akun dibuat, tapi gagal masuk otomatis. Silakan masuk manual.");
-        void navigate({ to: "/login", search: { email: parsed.data.email } as never });
+        void navigate({ to: "/login" });
         return;
       }
       session = signIn.data.session;
@@ -180,7 +180,8 @@ function RegisterPage() {
               <p className="text-right text-[11px] text-muted-foreground">{form.bio.length}/140</p>
             </div>
             <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
-              {loading && <Loader2 className="size-4 animate-spin" />} Buat akun
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading ? "Membuat akun…" : "Buat akun"}
             </Button>
           </form>
         )}
