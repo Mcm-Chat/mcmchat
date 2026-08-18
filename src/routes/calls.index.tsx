@@ -470,7 +470,7 @@ function CallsPage() {
                         ? liveStatusLabel(c)
                         : outcome === "answered"
                           ? durasi(c.duration_sec)
-                          : (STATUS_LABEL[c.status] ?? OUTCOME_LABEL[outcome])}{" "}
+                          : OUTCOME_LABEL[outcome]}{" "}
                       • {waktuRelatif(c.created_at)}
                     </p>
                   </div>
