@@ -275,6 +275,19 @@ function ChatListItemBase({
             <Archive className="size-4" />{" "}
             {conv.me.is_archived ? "Keluarkan dari arsip" : "Arsipkan"}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              void shareToApps({
+                title: name,
+                text: conv.lastMessage
+                  ? `${name}: ${previewOf(conv.lastMessage)}`
+                  : `Ngobrol dengan ${name} di MCM`,
+                url: SITE_URL,
+              })
+            }
+          >
+            <Share2 className="size-4" /> Bagikan ke aplikasi lain
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
