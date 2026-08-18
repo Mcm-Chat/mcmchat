@@ -303,18 +303,10 @@ function FinancePage() {
           ) : salesLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : salesError ? (
-            <EmptyState
-              icon={Receipt}
+            <ListErrorState
               title="Gagal memuat penjualan"
-              description="Terjadi kesalahan saat memuat data."
-              action={
-                <button
-                  className="text-sm text-primary underline"
-                  onClick={() => void refetchSales()}
-                >
-                  Coba lagi
-                </button>
-              }
+              description="Data penjualan tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+              onRetry={() => void refetchSales()}
             />
           ) : (sales ?? []).length === 0 ? (
             <EmptyState
@@ -347,18 +339,10 @@ function FinancePage() {
           ) : ordersLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : ordersError ? (
-            <EmptyState
-              icon={ShoppingBag}
+            <ListErrorState
               title="Gagal memuat pesanan"
-              description="Terjadi kesalahan saat memuat data."
-              action={
-                <button
-                  className="text-sm text-primary underline"
-                  onClick={() => void refetchOrders()}
-                >
-                  Coba lagi
-                </button>
-              }
+              description="Data pesanan tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+              onRetry={() => void refetchOrders()}
             />
           ) : (orders ?? []).length === 0 ? (
             <EmptyState
