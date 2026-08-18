@@ -9,10 +9,10 @@ const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
 const slug = (v: string) =>
   v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "catatan";
 
-export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf") {
-  return `pembayaran-${slug(ledger.counterpart_name ?? "catatan")}-${new Date()
-    .toISOString()
-    .slice(0, 10)}.${ext}`;
+export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf", receipt?: string) {
+  const date = new Date().toISOString().slice(0, 10);
+  const suffix = receipt ? `-${slug(receipt)}` : "";
+  return `pembayaran-${slug(ledger.counterpart_name ?? "catatan")}-${date}${suffix}.${ext}`;
 }
 
 const B32 = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
