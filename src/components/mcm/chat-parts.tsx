@@ -277,6 +277,12 @@ function ChatListItemBase({
   );
 }
 
+/**
+ * Dimemo: daftar percakapan panjang tidak ikut render ulang saat state layar
+ * (pencarian, mode pilih, dsb.) berubah — hanya baris yang datanya berubah.
+ */
+export const ChatListItem = memo(ChatListItemBase);
+
 /** Kartu lokasi yang menyatu dengan pesan foto/lokasi. */
 export function MessageLocationCard({
   message,
