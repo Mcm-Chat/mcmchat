@@ -16,7 +16,13 @@ import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 /** Pesan error ramah di bawah field input. */
-export function FieldError({ id, message }: { id?: string; message?: string | null }) {
+export function FieldError({
+  id,
+  message,
+}: {
+  id?: string | undefined;
+  message?: string | null | undefined;
+}) {
   if (!message) return null;
   return (
     <p id={id} role="alert" className="text-[12px] leading-4 text-destructive">
