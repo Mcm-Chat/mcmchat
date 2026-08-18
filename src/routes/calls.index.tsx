@@ -360,6 +360,29 @@ function CallsPage() {
           }
         >
           <div className="px-3 pb-3">
+            <div className="relative mb-2">
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                maxLength={60}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Cari panggilan berdasarkan nama, PIN, atau status"
+                placeholder="Cari nama, PIN, atau status"
+                className="h-10 rounded-xl pr-10 pl-9"
+              />
+              {query && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Bersihkan pencarian"
+                  className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+                  onClick={() => setQuery("")}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
+            </div>
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="w-full overflow-x-auto rounded-xl">
                 <TabsTrigger value="semua" className="flex-1 rounded-lg">
