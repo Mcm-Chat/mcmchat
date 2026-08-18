@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   isChunkLoadError,
+  isDomMutationError,
   retryRouteLoad,
   retryRouteRender,
   type RecoveryStage,
@@ -53,5 +54,21 @@ describe("retryRouteLoad", () => {
     expect(ok).toBe(false);
     expect(stages.at(-1)).toBe("gagal");
     expect(reload).toHaveBeenCalled();
+  });
+});
+
+describe("isDomMutationError", () => {
+  it("mengenali kegagalan removeChild dari React", () => {
+    const e = new Error(
+      "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
+    );
+    e.name = "NotFoundError";
+    expect(isDomMutationError(e)).toBe(true);
+  });
+
+  it("tidak menangkap NotFoundError perangkat media", () => {
+    const e = new Error("Requested device not found");
+    e.name = "NotFoundError";
+    expect(isDomMutationError(e)).toBe(false);
   });
 });

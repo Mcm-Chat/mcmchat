@@ -28,6 +28,8 @@ import { DEVICE_TIER_BOOTSTRAP_SCRIPT, installScrollPerf } from "@/lib/perf/devi
 import {
   installChunkRecovery,
   isChunkLoadError,
+  isDomMutationError,
+  allowDomHeal,
   recoverFromChunkError,
   retryRouteLoad,
   retryRouteRender,
@@ -67,13 +69,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   const chunk = isChunkLoadError(error);
+  const domGlitch = isDomMutationError(error);
   const [stage, setStage] = useState<RecoveryStage>("idle");
   const busy = stage !== "idle" && stage !== "gagal";
   useEffect(() => {
     // Modul rute basi (rilis baru / sinyal putus): muat ulang otomatis.
     if (chunk && recoverFromChunkError()) return;
+    // Pohon DOM diubah pihak lain (mis. terjemahan otomatis WebView):
+    // pasang ulang halaman sekali tanpa reload penuh.
+    if (domGlitch && allowDomHeal()) {
+      setStage("menampilkan");
+      void retryRouteRender(router, reset, setStage).then((ok) => setStage(ok ? "idle" : "gagal"));
+      return;
+    }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error, chunk]);
+  }, [error, chunk, domGlitch, reset, router]);
 
   const stageLabel: Record<RecoveryStage, string> = {
     idle: chunk ? "Muat ulang" : "Coba lagi",
@@ -102,12 +112,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {chunk ? "Versi aplikasi perlu dimuat ulang" : "Halaman gagal dimuat"}
+          {chunk
+            ? "Versi aplikasi perlu dimuat ulang"
+            : domGlitch
+              ? "Tampilan halaman terganggu"
+              : "Halaman gagal dimuat"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {chunk
             ? "Sebagian aplikasi tidak berhasil diunduh, biasanya karena ada versi baru atau koneksi terputus. Muat ulang untuk melanjutkan."
-            : "Data halaman gagal diproses. Coba lagi; bila berulang, waktu kejadian di bawah membantu pelacakan."}
+            : domGlitch
+              ? "Isi halaman diubah dari luar aplikasi — biasanya oleh fitur terjemahan otomatis browser. Halaman dipasang ulang; matikan terjemahan otomatis bila sering terjadi."
+              : "Data halaman gagal diproses. Coba lagi; bila berulang, waktu kejadian di bawah membantu pelacakan."}
         </p>
         {!chunk && (
           <p className="mt-2 font-mono text-[11px] text-muted-foreground" aria-label="Referensi error">
@@ -205,9 +221,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
+    <html lang="id" translate="no" className="dark notranslate" data-theme="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Terjemahan otomatis mengubah node DOM milik React → NotFoundError saat commit. */}
+        <meta name="google" content="notranslate" />
         {/* Google Search Console ownership (custom domain mcmchat.ai) */}
         <meta
           name="google-site-verification"
