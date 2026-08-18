@@ -430,6 +430,12 @@ function CallScreen() {
       ? "Menyambungkan… tombol aktif setelah tersambung"
       : "Aktif setelah panggilan tersambung";
 
+  // Tutup sheet perangkat begitu panggilan berakhir supaya tidak ada kontrol
+  // yang tampak masih bisa dipakai.
+  useEffect(() => {
+    if (callOver) setDevicesOpen(false);
+  }, [callOver]);
+
   const phaseLabel =
     session.phase === "connected"
       ? // Durasi hanya ditampilkan bila server panggilan terhubung dan media
