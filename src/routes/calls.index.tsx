@@ -493,8 +493,25 @@ function CallsPage() {
                     >
                       {tanggal(c.created_at)} • {jam(c.created_at)}
                     </p>
+                    {notes[c.id] && (
+                      <p className="mt-1 line-clamp-2 rounded-lg bg-muted/60 px-2 py-1 text-[11px] text-muted-foreground">
+                        {notes[c.id]!.note}
+                      </p>
+                    )}
                   </div>
                 </button>
+                <CallNoteIconButton
+                  callId={c.id}
+                  hasNote={Boolean(notes[c.id])}
+                  label={`${notes[c.id] ? "Ubah" : "Tambah"} catatan panggilan dengan ${peerName}`}
+                  onClick={() =>
+                    setNoteTarget({
+                      callId: c.id,
+                      peerName,
+                      note: notes[c.id]?.note ?? "",
+                    })
+                  }
+                />
                 {isMissed && (
                   <Button
                     variant="ghost"
@@ -562,6 +579,13 @@ function CallsPage() {
         target={deleteTarget}
         onOpenChange={(o) => (o ? undefined : setDeleteTarget(null))}
         onDeleted={() => void refetch()}
+      />
+
+      <CallNoteDialog
+        userId={userId}
+        target={noteTarget}
+        onOpenChange={(o) => (o ? undefined : setNoteTarget(null))}
+        onSaved={reloadNotes}
       />
 
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
