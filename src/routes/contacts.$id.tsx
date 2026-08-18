@@ -47,6 +47,8 @@ function ContactDetailPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
+  // Aksi berisiko selalu lewat dialog "Yakin?" (Batal/Hapus), bukan aksi langsung.
+  const [confirm, setConfirm] = useState<null | "remove-card" | "disconnect" | "block">(null);
   const { nameOf } = useContactAliases();
 
   const profile = useQuery({
