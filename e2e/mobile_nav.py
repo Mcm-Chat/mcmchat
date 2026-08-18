@@ -25,13 +25,17 @@ os.makedirs(OUT, exist_ok=True)
 TABS = [
     ("Chat", "/chat"),
     ("Panggilan", "/calls"),
-    ("Tugas", "/tasks"),
-    ("Katalog", "/catalog"),
-    ("Keuangan", "/finance"),
+    ("Catatan", "/finance"),
+    ("Bisnis", "/business"),
     ("Profil", "/profile"),
 ]
-# Rute Bisnis sengaja mengalihkan ke Katalog: (label, path, path akhir).
-EXTRA_ROUTES = [("Bisnis", "/business", "/catalog")]
+# Alias lama tetap hidup, satu lompatan langsung ke tujuan: (label, path, path akhir).
+EXTRA_ROUTES = [
+    ("Beranda", "/home", "/chat"),
+    ("Ledger", "/ledger", "/finance"),
+    ("Katalog", "/catalog", "/business"),
+    ("Tugas", "/tasks", "/business/tugas"),
+]
 
 # Noise yang tidak menandakan kegagalan navigasi.
 IGNORE = ("favicon", "manifest.json", "firebase", "messaging", "service worker",
