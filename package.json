@@ -86,6 +86,7 @@
     "entities-v4": "npm:entities@4.5.0",
     "firebase": "^12.17.1",
     "input-otp": "^1.4.2",
+    "jspdf": "^4.2.1",
     "jsqr": "^1.4.0",
     "livekit-client": "^2.21.0",
     "lucide-react": "^0.575.0",

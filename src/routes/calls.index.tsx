@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
+import { CallExportDialog } from "@/components/mcm/call-export-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { EmptyState, LoadingSkeleton, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -334,6 +335,16 @@ function CallsPage() {
                 >
                   <CheckCheck className="size-5" />
                 </Button>
+              )}
+              {(calls ?? []).length > 0 && (
+                <CallExportDialog
+                  calls={calls ?? []}
+                  userId={userId}
+                  nameOf={(c) => {
+                    const other = counterpartOf(c, userId);
+                    return nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM");
+                  }}
+                />
               )}
               {(calls ?? []).length > 0 && (
                 <DeleteCallIconButton
