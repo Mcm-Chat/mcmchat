@@ -153,7 +153,7 @@ function LedgerDetail() {
       toast.error("Nominal melebihi sisa tagihan");
       return;
     }
-    const rollback = optimisticRecordPayment(ledger.id ? qc : qc, ledger.id, {
+    const rollback = optimisticRecordPayment(qc, ledger.id, {
       amount,
       method: pay.method,
       note: pay.note.trim() || null,
