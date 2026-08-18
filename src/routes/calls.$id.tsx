@@ -30,6 +30,7 @@ import {
   type DeleteCallTarget,
 } from "@/components/mcm/delete-call-history";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import { callOutcome, OUTCOME_LABEL } from "@/lib/calls/outcome";
 import { PageSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/calls/$id")({
@@ -50,16 +51,6 @@ export const Route = createFileRoute("/calls/$id")({
   component: CallDetailPage,
   pendingComponent: () => <PageSkeleton rows={4} nav={false} />,
 });
-
-const STATUS_LABEL: Record<string, string> = {
-  ringing: "Berdering",
-  ongoing: "Berlangsung",
-  ended: "Selesai",
-  missed: "Tak terjawab",
-  declined: "Ditolak",
-  failed: "Gagal",
-  unconfigured: "Tidak dikonfigurasi",
-};
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -225,13 +216,13 @@ function CallDetailPage() {
               value={
                 isLiveCall(call.status)
                   ? liveStatusLabel(call)
-                  : (STATUS_LABEL[call.status] ?? call.status)
+                  : OUTCOME_LABEL[callOutcome(call, userId)]
               }
             />
             <Row
               label="Durasi"
               value={
-                call.status === "ended"
+                callOutcome(call, userId) === "answered"
                   ? durasi(call.duration_sec)
                   : isLiveCall(call.status)
                     ? (liveStatusLabel(call).split(" • ")[1] ?? "—")

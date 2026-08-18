@@ -48,6 +48,7 @@ import { markMissedCallsSeen } from "@/lib/calls/missed-seen";
 import { toast } from "sonner";
 import { type CallHistoryItem } from "@/lib/api/calls";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import { callOutcome, OUTCOME_BADGE, OUTCOME_LABEL } from "@/lib/calls/outcome";
 import { PageSkeleton } from "@/components/mcm/route-skeletons";
 import {
   CALL_RETURN_FOCUS_NEW,
@@ -89,16 +90,6 @@ export const Route = createFileRoute("/calls/")({
   component: CallsPage,
   pendingComponent: () => <PageSkeleton rows={7} />,
 });
-
-const STATUS_LABEL: Record<string, string> = {
-  ringing: "Berdering",
-  ongoing: "Berlangsung",
-  ended: "Selesai",
-  missed: "Tak terjawab",
-  declined: "Ditolak",
-  failed: "Gagal",
-  unconfigured: "Tidak dikonfigurasi",
-};
 
 function counterpartOf(call: CallHistoryItem, userId?: string) {
   return call.participants.find((p) => p.user_id !== userId) ?? call.participants[0] ?? null;
@@ -229,7 +220,10 @@ function CallsPage() {
 
   const list = (calls ?? [])
     .filter((c) => {
-      if (tab === "takterjawab") return c.status === "missed";
+      const outcome = callOutcome(c, userId);
+      if (tab === "takterjawab") return outcome === "missed";
+      if (tab === "terjawab") return outcome === "answered";
+      if (tab === "batal") return outcome === "cancelled" || outcome === "declined";
       if (tab === "masuk") return c.initiator_id !== userId;
       if (tab === "keluar") return c.initiator_id === userId;
       return true;
@@ -316,7 +310,7 @@ function CallsPage() {
         >
           <div className="px-3 pb-3">
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="w-full rounded-xl">
+              <TabsList className="w-full overflow-x-auto rounded-xl">
                 <TabsTrigger value="semua" className="flex-1 rounded-lg">
                   Semua
                 </TabsTrigger>
@@ -325,6 +319,12 @@ function CallsPage() {
                 </TabsTrigger>
                 <TabsTrigger value="keluar" className="flex-1 rounded-lg">
                   Keluar
+                </TabsTrigger>
+                <TabsTrigger value="terjawab" className="flex-1 rounded-lg">
+                  Terjawab
+                </TabsTrigger>
+                <TabsTrigger value="batal" className="flex-1 rounded-lg">
+                  Batal
                 </TabsTrigger>
                 <TabsTrigger value="takterjawab" className="flex-1 rounded-lg">
                   Tak dijawab
@@ -409,6 +409,8 @@ function CallsPage() {
             const other = counterpartOf(c, userId);
             const isMissed = c.status === "missed";
             const wasIncoming = c.initiator_id !== userId;
+            const outcome = callOutcome(c, userId);
+            const peerName = nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM");
             return (
               <li key={c.id} className="flex items-center gap-3 px-4 py-3">
                 <button
@@ -433,12 +435,18 @@ function CallsPage() {
                     >
                       {nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM")}
                     </p>
-                    {isLiveCall(c.status) && (
-                      <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                    <span
+                      className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${OUTCOME_BADGE[outcome]}`}
+                    >
+                      {outcome === "live" && (
                         <span className="size-1.5 animate-pulse rounded-full bg-success" />
-                        {c.status === "ringing" ? "Sedang dipanggil" : "Berlangsung"}
-                      </span>
-                    )}
+                      )}
+                      {outcome === "live"
+                        ? c.status === "ringing"
+                          ? "Sedang dipanggil"
+                          : "Berlangsung"
+                        : OUTCOME_LABEL[outcome]}
+                    </span>
                     <p className="flex items-center gap-1 text-xs text-muted-foreground">
                       {isMissed ? (
                         <PhoneMissed className="size-3.5 text-destructive" />
@@ -448,13 +456,11 @@ function CallsPage() {
                         <ArrowUpRight className="size-3.5 text-primary" />
                       )}
                       {c.kind === "video" ? "Video" : "Suara"} •{" "}
-                      {isMissed
-                        ? "Tak terjawab"
-                        : isLiveCall(c.status)
-                          ? liveStatusLabel(c)
-                          : c.status === "ended"
-                            ? durasi(c.duration_sec)
-                            : STATUS_LABEL[c.status]}{" "}
+                      {isLiveCall(c.status)
+                        ? liveStatusLabel(c)
+                        : outcome === "answered"
+                          ? durasi(c.duration_sec)
+                          : OUTCOME_LABEL[outcome]}{" "}
                       • {waktuRelatif(c.created_at)}
                     </p>
                   </div>
@@ -490,7 +496,8 @@ function CallsPage() {
                   variant="ghost"
                   size="icon"
                   id={redialButtonId(c.id)}
-                  aria-label={`Panggil ${nameOf(other?.user_id, other?.display_name ?? "pengguna")}`}
+                  aria-label={`Panggil ulang ${peerName} lewat ${c.kind === "video" ? "video" : "suara"}`}
+                  title="Panggil ulang"
                   onClick={() => void redial(c)}
                 >
                   {c.kind === "video" ? <Video className="size-5" /> : <Phone className="size-5" />}
