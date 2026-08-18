@@ -221,9 +221,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
+    <html lang="id" translate="no" className="dark notranslate" data-theme="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
+        {/* Terjemahan otomatis mengubah node DOM milik React → NotFoundError saat commit. */}
+        <meta name="google" content="notranslate" />
         {/* Google Search Console ownership (custom domain mcmchat.ai) */}
         <meta
           name="google-site-verification"
