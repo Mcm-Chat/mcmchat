@@ -557,32 +557,6 @@ function ChatIndex() {
         </TabsList>
       </Tabs>
 
-      {unreadOverview.total > 0 && !selectMode && (
-        <div className="flex items-center justify-between gap-2 border-b border-border bg-primary/5 px-3 py-2">
-          <p className="min-w-0 truncate text-[13px] text-muted-foreground">
-            <span className="font-semibold text-foreground">
-              {unreadOverview.total > 99 ? "99+" : unreadOverview.total} belum dibaca
-            </span>{" "}
-            di {unreadOverview.rooms} chat
-          </p>
-          {unreadOverview.top && (
-            <Button
-              size="sm"
-              className="h-10 shrink-0 rounded-full px-3 text-xs sm:h-8"
-              aria-label={`Buka ${unreadOverview.top.title_resolved} — ${unreadOverview.top.unread} pesan belum dibaca`}
-              onClick={() =>
-                void navigate({
-                  to: "/chat/$id",
-                  params: { id: unreadOverview.top!.id },
-                })
-              }
-            >
-              Lompat ke {unreadOverview.top.title_resolved}
-            </Button>
-          )}
-        </div>
-      )}
-
       {loading || isLoading ? (
         <LoadingSkeleton rows={6} />
       ) : conversationsError ? (
