@@ -82,13 +82,21 @@ function RegisterPage() {
       );
       return;
     }
-    if (!data.session) {
-      setLoading(false);
-      toast.success("Cek email Anda untuk konfirmasi, lalu masuk.");
-      void navigate({ to: "/login" });
-      return;
+    let session = data.session;
+    if (!session) {
+      // Konfirmasi email dimatikan untuk MVP; kalau sesi belum ada, langsung masuk.
+      const signIn = await supabase.auth.signInWithPassword({
+        email: parsed.data.email,
+        password: parsed.data.password,
+      });
+      if (signIn.error || !signIn.data.session) {
+        setLoading(false);
+        toast.error("Akun dibuat, tapi gagal masuk otomatis. Silakan masuk manual.");
+        void navigate({ to: "/login", search: { email: parsed.data.email } as never });
+        return;
+      }
+      session = signIn.data.session;
     }
-    const uid = data.session.user.id;
     if (form.bio.trim())
       await supabase.rpc("update_my_profile", {
         _display_name: form.name.trim(),
