@@ -95,6 +95,47 @@ export function installChunkRecovery(): () => void {
 /** Tahapan pemulihan yang ditampilkan pada tombol "Muat ulang". */
 export type RecoveryStage = "idle" | "mencoba" | "mengunduh" | "menampilkan" | "gagal";
 
+/**
+ * Error mutasi DOM ("NotFoundError: Failed to execute 'removeChild' on 'Node'…").
+ *
+ * Terjadi bila pohon DOM yang dipegang React diubah pihak lain — paling sering
+ * fitur terjemahan otomatis WebView/Chrome atau ekstensi — sehingga React gagal
+ * melepas/menyisipkan node saat commit. Halaman sebenarnya masih sehat: cukup
+ * dipasang ulang, tanpa unduh ulang modul atau reload penuh.
+ *
+ * Sengaja dibatasi pada pesan yang menyebut operasi node, supaya
+ * `NotFoundError` dari getUserMedia ("Requested device not found") tidak ikut.
+ */
+export function isDomMutationError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const name = error.name;
+  if (name !== "NotFoundError" && name !== "HierarchyRequestError") return true === false;
+  const msg = error.message.toLowerCase();
+  return /removechild|insertbefore|appendchild|replacechild|node to be removed|not a child of this node/.test(
+    msg,
+  );
+}
+
+const DOM_HEAL_KEY = "mcmDomHealAt";
+
+/** Izinkan satu pemasangan ulang otomatis per menit agar tidak berputar. */
+export function allowDomHeal(): boolean {
+  if (typeof window === "undefined") return false;
+  let last = 0;
+  try {
+    last = Number(sessionStorage.getItem(DOM_HEAL_KEY) ?? 0);
+  } catch {
+    /* storage diblokir: tetap coba sekali */
+  }
+  if (last && Date.now() - last < RELOAD_WINDOW_MS) return false;
+  try {
+    sessionStorage.setItem(DOM_HEAL_KEY, String(Date.now()));
+  } catch {
+    /* abaikan */
+  }
+  return true;
+}
+
 type MinimalRouter = {
   preloadRoute: (opts: { to: string }) => Promise<unknown>;
   invalidate: () => Promise<unknown> | unknown;
