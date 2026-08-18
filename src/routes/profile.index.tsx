@@ -112,6 +112,7 @@ function ProfilePage() {
 
   const [name, setName] = useState(profile?.display_name ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
+  const [profileTouched, setProfileTouched] = useState<{ name?: boolean; bio?: boolean }>({});
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
 
