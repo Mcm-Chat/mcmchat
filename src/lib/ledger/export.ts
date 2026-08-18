@@ -93,22 +93,32 @@ function download(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-export function downloadPaymentsCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
-  const receipt = receiptNumber(ledger);
+export function downloadPaymentsCsv(
+  ledger: LedgerRow,
+  payments: LedgerPaymentRow[],
+  receiptOverride?: string,
+) {
+  const receipt = receiptOverride ?? receiptNumber(ledger);
+  const fileName = paymentsFileName(ledger, "csv", receipt);
   download(
     new Blob([paymentsToCsv(ledger, payments, receipt)], { type: "text/csv;charset=utf-8" }),
-    paymentsFileName(ledger, "csv", receipt),
+    fileName,
   );
+  return { receipt, fileName };
 }
 
-export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
+export async function downloadPaymentsPdf(
+  ledger: LedgerRow,
+  payments: LedgerPaymentRow[],
+  receiptOverride?: string,
+) {
   const { jsPDF } = await import("jspdf");
   const QR = (await import("qrcode")).default;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const marginX = 32;
   const cols = [96, 110, 90, 200];
   let y = 48;
-  const receipt = receiptNumber(ledger);
+  const receipt = receiptOverride ?? receiptNumber(ledger);
   const verify = verifyUrl(ledger, receipt);
   const qrDataUrl = await QR.toDataURL(verify, {
     margin: 0,
