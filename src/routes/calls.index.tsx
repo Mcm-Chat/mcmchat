@@ -337,6 +337,16 @@ function CallsPage() {
                 </Button>
               )}
               {(calls ?? []).length > 0 && (
+                <CallExportDialog
+                  calls={calls ?? []}
+                  userId={userId}
+                  nameOf={(c) => {
+                    const other = counterpartOf(c, userId);
+                    return nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM");
+                  }}
+                />
+              )}
+              {(calls ?? []).length > 0 && (
                 <DeleteCallIconButton
                   label="Hapus semua riwayat panggilan"
                   onClick={() =>
