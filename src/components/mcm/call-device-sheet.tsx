@@ -19,18 +19,24 @@ export function CallDeviceSheet({
   devices,
   micDeviceId,
   cameraDeviceId,
+  speakerDeviceId,
   onPickMic,
   onPickCamera,
+  onPickSpeaker,
   videoEnabled,
+  speakerSupported,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   devices: CallDevices;
   micDeviceId: string | null;
   cameraDeviceId: string | null;
+  speakerDeviceId?: string | null;
   onPickMic: (id: string) => void;
   onPickCamera: (id: string) => void;
+  onPickSpeaker?: (id: string) => void;
   videoEnabled: boolean;
+  speakerSupported?: boolean;
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -38,7 +44,7 @@ export function CallDeviceSheet({
         <SheetHeader className="text-left">
           <SheetTitle>Perangkat panggilan</SheetTitle>
           <SheetDescription>
-            Ganti mikrofon atau kamera tanpa keluar dari panggilan.
+            Ganti mikrofon, kamera, atau speaker tanpa keluar dari panggilan.
           </SheetDescription>
         </SheetHeader>
 
@@ -79,6 +85,32 @@ export function CallDeviceSheet({
                   <div key={d.deviceId} className="flex items-center gap-3 rounded-xl border p-3">
                     <RadioGroupItem value={d.deviceId} id={`cam-${d.deviceId}`} />
                     <Label htmlFor={`cam-${d.deviceId}`} className="flex-1 cursor-pointer text-sm">
+                      {d.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
+          </section>
+
+          <section aria-label="Speaker">
+            <p className="mb-2 text-sm font-semibold">Speaker</p>
+            {!onPickSpeaker || speakerSupported === false ? (
+              <p className="text-sm text-muted-foreground">
+                Keluaran audio diatur sistem di perangkat ini.
+              </p>
+            ) : devices.speakers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Tidak ada speaker terdeteksi.</p>
+            ) : (
+              <RadioGroup
+                value={speakerDeviceId ?? ""}
+                onValueChange={onPickSpeaker}
+                className="gap-2"
+              >
+                {devices.speakers.map((d) => (
+                  <div key={d.deviceId} className="flex items-center gap-3 rounded-xl border p-3">
+                    <RadioGroupItem value={d.deviceId} id={`spk-${d.deviceId}`} />
+                    <Label htmlFor={`spk-${d.deviceId}`} className="flex-1 cursor-pointer text-sm">
                       {d.label}
                     </Label>
                   </div>
