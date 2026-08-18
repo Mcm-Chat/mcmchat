@@ -120,8 +120,10 @@ function RegisterPage() {
     }
     setOtpError("");
     setLoading(true);
-    const { myPin } = await import("@/lib/api/pins");
-    setPin(await myPin().catch(() => ""));
+    const { myPinWithRetry } = await import("@/lib/api/pins");
+    const issued = await myPinWithRetry();
+    if (!issued) toast.error("PIN belum terbit. Buka halaman Profil untuk melihatnya.");
+    setPin(issued);
     setLoading(false);
     setStep(3);
   };
