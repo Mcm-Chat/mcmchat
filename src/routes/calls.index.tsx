@@ -73,6 +73,12 @@ import {
   listCallReminders,
   type CallReminder,
 } from "@/lib/api/call-reminders";
+import {
+  CallNoteDialog,
+  CallNoteIconButton,
+  type CallNoteTarget,
+} from "@/components/mcm/call-note-dialog";
+import { listCallNotes, type CallNote } from "@/lib/api/call-notes";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -111,6 +117,8 @@ function CallsPage() {
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
+  const [notes, setNotes] = useState<Record<string, CallNote>>({});
+  const [noteTarget, setNoteTarget] = useState<CallNoteTarget | null>(null);
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
@@ -134,6 +142,18 @@ function CallsPage() {
       .then(setReminders)
       .catch(() => undefined);
   };
+
+  const reloadNotes = () => {
+    if (!userId) return;
+    void listCallNotes(userId)
+      .then(setNotes)
+      .catch(() => undefined);
+  };
+
+  useEffect(() => {
+    reloadNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     reloadReminders();
