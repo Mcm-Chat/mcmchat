@@ -22,6 +22,7 @@ import {
   Pin,
   Plus,
   Send,
+  Share2,
   ShoppingCart,
   Smile,
   Sticker,
