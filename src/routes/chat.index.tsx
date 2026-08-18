@@ -496,7 +496,7 @@ function ChatIndex() {
                     size="sm"
                     variant={kind === o.v ? "default" : "secondary"}
                     aria-pressed={kind === o.v}
-                    className="h-8 rounded-full px-3 text-xs"
+                    className="h-10 rounded-full px-3 text-xs sm:h-8"
                     onClick={() => setKind(o.v)}
                   >
                     {o.label}
@@ -548,7 +548,7 @@ function ChatIndex() {
           {unreadOverview.top && (
             <Button
               size="sm"
-              className="h-8 shrink-0 rounded-full px-3 text-xs"
+              className="h-10 shrink-0 rounded-full px-3 text-xs sm:h-8"
               aria-label={`Buka ${unreadOverview.top.title_resolved} — ${unreadOverview.top.unread} pesan belum dibaca`}
               onClick={() =>
                 void navigate({
