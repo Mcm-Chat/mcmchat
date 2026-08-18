@@ -1809,12 +1809,16 @@ function ChatRoom() {
               <Button
                 variant="outline"
                 className="w-full rounded-xl text-destructive"
-                onClick={() =>
-                  void setBlocked(userId!, conv.other!.id, !blocked).then(() => {
-                    void qc.invalidateQueries({ queryKey: ["block", userId, conv.other?.id] });
-                    setDetailOpen(false);
-                  })
-                }
+                onClick={() => {
+                  if (blocked) {
+                    void setBlocked(userId!, conv.other!.id, false).then(() => {
+                      void qc.invalidateQueries({ queryKey: ["block", userId, conv.other?.id] });
+                      setDetailOpen(false);
+                    });
+                    return;
+                  }
+                  setConfirmBlock(true);
+                }}
               >
                 {blocked ? "Buka blokir kontak" : "Blokir kontak"}
               </Button>
@@ -1883,6 +1887,23 @@ function ChatRoom() {
         confirmLabel="Hapus untuk semua"
         destructive
         onConfirm={() => void runDeleteForEveryone()}
+      />
+
+      <ConfirmDialog
+        open={confirmBlock}
+        onOpenChange={setConfirmBlock}
+        title="Blokir kontak?"
+        description="Kontak tidak bisa mengirim pesan, panggilan, atau permintaan baru sampai Anda membuka blokirnya."
+        confirmLabel="Blokir"
+        destructive
+        onConfirm={() => {
+          setConfirmBlock(false);
+          if (!conv?.other) return;
+          void setBlocked(userId!, conv.other.id, true).then(() => {
+            void qc.invalidateQueries({ queryKey: ["block", userId, conv.other?.id] });
+            setDetailOpen(false);
+          });
+        }}
       />
     </AppShell>
   );
