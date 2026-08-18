@@ -14,6 +14,22 @@ export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf") {
     .slice(0, 10)}.${ext}`;
 }
 
+const B32 = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+/** Nomor bukti unik, mis. MCM-20260818-7QF3K2 */
+export function receiptNumber(ledger: LedgerRow, at = new Date()) {
+  const date = `${at.getFullYear()}${String(at.getMonth() + 1).padStart(2, "0")}${String(at.getDate()).padStart(2, "0")}`;
+  let seed = 0;
+  const base = `${ledger.id}|${at.getTime()}|${Math.random()}`;
+  for (let i = 0; i < base.length; i++) seed = (seed * 31 + base.charCodeAt(i)) >>> 0;
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += B32[seed % B32.length];
+    seed = Math.floor(seed / B32.length) + (i + 1) * 7919;
+  }
+  return `MCM-${date}-${code}`;
+}
+
 export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
   const meta = [
     ["Catatan", ledger.counterpart_name ?? "-"],
@@ -64,6 +80,33 @@ export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPay
   const marginX = 32;
   const cols = [96, 110, 90, 200];
   let y = 48;
+  const receipt = receiptNumber(ledger);
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  const decoratePage = () => {
+    // Watermark diagonal
+    doc.saveGraphicsState();
+    // @ts-expect-error GState is available at runtime in jsPDF
+    doc.setGState(new doc.GState({ opacity: 0.08 }));
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(46);
+    doc.setTextColor(0, 0, 0);
+    doc.text("MCM — Private Chat", pageW / 2, pageH / 2, {
+      align: "center",
+      angle: 35,
+    });
+    doc.restoreGraphicsState();
+    // Nomor bukti di footer
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`No. bukti: ${receipt}`, marginX, pageH - 24);
+    doc.text("MCM — Private Chat", pageW - marginX, pageH - 24, { align: "right" });
+    doc.setTextColor(0, 0, 0);
+  };
+
+  decoratePage();
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
@@ -73,6 +116,7 @@ export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPay
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   const summary = [
+    `No. bukti: ${receipt}`,
     `${ledger.type === "receivable" ? "Piutang" : "Utang"} • ${ledger.counterpart_name ?? "-"}`,
     `Total ${rupiah(Number(ledger.amount))} • Dibayar ${rupiah(Number(ledger.paid_amount))} • Sisa ${rupiah(remaining(ledger))}`,
     `Status: ${LEDGER_STATUS_LABEL[ledger.status]} • Dicetak ${tanggal(new Date().toISOString())}`,
@@ -101,7 +145,10 @@ export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPay
   for (const p of payments) {
     if (y > 790) {
       doc.addPage();
+      decoratePage();
       y = 48;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
       drawHeader();
     }
     let x = marginX;
