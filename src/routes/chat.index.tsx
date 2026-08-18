@@ -671,9 +671,9 @@ function ChatIndex() {
                         )
                       : undefined
                   }
-                  onTogglePin={() => void patchMember(c.id, { is_pinned: !c.me.is_pinned })}
-                  onToggleMute={() => void patchMember(c.id, { is_muted: !c.me.is_muted })}
-                  onToggleArchive={() => void patchMember(c.id, { is_archived: !c.me.is_archived })}
+                  onTogglePin={onTogglePin}
+                  onToggleMute={onToggleMute}
+                  onToggleArchive={onToggleArchive}
                 />
               </div>
             </li>
