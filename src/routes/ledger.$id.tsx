@@ -443,6 +443,31 @@ function LedgerDetail() {
         destructive={confirm?.destructive}
         onConfirm={() => confirm && void runStatus(confirm.status)}
       />
+
+      <ConfirmDialog
+        open={!!delPayment}
+        onOpenChange={(v) => !v && setDelPayment(null)}
+        title="Hapus pembayaran?"
+        description={`Pembayaran ${rupiah(delPayment?.amount ?? 0)} akan dihapus dan sisa tagihan dihitung ulang.`}
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => {
+          const target = delPayment;
+          if (!target) return;
+          void (async () => {
+            try {
+              await deleteLedgerPayment(target.id);
+              toast.success("Pembayaran dihapus");
+              refresh();
+              if (userId) void qc.invalidateQueries({ queryKey: qk.ledgers(userId) });
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Gagal menghapus pembayaran");
+            } finally {
+              setDelPayment(null);
+            }
+          })();
+        }}
+      />
     </AppShell>
   );
 }
