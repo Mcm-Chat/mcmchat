@@ -19,7 +19,12 @@ const PATTERNS = [
   "error loading dynamically imported module",
   "importing a module script failed",
   "failed to load module script",
+  "failed to fetch module script",
+  "module script load failed",
+  "module load failed",
+  "networkerror when attempting to fetch resource",
   "unable to preload css",
+  "stylesheet preload failed",
   "dynamically imported module",
 ];
 
@@ -31,7 +36,16 @@ export function isChunkLoadError(error: unknown): boolean {
         ? `${error.name}: ${error.message}`
         : "";
   const lower = msg.toLowerCase();
-  return PATTERNS.some((p) => lower.includes(p));
+  if (PATTERNS.some((p) => lower.includes(p))) return true;
+
+  // Chromium/WebView tertentu hanya memberi "Load failed"/"Failed to fetch".
+  // Klasifikasikan sebagai chunk hanya bila pesan juga menyebut import, modul,
+  // script, stylesheet, atau URL aset aplikasi; jangan salah menangkap fetch API.
+  const vagueNetworkFailure = /(?:load failed|failed to fetch|networkerror)/.test(lower);
+  const assetContext = /(?:import|module|script|stylesheet|\/assets\/|\.m?js(?:\?|$)|\.css(?:\?|$))/.test(
+    lower,
+  );
+  return vagueNetworkFailure && assetContext;
 }
 
 /** Memuat ulang halaman sekali; mengembalikan false bila sudah pernah. */

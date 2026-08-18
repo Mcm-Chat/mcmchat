@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { retryRouteLoad, retryRouteRender, type RecoveryStage } from "@/lib/chunk-recovery";
+import {
+  isChunkLoadError,
+  retryRouteLoad,
+  retryRouteRender,
+  type RecoveryStage,
+} from "@/lib/chunk-recovery";
 
 describe("retryRouteLoad", () => {
   it("prefetch ulang rute target lalu menyegarkan data", async () => {
@@ -25,6 +30,12 @@ describe("retryRouteLoad", () => {
     expect(reset).toHaveBeenCalledOnce();
     expect(invalidate).toHaveBeenCalledOnce();
     expect(stages).toEqual(["mencoba", "menampilkan"]);
+  });
+
+  it("mengenali variasi error aset Android tanpa menangkap fetch API biasa", () => {
+    expect(isChunkLoadError(new TypeError("Module script load failed"))).toBe(true);
+    expect(isChunkLoadError(new TypeError("Load failed: /assets/chat-D4X9.js"))).toBe(true);
+    expect(isChunkLoadError(new TypeError("Failed to fetch"))).toBe(false);
   });
 
   it("jatuh ke muat ulang penuh bila prefetch tetap gagal", async () => {
