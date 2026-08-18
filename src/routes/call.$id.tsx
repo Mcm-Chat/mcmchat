@@ -524,6 +524,9 @@ function CallScreen() {
               className="mt-1"
             />
             <CallProviderStatus status={providerHealth} className="mt-1" />
+            {session.phase !== "incoming" && permission.state !== "granted" ? (
+              <CallPermissionStatus permission={permission} className="mt-2 w-full text-left" />
+            ) : null}
             {session.phase === "connected" && (
               <CallQualityMetrics metrics={session.metrics} className="mt-2" />
             )}
