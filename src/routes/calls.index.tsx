@@ -474,8 +474,12 @@ function CallsPage() {
       ) : list.length === 0 ? (
         <EmptyState
           icon={PhoneCall}
-          title="Belum ada panggilan"
-          description="Riwayat panggilan suara dan video Anda akan muncul di sini."
+          title={term ? "Tidak ada hasil" : "Belum ada panggilan"}
+          description={
+            term
+              ? `Tidak ada panggilan yang cocok dengan "${query.trim()}". Coba nama kontak, PIN, atau status seperti "tak terjawab".`
+              : "Riwayat panggilan suara dan video Anda akan muncul di sini."
+          }
         />
       ) : (
         <ul className="divide-y divide-border/70">
