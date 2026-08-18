@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/mcm/primitives";
 import { CALL_NOTE_MAX, deleteCallNote, saveCallNote } from "@/lib/api/call-notes";
 
 export type CallNoteTarget = {
@@ -136,7 +137,7 @@ export function CallNoteDialog({
               variant="ghost"
               className="rounded-xl text-destructive"
               disabled={busy}
-              onClick={() => void remove()}
+              onClick={() => setConfirmRemove(true)}
             >
               <Trash2 className="size-4" /> Hapus
             </Button>
@@ -156,6 +157,18 @@ export function CallNoteDialog({
             </Button>
           </div>
         </DialogFooter>
+        <ConfirmDialog
+          open={confirmRemove}
+          onOpenChange={setConfirmRemove}
+          title="Hapus catatan?"
+          description="Catatan panggilan ini akan dihapus permanen dan tidak bisa dikembalikan."
+          confirmLabel="Hapus"
+          destructive
+          onConfirm={() => {
+            setConfirmRemove(false);
+            void remove();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
