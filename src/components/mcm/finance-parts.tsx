@@ -7,6 +7,7 @@ import { salesPayload } from "@/lib/api/finance";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type Tone } from "./primitives";
 import { LedgerQuickAdjust } from "./ledger-quick-adjust";
+import { LedgerPaySheet, canPayLedger } from "./ledger-pay-sheet";
 import { cn } from "@/lib/utils";
 
 export function FinanceSummaryCard({
@@ -53,6 +54,8 @@ const LEDGER_TONE: Record<LedgerRow["status"], Tone> = {
 export function LedgerListItem({ ledger, actorId }: { ledger: LedgerRow; actorId?: string }) {
   const sisa = remaining(ledger);
   const receivable = ledger.type === "receivable";
+  const [payOpen, setPayOpen] = useState(false);
+  const payable = canPayLedger(ledger) && !!actorId;
   return (
     <div className="card-soft p-4">
       <div className="flex items-start gap-3">
@@ -84,6 +87,15 @@ export function LedgerListItem({ ledger, actorId }: { ledger: LedgerRow; actorId
             </div>
           )}
           <div className="mt-2 flex gap-2">
+            {payable && (
+              <Button
+                size="sm"
+                className="h-8 flex-1 rounded-xl text-xs font-semibold"
+                onClick={() => setPayOpen(true)}
+              >
+                <Wallet className="size-3.5" /> Bayar
+              </Button>
+            )}
             <Button asChild size="sm" variant="outline" className="h-8 flex-1 rounded-xl text-xs">
               <Link to="/ledger/$id" params={{ id: ledger.id }}>
                 Lihat detail
@@ -98,6 +110,14 @@ export function LedgerListItem({ ledger, actorId }: { ledger: LedgerRow; actorId
             )}
           </div>
           <LedgerQuickAdjust ledger={ledger} {...(actorId ? { actorId } : {})} />
+          {payable && (
+            <LedgerPaySheet
+              ledger={ledger}
+              open={payOpen}
+              onOpenChange={setPayOpen}
+              {...(actorId ? { actorId } : {})}
+            />
+          )}
         </div>
       </div>
     </div>
