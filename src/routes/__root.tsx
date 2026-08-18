@@ -80,7 +80,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     mencoba: "Mencoba kembali…",
     mengunduh: "Mengunduh ulang halaman…",
     menampilkan: "Menampilkan halaman…",
-    gagal: "Memuat ulang aplikasi…",
+    gagal: chunk ? "Memuat ulang aplikasi…" : "Belum berhasil — coba lagi",
   };
 
   const handleRetry = async () => {
