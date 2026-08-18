@@ -30,6 +30,7 @@ import {
   type DeleteCallTarget,
 } from "@/components/mcm/delete-call-history";
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
+import { callOutcome, OUTCOME_LABEL } from "@/lib/calls/outcome";
 import { PageSkeleton } from "@/components/mcm/route-skeletons";
 
 export const Route = createFileRoute("/calls/$id")({
