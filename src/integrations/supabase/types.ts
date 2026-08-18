@@ -3920,6 +3920,32 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_ledger_payment: {
+        Args: { _payment: string }
+        Returns: {
+          amount: number
+          conversation_id: string | null
+          counterpart_name: string
+          counterpart_user_id: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          note: string
+          owner_id: string
+          paid_amount: number
+          reminder: boolean
+          sales_record_id: string | null
+          status: Database["public"]["Enums"]["ledger_status"]
+          type: Database["public"]["Enums"]["ledger_type"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ledgers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       deliver_preparation_job: {
         Args: { _job: string; _link: string }
         Returns: Json
@@ -4243,37 +4269,70 @@ export type Database = {
           vibrate: boolean
         }[]
       }
-      record_ledger_payment: {
-        Args: {
-          _amount: number
-          _ledger: string
-          _method: string
-          _note: string
-        }
-        Returns: {
-          amount: number
-          conversation_id: string | null
-          counterpart_name: string
-          counterpart_user_id: string | null
-          created_at: string
-          due_date: string | null
-          id: string
-          note: string
-          owner_id: string
-          paid_amount: number
-          reminder: boolean
-          sales_record_id: string | null
-          status: Database["public"]["Enums"]["ledger_status"]
-          type: Database["public"]["Enums"]["ledger_type"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "ledgers"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      record_ledger_payment:
+        | {
+            Args: {
+              _amount: number
+              _ledger: string
+              _method: string
+              _note: string
+            }
+            Returns: {
+              amount: number
+              conversation_id: string | null
+              counterpart_name: string
+              counterpart_user_id: string | null
+              created_at: string
+              due_date: string | null
+              id: string
+              note: string
+              owner_id: string
+              paid_amount: number
+              reminder: boolean
+              sales_record_id: string | null
+              status: Database["public"]["Enums"]["ledger_status"]
+              type: Database["public"]["Enums"]["ledger_type"]
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ledgers"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              _amount: number
+              _ledger: string
+              _method: string
+              _note: string
+              _paid_at: string
+            }
+            Returns: {
+              amount: number
+              conversation_id: string | null
+              counterpart_name: string
+              counterpart_user_id: string | null
+              created_at: string
+              due_date: string | null
+              id: string
+              note: string
+              owner_id: string
+              paid_amount: number
+              reminder: boolean
+              sales_record_id: string | null
+              status: Database["public"]["Enums"]["ledger_status"]
+              type: Database["public"]["Enums"]["ledger_type"]
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "ledgers"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       record_purchase: { Args: { _payload: Json }; Returns: string }
       register_push_device: {
         Args: {

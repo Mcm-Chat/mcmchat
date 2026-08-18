@@ -113,18 +113,27 @@ export async function recordPayment(
   amount: number,
   method: string,
   note: string,
+  paidAt?: string | null,
 ) {
   const { data, error } = await supabase.rpc("record_ledger_payment", {
     _ledger: ledgerId,
     _amount: amount,
     _method: method,
     _note: note,
+    _paid_at: paidAt ?? new Date().toISOString(),
   });
   if (error) throw new Error(friendly(error.message, "Pembayaran gagal dicatat"));
   const row = data as unknown as LedgerRow;
   // Server memverifikasi pemanggil terkait catatan ini dan memilih pihak lawan.
   void notifyLedgerPayment({ data: { ledgerId: row.id } }).catch(() => undefined);
   return row;
+}
+
+/** Hapus satu pembayaran; sisa tagihan dan status catatan dihitung ulang di server. */
+export async function deleteLedgerPayment(paymentId: string): Promise<LedgerRow> {
+  const { data, error } = await supabase.rpc("delete_ledger_payment", { _payment: paymentId });
+  if (error) throw new Error(friendly(error.message, "Gagal menghapus pembayaran"));
+  return data as unknown as LedgerRow;
 }
 
 export async function updateStatus(ledgerId: string, status: LedgerRow["status"], actorId: string) {
