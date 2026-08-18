@@ -53,7 +53,7 @@ function SlideMedia({ item }: { item: StatusItem }) {
       </div>
     );
   }
-  if (isLoading || !url) return <div className="size-full animate-pulse bg-white/5" />;
+  if (isLoading || !url) return <div className="size-full animate-pulse bg-on-dark-surface" />;
   return (
     <img
       src={url}
@@ -209,7 +209,7 @@ export function StatusViewer({
       aria-modal="true"
       aria-label="Penampil status"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex flex-col bg-black text-white select-none outline-none"
+      className="fixed inset-0 z-50 flex flex-col bg-media-canvas text-on-dark select-none outline-none"
       onTouchStart={(e) => {
         const t = e.touches[0]!;
         touchStart.current = { x: t.clientX, y: t.clientY };
@@ -225,12 +225,12 @@ export function StatusViewer({
         else if (dy < -90 && dx < 80 && mine) setViewersOpen(true);
       }}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-black/70 to-transparent pb-10 pt-[env(safe-area-inset-top)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 bg-gradient-to-b from-media-canvas/70 to-transparent pb-10 pt-[env(safe-area-inset-top)]">
         <div className="flex gap-1 px-3 pt-3">
           {progress.map((p, idx) => (
-            <div key={idx} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/25">
+            <div key={idx} className="h-0.5 flex-1 overflow-hidden rounded-full bg-on-dark-surface">
               <div
-                className="h-full bg-white transition-[width] duration-75"
+                className="h-full bg-on-dark transition-[width] duration-75"
                 style={{ width: `${Math.min(1, p) * 100}%` }}
               />
             </div>
@@ -247,14 +247,14 @@ export function StatusViewer({
           />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{mine ? "Status Saya" : name}</div>
-            <div className="text-[11px] text-white/70">{waktuStatus(item.created_at)}</div>
+            <div className="text-[11px] text-on-dark-muted">{waktuStatus(item.created_at)}</div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-9 text-white hover:bg-white/15"
+                className="size-9 text-on-dark hover:bg-on-dark-surface"
                 aria-label="Menu status"
               >
                 <MoreVertical className="size-5" />
@@ -276,7 +276,7 @@ export function StatusViewer({
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 text-white hover:bg-white/15"
+            className="size-9 text-on-dark hover:bg-on-dark-surface"
             aria-label="Tutup"
             onClick={onClose}
           >
@@ -312,17 +312,17 @@ export function StatusViewer({
           />
         ))}
         {item.caption && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-5 pb-6 pt-10 text-center text-sm">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-media-canvas/70 to-transparent px-5 pb-6 pt-10 text-center text-sm">
             {item.caption}
           </div>
         )}
       </div>
 
-      <div className="z-20 shrink-0 bg-gradient-to-t from-black/85 to-transparent px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-4">
+      <div className="z-20 shrink-0 bg-gradient-to-t from-media-canvas/85 to-transparent px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-4">
         {mine ? (
           <Button
             variant="ghost"
-            className="mx-auto flex h-11 items-center gap-2 text-white hover:bg-white/15"
+            className="mx-auto flex h-11 items-center gap-2 text-on-dark hover:bg-on-dark-surface"
             onClick={() => setViewersOpen(true)}
           >
             <Eye className="size-4" /> Lihat penonton
@@ -335,7 +335,7 @@ export function StatusViewer({
                 <button
                   key={emoji}
                   type="button"
-                  className="rounded-full bg-white/10 px-2.5 py-1.5 text-lg transition-transform active:scale-90"
+                  className="rounded-full bg-on-dark-surface px-2.5 py-1.5 text-lg transition-transform active:scale-90"
                   onClick={() => void kirimReaksi(emoji)}
                 >
                   {emoji}
@@ -355,7 +355,7 @@ export function StatusViewer({
                 onFocus={() => setPaused(true)}
                 onBlur={() => setPaused(false)}
                 placeholder={`Balas ke ${name}`}
-                className="h-11 rounded-full border-white/25 bg-white/10 text-white placeholder:text-white/60"
+                className="h-11 rounded-full border-on-dark-border bg-on-dark-surface text-on-dark placeholder:text-on-dark-muted"
               />
               <Button
                 type="submit"

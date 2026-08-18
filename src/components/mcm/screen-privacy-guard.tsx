@@ -42,7 +42,7 @@ export function ScreenPrivacyGuard() {
       aria-hidden
       className="app-gradient fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 text-navy-foreground"
     >
-      <span className="flex size-16 items-center justify-center rounded-2xl bg-white/10 text-2xl font-extrabold tracking-tight">
+      <span className="flex size-16 items-center justify-center rounded-2xl bg-on-dark-surface text-2xl font-extrabold tracking-tight">
         MCM
       </span>
       <p className="text-sm font-medium opacity-80">Konten disembunyikan</p>

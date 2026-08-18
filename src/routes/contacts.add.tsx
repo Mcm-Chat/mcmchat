@@ -46,11 +46,11 @@ function relationBadges(r: ContactRelation): StatusBadge[] {
   if (r.blockedByMe)
     out.push({ label: "Anda memblokir", className: "bg-destructive/10 text-destructive" });
   if (r.connected)
-    out.push({ label: "Sudah terhubung", className: "bg-emerald-500/15 text-emerald-600" });
+    out.push({ label: "Sudah terhubung", className: "bg-success/15 text-success" });
   if (r.incomingRequest)
     out.push({ label: "Menunggu jawaban Anda", className: "bg-primary/10 text-primary" });
   if (r.outgoingPending)
-    out.push({ label: "Menunggu jawaban mereka", className: "bg-amber-500/15 text-amber-600" });
+    out.push({ label: "Menunggu jawaban mereka", className: "bg-warning/20 text-warning" });
   if (r.saved && !r.connected)
     out.push({ label: "Tersimpan (belum terhubung)", className: "bg-muted text-muted-foreground" });
   if (out.length === 0)

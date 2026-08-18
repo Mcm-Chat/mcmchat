@@ -6,12 +6,18 @@
 
 @theme inline {
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --radius-sm: calc(var(--radius) - 8px);
-  --radius-md: calc(var(--radius) - 4px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  /*
+   * Skala radius terpadu — semua permukaan utama (kartu, panel, sheet, bubble,
+   * tombol besar, input) mendarat di 16px, apa pun kelas yang dipakai halaman
+   * (`rounded-lg` maupun `rounded-xl`). Hanya elemen mungil (chip, ikon kecil)
+   * dan overlay besar yang menyimpang, itu pun tetap kelipatan 4px.
+   */
+  --radius-sm: calc(var(--radius) - 8px); /* 8px  — chip/kbd */
+  --radius-md: calc(var(--radius) - 4px); /* 12px — kontrol kecil */
+  --radius-lg: var(--radius); /* 16px — standar */
+  --radius-xl: var(--radius); /* 16px — standar */
+  --radius-2xl: calc(var(--radius) + 4px); /* 20px — sheet/dialog */
+  --radius-3xl: calc(var(--radius) + 8px); /* 24px — hero/overlay */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -42,6 +48,12 @@
   --color-link: var(--link);
   --color-link-on-bubble: var(--link-on-bubble);
   --color-chat-canvas: var(--chat-canvas);
+  --color-media-canvas: var(--media-canvas);
+  --color-qr-surface: var(--qr-surface);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-muted: var(--on-dark-muted);
+  --color-on-dark-surface: var(--on-dark-surface);
+  --color-on-dark-border: var(--on-dark-border);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -65,38 +77,47 @@
   --card-foreground: oklch(0.23 0.035 258);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.23 0.035 258);
-  --primary: oklch(0.58 0.115 178);
-  --primary-foreground: oklch(0.99 0.01 180);
+  --primary: oklch(0.6 0.125 162);
+  --primary-foreground: oklch(0.99 0.01 160);
   --secondary: oklch(0.955 0.012 240);
   --secondary-foreground: oklch(0.28 0.04 258);
   --muted: oklch(0.955 0.012 240);
   --muted-foreground: oklch(0.53 0.028 252);
-  --accent: oklch(0.93 0.05 178);
-  --accent-foreground: oklch(0.32 0.06 190);
+  --accent: oklch(0.93 0.05 162);
+  --accent-foreground: oklch(0.32 0.06 165);
   --destructive: oklch(0.58 0.21 25);
   --destructive-foreground: oklch(0.99 0.005 0);
-  --success: oklch(0.62 0.13 155);
-  --success-foreground: oklch(0.99 0.01 155);
+  --success: oklch(0.6 0.125 162);
+  --success-foreground: oklch(0.99 0.01 160);
   --warning: oklch(0.75 0.14 75);
   --warning-foreground: oklch(0.26 0.05 75);
   --navy: oklch(0.26 0.05 258);
   --navy-foreground: oklch(0.97 0.01 240);
-  --bubble-out: oklch(0.58 0.115 178);
-  --bubble-out-foreground: oklch(0.99 0.01 180);
+  --bubble-out: oklch(0.6 0.125 162);
+  --bubble-out-foreground: oklch(0.99 0.01 160);
   --bubble-in: oklch(1 0 0);
   --bubble-in-foreground: oklch(0.23 0.035 258);
-  --tick-read: oklch(0.86 0.1 205);
+  --tick-read: oklch(0.87 0.11 168);
   --link: oklch(0.52 0.16 245);
-  --link-on-bubble: oklch(0.97 0.03 200);
+  --link-on-bubble: oklch(0.97 0.03 170);
   --chat-canvas: oklch(0.965 0.008 240);
   --border: oklch(0.9 0.012 250);
   --input: oklch(0.9 0.012 250);
-  --ring: oklch(0.58 0.115 178);
-  --chart-1: oklch(0.58 0.115 178);
+  --ring: oklch(0.6 0.125 162);
+  --chart-1: oklch(0.6 0.125 162);
   --chart-2: oklch(0.26 0.05 258);
   --chart-3: oklch(0.75 0.14 75);
-  --chart-4: oklch(0.62 0.13 155);
+  --chart-4: oklch(0.45 0.09 200);
   --chart-5: oklch(0.58 0.21 25);
+  /* Permukaan gelap (layar panggilan, viewer status/foto): satu set token
+     supaya kontrol di atas navy/video tidak lagi memakai putih hardcode. */
+  --media-canvas: oklch(0.12 0.02 258);
+  /* Zona tenang QR wajib putih murni di light & dark agar tetap terbaca pemindai. */
+  --qr-surface: oklch(1 0 0);
+  --on-dark: oklch(0.98 0.01 240);
+  --on-dark-muted: oklch(0.98 0.01 240 / 0.7);
+  --on-dark-surface: oklch(0.98 0.01 240 / 0.12);
+  --on-dark-border: oklch(0.98 0.01 240 / 0.22);
 }
 
 .dark {
@@ -106,37 +127,37 @@
   --card-foreground: oklch(0.96 0.008 240);
   --popover: oklch(0.235 0.032 258);
   --popover-foreground: oklch(0.96 0.008 240);
-  --primary: oklch(0.72 0.13 176);
-  --primary-foreground: oklch(0.19 0.04 200);
+  --primary: oklch(0.73 0.14 163);
+  --primary-foreground: oklch(0.19 0.04 165);
   --secondary: oklch(0.28 0.033 258);
   --secondary-foreground: oklch(0.96 0.008 240);
   --muted: oklch(0.28 0.033 258);
   --muted-foreground: oklch(0.7 0.025 250);
-  --accent: oklch(0.32 0.05 190);
-  --accent-foreground: oklch(0.92 0.05 180);
+  --accent: oklch(0.32 0.05 165);
+  --accent-foreground: oklch(0.92 0.05 162);
   --destructive: oklch(0.65 0.19 25);
   --destructive-foreground: oklch(0.99 0.005 0);
-  --success: oklch(0.7 0.13 155);
-  --success-foreground: oklch(0.18 0.04 155);
+  --success: oklch(0.73 0.14 163);
+  --success-foreground: oklch(0.19 0.04 165);
   --warning: oklch(0.8 0.13 75);
   --warning-foreground: oklch(0.22 0.05 75);
   --navy: oklch(0.16 0.03 258);
   --navy-foreground: oklch(0.96 0.008 240);
-  --bubble-out: oklch(0.42 0.085 178);
-  --bubble-out-foreground: oklch(0.97 0.02 180);
+  --bubble-out: oklch(0.42 0.09 163);
+  --bubble-out-foreground: oklch(0.97 0.02 160);
   --bubble-in: oklch(0.27 0.032 258);
   --bubble-in-foreground: oklch(0.96 0.008 240);
-  --tick-read: oklch(0.82 0.12 200);
+  --tick-read: oklch(0.84 0.13 168);
   --link: oklch(0.78 0.13 230);
-  --link-on-bubble: oklch(0.93 0.06 200);
+  --link-on-bubble: oklch(0.93 0.06 168);
   --chat-canvas: oklch(0.175 0.028 258);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.72 0.13 176);
-  --chart-1: oklch(0.72 0.13 176);
+  --ring: oklch(0.73 0.14 163);
+  --chart-1: oklch(0.73 0.14 163);
   --chart-2: oklch(0.75 0.05 258);
   --chart-3: oklch(0.8 0.13 75);
-  --chart-4: oklch(0.7 0.13 155);
+  --chart-4: oklch(0.7 0.09 205);
   --chart-5: oklch(0.65 0.19 25);
 }
 
@@ -148,6 +169,47 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
+    font-feature-settings: "cv02", "cv03", "cv04", "tnum" 0;
+  }
+  /*
+   * Skala tipografi tunggal untuk semua halaman: judul layar (h1) 20px,
+   * judul bagian (h2) 17px, sub-bagian (h3) 15px, semua semibold dengan
+   * tracking rapat yang sama. Halaman tidak perlu lagi menentukan ukuran
+   * sendiri; cukup pakai elemen heading yang benar.
+   */
+  h1 {
+    font-size: 1.25rem;
+    line-height: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: 1.0625rem;
+    line-height: 1.45rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-size: 0.9375rem;
+    line-height: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  h4,
+  h5,
+  h6 {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  /* Angka uang/statistik selalu rata kolom. */
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -344,4 +406,17 @@ html[data-perf="low"] .animate-bubble-in {
 /* Gulir bebas jank: jangan biarkan browser menunggu handler sentuh. */
 .chat-scroll {
   scrollbar-width: thin;
+}
+
+/* Judul layar: satu ukuran & bobot untuk header semua halaman. */
+@utility screen-title {
+  font-size: 1.0625rem;
+  line-height: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Gutter halaman standar 16px, sejajar dengan radius kartu. */
+@utility page-gutter {
+  padding-inline: 1rem;
 }

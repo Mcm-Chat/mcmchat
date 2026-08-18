@@ -22,10 +22,10 @@ const GRADE_TEXT: Record<string, string> = {
 };
 
 const GRADE_TONE: Record<string, string> = {
-  good: "text-emerald-300",
-  fair: "text-amber-300",
-  poor: "text-rose-300",
-  unknown: "text-white/60",
+  good: "text-success",
+  fair: "text-warning",
+  poor: "text-destructive",
+  unknown: "text-on-dark-muted",
 };
 
 export function CallQualityMetrics({
@@ -48,7 +48,7 @@ export function CallQualityMetrics({
     <section
       aria-label="Metrik kualitas panggilan"
       className={cn(
-        "mx-auto w-full max-w-xs rounded-2xl border border-white/15 bg-white/10 px-3 py-2 text-white",
+        "mx-auto w-full max-w-xs rounded-2xl border border-on-dark-border bg-on-dark-surface px-3 py-2 text-on-dark",
         className,
       )}
     >
@@ -64,7 +64,7 @@ export function CallQualityMetrics({
       <dl className="mt-1.5 grid grid-cols-3 gap-x-2 gap-y-1 text-center text-[11px] leading-tight">
         {items.map(([label, value]) => (
           <div key={label}>
-            <dt className="text-white/60">{label}</dt>
+            <dt className="text-on-dark-muted">{label}</dt>
             <dd className="font-medium tabular-nums">{value}</dd>
           </div>
         ))}

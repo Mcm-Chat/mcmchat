@@ -263,7 +263,7 @@ export function QrScannerDialog({
           <DialogDescription>Arahkan kamera ke QR Code PIN MCM milik teman Anda.</DialogDescription>
         </DialogHeader>
 
-        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black">
+        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-media-canvas">
           <video
             ref={videoRef}
             playsInline
@@ -275,7 +275,7 @@ export function QrScannerDialog({
           {/* Overlay panduan: area gelap + bingkai sudut + garis pindai */}
           {phase === "streaming" && (
             <>
-              <div className="pointer-events-none absolute inset-0 bg-black/45 [clip-path:polygon(0_0,100%_0,100%_100%,0_100%,0_14%,14%_14%,14%_86%,86%_86%,86%_14%,0_14%)]" />
+              <div className="pointer-events-none absolute inset-0 bg-foreground/10 [clip-path:polygon(0_0,100%_0,100%_100%,0_100%,0_14%,14%_14%,14%_86%,86%_86%,86%_14%,0_14%)]" />
               <div className="pointer-events-none absolute inset-[14%]">
                 <span className="absolute -left-0.5 -top-0.5 size-8 rounded-tl-xl border-l-4 border-t-4 border-primary" />
                 <span className="absolute -right-0.5 -top-0.5 size-8 rounded-tr-xl border-r-4 border-t-4 border-primary" />
@@ -283,7 +283,7 @@ export function QrScannerDialog({
                 <span className="absolute -bottom-0.5 -right-0.5 size-8 rounded-br-xl border-b-4 border-r-4 border-primary" />
                 <span className="absolute inset-x-2 top-1/2 h-0.5 animate-pulse rounded-full bg-primary/80" />
               </div>
-              <p className="pointer-events-none absolute inset-x-4 bottom-3 text-center text-[11px] font-medium text-white drop-shadow">
+              <p className="pointer-events-none absolute inset-x-4 bottom-3 text-center text-[11px] font-medium text-on-dark drop-shadow">
                 Posisikan QR di dalam bingkai — pemindaian otomatis
               </p>
               {torchAvailable && (

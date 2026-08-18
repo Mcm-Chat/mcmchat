@@ -62,7 +62,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
         aria-hidden
         className={cn(
           CARD_CLS,
-          onBubble ? "border-current/25 bg-black/10" : "border-border/70 bg-background/70",
+          onBubble ? "border-current/25 bg-foreground/10" : "border-border/70 bg-background/70",
         )}
       >
         <MediaSkeleton className="h-28 w-full rounded-none" />
@@ -97,7 +97,7 @@ export function LinkPreviewCard({ url, onBubble }: { url: string; onBubble?: boo
       className={cn(
         CARD_CLS,
         "transition-opacity active:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        onBubble ? "border-current/25 bg-black/10" : "border-border/70 bg-background/70",
+        onBubble ? "border-current/25 bg-foreground/10" : "border-border/70 bg-background/70",
       )}
     >
       {data.image && (

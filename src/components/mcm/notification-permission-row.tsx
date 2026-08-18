@@ -7,10 +7,10 @@ import { checkPermission, openAppSettings, type PermState } from "@/lib/push/per
 import { enablePush, usePushState } from "@/lib/push/use-push";
 
 const TONE: Record<PermState, string> = {
-  granted: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  granted: "bg-success/15 text-success",
   denied: "bg-destructive/15 text-destructive",
   restricted: "bg-destructive/15 text-destructive",
-  prompt: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  prompt: "bg-warning/20 text-warning",
   unsupported: "bg-muted text-muted-foreground",
 };
 

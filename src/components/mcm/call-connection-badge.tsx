@@ -3,14 +3,14 @@ import { callConnectionStatus, type CallConnectionInput } from "@/lib/calls/conn
 
 const TONE: Record<string, string> = {
   live: "bg-success/20 text-success-foreground ring-success/40",
-  pending: "bg-white/15 text-navy-foreground ring-white/25",
+  pending: "bg-on-dark-surface text-navy-foreground ring-on-dark-border",
   warn: "bg-warning/20 text-navy-foreground ring-warning/50",
   down: "bg-destructive/20 text-navy-foreground ring-destructive/50",
 };
 
 const DOT: Record<string, string> = {
   live: "bg-success",
-  pending: "bg-white/70 animate-pulse",
+  pending: "bg-on-dark/80 animate-pulse",
   warn: "bg-warning",
   down: "bg-destructive",
 };

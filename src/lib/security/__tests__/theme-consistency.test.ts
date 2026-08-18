@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { globSync, readFileSync } from "node:fs";
 
 const ROUTES = [
   "chat.index",
@@ -28,7 +28,7 @@ describe("tema global konsisten di enam menu", () => {
     for (const r of ROUTES) {
       const src = read(`src/routes/${r}.tsx`);
       expect(src, `${r} memakai warna hardcode`).not.toMatch(
-        /bg-white\b|bg-slate-\d|app-gradient|text-navy-foreground/,
+        /bg-white\b|bg-black\b|bg-slate-\d|text-(white|emerald|amber|slate|rose)-?\d*\b|app-gradient|text-navy-foreground/,
       );
     }
   });
@@ -95,10 +95,56 @@ describe("form penyiapan dan ledger tahan double-submit", () => {
   it("form ledger mengunci submit dan menutup dialog saat menyimpan", () => {
     const src = read("src/components/mcm/ledger-form.tsx");
     expect(src).toMatch(/if \(saving\) return;/);
-    expect(src).toMatch(/disabled=\{saving\}/);
+    // Tombol boleh punya syarat tambahan (validasi), tapi wajib terkunci saat menyimpan.
+    expect(src).toMatch(/disabled=\{saving\b/);
   });
 
   it("keuangan memperbarui ringkasan realtime dari tabel ledgers", () => {
     expect(read("src/routes/finance.index.tsx")).toMatch(/table: "ledgers"/);
+  });
+});
+
+describe("token desain terpadu navy + emerald", () => {
+  const css = read("src/styles.css");
+
+  it("radius standar 16px dan skala turunannya konsisten", () => {
+    expect(css).toMatch(/--radius:\s*1rem/);
+    expect(css).toMatch(/--radius-lg:\s*var\(--radius\)/);
+    expect(css).toMatch(/--radius-xl:\s*var\(--radius\)/);
+  });
+
+  it("primary emerald & navy terdefinisi di light dan dark", () => {
+    const light = css.slice(css.indexOf(":root {"), css.indexOf(".dark {"));
+    const dark = css.slice(css.indexOf(".dark {"));
+    for (const [scope, block] of [
+      ["light", light],
+      ["dark", dark],
+    ] as const) {
+      const primary = block.match(/--primary:\s*oklch\([\d.]+ [\d.]+ ([\d.]+)\)/);
+      expect(primary, `${scope} tidak punya --primary`).toBeTruthy();
+      // Hue emerald 150–172; bukan teal/cyan lama (178+).
+      expect(Number(primary![1])).toBeGreaterThanOrEqual(150);
+      expect(Number(primary![1])).toBeLessThanOrEqual(172);
+      expect(block, `${scope} tidak punya --navy`).toMatch(/--navy:\s*oklch/);
+    }
+  });
+
+  it("tidak ada warna literal Tailwind di layar aplikasi", () => {
+    const files = globSync("src/{routes,components/mcm}/**/*.tsx");
+    expect(files.length).toBeGreaterThan(30);
+    const bad: string[] = [];
+    for (const f of files) {
+      const src = read(f);
+      const hit = src.match(
+        /\b(?:bg|text|border|ring|from|to|via)-(?:white|black|slate|gray|zinc|emerald|teal|amber|rose|red|green|blue|indigo|purple|orange|sky|cyan)(?:-\d{2,3})?(?:\/\d+)?\b/g,
+      );
+      if (hit) bad.push(`${f}: ${[...new Set(hit)].join(", ")}`);
+    }
+    expect(bad, `warna literal harus diganti token semantik:\n${bad.join("\n")}`).toEqual([]);
+  });
+
+  it("skala tipografi didefinisikan sekali di base layer", () => {
+    expect(css).toMatch(/@utility screen-title/);
+    expect(css).toMatch(/h1 \{[\s\S]*?font-size: 1\.25rem/);
   });
 });

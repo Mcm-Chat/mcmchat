@@ -56,9 +56,9 @@ const ICON: Record<CheckStatus, typeof CheckCircle2> = {
 };
 
 const TONE: Record<CheckStatus, string> = {
-  pass: "text-emerald-600",
+  pass: "text-success",
   fail: "text-destructive",
-  warn: "text-amber-600",
+  warn: "text-warning",
   pending: "text-muted-foreground",
 };
 
@@ -244,9 +244,9 @@ function CallDiagnosticsPage() {
                   <span
                     className={`mt-1 size-2 shrink-0 rounded-full ${
                       h.status === "pass"
-                        ? "bg-emerald-500"
+                        ? "bg-success"
                         : h.status === "warn"
-                          ? "bg-amber-500"
+                          ? "bg-warning"
                           : "bg-destructive"
                     }`}
                     aria-hidden

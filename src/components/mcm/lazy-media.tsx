@@ -16,7 +16,7 @@ export function MediaSkeleton({
     <div
       aria-hidden
       className={cn(
-        "flex animate-pulse items-center justify-center rounded-xl bg-black/15",
+        "flex animate-pulse items-center justify-center rounded-xl bg-foreground/10",
         className,
       )}
     >

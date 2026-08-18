@@ -451,7 +451,7 @@ function CallScreen() {
               autoPlay
               playsInline
               muted
-              className="absolute top-[calc(env(safe-area-inset-top)+5rem)] right-4 z-10 h-36 w-24 sm:h-40 sm:w-28 rounded-2xl border border-white/25 object-cover"
+              className="absolute top-[calc(env(safe-area-inset-top)+5rem)] right-4 z-10 h-36 w-24 sm:h-40 sm:w-28 rounded-2xl border border-on-dark-border object-cover"
             />
           </>
         )}
@@ -477,7 +477,7 @@ function CallScreen() {
               variant="ghost"
               size="icon"
               aria-label="Kembali"
-              className="size-11 text-navy-foreground hover:bg-white/15"
+              className="size-11 text-navy-foreground hover:bg-on-dark-surface"
               onClick={backToCalls}
             >
               <ArrowLeft className="size-5" />
@@ -499,7 +499,7 @@ function CallScreen() {
               />
             )}
             {!isVideo && !other && (
-              <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />
+              <MCMAvatar initials={initials} color="from-navy to-primary" size="xl" />
             )}
             <h2 className="text-2xl font-semibold">{name}</h2>
             <div className="flex items-center gap-2 text-sm text-navy-foreground/75">
@@ -590,7 +590,7 @@ function CallScreen() {
                     >
                       <PhoneIcon className="size-7" />
                     </Button>
-                    <span className="text-[10px] text-white/70" id="call-permission-help">
+                    <span className="text-[10px] text-on-dark-muted" id="call-permission-help">
                       {answerBlocked
                         ? "Jawab (minta izin)"
                         : permission.audioOnly
@@ -607,7 +607,7 @@ function CallScreen() {
                     >
                       <PhoneOff className="size-7" />
                     </Button>
-                    <span className="text-[10px] text-white/70">Tolak</span>
+                    <span className="text-[10px] text-on-dark-muted">Tolak</span>
                   </div>
                 </div>
               </>
@@ -720,7 +720,7 @@ function CallScreen() {
           variant="ghost"
           size="icon"
           aria-label="Kembali"
-          className="size-11 text-navy-foreground hover:bg-white/15"
+          className="size-11 text-navy-foreground hover:bg-on-dark-surface"
           onClick={backToCalls}
         >
           <ArrowLeft className="size-5" />
@@ -748,7 +748,7 @@ function CallScreen() {
             size="xl"
           />
         ) : (
-          <MCMAvatar initials={initials} color="from-slate-500 to-slate-700" size="xl" />
+          <MCMAvatar initials={initials} color="from-navy to-primary" size="xl" />
         )}
         <h2 className="text-2xl font-semibold">{name}</h2>
         <p className="flex items-center gap-1.5 text-sm text-navy-foreground/70">
@@ -806,7 +806,7 @@ function CallScreen() {
         videoEnabled={isVideo}
       />
 
-      <div className="mt-6 space-y-3 rounded-2xl bg-white/10 p-4 text-sm">
+      <div className="mt-6 space-y-3 rounded-2xl bg-on-dark-surface p-4 text-sm">
         <Row label="Tanggal" value={tanggalPanjang(detail.created_at)} />
         <Row label="Waktu mulai" value={jam(detail.started_at ?? detail.created_at)} />
         {detail.ended_at && <Row label="Waktu berakhir" value={jam(detail.ended_at)} />}
@@ -814,7 +814,7 @@ function CallScreen() {
         <Row label="Peserta" value={detail.participants.map((p) => p.display_name).join(", ")} />
       </div>
 
-      <div className="mt-6 rounded-2xl bg-white/10 p-4">
+      <div className="mt-6 rounded-2xl bg-on-dark-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="flex items-center gap-1.5 text-sm font-semibold">
@@ -844,7 +844,7 @@ function CallScreen() {
       <div className="mt-auto space-y-3 pt-8">
         <Button
           variant="ghost"
-          className="w-full rounded-xl text-navy-foreground/80 hover:bg-white/10"
+          className="w-full rounded-xl text-navy-foreground/80 hover:bg-on-dark-surface"
           onClick={backToCalls}
         >
           Kembali ke riwayat
@@ -914,10 +914,10 @@ function ControlButton({
       aria-label={hint ? `${ariaLabel}. ${hint}` : ariaLabel}
       onClick={onClick}
       className={cn(
-        "size-14 rounded-full border border-white/20",
+        "size-14 rounded-full border border-on-dark-border",
         active
-          ? "bg-white text-navy hover:bg-white/90"
-          : "bg-white/15 text-white hover:bg-white/25",
+          ? "bg-on-dark text-navy hover:bg-on-dark/80"
+          : "bg-on-dark-surface text-on-dark hover:bg-on-dark-surface",
       )}
     >
       <Icon className="size-6" />
@@ -943,7 +943,7 @@ function ControlButton({
       ) : (
         button
       )}
-      <span className="text-[10px] text-white/70">{label}</span>
+      <span className="text-[10px] text-on-dark-muted">{label}</span>
     </div>
   );
 }

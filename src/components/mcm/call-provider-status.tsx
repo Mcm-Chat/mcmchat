@@ -47,7 +47,7 @@ export function CallProviderStatus({
               ? "bg-success/20 text-success-foreground ring-success/40"
               : health === "offline"
                 ? "bg-destructive/20 text-navy-foreground ring-destructive/50"
-                : "bg-white/15 text-navy-foreground ring-white/25",
+                : "bg-on-dark-surface text-navy-foreground ring-on-dark-border",
           )}
         >
           <span
@@ -58,7 +58,7 @@ export function CallProviderStatus({
                 ? "bg-success"
                 : health === "offline"
                   ? "bg-destructive"
-                  : "bg-white/70 animate-pulse",
+                  : "bg-on-dark/80 animate-pulse",
             )}
           />
           {label}
@@ -68,7 +68,7 @@ export function CallProviderStatus({
           onClick={refresh}
           disabled={busy}
           aria-label="Perbarui status server panggilan"
-          className="inline-flex size-7 items-center justify-center rounded-full bg-white/10 text-navy-foreground disabled:opacity-50"
+          className="inline-flex size-7 items-center justify-center rounded-full bg-on-dark-surface text-navy-foreground disabled:opacity-50"
         >
           <RefreshCcw className={cn("size-3.5", busy && "animate-spin")} />
         </button>

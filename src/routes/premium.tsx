@@ -91,7 +91,7 @@ function PremiumPage() {
           {ent.loading ? (
             <p className="mt-1 text-xs text-muted-foreground">Memeriksa status…</p>
           ) : ent.active ? (
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-success">
               <Check className="size-3.5" /> Premium aktif
               {ent.expiresAt
                 ? ` sampai ${new Date(ent.expiresAt).toLocaleDateString("id-ID")}`

@@ -376,7 +376,7 @@ function CallsPage() {
             </div>
           }
         >
-          <div className="px-3 pb-3">
+          <div className="px-4 pb-3">
             <div className="relative mb-2">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -535,7 +535,7 @@ function CallsPage() {
                       color={other.avatar_color}
                     />
                   ) : (
-                    <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" />
+                    <MCMAvatar initials="MC" color="from-navy to-primary" />
                   )}
                   <div className="min-w-0 flex-1">
                     <p
@@ -721,7 +721,7 @@ function CallsPage() {
                     size="sm"
                   />
                 ) : (
-                  <MCMAvatar initials="MC" color="from-slate-500 to-slate-700" size="sm" />
+                  <MCMAvatar initials="MC" color="from-navy to-primary" size="sm" />
                 )}
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">
                   {c.title_resolved}

@@ -75,7 +75,7 @@ function Onboarding() {
           />
           <Button
             variant="ghost"
-            className="text-navy-foreground hover:bg-white/10"
+            className="text-navy-foreground hover:bg-on-dark-surface"
             disabled={leaving !== null}
             onClick={finish}
           >
@@ -83,7 +83,7 @@ function Onboarding() {
           </Button>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-          <div className="flex size-24 items-center justify-center rounded-3xl bg-white/12">
+          <div className="flex size-24 items-center justify-center rounded-3xl bg-on-dark-surface">
             <Icon className="size-11" />
           </div>
           <div>
@@ -96,7 +96,7 @@ function Onboarding() {
                 key={i}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
-                  i === index ? "w-6 bg-primary" : "w-1.5 bg-white/30",
+                  i === index ? "w-6 bg-primary" : "w-1.5 bg-on-dark-surface",
                 )}
               />
             ))}
@@ -117,7 +117,7 @@ function Onboarding() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full text-navy-foreground hover:bg-white/10"
+            className="w-full text-navy-foreground hover:bg-on-dark-surface"
             disabled={leaving !== null}
             onClick={goLogin}
           >

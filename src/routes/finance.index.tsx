@@ -153,7 +153,7 @@ function FinancePage() {
             </Button>
           }
         >
-          <div className="grid grid-cols-2 gap-2 px-3 pb-3">
+          <div className="grid grid-cols-2 gap-2 px-4 pb-3">
             <FinanceSummaryCard
               label="Piutang"
               value={rupiah(summary.receivable)}
