@@ -6,6 +6,7 @@ import { PAYMENT_LABEL, type OrderRow, type SalesRecordRow } from "@/lib/api/sal
 import { salesPayload } from "@/lib/api/finance";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, type Tone } from "./primitives";
+import { LedgerQuickAdjust } from "./ledger-quick-adjust";
 import { cn } from "@/lib/utils";
 
 export function FinanceSummaryCard({
@@ -49,7 +50,7 @@ const LEDGER_TONE: Record<LedgerRow["status"], Tone> = {
   cancelled: "neutral",
 };
 
-export function LedgerListItem({ ledger }: { ledger: LedgerRow }) {
+export function LedgerListItem({ ledger, actorId }: { ledger: LedgerRow; actorId?: string }) {
   const sisa = remaining(ledger);
   const receivable = ledger.type === "receivable";
   return (
@@ -96,6 +97,7 @@ export function LedgerListItem({ ledger }: { ledger: LedgerRow }) {
               </Button>
             )}
           </div>
+          <LedgerQuickAdjust ledger={ledger} {...(actorId ? { actorId } : {})} />
         </div>
       </div>
     </div>
