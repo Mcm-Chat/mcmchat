@@ -88,6 +88,7 @@ function AddContactPage() {
   const { userId, profile } = useRequireAuth();
   const { conv, reason, scan, pin: pinParam } = Route.useSearch();
   const [pin, setPin] = useState("");
+  const [pinTouched, setPinTouched] = useState(false);
   const [message, setMessage] = useState("Halo, saya ingin terhubung di MCM.");
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -316,7 +317,11 @@ function AddContactPage() {
             <PinField
               id="pin"
               value={pin}
-              onChange={(v) => setPin(normalizePin(v))}
+              onChange={(v) => {
+                setPinTouched(true);
+                setError(null);
+                setPin(normalizePin(v));
+              }}
               onPickContact={(c) => void search(c.pin)}
               placeholder="A2B3-C4D5"
               maxLength={9}
@@ -325,14 +330,14 @@ function AddContactPage() {
                 <Button
                   className="h-11 rounded-xl"
                   onClick={() => void search()}
-                  disabled={searching || !pin}
+                  disabled={searching || !!pinError(pin)}
                 >
                   <Search className="size-4" /> {searching ? "Mencari…" : "Cari"}
                 </Button>
               }
             />
+            <FieldError message={pinTouched ? (error ?? pinError(pin)) : error} />
           </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
           <Button
             type="button"
             variant="secondary"
