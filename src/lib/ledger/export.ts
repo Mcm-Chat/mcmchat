@@ -22,7 +22,7 @@ export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
     ["Sudah dibayar", rupiah(Number(ledger.paid_amount))],
     ["Sisa", rupiah(remaining(ledger))],
     ["Status", LEDGER_STATUS_LABEL[ledger.status]],
-  ].map(([k, v]) => [escapeCsv(k), escapeCsv(v)].join(","));
+  ].map(([k, v]) => [escapeCsv(k ?? ""), escapeCsv(v ?? "")].join(","));
 
   const lines = [...meta, "", HEADERS.join(",")];
   for (const p of payments) {
