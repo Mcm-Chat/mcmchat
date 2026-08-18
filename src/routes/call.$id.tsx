@@ -415,6 +415,12 @@ function CallScreen() {
       });
     };
 
+  // Sebelum panggilan tersambung tidak ada sesi media sama sekali: kontrol
+  // mikrofon/kamera/speaker/perangkat tidak punya apa pun untuk diubah.
+  // Ditampilkan nonaktif dengan alasan jujur, bukan tombol mati diam-diam.
+  const controlsLive = session.phase === "connected" || session.phase === "connecting";
+  const notLiveHint = "Aktif setelah panggilan tersambung";
+
   const phaseLabel =
     session.phase === "connected"
       ? // Durasi hanya ditampilkan bila server panggilan terhubung dan media
@@ -617,7 +623,8 @@ function CallScreen() {
                   <ControlButton
                     label={session.controls.muted ? "Suara mati" : "Mikrofon"}
                     active={session.controls.muted}
-                    hint={micGranted ? undefined : micHint}
+                    disabled={!controlsLive}
+                    hint={!controlsLive ? notLiveHint : micGranted ? undefined : micHint}
                     ariaLabel="Bisukan mikrofon"
                     onClick={withPermission(micGranted, micHint, session.toggleMute)}
                     icon={session.controls.muted ? MicOff : Mic}
@@ -625,7 +632,8 @@ function CallScreen() {
                   <ControlButton
                     label="Kamera"
                     active={!session.controls.cameraOn}
-                    hint={cameraGranted ? undefined : cameraHint}
+                    disabled={!controlsLive}
+                    hint={!controlsLive ? notLiveHint : cameraGranted ? undefined : cameraHint}
                     ariaLabel="Nyalakan kamera"
                     onClick={withPermission(cameraGranted, cameraHint, session.toggleCamera, true)}
                     icon={session.controls.cameraOn ? Video : VideoOff}
@@ -636,6 +644,8 @@ function CallScreen() {
                     <ControlButton
                       label="Speaker"
                       active={session.controls.speakerOn}
+                      disabled={!controlsLive}
+                      hint={!controlsLive ? notLiveHint : undefined}
                       ariaLabel="Pengeras suara"
                       onClick={session.toggleSpeaker}
                       icon={session.controls.speakerOn ? Volume2 : VolumeX}
@@ -653,7 +663,8 @@ function CallScreen() {
                   <ControlButton
                     label="Balik kamera"
                     active={false}
-                    hint={cameraGranted ? undefined : cameraHint}
+                    disabled={!controlsLive}
+                    hint={!controlsLive ? notLiveHint : cameraGranted ? undefined : cameraHint}
                     ariaLabel="Balik kamera"
                     onClick={withPermission(cameraGranted, cameraHint, session.switchCamera, true)}
                     icon={RefreshCcw}
@@ -661,7 +672,7 @@ function CallScreen() {
                   <ControlButton
                     label="Perangkat"
                     active={devicesOpen}
-                    hint={micGranted ? undefined : micHint}
+                    hint={!controlsLive ? notLiveHint : micGranted ? undefined : micHint}
                     ariaLabel="Pilih mikrofon dan kamera"
                     onClick={withPermission(micGranted, micHint, () => {
                       session.refreshDevices();
@@ -670,6 +681,12 @@ function CallScreen() {
                     icon={SlidersHorizontal}
                   />
                 </div>
+                {!controlsLive && (
+                  <p className="text-center text-[11px] text-on-dark-muted">
+                    Kontrol mikrofon, kamera, dan speaker aktif setelah panggilan dijawab. Tombol
+                    merah membatalkan panggilan.
+                  </p>
+                )}
                 <div className="flex justify-center">
                   <Button
                     ref={hangupRef}
