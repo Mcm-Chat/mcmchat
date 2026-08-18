@@ -1,30 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+/**
+ * /home hanya dipertahankan sebagai alias deep link lama. Redirect dilakukan
+ * di beforeLoad supaya tidak ada layar "Membuka beranda…" yang berkedip.
+ */
 export const Route = createFileRoute("/home")({
-  head: () => ({
-    meta: [
-      { title: "Beranda MCM" },
-      {
-        name: "description",
-        content: "Beranda MCM mengarahkan Anda ke daftar chat, panggilan, catatan, dan bisnis.",
-      },
-      { property: "og:title", content: "Beranda MCM" },
-      { property: "og:description", content: "Pusat navigasi aplikasi MCM." },
-    ],
-  }),
-  component: HomeRedirect,
+  beforeLoad: () => {
+    throw redirect({ to: "/chat", replace: true });
+  },
 });
-
-function HomeRedirect() {
-  const navigate = useNavigate();
-  useEffect(() => {
-    navigate({ to: "/chat", replace: true });
-  }, [navigate]);
-  return (
-    <div className="flex min-h-dvh items-center justify-center gap-2 text-sm text-muted-foreground">
-      <Loader2 className="size-4 animate-spin" /> Membuka beranda…
-    </div>
-  );
-}
