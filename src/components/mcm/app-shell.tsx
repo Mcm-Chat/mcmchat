@@ -20,9 +20,8 @@ import { isMissedUnseen, useMissedCallsSeen } from "@/lib/calls/missed-seen";
 const NAV = [
   { to: "/chat", label: "Chat", icon: MessageCircle, match: "/chat" },
   { to: "/calls", label: "Panggilan", icon: Phone, match: "/calls" },
-  { to: "/tasks", label: "Tugas", icon: ClipboardList, match: "/tasks" },
-  { to: "/catalog", label: "Katalog", icon: Package, match: "/catalog" },
-  { to: "/finance", label: "Keuangan", icon: Wallet, match: "/finance" },
+  { to: "/finance", label: "Catatan", icon: Wallet, match: "/finance" },
+  { to: "/business", label: "Bisnis", icon: Store, match: "/business" },
   { to: "/profile", label: "Profil", icon: User, match: "/profile" },
 ] as const;
 
@@ -100,7 +99,7 @@ export function BottomNavigation({
           callLocked && "pointer-events-none opacity-40 select-none",
         )}
       >
-        <ul className="grid w-full grid-cols-6">
+        <ul className="grid w-full grid-cols-5">
           {NAV.map((item) => {
             const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
             const badge = merged[item.match];
