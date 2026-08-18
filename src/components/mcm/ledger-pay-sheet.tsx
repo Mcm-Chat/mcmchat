@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { recordPayment, remaining, type LedgerRow } from "@/lib/api/ledger";
+import { optimisticRecordPayment } from "@/lib/api/ledger-optimistic";
 import { qk } from "@/lib/api/queries";
 import { rupiah } from "@/lib/mcm/format";
 
@@ -78,16 +79,24 @@ export function LedgerPaySheet({
       return;
     }
     setSaving(true);
+    const paidAt = toIso(date);
+    const rollback = optimisticRecordPayment(qc, ledger.id, {
+      amount: value,
+      method: "cash",
+      note: note.trim() || null,
+      paidAt,
+    });
+    onOpenChange(false);
     try {
-      const updated = await recordPayment(ledger.id, value, "cash", note.trim(), toIso(date));
+      const updated = await recordPayment(ledger.id, value, "cash", note.trim(), paidAt);
       const sisaBaru = Math.max(0, Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0));
       toast.success(sisaBaru === 0 ? "Pembayaran dicatat — catatan lunas" : "Pembayaran dicatat");
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["ledgers"] }),
         qc.invalidateQueries({ queryKey: qk.ledger(ledger.id) }),
       ]);
-      onOpenChange(false);
     } catch (err) {
+      rollback();
       toast.error(err instanceof Error ? err.message : "Pembayaran gagal dicatat");
     } finally {
       setSaving(false);
