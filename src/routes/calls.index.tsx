@@ -247,6 +247,27 @@ function CallsPage() {
     }
   };
 
+  // PIN kontak hanya bisa dibaca lewat RPC `pins_for_me`, sudah termuat di daftar kontak.
+  const pinByUser = new Map(
+    (contacts ?? []).map((c) => [c.contact_id, (c.profile.pin ?? "").toLowerCase()]),
+  );
+  const term = query.trim().toLowerCase();
+  const pinTerm = term.replace(/[^a-z0-9]/g, "");
+
+  /** Cocokkan satu panggilan dengan kata kunci: nama kontak, PIN, atau status. */
+  const matches = (c: CallHistoryItem) => {
+    if (!term) return true;
+    const other = counterpartOf(c, userId);
+    const name = nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM").toLowerCase();
+    if (name.includes(term)) return true;
+    const pin = other ? (pinByUser.get(other.user_id) ?? "") : "";
+    if (pinTerm && pin.replace(/[^a-z0-9]/g, "").includes(pinTerm)) return true;
+    const outcome = callOutcome(c, userId);
+    if (OUTCOME_LABEL[outcome].toLowerCase().includes(term)) return true;
+    if ((c.kind === "video" ? "video" : "suara").includes(term)) return true;
+    return false;
+  };
+
   const list = (calls ?? [])
     .filter((c) => {
       const outcome = callOutcome(c, userId);
@@ -257,6 +278,7 @@ function CallsPage() {
       if (tab === "keluar") return c.initiator_id === userId;
       return true;
     })
+    .filter(matches)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const dialTargets = (conversations ?? []).filter(
