@@ -23,6 +23,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { createLedger, type LedgerRow } from "@/lib/api/ledger";
 import { useContacts, qk } from "@/lib/api/queries";
+import { FieldError } from "@/components/mcm/primitives";
+import { fieldErrors, ledgerSchema } from "@/lib/validation/forms";
 
 export type LedgerFormPreset = {
   counterpartUserId: string | null;
@@ -60,18 +62,31 @@ export function LedgerFormDialog({
   const { data: contacts } = useContacts(preset ? undefined : ownerId);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (open) setForm(empty);
+    if (open) {
+      setForm(empty);
+      setTouched({});
+    }
   }, [open]);
+
+  const errors = fieldErrors(ledgerSchema, {
+    amount: form.amount,
+    dueDate: form.dueDate,
+    // Bila lawan transaksi sudah ditentukan dari chat, field ini tidak dipakai.
+    counterpart: preset ? preset.counterpartName : form.contact,
+    note: form.note,
+  });
+  const isValid = Object.keys(errors).length === 0;
+  const show = (k: string) => (touched[k] ? errors[k] : undefined);
+  const markTouched = (k: string) => setTouched((p) => ({ ...p, [k]: true }));
 
   const submit = async () => {
     if (saving) return; // anti double-submit
+    setTouched({ amount: true, dueDate: true, counterpart: true, note: true });
+    if (!isValid) return;
     const amount = Number(form.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Nominal harus lebih dari nol");
-      return;
-    }
     const picked = (contacts ?? []).find((c) => c.contact_id === form.contact);
     const counterpartUserId = preset ? preset.counterpartUserId : (picked?.contact_id ?? null);
     const counterpartName = preset ? preset.counterpartName : (picked?.profile.display_name ?? "");
@@ -134,7 +149,10 @@ export function LedgerFormDialog({
               <Label>Lawan transaksi</Label>
               <Select
                 value={form.contact}
-                onValueChange={(v) => setForm((p) => ({ ...p, contact: v }))}
+                onValueChange={(v) => {
+                  markTouched("counterpart");
+                  setForm((p) => ({ ...p, contact: v }));
+                }}
               >
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="Pilih kontak" />
@@ -147,6 +165,7 @@ export function LedgerFormDialog({
                   ))}
                 </SelectContent>
               </Select>
+              <FieldError message={show("counterpart")} />
               {(contacts ?? []).length === 0 && (
                 <p className="text-[11px] text-muted-foreground">
                   Belum ada kontak. Tambah kontak dulu lewat menu Chat.
@@ -161,21 +180,32 @@ export function LedgerFormDialog({
               id="ledger-amount"
               inputMode="numeric"
               className="h-11"
+              aria-invalid={!!show("amount")}
+              aria-describedby={show("amount") ? "ledger-amount-error" : undefined}
               value={form.amount}
+              onBlur={() => markTouched("amount")}
               onChange={(e) =>
                 setForm((p) => ({ ...p, amount: e.target.value.replace(/\D/g, "") }))
               }
             />
+            <FieldError id="ledger-amount-error" message={show("amount")} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ledger-due">Jatuh tempo (opsional)</Label>
+            <Label htmlFor="ledger-due">Jatuh tempo</Label>
             <Input
               id="ledger-due"
               type="date"
               className="h-11"
+              aria-invalid={!!show("dueDate")}
+              aria-describedby={show("dueDate") ? "ledger-due-error" : undefined}
               value={form.dueDate}
-              onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))}
+              onBlur={() => markTouched("dueDate")}
+              onChange={(e) => {
+                markTouched("dueDate");
+                setForm((p) => ({ ...p, dueDate: e.target.value }));
+              }}
             />
+            <FieldError id="ledger-due-error" message={show("dueDate")} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ledger-note">Keterangan</Label>
@@ -183,8 +213,10 @@ export function LedgerFormDialog({
               id="ledger-note"
               maxLength={200}
               value={form.note}
+              onBlur={() => markTouched("note")}
               onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
             />
+            <FieldError message={show("note")} />
           </div>
           <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
             <div>
@@ -202,7 +234,7 @@ export function LedgerFormDialog({
         <DialogFooter>
           <Button
             className="h-11 w-full rounded-xl"
-            disabled={saving}
+            disabled={saving || !isValid}
             onClick={() => void submit()}
           >
             <Wallet className="size-4" /> {saving ? "Menyimpan…" : "Simpan catatan"}
