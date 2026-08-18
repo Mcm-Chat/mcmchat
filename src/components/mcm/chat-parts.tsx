@@ -164,9 +164,10 @@ function ChatListItemBase({
   time: string;
   outgoingStatus?: MessageStatus | undefined;
   query?: string;
-  onTogglePin: () => void;
-  onToggleMute: () => void;
-  onToggleArchive: () => void;
+  /** Handler berbasis id supaya pemanggil bisa memakai callback stabil (memo). */
+  onTogglePin: (id: string, next: boolean) => void;
+  onToggleMute: (id: string, next: boolean) => void;
+  onToggleArchive: (id: string, next: boolean) => void;
 }) {
   const name = conv.title_resolved;
   const needle = (query ?? "").trim().toLowerCase();
@@ -261,13 +262,13 @@ function ChatListItemBase({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onTogglePin}>
+          <DropdownMenuItem onClick={() => onTogglePin(conv.id, !conv.me.is_pinned)}>
             <Pin className="size-4" /> {conv.me.is_pinned ? "Lepas pin" : "Sematkan"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleMute}>
+          <DropdownMenuItem onClick={() => onToggleMute(conv.id, !conv.me.is_muted)}>
             <BellOff className="size-4" /> {conv.me.is_muted ? "Bunyikan" : "Bisukan"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleArchive}>
+          <DropdownMenuItem onClick={() => onToggleArchive(conv.id, !conv.me.is_archived)}>
             <Archive className="size-4" />{" "}
             {conv.me.is_archived ? "Keluarkan dari arsip" : "Arsipkan"}
           </DropdownMenuItem>
