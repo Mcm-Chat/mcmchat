@@ -213,5 +213,5 @@ export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPay
   }
   if (payments.length === 0) doc.text("Belum ada pembayaran yang dicatat.", marginX, y);
 
-  doc.save(paymentsFileName(ledger, "pdf"));
+  doc.save(paymentsFileName(ledger, "pdf", receipt));
 }
