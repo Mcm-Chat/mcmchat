@@ -28,7 +28,7 @@ export function CallExportDialog({
   nameOf,
 }: {
   calls: CallHistoryItem[];
-  userId?: string;
+  userId?: string | undefined;
   nameOf: (call: CallHistoryItem) => string;
 }) {
   const [open, setOpen] = useState(false);
