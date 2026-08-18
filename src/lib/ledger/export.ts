@@ -9,10 +9,10 @@ const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
 const slug = (v: string) =>
   v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "catatan";
 
-export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf") {
-  return `pembayaran-${slug(ledger.counterpart_name ?? "catatan")}-${new Date()
-    .toISOString()
-    .slice(0, 10)}.${ext}`;
+export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf", receipt?: string) {
+  const date = new Date().toISOString().slice(0, 10);
+  const suffix = receipt ? `-${receipt.replace(/[^A-Za-z0-9-]/g, "")}` : "";
+  return `pembayaran-${slug(ledger.counterpart_name ?? "catatan")}-${date}${suffix}.${ext}`;
 }
 
 const B32 = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -94,9 +94,10 @@ function download(blob: Blob, filename: string) {
 }
 
 export function downloadPaymentsCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
+  const receipt = receiptNumber(ledger);
   download(
-    new Blob([paymentsToCsv(ledger, payments)], { type: "text/csv;charset=utf-8" }),
-    paymentsFileName(ledger, "csv"),
+    new Blob([paymentsToCsv(ledger, payments, receipt)], { type: "text/csv;charset=utf-8" }),
+    paymentsFileName(ledger, "csv", receipt),
   );
 }
 
@@ -212,5 +213,5 @@ export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPay
   }
   if (payments.length === 0) doc.text("Belum ada pembayaran yang dicatat.", marginX, y);
 
-  doc.save(paymentsFileName(ledger, "pdf"));
+  doc.save(paymentsFileName(ledger, "pdf", receipt));
 }
