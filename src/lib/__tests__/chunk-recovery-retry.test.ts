@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   isChunkLoadError,
+  isDomMutationError,
   retryRouteLoad,
   retryRouteRender,
   type RecoveryStage,
