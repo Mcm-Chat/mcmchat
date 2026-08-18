@@ -341,7 +341,17 @@ function LedgerDetail() {
                 <DropdownMenuItem
                   onSelect={() => {
                     try {
-                      downloadPaymentsCsv(ledger, data.payments);
+                      const res = downloadPaymentsCsv(ledger, data.payments);
+                      setExports(
+                        recordExport({
+                          receipt: res.receipt,
+                          ledgerId: ledger.id,
+                          ledgerName: ledger.counterpart_name ?? "Catatan",
+                          format: "csv",
+                          fileName: res.fileName,
+                          at: new Date().toISOString(),
+                        }),
+                      );
                       toast.success("Riwayat pembayaran diekspor ke CSV");
                     } catch {
                       toast.error("Gagal mengekspor CSV");
@@ -355,7 +365,17 @@ function LedgerDetail() {
                   onSelect={() => {
                     void (async () => {
                       try {
-                        await downloadPaymentsPdf(ledger, data.payments);
+                        const res = await downloadPaymentsPdf(ledger, data.payments);
+                        setExports(
+                          recordExport({
+                            receipt: res.receipt,
+                            ledgerId: ledger.id,
+                            ledgerName: ledger.counterpart_name ?? "Catatan",
+                            format: "pdf",
+                            fileName: res.fileName,
+                            at: new Date().toISOString(),
+                          }),
+                        );
                         toast.success("Bukti pembayaran diekspor ke PDF");
                       } catch {
                         toast.error("Gagal mengekspor PDF");
@@ -369,6 +389,63 @@ function LedgerDetail() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          {exports.length > 0 ? (
+            <div className="mb-3 rounded-xl border border-border p-3">
+              <p className="mb-2 text-xs font-semibold text-muted-foreground">
+                Unduhan terbaru (tersimpan di perangkat ini)
+              </p>
+              <ul className="space-y-2">
+                {exports.slice(0, 5).map((e) => (
+                  <li key={e.receipt} className="flex items-center gap-2">
+                    {e.format === "pdf" ? (
+                      <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <SheetIcon className="size-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium">{e.receipt}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {e.format.toUpperCase()} • {tanggal(e.at)}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-lg px-2 text-xs"
+                      onClick={() => {
+                        void (async () => {
+                          try {
+                            if (e.format === "pdf") {
+                              await downloadPaymentsPdf(ledger, data.payments, e.receipt);
+                            } else {
+                              downloadPaymentsCsv(ledger, data.payments, e.receipt);
+                            }
+                            toast.success("Berkas diunduh ulang");
+                          } catch {
+                            toast.error("Gagal mengunduh ulang");
+                          }
+                        })();
+                      }}
+                    >
+                      <Download className="mr-1 size-3.5" /> Unduh
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label={`Hapus riwayat ekspor ${e.receipt}`}
+                      className="size-8 rounded-lg text-muted-foreground"
+                      onClick={() => {
+                        removeExport(e.receipt);
+                        setExports(listExportHistory(ledger.id));
+                      }}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {data.payments.length === 0 ? (
             <p className="text-sm text-muted-foreground">Belum ada pembayaran yang dicatat.</p>
           ) : (
