@@ -37,6 +37,11 @@ import {
   LEDGER_STATUS_LABEL,
   deleteLedgerPayment,
   recordPayment,
+} from "@/lib/api/ledger";
+import {
+  optimisticDeletePayment,
+  optimisticRecordPayment,
+} from "@/lib/api/ledger-optimistic";
   remaining,
   updateStatus,
   type LedgerRow,
