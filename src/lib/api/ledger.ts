@@ -173,20 +173,6 @@ export async function increaseLedgerAmount(
   return row;
 }
 
-async function _unusedUpdateStatus(
-  ledgerId: string,
-  status: LedgerRow["status"],
-  actorId: string,
-) {
-  const { error } = await supabase.from("ledgers").update({ status }).eq("id", ledgerId);
-  if (error) throw new Error(friendly(error.message, "Gagal memperbarui status"));
-  await supabase.from("ledger_events").insert({
-    ledger_id: ledgerId,
-    actor_id: actorId,
-    label: `Status: ${LEDGER_STATUS_LABEL[status]}`,
-  });
-}
-
 export function totals(rows: LedgerRow[]) {
   const open = rows.filter((l) => OPEN_STATUSES.includes(l.status));
   const receivable = open
