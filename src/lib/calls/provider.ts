@@ -397,6 +397,22 @@ export const liveKitProvider: CallProvider = {
         attachLocal();
       },
       speakerCapability,
+      async setAudioOutput(deviceId) {
+        if (!canSetSink || !deviceId) return false;
+        const prev = speakerSinkId;
+        speakerSinkId = deviceId;
+        try {
+          for (const el of audioEls.values()) {
+            await (el as unknown as { setSinkId: (id: string) => Promise<void> }).setSinkId(
+              deviceId,
+            );
+          }
+          return true;
+        } catch {
+          speakerSinkId = prev;
+          return false;
+        }
+      },
       async setSpeaker(on) {
         if (!canSetSink) return null;
         const devices = await navigator.mediaDevices.enumerateDevices().catch(() => []);
