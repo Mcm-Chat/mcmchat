@@ -21,6 +21,7 @@ import {
   ConfirmDialog,
   EmptyState,
   LoadingSkeleton,
+  ListErrorState,
   MCMAvatar,
   StatusBadge,
 } from "@/components/mcm/primitives";
@@ -266,20 +267,19 @@ function ContactsPage() {
       {isLoading ? (
         <LoadingSkeleton rows={6} />
       ) : isError ? (
-        <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-          <p className="text-sm text-muted-foreground">Gagal memuat data kontak.</p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="rounded-xl"
-            onClick={() => {
-              void refetchContacts();
-              void refetchRequests();
-            }}
-          >
-            Coba lagi
-          </Button>
-        </div>
+        <ListErrorState
+          title="Gagal memuat kontak"
+          description="Daftar kontak dan permintaan tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+          onRetry={() => {
+            void refetchContacts();
+            void refetchRequests();
+          }}
+          action={
+            <Button className="rounded-xl" asChild>
+              <Link to="/contacts/add">Tambah lewat PIN</Link>
+            </Button>
+          }
+        />
       ) : tab === "kontak" ? (
         filteredActive.length === 0 ? (
           <EmptyState
@@ -352,6 +352,11 @@ function ContactsPage() {
             icon={UserPlus}
             title="Tidak ada kartu tersimpan"
             description="Kartu yang Anda simpan dari QR/PIN muncul di sini. Menyimpan bukan berarti terhubung — kirim permintaan agar bisa chat."
+            action={
+              <Button className="rounded-xl" asChild>
+                <Link to="/contacts/add">Cari lewat PIN / QR</Link>
+              </Button>
+            }
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">
@@ -402,6 +407,15 @@ function ContactsPage() {
             icon={UserPlus}
             title="Tidak ada permintaan masuk"
             description="Permintaan kontak baru akan muncul di sini."
+            action={
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => void refetchRequests()}
+              >
+                Muat ulang
+              </Button>
+            }
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">
@@ -467,6 +481,11 @@ function ContactsPage() {
             icon={UserPlus}
             title="Tidak ada permintaan terkirim"
             description="Permintaan yang Anda kirim akan tampil di sini sampai direspons."
+            action={
+              <Button className="rounded-xl" asChild>
+                <Link to="/contacts/add">Kirim permintaan baru</Link>
+              </Button>
+            }
           />
         ) : (
           <ul className="divide-y divide-border/70 pb-24">

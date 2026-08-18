@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Briefcase, Plus, Receipt, ShoppingBag, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { EmptyState, LoadingSkeleton } from "@/components/mcm/primitives";
+import { EmptyState, ListErrorState, LoadingSkeleton } from "@/components/mcm/primitives";
 import {
   ContactSummaryRow,
   DailySummaryRow,
@@ -257,17 +257,14 @@ function FinancePage() {
           {loading || ledgersLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : ledgersError ? (
-            <EmptyState
-              icon={Wallet}
+            <ListErrorState
               title="Gagal memuat catatan"
-              description="Terjadi kesalahan saat memuat data."
+              description="Catatan utang piutang tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+              onRetry={() => void refetchLedgers()}
               action={
-                <button
-                  className="text-sm text-primary underline"
-                  onClick={() => void refetchLedgers()}
-                >
-                  Coba lagi
-                </button>
+                <Button className="rounded-xl" onClick={() => setLedgerFormOpen(true)}>
+                  <Plus className="size-4" /> Tambah Catatan
+                </Button>
               }
             />
           ) : filteredLedgers.length === 0 ? (
@@ -306,18 +303,10 @@ function FinancePage() {
           ) : salesLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : salesError ? (
-            <EmptyState
-              icon={Receipt}
+            <ListErrorState
               title="Gagal memuat penjualan"
-              description="Terjadi kesalahan saat memuat data."
-              action={
-                <button
-                  className="text-sm text-primary underline"
-                  onClick={() => void refetchSales()}
-                >
-                  Coba lagi
-                </button>
-              }
+              description="Data penjualan tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+              onRetry={() => void refetchSales()}
             />
           ) : (sales ?? []).length === 0 ? (
             <EmptyState
@@ -350,18 +339,10 @@ function FinancePage() {
           ) : ordersLoading ? (
             <LoadingSkeleton rows={4} avatar={false} />
           ) : ordersError ? (
-            <EmptyState
-              icon={ShoppingBag}
+            <ListErrorState
               title="Gagal memuat pesanan"
-              description="Terjadi kesalahan saat memuat data."
-              action={
-                <button
-                  className="text-sm text-primary underline"
-                  onClick={() => void refetchOrders()}
-                >
-                  Coba lagi
-                </button>
-              }
+              description="Data pesanan tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+              onRetry={() => void refetchOrders()}
             />
           ) : (orders ?? []).length === 0 ? (
             <EmptyState

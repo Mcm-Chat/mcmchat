@@ -13,6 +13,46 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { ComponentType, ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+
+/** State error seragam untuk semua daftar: penjelasan + tombol coba lagi. */
+export function ListErrorState({
+  title = "Gagal memuat data",
+  description = "Periksa koneksi Anda lalu coba lagi.",
+  onRetry,
+  retrying = false,
+  action,
+}: {
+  title?: string;
+  description?: string;
+  onRetry?: (() => void) | undefined;
+  retrying?: boolean;
+  action?: ReactNode | undefined;
+}) {
+  return (
+    <div
+      role="alert"
+      className="mx-auto flex max-w-xs flex-col items-center justify-center gap-4 px-6 py-16 text-center"
+    >
+      <div className="flex size-16 items-center justify-center rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive">
+        <AlertTriangle className="size-7" />
+      </div>
+      <div className="space-y-1.5">
+        <p className="text-[15px] font-semibold tracking-[-0.01em]">{title}</p>
+        <p className="text-[13px] leading-5 text-balance text-muted-foreground">{description}</p>
+      </div>
+      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+        {onRetry && (
+          <Button variant="outline" className="rounded-xl" disabled={retrying} onClick={onRetry}>
+            <RefreshCw className={cn("size-4", retrying && "animate-spin")} />
+            {retrying ? "Memuat…" : "Coba lagi"}
+          </Button>
+        )}
+        {action}
+      </div>
+    </div>
+  );
+}
 
 export function MCMAvatar({
   initials,
