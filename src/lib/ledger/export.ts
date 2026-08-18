@@ -223,5 +223,7 @@ export async function downloadPaymentsPdf(
   }
   if (payments.length === 0) doc.text("Belum ada pembayaran yang dicatat.", marginX, y);
 
-  doc.save(paymentsFileName(ledger, "pdf", receipt));
+  const fileName = paymentsFileName(ledger, "pdf", receipt);
+  doc.save(fileName);
+  return { receipt, fileName };
 }
