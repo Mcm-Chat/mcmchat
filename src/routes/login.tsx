@@ -113,8 +113,14 @@ function LoginPage() {
             {errors["password"] && <p className="text-xs text-destructive">{errors["password"]}</p>}
           </div>
           <Button type="submit" className="h-11 w-full rounded-xl" disabled={loading}>
-            {loading && <Loader2 className="size-4 animate-spin" />} Masuk
+            {loading && <Loader2 className="size-4 animate-spin" />}
+            {loading ? "Memproses…" : "Masuk"}
           </Button>
+          <p className="text-center text-sm">
+            <Link to="/forgot-password" className="font-semibold text-primary">
+              Lupa kata sandi?
+            </Link>
+          </p>
         </form>
         <p className="text-center text-sm text-muted-foreground">
           Belum punya akun?{" "}
