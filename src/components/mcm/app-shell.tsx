@@ -1,10 +1,9 @@
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  ClipboardList,
   MessageCircle,
-  Package,
   Phone,
+  Store,
   User,
   Wallet,
 } from "lucide-react";
