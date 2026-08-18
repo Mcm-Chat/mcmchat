@@ -263,9 +263,7 @@ function ContactDetailPage() {
                 variant="outline"
                 className="h-12 rounded-xl"
                 disabled={busy}
-                onClick={() =>
-                  void run(() => removeSavedContact(userId!, id), "Kartu kontak dihapus")
-                }
+                onClick={() => setConfirm("remove-card")}
               >
                 <Trash2 className="size-4" /> Hapus kartu kontak
               </Button>
@@ -276,10 +274,7 @@ function ContactDetailPage() {
                 variant="outline"
                 className="h-12 rounded-xl text-destructive"
                 disabled={busy}
-                onClick={() => {
-                  if (!window.confirm("Putuskan hubungan dengan kontak ini?")) return;
-                  void run(() => disconnectContact(userId!, id), "Hubungan diputus");
-                }}
+                onClick={() => setConfirm("disconnect")}
               >
                 <Unlink className="size-4" /> Putuskan hubungan
               </Button>
@@ -289,18 +284,56 @@ function ContactDetailPage() {
               variant={rel?.blockedByMe ? "outline" : "ghost"}
               className="h-12 rounded-xl text-destructive"
               disabled={busy}
-              onClick={() =>
-                void run(
-                  () => setBlocked(userId!, id, !rel?.blockedByMe),
-                  rel?.blockedByMe ? "Blokir dibuka" : "Kontak diblokir",
-                )
-              }
+              onClick={() => {
+                if (rel?.blockedByMe) {
+                  void run(() => setBlocked(userId!, id, false), "Blokir dibuka");
+                  return;
+                }
+                setConfirm("block");
+              }}
             >
               <Ban className="size-4" /> {rel?.blockedByMe ? "Buka blokir" : "Blokir kontak"}
             </Button>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirm === "remove-card"}
+        onOpenChange={(v) => !v && setConfirm(null)}
+        title="Hapus kartu kontak?"
+        description="Kartu ini akan hilang dari daftar kontak Anda. Anda masih bisa menambahkannya lagi lewat PIN."
+        confirmLabel="Hapus"
+        destructive
+        onConfirm={() => {
+          setConfirm(null);
+          void run(() => removeSavedContact(userId!, id), "Kartu kontak dihapus");
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === "disconnect"}
+        onOpenChange={(v) => !v && setConfirm(null)}
+        title="Putuskan hubungan?"
+        description="Anda dan kontak ini tidak lagi terhubung. Untuk terhubung kembali perlu permintaan kontak baru."
+        confirmLabel="Putuskan"
+        destructive
+        onConfirm={() => {
+          setConfirm(null);
+          void run(() => disconnectContact(userId!, id), "Hubungan diputus");
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === "block"}
+        onOpenChange={(v) => !v && setConfirm(null)}
+        title="Blokir kontak?"
+        description="Kontak tidak bisa mengirim pesan, panggilan, atau permintaan baru sampai Anda membuka blokirnya."
+        confirmLabel="Blokir"
+        destructive
+        onConfirm={() => {
+          setConfirm(null);
+          void run(() => setBlocked(userId!, id, true), "Kontak diblokir");
+        }}
+      />
     </AppShell>
   );
 }
