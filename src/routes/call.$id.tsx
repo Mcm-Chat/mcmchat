@@ -51,6 +51,7 @@ import { CallFailureRecovery } from "@/components/mcm/call-failure-recovery";
 import { CallShortcutsHelp } from "@/components/mcm/call-shortcuts-help";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CallPermissionGate } from "@/components/mcm/call-permission-gate";
+import { CallPermissionStatus } from "@/components/mcm/call-permission-status";
 import { useMediaPermission } from "@/lib/calls/use-media-permission";
 import { useCallShortcuts, type CallShortcutAction } from "@/lib/calls/use-call-shortcuts";
 import { getSettings, updateSettings, voiceOf, type UserSettingsRow } from "@/lib/api/settings";
