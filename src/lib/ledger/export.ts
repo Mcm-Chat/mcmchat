@@ -1,5 +1,6 @@
 import { LEDGER_STATUS_LABEL, remaining, type LedgerPaymentRow, type LedgerRow } from "@/lib/api/ledger";
 import { rupiah, tanggal } from "@/lib/mcm/format";
+import { absoluteUrl } from "@/lib/site";
 
 const HEADERS = ["Tanggal", "Nominal", "Metode", "Catatan"] as const;
 
@@ -28,6 +29,18 @@ export function receiptNumber(ledger: LedgerRow, at = new Date()) {
     seed = Math.floor(seed / B32.length) + (i + 1) * 7919;
   }
   return `MCM-${date}-${code}`;
+}
+
+/** Tautan verifikasi yang di-encode ke QR pada PDF bukti. */
+export function verifyUrl(ledger: LedgerRow, receipt: string) {
+  const params = new URLSearchParams({
+    bukti: receipt,
+    catatan: ledger.id,
+    total: String(Number(ledger.amount)),
+    dibayar: String(Number(ledger.paid_amount)),
+    sisa: String(remaining(ledger)),
+  });
+  return absoluteUrl(`/support?${params.toString()}`);
 }
 
 export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
@@ -76,11 +89,18 @@ export function downloadPaymentsCsv(ledger: LedgerRow, payments: LedgerPaymentRo
 
 export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
   const { jsPDF } = await import("jspdf");
+  const QR = (await import("qrcode")).default;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const marginX = 32;
   const cols = [96, 110, 90, 200];
   let y = 48;
   const receipt = receiptNumber(ledger);
+  const verify = verifyUrl(ledger, receipt);
+  const qrDataUrl = await QR.toDataURL(verify, {
+    margin: 0,
+    width: 240,
+    errorCorrectionLevel: "M",
+  }).catch(() => null);
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
 
@@ -112,6 +132,19 @@ export async function downloadPaymentsPdf(ledger: LedgerRow, payments: LedgerPay
   doc.setFontSize(14);
   doc.text("Bukti Pembayaran — MCM", marginX, y);
   y += 18;
+
+  // QR verifikasi di kanan atas halaman pertama
+  if (qrDataUrl) {
+    const qrSize = 78;
+    const qrX = pageW - marginX - qrSize;
+    doc.addImage(qrDataUrl, "PNG", qrX, 34, qrSize, qrSize);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Scan untuk verifikasi", qrX + qrSize / 2, 34 + qrSize + 9, { align: "center" });
+    doc.text(receipt, qrX + qrSize / 2, 34 + qrSize + 18, { align: "center" });
+    doc.setTextColor(0, 0, 0);
+  }
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
