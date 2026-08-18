@@ -79,10 +79,13 @@ export function LedgerPaySheet({
     }
     setSaving(true);
     try {
-      await recordPayment(ledger.id, value, "cash", note.trim(), toIso(date));
-      toast.success("Pembayaran dicatat");
-      if (actorId) await qc.invalidateQueries({ queryKey: qk.ledgers(actorId) });
-      void qc.invalidateQueries({ queryKey: qk.ledger(ledger.id) });
+      const updated = await recordPayment(ledger.id, value, "cash", note.trim(), toIso(date));
+      const sisaBaru = Math.max(0, Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0));
+      toast.success(sisaBaru === 0 ? "Pembayaran dicatat — catatan lunas" : "Pembayaran dicatat");
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["ledgers"] }),
+        qc.invalidateQueries({ queryKey: qk.ledger(ledger.id) }),
+      ]);
       onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Pembayaran gagal dicatat");

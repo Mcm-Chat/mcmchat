@@ -119,14 +119,18 @@ function LedgerDetail() {
 
   const sisa = useMemo(() => (ledger ? remaining(ledger) : 0), [ledger]);
 
-  const refresh = () => void qc.invalidateQueries({ queryKey: qk.ledger(id) });
+  const refresh = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: qk.ledger(id) }),
+      qc.invalidateQueries({ queryKey: ["ledgers"] }),
+    ]);
 
   const runStatus = async (status: LedgerRow["status"]) => {
     if (!ledger || !userId) return;
     try {
       await updateStatus(ledger.id, status, userId);
       toast.success(`Status diperbarui: ${LEDGER_STATUS_LABEL[status]}`);
-      refresh();
+      await refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memperbarui status");
     } finally {
@@ -146,11 +150,12 @@ function LedgerDetail() {
       return;
     }
     try {
-      await recordPayment(ledger.id, amount, pay.method, pay.note.trim());
-      toast.success("Pembayaran tercatat");
+      const updated = await recordPayment(ledger.id, amount, pay.method, pay.note.trim());
+      const sisaBaru = Math.max(0, Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0));
+      toast.success(sisaBaru === 0 ? "Pembayaran tercatat — catatan lunas" : "Pembayaran tercatat");
       setPayOpen(false);
       setPay({ amount: "", method: "transfer", note: "" });
-      refresh();
+      await refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Pembayaran gagal dicatat");
     }
@@ -456,10 +461,15 @@ function LedgerDetail() {
           if (!target) return;
           void (async () => {
             try {
-              await deleteLedgerPayment(target.id);
-              toast.success("Pembayaran dihapus");
-              refresh();
-              if (userId) void qc.invalidateQueries({ queryKey: qk.ledgers(userId) });
+              const updated = await deleteLedgerPayment(target.id);
+              const sisaBaru = Math.max(
+                0,
+                Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0),
+              );
+              toast.success(
+                sisaBaru > 0 ? "Pembayaran dihapus — sisa tagihan diperbarui" : "Pembayaran dihapus",
+              );
+              await refresh();
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Gagal menghapus pembayaran");
             } finally {
