@@ -651,7 +651,13 @@ function CallScreen() {
                     disabled={!controlsLive}
                     hint={!controlsLive ? notLiveHint : micGranted ? undefined : micHint}
                     ariaLabel="Bisukan mikrofon"
-                    onClick={withPermission(micGranted, micHint, session.toggleMute)}
+                    onClick={withPermission(
+                      micGranted,
+                      micHint,
+                      withFeedback(session.toggleMute, () =>
+                        session.controls.muted ? "Mikrofon dinyalakan" : "Mikrofon dimatikan",
+                      ),
+                    )}
                     icon={session.controls.muted ? MicOff : Mic}
                   />
                   <ControlButton
@@ -660,7 +666,14 @@ function CallScreen() {
                     disabled={!controlsLive}
                     hint={!controlsLive ? notLiveHint : cameraGranted ? undefined : cameraHint}
                     ariaLabel="Nyalakan kamera"
-                    onClick={withPermission(cameraGranted, cameraHint, session.toggleCamera, true)}
+                    onClick={withPermission(
+                      cameraGranted,
+                      cameraHint,
+                      withFeedback(session.toggleCamera, () =>
+                        session.controls.cameraOn ? "Kamera dimatikan" : "Kamera dinyalakan",
+                      ),
+                      true,
+                    )}
                     icon={session.controls.cameraOn ? Video : VideoOff}
                   />
                   {/* Tombol speaker hanya muncul bila rute keluaran memang bisa
@@ -672,7 +685,11 @@ function CallScreen() {
                       disabled={!controlsLive}
                       hint={!controlsLive ? notLiveHint : undefined}
                       ariaLabel="Pengeras suara"
-                      onClick={session.toggleSpeaker}
+                      onClick={withFeedback(session.toggleSpeaker, () =>
+                        session.controls.speakerOn
+                          ? "Pengeras suara dimatikan"
+                          : "Pengeras suara dinyalakan",
+                      )}
                       icon={session.controls.speakerOn ? Volume2 : VolumeX}
                     />
                   ) : (
@@ -691,7 +708,12 @@ function CallScreen() {
                     disabled={!controlsLive}
                     hint={!controlsLive ? notLiveHint : cameraGranted ? undefined : cameraHint}
                     ariaLabel="Balik kamera"
-                    onClick={withPermission(cameraGranted, cameraHint, session.switchCamera, true)}
+                    onClick={withPermission(
+                      cameraGranted,
+                      cameraHint,
+                      withFeedback(session.switchCamera, () => "Kamera dibalik"),
+                      true,
+                    )}
                     icon={RefreshCcw}
                   />
                   <ControlButton
@@ -702,6 +724,7 @@ function CallScreen() {
                     onClick={withPermission(micGranted, micHint, () => {
                       session.refreshDevices();
                       setDevicesOpen(true);
+                      toast("Memuat daftar perangkat…", { duration: 1200 });
                     })}
                     icon={SlidersHorizontal}
                   />
