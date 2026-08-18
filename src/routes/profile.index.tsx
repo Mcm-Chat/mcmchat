@@ -28,6 +28,8 @@ import {
   ProtoNote,
   SettingRow,
 } from "@/components/mcm/primitives";
+import { FieldError } from "@/components/mcm/primitives";
+import { fieldErrors, profileSchema } from "@/lib/validation/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -527,7 +529,19 @@ function ProfilePage() {
         <div className="card-soft space-y-2 p-4">
           <div className="space-y-1">
             <Label htmlFor="nm">Nama</Label>
-            <Input id="nm" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
+            <Input
+              id="nm"
+              maxLength={60}
+              value={name}
+              aria-invalid={!!(profileTouched.name && profileErrors['name'])}
+              aria-describedby={profileTouched.name && profileErrors['name'] ? "nm-error" : undefined}
+              onBlur={() => setProfileTouched((p) => ({ ...p, name: true }))}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <FieldError
+              id="nm-error"
+              message={profileTouched.name ? profileErrors['name'] : undefined}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="bio">Bio</Label>
@@ -535,12 +549,14 @@ function ProfilePage() {
               id="bio"
               maxLength={140}
               value={bio}
+              onBlur={() => setProfileTouched((p) => ({ ...p, bio: true }))}
               onChange={(e) => setBio(e.target.value)}
             />
+            <FieldError message={profileTouched.bio ? profileErrors['bio'] : undefined} />
           </div>
           <Button
             className="w-full rounded-xl"
-            disabled={savingProfile}
+            disabled={savingProfile || !profileValid}
             onClick={() => void saveProfile()}
           >
             {savingProfile ? "Menyimpan…" : "Simpan perubahan"}
