@@ -294,7 +294,7 @@ function RegisterPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Sudah punya akun?{" "}
-          <Link to="/login" className="font-semibold text-primary">
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-primary">
             Masuk
           </Link>
         </p>

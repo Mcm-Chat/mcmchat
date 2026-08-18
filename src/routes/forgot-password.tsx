@@ -120,7 +120,7 @@ function ForgotPasswordPage() {
         )}
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link to="/login" className="inline-flex items-center gap-1 font-semibold text-primary">
+          <Link to="/login" className="inline-flex min-h-11 items-center gap-1 font-semibold text-primary">
             <ArrowLeft className="size-4" /> Kembali masuk
           </Link>
         </p>

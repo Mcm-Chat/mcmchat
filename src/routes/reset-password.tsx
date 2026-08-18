@@ -182,7 +182,7 @@ function ResetPasswordPage() {
         )}
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link to="/login" className="font-semibold text-primary">
+          <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-primary">
             Kembali ke halaman masuk
           </Link>
         </p>

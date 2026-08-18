@@ -19,11 +19,12 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3 text-xs",
+        // Ponsel: minimal 40px agar nyaman disentuh; desktop kembali ringkas.
+        sm: "h-10 rounded-md px-3 text-xs sm:h-9",
         lg: "h-11 rounded-md px-8",
         // Target sentuh minimum 44px untuk kontrol ikon di Android.
         icon: "h-11 w-11",
-        "icon-sm": "h-9 w-9",
+        "icon-sm": "size-10 sm:size-9",
       },
     },
     defaultVariants: {

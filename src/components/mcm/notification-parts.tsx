@@ -63,7 +63,7 @@ export function NotificationBell({ userId }: { userId?: string | undefined }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Notifikasi" className="relative size-9">
+        <Button variant="ghost" size="icon" aria-label="Notifikasi" className="relative size-11 sm:size-9">
           <Bell className="size-5" />
           {unread > 0 && (
             <span className="absolute top-1 right-1 min-w-4 rounded-full bg-destructive px-1 text-[9px] leading-4 font-bold text-destructive-foreground">

@@ -18,6 +18,7 @@ import { OfflineBanner } from "@/components/mcm/offline-banner";
 import { isPerfOverlayEnabled } from "@/lib/debug/perf-flag";
 import { initConnectionWatcher } from "@/lib/realtime/connection";
 import { installViewportMetrics } from "@/lib/mobile/viewport";
+import { installFocusScroll } from "@/lib/mobile/focus-scroll";
 import { initOutboxFlush } from "@/lib/api/outbox";
 import { installImportantToastFocus } from "@/lib/a11y/toast-focus";
 import { installEscapeDismiss } from "@/lib/a11y/escape-dismiss";
@@ -236,6 +237,7 @@ function RootComponent() {
     const offConn = initConnectionWatcher();
     const offOutbox = initOutboxFlush();
     const offViewport = installViewportMetrics();
+    const offFocusScroll = installFocusScroll();
     const offToastFocus = installImportantToastFocus();
     const offEscape = installEscapeDismiss();
     const offScrollPerf = installScrollPerf();
@@ -244,6 +246,7 @@ function RootComponent() {
       offConn();
       offOutbox();
       offViewport();
+      offFocusScroll();
       offToastFocus();
       offEscape();
       offScrollPerf();
