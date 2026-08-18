@@ -19,7 +19,7 @@ export const Route = createFileRoute("/login")({
       { title: "Masuk ke MCM" },
       {
         name: "description",
-        content: "Masuk ke akun MCM dengan email dan kata sandi atau akun Google Anda.",
+        content: "Masuk ke akun MCM dengan email dan kata sandi Anda.",
       },
       { property: "og:title", content: "Masuk ke MCM" },
       { property: "og:description", content: "Masuk ke akun MCM Anda." },
