@@ -34,6 +34,8 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent, TouchEvent as ReactTouchEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { shareToApps } from "@/lib/mcm/share";
+import { SITE_URL } from "@/lib/site";
 import {
   DropdownMenu,
   DropdownMenuContent,
