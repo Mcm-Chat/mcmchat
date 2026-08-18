@@ -137,6 +137,42 @@ export async function updateStatus(ledgerId: string, status: LedgerRow["status"]
   });
 }
 
+/** Tambah nominal pada catatan yang sudah ada (utang/piutang bertambah). */
+export async function increaseLedgerAmount(
+  ledger: LedgerRow,
+  addAmount: number,
+  actorId: string,
+  note?: string,
+): Promise<LedgerRow> {
+  if (!(addAmount > 0)) throw new Error("Nominal harus lebih dari nol");
+  const nextAmount = Number(ledger.amount) + addAmount;
+  const paid = Number(ledger.paid_amount);
+  const nextStatus: LedgerRow["status"] =
+    ledger.status === "paid" || ledger.status === "partially_paid" || ledger.status === "active"
+      ? paid >= nextAmount
+        ? "paid"
+        : paid > 0
+          ? "partially_paid"
+          : "active"
+      : ledger.status;
+  const row = unwrap(
+    await supabase
+      .from("ledgers")
+      .update({ amount: nextAmount, status: nextStatus })
+      .eq("id", ledger.id)
+      .select("*")
+      .single(),
+    "Gagal menambah nominal",
+  );
+  await supabase.from("ledger_events").insert({
+    ledger_id: ledger.id,
+    actor_id: actorId,
+    label: "Nominal ditambah",
+    detail: note?.trim() ? note.trim() : "",
+  });
+  return row;
+}
+
 export function totals(rows: LedgerRow[]) {
   const open = rows.filter((l) => OPEN_STATUSES.includes(l.status));
   const receivable = open
