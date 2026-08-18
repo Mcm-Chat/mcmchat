@@ -1,7 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ban, Check, MessageSquare, ScanLine, Search, Trash2, UserPlus, UserX, X } from "lucide-react";
+import {
+  Ban,
+  Check,
+  Loader2,
+  MessageSquare,
+  ScanLine,
+  Search,
+  Trash2,
+  UserPlus,
+  UserX,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
@@ -119,14 +130,29 @@ function ContactsPage() {
     setBusy(r.id);
     try {
       await respondToRequest(r, action);
-      refreshAll();
-      toast.success(
-        action === "accepted"
-          ? "Kontak ditambahkan"
-          : action === "rejected"
-            ? "Permintaan ditolak"
-            : "Pengirim diblokir",
-      );
+      if (action === "accepted") {
+        // Kontak baru harus langsung terlihat di daftar chat, jadi percakapan
+        // langsungnya dibuat begitu permintaan diterima.
+        let convId: string | null = null;
+        try {
+          convId = await getOrCreateDirect(r.requester_id);
+        } catch {
+          /* chat bisa dibuka manual bila pembuatan percakapan gagal */
+        }
+        refreshAll();
+        void qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
+        toast.success("Kontak ditambahkan — sudah muncul di daftar chat", {
+          action: convId
+            ? {
+                label: "Buka chat",
+                onClick: () => void navigate({ to: "/chat/$id", params: { id: convId } }),
+              }
+            : undefined,
+        });
+      } else {
+        refreshAll();
+        toast.success(action === "rejected" ? "Permintaan ditolak" : "Pengirim diblokir");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal memproses permintaan");
     } finally {
@@ -353,7 +379,8 @@ function ContactsPage() {
                   disabled={busy === c.contact_id}
                   onClick={() => void askConnect(c.contact_id)}
                 >
-                  Kirim permintaan
+                  {busy === c.contact_id && <Loader2 className="size-3.5 animate-spin" />}
+                  {busy === c.contact_id ? "Mengirim…" : "Kirim permintaan"}
                 </Button>
                 <Button
                   variant="ghost"
@@ -408,11 +435,15 @@ function ContactsPage() {
                       <Button
                         size="icon"
                         className="size-9 rounded-xl"
-                        aria-label="Terima"
+                        aria-label={busy === r.id ? "Memproses permintaan" : "Terima"}
                         disabled={busy === r.id}
                         onClick={() => void respond(r, "accepted")}
                       >
-                        <Check className="size-4" />
+                        {busy === r.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Check className="size-4" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"
