@@ -15,6 +15,8 @@ import {
   Info,
   MailOpen,
   CheckCheck,
+  MoreVertical,
+  Pencil,
   Phone,
   RotateCw,
   Users,
@@ -24,7 +26,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
-import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
+import { RenameContactDialog } from "@/components/mcm/rename-contact-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useContactAliases } from "@/lib/contacts/alias";
 import { MessageBubble, type MessageAction } from "@/components/mcm/chat-parts";
 import { ComposerHost, type ComposerHandle } from "@/components/mcm/composer-host";
@@ -198,6 +206,7 @@ function ChatRoom() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [stickerOpen, setStickerOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [ledgerOpen, setLedgerOpen] = useState(false);
   const [prepOpen, setPrepOpen] = useState(false);
   const [saleOpen, setSaleOpen] = useState(false);
