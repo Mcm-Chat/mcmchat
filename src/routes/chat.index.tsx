@@ -583,6 +583,18 @@ function ChatIndex() {
                   ? "Belum ada percakapan grup."
                   : "Belum ada percakapan dengan kontak."
             }
+            action={
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => {
+                  setQ("");
+                  setKind("all");
+                }}
+              >
+                Hapus pencarian & filter
+              </Button>
+            }
           />
         ) : (
           <EmptyState
