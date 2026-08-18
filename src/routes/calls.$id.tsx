@@ -350,6 +350,13 @@ function CallDetailPage() {
           void navigate({ to: "/calls" });
         }}
       />
+
+      <CallNoteDialog
+        userId={userId}
+        target={noteTarget}
+        onOpenChange={(o) => (o ? undefined : setNoteTarget(null))}
+        onSaved={reloadNote}
+      />
     </AppShell>
   );
 }
