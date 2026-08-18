@@ -78,7 +78,7 @@ import {
   CallNoteIconButton,
   type CallNoteTarget,
 } from "@/components/mcm/call-note-dialog";
-import { listCallNotes, type CallNote } from "@/lib/api/call-notes";
+import { listCallNotes, subscribeMyCallNotes, type CallNote } from "@/lib/api/call-notes";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -153,12 +153,19 @@ function CallsPage() {
   useEffect(() => {
     reloadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, calls]);
+
+  // Catatan yang diubah dari perangkat lain langsung tersinkron.
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeMyCallNotes(userId, reloadNotes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
     reloadReminders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, calls]);
 
   /**
    * Setelah panggilan berakhir/dibatalkan, kembalikan fokus keyboard ke tombol
