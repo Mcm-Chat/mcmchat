@@ -222,6 +222,9 @@ export type UseCallResult = {
   refreshDevices: () => void;
   setMicDevice: (deviceId: string) => void;
   setCameraDevice: (deviceId: string) => void;
+  /** Perangkat keluaran audio aktif (bila browser mendukung setSinkId). */
+  speakerDeviceId: string | null;
+  setSpeakerDevice: (deviceId: string) => void;
   attachLocalVideo: (el: HTMLVideoElement | null) => void;
   attachRemoteVideo: (el: HTMLVideoElement | null) => void;
 };
@@ -263,7 +266,8 @@ export function useCall(opts: {
   const [metrics, setMetrics] = useState<QualityMetrics | null>(null);
   /** Cuplikan stats sebelumnya — metrik hanya berarti sebagai selisih. */
   const lastSnapRef = useRef<QualitySnapshot | null>(null);
-  const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [] });
+  const [devices, setDevices] = useState<CallDevices>({ mics: [], cameras: [], speakers: [] });
+  const [speakerDeviceId, setSpeakerDeviceId] = useState<string | null>(null);
   const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const [cameraDeviceId, setCameraDeviceId] = useState<string | null>(null);
   /** Preferensi kamera tersimpan hanya dipulihkan sekali per sesi panggilan. */
@@ -822,6 +826,7 @@ export function useCall(opts: {
         setDevices({
           mics: map("audioinput", "Mikrofon"),
           cameras: map("videoinput", "Kamera"),
+          speakers: map("audiooutput", "Speaker"),
         });
       })
       .catch(() => undefined);
@@ -873,6 +878,16 @@ export function useCall(opts: {
         setCameraDeviceId(deviceId);
         writePreferredDevice("camera", deviceId);
       } else setReason("Kamera itu tidak bisa dipakai saat ini");
+    });
+  }, []);
+
+  /** Ganti keluaran audio (speaker/headset) tanpa memutus panggilan. */
+  const setSpeakerDevice = useCallback((deviceId: string) => {
+    const session = sessionRef.current;
+    if (!session) return;
+    void session.setAudioOutput(deviceId).then((ok) => {
+      if (ok) setSpeakerDeviceId(deviceId);
+      else setReason("Perangkat keluaran itu tidak bisa dipakai saat ini");
     });
   }, []);
 
@@ -1071,6 +1086,8 @@ export function useCall(opts: {
       refreshDevices,
       setMicDevice,
       setCameraDevice,
+      speakerDeviceId,
+      setSpeakerDevice,
       attachLocalVideo,
       attachRemoteVideo,
     }),
@@ -1105,6 +1122,8 @@ export function useCall(opts: {
       refreshDevices,
       setMicDevice,
       setCameraDevice,
+      speakerDeviceId,
+      setSpeakerDevice,
       attachLocalVideo,
       attachRemoteVideo,
     ],
