@@ -130,6 +130,10 @@ function LedgerDetail() {
   }, [id, qc]);
 
   const [payOpen, setPayOpen] = useState(false);
+  const [exports, setExports] = useState<ExportHistoryEntry[]>([]);
+  useEffect(() => {
+    setExports(listExportHistory(id));
+  }, [id]);
   const [pay, setPay] = useState({ amount: "", method: "transfer", note: "" });
   const [delPayment, setDelPayment] = useState<null | { id: string; amount: number }>(null);
   const [confirm, setConfirm] = useState<null | {
