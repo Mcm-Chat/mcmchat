@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, MessageSquare, Wallet } from "lucide-react";
 import { labelHari, rupiah, tanggal } from "@/lib/mcm/format";
 import { LEDGER_STATUS_LABEL, remaining, type LedgerRow } from "@/lib/api/ledger";
 import { PAYMENT_LABEL, type OrderRow, type SalesRecordRow } from "@/lib/api/sales";
