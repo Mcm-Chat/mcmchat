@@ -32,6 +32,9 @@ import {
 import { isLiveCall, liveStatusLabel, useSecondTick } from "@/lib/calls/live-status";
 import { callOutcome, OUTCOME_LABEL } from "@/lib/calls/outcome";
 import { PageSkeleton } from "@/components/mcm/route-skeletons";
+import { CallNoteDialog, type CallNoteTarget } from "@/components/mcm/call-note-dialog";
+import { listCallNotes, type CallNote } from "@/lib/api/call-notes";
+import { NotebookPen } from "lucide-react";
 
 export const Route = createFileRoute("/calls/$id")({
   head: () => ({
@@ -69,6 +72,8 @@ function CallDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteCallTarget | null>(null);
+  const [note, setNote] = useState<CallNote | null>(null);
+  const [noteTarget, setNoteTarget] = useState<CallNoteTarget | null>(null);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
   const liveStatus = (calls ?? []).find((c) => c.id === id)?.status ?? "";
@@ -79,6 +84,18 @@ function CallDetailPage() {
       .then((c) => setConfigured(c.configured))
       .catch(() => setConfigured(false));
   }, [loadConfig]);
+
+  const reloadNote = () => {
+    if (!userId) return;
+    void listCallNotes(userId)
+      .then((map) => setNote(map[id] ?? null))
+      .catch(() => undefined);
+  };
+
+  useEffect(() => {
+    reloadNote();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, id]);
 
   const call: CallHistoryItem | undefined = (calls ?? []).find((c) => c.id === id);
   const other = call?.participants.find((p) => p.user_id !== userId) ?? null;
@@ -235,6 +252,34 @@ function CallDetailPage() {
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
+            <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-1">
+              <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Catatan panggilan
+              </h2>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="rounded-xl"
+                onClick={() =>
+                  setNoteTarget({ callId: call.id, peerName, note: note?.note ?? "" })
+                }
+              >
+                <NotebookPen className="size-4" /> {note ? "Ubah" : "Tambah"}
+              </Button>
+            </div>
+            <p className="px-4 pb-3 text-sm whitespace-pre-wrap">
+              {note ? (
+                note.note
+              ) : (
+                <span className="text-muted-foreground">
+                  Belum ada catatan. Simpan poin singkat hasil panggilan ini — hanya Anda yang bisa
+                  melihatnya.
+                </span>
+              )}
+            </p>
+          </section>
+
+          <section className="overflow-hidden rounded-2xl border border-border/70 bg-card">
             <h2 className="px-4 pt-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Peserta
             </h2>
@@ -304,6 +349,13 @@ function CallDetailPage() {
           void refetch();
           void navigate({ to: "/calls" });
         }}
+      />
+
+      <CallNoteDialog
+        userId={userId}
+        target={noteTarget}
+        onOpenChange={(o) => (o ? undefined : setNoteTarget(null))}
+        onSaved={reloadNote}
       />
     </AppShell>
   );

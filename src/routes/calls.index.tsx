@@ -73,6 +73,12 @@ import {
   listCallReminders,
   type CallReminder,
 } from "@/lib/api/call-reminders";
+import {
+  CallNoteDialog,
+  CallNoteIconButton,
+  type CallNoteTarget,
+} from "@/components/mcm/call-note-dialog";
+import { listCallNotes, type CallNote } from "@/lib/api/call-notes";
 
 export const Route = createFileRoute("/calls/")({
   head: () => ({
@@ -111,6 +117,8 @@ function CallsPage() {
   const [missedTarget, setMissedTarget] = useState<MissedCallTarget | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteCallTarget | null>(null);
   const [reminders, setReminders] = useState<CallReminder[]>([]);
+  const [notes, setNotes] = useState<Record<string, CallNote>>({});
+  const [noteTarget, setNoteTarget] = useState<CallNoteTarget | null>(null);
   const [dismissedReminders, setDismissedReminders] = useState<string[]>([]);
   const navigate = useNavigate();
   const loadConfig = useServerFn(getCallConfig);
@@ -134,6 +142,18 @@ function CallsPage() {
       .then(setReminders)
       .catch(() => undefined);
   };
+
+  const reloadNotes = () => {
+    if (!userId) return;
+    void listCallNotes(userId)
+      .then(setNotes)
+      .catch(() => undefined);
+  };
+
+  useEffect(() => {
+    reloadNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   useEffect(() => {
     reloadReminders();
@@ -473,8 +493,25 @@ function CallsPage() {
                     >
                       {tanggal(c.created_at)} • {jam(c.created_at)}
                     </p>
+                    {notes[c.id] && (
+                      <p className="mt-1 line-clamp-2 rounded-lg bg-muted/60 px-2 py-1 text-[11px] text-muted-foreground">
+                        {notes[c.id]!.note}
+                      </p>
+                    )}
                   </div>
                 </button>
+                <CallNoteIconButton
+                  callId={c.id}
+                  hasNote={Boolean(notes[c.id])}
+                  label={`${notes[c.id] ? "Ubah" : "Tambah"} catatan panggilan dengan ${peerName}`}
+                  onClick={() =>
+                    setNoteTarget({
+                      callId: c.id,
+                      peerName,
+                      note: notes[c.id]?.note ?? "",
+                    })
+                  }
+                />
                 {isMissed && (
                   <Button
                     variant="ghost"
@@ -542,6 +579,13 @@ function CallsPage() {
         target={deleteTarget}
         onOpenChange={(o) => (o ? undefined : setDeleteTarget(null))}
         onDeleted={() => void refetch()}
+      />
+
+      <CallNoteDialog
+        userId={userId}
+        target={noteTarget}
+        onOpenChange={(o) => (o ? undefined : setNoteTarget(null))}
+        onSaved={reloadNotes}
       />
 
       <Dialog open={newOpen} onOpenChange={setNewOpen}>
