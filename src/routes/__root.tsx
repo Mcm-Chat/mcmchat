@@ -30,6 +30,7 @@ import {
   isChunkLoadError,
   recoverFromChunkError,
   retryRouteLoad,
+  retryRouteRender,
   type RecoveryStage,
 } from "@/lib/chunk-recovery";
 
@@ -76,14 +77,19 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   const stageLabel: Record<RecoveryStage, string> = {
     idle: chunk ? "Muat ulang" : "Coba lagi",
-    membersihkan: "Membersihkan cache…",
+    mencoba: "Mencoba kembali…",
     mengunduh: "Mengunduh ulang halaman…",
     menampilkan: "Menampilkan halaman…",
-    gagal: "Memuat ulang aplikasi…",
+    gagal: chunk ? "Memuat ulang aplikasi…" : "Belum berhasil — coba lagi",
   };
 
   const handleRetry = async () => {
     if (busy) return;
+    if (!chunk) {
+      const ok = await retryRouteRender(router, reset, setStage);
+      setStage(ok ? "idle" : "gagal");
+      return;
+    }
     const target =
       typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
     const ok = await retryRouteLoad(router, target, setStage);
@@ -101,8 +107,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">
           {chunk
             ? "Sebagian aplikasi tidak berhasil diunduh, biasanya karena ada versi baru atau koneksi terputus. Muat ulang untuk melanjutkan."
-            : "Terjadi kesalahan. Coba lagi atau kembali ke beranda."}
+            : "Data halaman gagal diproses. Coba lagi; bila berulang, waktu kejadian di bawah membantu pelacakan."}
         </p>
+        {!chunk && (
+          <p className="mt-2 font-mono text-[11px] text-muted-foreground" aria-label="Referensi error">
+            Ref {error.name || "Error"} · {new Date().toISOString().slice(11, 19)} UTC
+          </p>
+        )}
         {busy && (
           <p aria-live="polite" className="mt-3 text-xs font-medium text-primary">
             {stageLabel[stage]}
