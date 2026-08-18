@@ -533,14 +533,16 @@ function ProfilePage() {
               id="nm"
               maxLength={60}
               value={name}
-              aria-invalid={!!(profileTouched.name && profileErrors['name'])}
-              aria-describedby={profileTouched.name && profileErrors['name'] ? "nm-error" : undefined}
+              aria-invalid={!!(profileTouched.name && profileErrors["name"])}
+              aria-describedby={
+                profileTouched.name && profileErrors["name"] ? "nm-error" : undefined
+              }
               onBlur={() => setProfileTouched((p) => ({ ...p, name: true }))}
               onChange={(e) => setName(e.target.value)}
             />
             <FieldError
               id="nm-error"
-              message={profileTouched.name ? profileErrors['name'] : undefined}
+              message={profileTouched.name ? profileErrors["name"] : undefined}
             />
           </div>
           <div className="space-y-1">
@@ -552,7 +554,7 @@ function ProfilePage() {
               onBlur={() => setProfileTouched((p) => ({ ...p, bio: true }))}
               onChange={(e) => setBio(e.target.value)}
             />
-            <FieldError message={profileTouched.bio ? profileErrors['bio'] : undefined} />
+            <FieldError message={profileTouched.bio ? profileErrors["bio"] : undefined} />
           </div>
           <Button
             className="w-full rounded-xl"

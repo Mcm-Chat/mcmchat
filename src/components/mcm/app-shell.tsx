@@ -1,12 +1,5 @@
 import { Link, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  MessageCircle,
-  Phone,
-  Store,
-  User,
-  Wallet,
-} from "lucide-react";
+import { ArrowLeft, MessageCircle, Phone, Store, User, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";

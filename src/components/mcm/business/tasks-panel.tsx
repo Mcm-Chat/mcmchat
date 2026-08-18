@@ -28,7 +28,6 @@ import {
   type JobWithItems,
 } from "@/lib/api/tasks";
 
-
 const TAB_STATUSES: Record<string, string[] | null> = {
   semua: null,
   dikirim: ["draft", "sent"],

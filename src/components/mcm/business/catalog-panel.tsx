@@ -60,7 +60,6 @@ import {
 import { rupiah } from "@/lib/mcm/format";
 import { ROLE_LABEL } from "@/lib/api/business";
 
-
 export function CatalogPanel() {
   const { userId, loading } = useRequireAuth();
   const navigate = useNavigate();
@@ -248,176 +247,181 @@ export function CatalogPanel() {
           subtitle={`${biz.business.name} · ${ROLE_LABEL[biz.role]}`}
           actions={
             <>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Buat bisnis baru"
-              className="size-11"
-              onClick={() => setBizOpen(true)}
-            >
-              <Store className="size-5" />
-            </Button>
-            <Dialog open={addOpen} onOpenChange={setAddOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Tambah produk" className="size-11">
-                  <Plus className="size-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl">
-                <DialogHeader>
-                  <DialogTitle>Produk baru</DialogTitle>
-                  <DialogDescription>
-                    Lengkapi data pembelian pertama (agen, jenis, jumlah, harga modal) agar stok dan
-                    indikator laba langsung terhubung.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label>Nama produk</Label>
-                    <Input
-                      value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                      placeholder="Contoh: Kopi Arabika"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Kategori</Label>
-                    <Input
-                      value={form.category}
-                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                      placeholder="Contoh: Minuman"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Harga jual dasar (Rp)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={form.price}
-                      onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <Label>Deskripsi</Label>
-                      <AiDescriptionButton
-                        name={form.name}
-                        category={form.category}
-                        price={Number(form.price) || undefined}
-                        currentDescription={form.description}
-                        onApply={(text) => setForm((f) => ({ ...f, description: text }))}
-                      />
-                    </div>
-                    <Textarea
-                      value={form.description}
-                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                      rows={4}
-                      placeholder="Opsional"
-                    />
-                  </div>
-                  <div className="space-y-3 rounded-xl border border-border p-3">
-                    <p className="text-xs font-semibold tracking-[0.04em] uppercase">
-                      Pembelian pertama (modal)
-                    </p>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Buat bisnis baru"
+                className="size-11"
+                onClick={() => setBizOpen(true)}
+              >
+                <Store className="size-5" />
+              </Button>
+              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Tambah produk"
+                    className="size-11"
+                  >
+                    <Plus className="size-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Produk baru</DialogTitle>
+                    <DialogDescription>
+                      Lengkapi data pembelian pertama (agen, jenis, jumlah, harga modal) agar stok
+                      dan indikator laba langsung terhubung.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3">
                     <div className="space-y-1.5">
-                      <Label>Agen / pemasok</Label>
+                      <Label>Nama produk</Label>
                       <Input
-                        value={form.supplier}
-                        onChange={(e) => setForm((f) => ({ ...f, supplier: e.target.value }))}
-                        placeholder="Contoh: CV Sumber Pasir"
+                        value={form.name}
+                        onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                        placeholder="Contoh: Kopi Arabika"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Kontak agen (opsional)</Label>
+                      <Label>Kategori</Label>
                       <Input
-                        value={form.supplierContact}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, supplierContact: e.target.value }))
-                        }
-                        placeholder="No. HP / alamat"
+                        value={form.category}
+                        onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                        placeholder="Contoh: Minuman"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Nama varian / ecer pertama</Label>
+                      <Label>Harga jual dasar (Rp)</Label>
                       <Input
-                        value={form.variantName}
-                        onChange={(e) => setForm((f) => ({ ...f, variantName: e.target.value }))}
-                        placeholder="Contoh: Kristal"
-                      />
-                    </div>
-                    {!(WEIGHT_UNITS as readonly string[]).includes(form.unit) && (
-                      <div className="space-y-1.5">
-                        <Label>Isi per {form.unit} (pcs)</Label>
-                        <Input
-                          inputMode="numeric"
-                          value={form.perBuyUnit}
-                          onChange={(e) => setForm((f) => ({ ...f, perBuyUnit: e.target.value }))}
-                          placeholder="1"
-                        />
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <div className="flex-1 space-y-1.5">
-                        <Label>Jumlah</Label>
-                        <Input
-                          inputMode="decimal"
-                          value={form.qty}
-                          onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="w-28 space-y-1.5">
-                        <Label>Satuan</Label>
-                        <Select
-                          value={form.unit}
-                          onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}
-                        >
-                          <SelectTrigger className="rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[...COUNT_UNITS, ...WEIGHT_UNITS].map((u) => (
-                              <SelectItem key={u} value={u}>
-                                {u}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Harga modal per {form.unit} (Rp)</Label>
-                      <Input
-                        inputMode="numeric"
-                        value={form.cost}
-                        onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))}
+                        type="number"
+                        min={0}
+                        value={form.price}
+                        onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                         placeholder="0"
                       />
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Total modal:{" "}
-                      <span className="font-semibold text-foreground">
-                        {rupiah(
-                          (Number(form.qty.replace(",", ".")) || 0) *
-                            (Number(form.cost.replace(/[^\d]/g, "")) || 0),
-                        )}
-                      </span>{" "}
-                      · kosongkan bagian ini bila belum ada pembelian.
-                    </p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label>Deskripsi</Label>
+                        <AiDescriptionButton
+                          name={form.name}
+                          category={form.category}
+                          price={Number(form.price) || undefined}
+                          currentDescription={form.description}
+                          onApply={(text) => setForm((f) => ({ ...f, description: text }))}
+                        />
+                      </div>
+                      <Textarea
+                        value={form.description}
+                        onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                        rows={4}
+                        placeholder="Opsional"
+                      />
+                    </div>
+                    <div className="space-y-3 rounded-xl border border-border p-3">
+                      <p className="text-xs font-semibold tracking-[0.04em] uppercase">
+                        Pembelian pertama (modal)
+                      </p>
+                      <div className="space-y-1.5">
+                        <Label>Agen / pemasok</Label>
+                        <Input
+                          value={form.supplier}
+                          onChange={(e) => setForm((f) => ({ ...f, supplier: e.target.value }))}
+                          placeholder="Contoh: CV Sumber Pasir"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Kontak agen (opsional)</Label>
+                        <Input
+                          value={form.supplierContact}
+                          onChange={(e) =>
+                            setForm((f) => ({ ...f, supplierContact: e.target.value }))
+                          }
+                          placeholder="No. HP / alamat"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Nama varian / ecer pertama</Label>
+                        <Input
+                          value={form.variantName}
+                          onChange={(e) => setForm((f) => ({ ...f, variantName: e.target.value }))}
+                          placeholder="Contoh: Kristal"
+                        />
+                      </div>
+                      {!(WEIGHT_UNITS as readonly string[]).includes(form.unit) && (
+                        <div className="space-y-1.5">
+                          <Label>Isi per {form.unit} (pcs)</Label>
+                          <Input
+                            inputMode="numeric"
+                            value={form.perBuyUnit}
+                            onChange={(e) => setForm((f) => ({ ...f, perBuyUnit: e.target.value }))}
+                            placeholder="1"
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1.5">
+                          <Label>Jumlah</Label>
+                          <Input
+                            inputMode="decimal"
+                            value={form.qty}
+                            onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="w-28 space-y-1.5">
+                          <Label>Satuan</Label>
+                          <Select
+                            value={form.unit}
+                            onValueChange={(v) => setForm((f) => ({ ...f, unit: v }))}
+                          >
+                            <SelectTrigger className="rounded-xl">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[...COUNT_UNITS, ...WEIGHT_UNITS].map((u) => (
+                                <SelectItem key={u} value={u}>
+                                  {u}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Harga modal per {form.unit} (Rp)</Label>
+                        <Input
+                          inputMode="numeric"
+                          value={form.cost}
+                          onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))}
+                          placeholder="0"
+                        />
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Total modal:{" "}
+                        <span className="font-semibold text-foreground">
+                          {rupiah(
+                            (Number(form.qty.replace(",", ".")) || 0) *
+                              (Number(form.cost.replace(/[^\d]/g, "")) || 0),
+                          )}
+                        </span>{" "}
+                        · kosongkan bagian ini bila belum ada pembelian.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    className="w-full rounded-xl"
-                    disabled={saving}
-                    onClick={() => void submitProduct()}
-                  >
-                    {saving ? "Menyimpan…" : "Simpan & lanjut kelola"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter>
+                    <Button
+                      className="w-full rounded-xl"
+                      disabled={saving}
+                      onClick={() => void submitProduct()}
+                    >
+                      {saving ? "Menyimpan…" : "Simpan & lanjut kelola"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </>
           }
         >
