@@ -109,7 +109,7 @@ export type RecoveryStage = "idle" | "mencoba" | "mengunduh" | "menampilkan" | "
 export function isDomMutationError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const name = error.name;
-  if (name !== "NotFoundError" && name !== "HierarchyRequestError") return true === false;
+  if (name !== "NotFoundError" && name !== "HierarchyRequestError") return false;
   const msg = error.message.toLowerCase();
   return /removechild|insertbefore|appendchild|replacechild|node to be removed|not a child of this node/.test(
     msg,
