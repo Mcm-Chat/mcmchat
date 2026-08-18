@@ -320,7 +320,7 @@ function CallsPage() {
         >
           <div className="px-3 pb-3">
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="w-full rounded-xl">
+              <TabsList className="w-full overflow-x-auto rounded-xl">
                 <TabsTrigger value="semua" className="flex-1 rounded-lg">
                   Semua
                 </TabsTrigger>
@@ -329,6 +329,12 @@ function CallsPage() {
                 </TabsTrigger>
                 <TabsTrigger value="keluar" className="flex-1 rounded-lg">
                   Keluar
+                </TabsTrigger>
+                <TabsTrigger value="terjawab" className="flex-1 rounded-lg">
+                  Terjawab
+                </TabsTrigger>
+                <TabsTrigger value="batal" className="flex-1 rounded-lg">
+                  Batal
                 </TabsTrigger>
                 <TabsTrigger value="takterjawab" className="flex-1 rounded-lg">
                   Tak dijawab
