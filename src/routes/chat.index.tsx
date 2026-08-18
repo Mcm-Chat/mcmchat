@@ -99,6 +99,7 @@ function ChatIndex() {
   const { data: contacts } = useContacts(userId);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState("semua");
+  const [kind, setKind] = useState<"all" | "direct" | "group">("all");
   const [groupOpen, setGroupOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
@@ -113,19 +114,26 @@ function ChatIndex() {
   const list = useMemo(() => {
     const all = conversations ?? [];
     const needle = q.trim().toLowerCase();
+    const byKind =
+      kind === "all"
+        ? all
+        : kind === "group"
+          ? all.filter((c) => c.type === "group")
+          : all.filter((c) => c.type !== "group");
     const filtered = needle
       ? all.filter((c) => {
           if (c.title_resolved.toLowerCase().includes(needle)) return true;
+          if ((c.lastMessage?.body ?? "").toLowerCase().includes(needle)) return true;
           return c.members.some(
             (m) =>
               m.display_name.toLowerCase().includes(needle) || m.pin.toLowerCase().includes(needle),
           );
         })
-      : all;
+      : byKind;
     if (tab === "arsip") return filtered.filter((c) => c.me.is_archived);
     const active = filtered.filter((c) => !c.me.is_archived);
     return tab === "belum" ? active.filter((c) => c.unread > 0) : active;
-  }, [conversations, q, tab]);
+  }, [conversations, q, tab, kind]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
 
