@@ -11,7 +11,7 @@ const slug = (v: string) =>
 
 export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf", receipt?: string) {
   const date = new Date().toISOString().slice(0, 10);
-  const suffix = receipt ? `-${slug(receipt)}` : "";
+  const suffix = receipt ? `-${receipt.replace(/[^A-Za-z0-9-]/g, "")}` : "";
   return `pembayaran-${slug(ledger.counterpart_name ?? "catatan")}-${date}${suffix}.${ext}`;
 }
 
