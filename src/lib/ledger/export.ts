@@ -1,5 +1,6 @@
 import { LEDGER_STATUS_LABEL, remaining, type LedgerPaymentRow, type LedgerRow } from "@/lib/api/ledger";
 import { rupiah, tanggal } from "@/lib/mcm/format";
+import { absoluteUrl } from "@/lib/site";
 
 const HEADERS = ["Tanggal", "Nominal", "Metode", "Catatan"] as const;
 
@@ -28,6 +29,18 @@ export function receiptNumber(ledger: LedgerRow, at = new Date()) {
     seed = Math.floor(seed / B32.length) + (i + 1) * 7919;
   }
   return `MCM-${date}-${code}`;
+}
+
+/** Tautan verifikasi yang di-encode ke QR pada PDF bukti. */
+export function verifyUrl(ledger: LedgerRow, receipt: string) {
+  const params = new URLSearchParams({
+    bukti: receipt,
+    catatan: ledger.id,
+    total: String(Number(ledger.amount)),
+    dibayar: String(Number(ledger.paid_amount)),
+    sisa: String(remaining(ledger)),
+  });
+  return absoluteUrl(`/support?${params.toString()}`);
 }
 
 export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
