@@ -123,6 +123,7 @@ export const useSales = (bid?: string) =>
 export function useRealtimeSync(uid?: string) {
   const qc = useQueryClient();
   const convTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!uid) return;
     // Daftar percakapan disegarkan dengan debounce agar burst pesan tidak
@@ -132,6 +133,16 @@ export function useRealtimeSync(uid?: string) {
       convTimer.current = setTimeout(() => {
         void qc.invalidateQueries({ queryKey: qk.conversations(uid) });
       }, 400);
+    };
+
+    // Satu panggilan menghasilkan beberapa event (calls + call_participants +
+    // perubahan status berturut-turut); debounce singkat menjaga daftar tetap
+    // terasa instan tanpa refetch beruntun.
+    const refreshCalls = () => {
+      if (callTimer.current) clearTimeout(callTimer.current);
+      callTimer.current = setTimeout(() => {
+        void qc.invalidateQueries({ queryKey: qk.calls(uid) });
+      }, 150);
     };
 
     const applyInsert = (row: MessageRow) => {
@@ -246,18 +257,19 @@ export function useRealtimeSync(uid?: string) {
           void qc.invalidateQueries({ queryKey: qk.contacts(uid) });
         })
         .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
-          void qc.invalidateQueries({ queryKey: qk.calls(uid) });
+          refreshCalls();
         })
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "call_participants" },
           () => {
-            void qc.invalidateQueries({ queryKey: qk.calls(uid) });
+            refreshCalls();
           },
         ),
     );
     return () => {
       if (convTimer.current) clearTimeout(convTimer.current);
+      if (callTimer.current) clearTimeout(callTimer.current);
       unsubscribe();
     };
   }, [uid, qc]);
