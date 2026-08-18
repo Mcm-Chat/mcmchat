@@ -14,6 +14,22 @@ export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf") {
     .slice(0, 10)}.${ext}`;
 }
 
+const B32 = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+/** Nomor bukti unik, mis. MCM-20260818-7QF3K2 */
+export function receiptNumber(ledger: LedgerRow, at = new Date()) {
+  const date = `${at.getFullYear()}${String(at.getMonth() + 1).padStart(2, "0")}${String(at.getDate()).padStart(2, "0")}`;
+  let seed = 0;
+  const base = `${ledger.id}|${at.getTime()}|${Math.random()}`;
+  for (let i = 0; i < base.length; i++) seed = (seed * 31 + base.charCodeAt(i)) >>> 0;
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += B32[seed % B32.length];
+    seed = Math.floor(seed / B32.length) + (i + 1) * 7919;
+  }
+  return `MCM-${date}-${code}`;
+}
+
 export function paymentsToCsv(ledger: LedgerRow, payments: LedgerPaymentRow[]) {
   const meta = [
     ["Catatan", ledger.counterpart_name ?? "-"],
