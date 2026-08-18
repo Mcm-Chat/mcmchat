@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { durasi, jam, tanggal, waktuRelatif } from "@/lib/mcm/format";
 import { useRequireAuth } from "@/lib/api/guard";
-import { useCalls, useConversations } from "@/lib/api/queries";
+import { useCalls, useContacts, useConversations } from "@/lib/api/queries";
 import { markMissedCallsSeen } from "@/lib/calls/missed-seen";
 import { toast } from "sonner";
 import { type CallHistoryItem } from "@/lib/api/calls";
@@ -106,10 +106,12 @@ function CallsPage() {
   const { nameOf } = useContactAliases();
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
   const { data: conversations } = useConversations(userId);
+  const { data: contacts } = useContacts(userId);
   const [tab, setTab] = useState("semua");
   const [notice, setNotice] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const newCallRef = useRef<HTMLButtonElement>(null);
   const noticeReturnRef = useRef<HTMLElement | null>(null);
@@ -245,6 +247,27 @@ function CallsPage() {
     }
   };
 
+  // PIN kontak hanya bisa dibaca lewat RPC `pins_for_me`, sudah termuat di daftar kontak.
+  const pinByUser = new Map(
+    (contacts ?? []).map((c) => [c.contact_id, (c.profile.pin ?? "").toLowerCase()]),
+  );
+  const term = query.trim().toLowerCase();
+  const pinTerm = term.replace(/[^a-z0-9]/g, "");
+
+  /** Cocokkan satu panggilan dengan kata kunci: nama kontak, PIN, atau status. */
+  const matches = (c: CallHistoryItem) => {
+    if (!term) return true;
+    const other = counterpartOf(c, userId);
+    const name = nameOf(other?.user_id, other?.display_name ?? "Pengguna MCM").toLowerCase();
+    if (name.includes(term)) return true;
+    const pin = other ? (pinByUser.get(other.user_id) ?? "") : "";
+    if (pinTerm && pin.replace(/[^a-z0-9]/g, "").includes(pinTerm)) return true;
+    const outcome = callOutcome(c, userId);
+    if (OUTCOME_LABEL[outcome].toLowerCase().includes(term)) return true;
+    if ((c.kind === "video" ? "video" : "suara").includes(term)) return true;
+    return false;
+  };
+
   const list = (calls ?? [])
     .filter((c) => {
       const outcome = callOutcome(c, userId);
@@ -255,6 +278,7 @@ function CallsPage() {
       if (tab === "keluar") return c.initiator_id === userId;
       return true;
     })
+    .filter(matches)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const dialTargets = (conversations ?? []).filter(
@@ -336,6 +360,29 @@ function CallsPage() {
           }
         >
           <div className="px-3 pb-3">
+            <div className="relative mb-2">
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                maxLength={60}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Cari panggilan berdasarkan nama, PIN, atau status"
+                placeholder="Cari nama, PIN, atau status"
+                className="h-10 rounded-xl pr-10 pl-9"
+              />
+              {query && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Bersihkan pencarian"
+                  className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+                  onClick={() => setQuery("")}
+                >
+                  <X className="size-4" />
+                </Button>
+              )}
+            </div>
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="w-full overflow-x-auto rounded-xl">
                 <TabsTrigger value="semua" className="flex-1 rounded-lg">
@@ -427,8 +474,12 @@ function CallsPage() {
       ) : list.length === 0 ? (
         <EmptyState
           icon={PhoneCall}
-          title="Belum ada panggilan"
-          description="Riwayat panggilan suara dan video Anda akan muncul di sini."
+          title={term ? "Tidak ada hasil" : "Belum ada panggilan"}
+          description={
+            term
+              ? `Tidak ada panggilan yang cocok dengan "${query.trim()}". Coba nama kontak, PIN, atau status seperti "tak terjawab".`
+              : "Riwayat panggilan suara dan video Anda akan muncul di sini."
+          }
         />
       ) : (
         <ul className="divide-y divide-border/70">
