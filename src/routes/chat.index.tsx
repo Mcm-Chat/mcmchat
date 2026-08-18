@@ -99,6 +99,7 @@ function ChatIndex() {
   const { data: contacts } = useContacts(userId);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState("semua");
+  const [kind, setKind] = useState<"all" | "direct" | "group">("all");
   const [groupOpen, setGroupOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
@@ -113,19 +114,26 @@ function ChatIndex() {
   const list = useMemo(() => {
     const all = conversations ?? [];
     const needle = q.trim().toLowerCase();
+    const byKind =
+      kind === "all"
+        ? all
+        : kind === "group"
+          ? all.filter((c) => c.type === "group")
+          : all.filter((c) => c.type !== "group");
     const filtered = needle
-      ? all.filter((c) => {
+      ? byKind.filter((c) => {
           if (c.title_resolved.toLowerCase().includes(needle)) return true;
+          if ((c.lastMessage?.body ?? "").toLowerCase().includes(needle)) return true;
           return c.members.some(
             (m) =>
               m.display_name.toLowerCase().includes(needle) || m.pin.toLowerCase().includes(needle),
           );
         })
-      : all;
+      : byKind;
     if (tab === "arsip") return filtered.filter((c) => c.me.is_archived);
     const active = filtered.filter((c) => !c.me.is_archived);
     return tab === "belum" ? active.filter((c) => c.unread > 0) : active;
-  }, [conversations, q, tab]);
+  }, [conversations, q, tab, kind]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: qk.conversations(userId ?? "") });
 
@@ -465,10 +473,35 @@ function ChatIndex() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   maxLength={60}
-                  aria-label="Cari nama atau PIN"
-                  placeholder="Cari nama atau PIN"
+                  aria-label="Cari nama, PIN, atau isi pesan"
+                  placeholder="Cari nama, PIN, atau pesan"
                   className="h-11 rounded-xl pl-9"
                 />
+              </div>
+              <div
+                role="group"
+                aria-label="Filter jenis percakapan"
+                className="mt-2 flex items-center gap-2"
+              >
+                {(
+                  [
+                    { v: "all", label: "Semua" },
+                    { v: "direct", label: "Kontak" },
+                    { v: "group", label: "Grup" },
+                  ] as const
+                ).map((o) => (
+                  <Button
+                    key={o.v}
+                    type="button"
+                    size="sm"
+                    variant={kind === o.v ? "default" : "secondary"}
+                    aria-pressed={kind === o.v}
+                    className="h-8 rounded-full px-3 text-xs"
+                    onClick={() => setKind(o.v)}
+                  >
+                    {o.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </MobileHeader>
@@ -539,11 +572,17 @@ function ChatIndex() {
           links={["contacts", "support"]}
         />
       ) : list.length === 0 ? (
-        q.trim() ? (
+        q.trim() || kind !== "all" ? (
           <EmptyState
             icon={Search}
             title="Tidak ada hasil"
-            description={`Tidak ditemukan percakapan untuk “${q.trim()}”. Coba nama lain atau PIN publik kontak.`}
+            description={
+              q.trim()
+                ? `Tidak ditemukan percakapan untuk “${q.trim()}”. Coba nama lain, PIN, atau ganti filter.`
+                : kind === "group"
+                  ? "Belum ada percakapan grup."
+                  : "Belum ada percakapan dengan kontak."
+            }
           />
         ) : (
           <EmptyState
