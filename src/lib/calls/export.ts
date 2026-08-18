@@ -101,7 +101,7 @@ export async function downloadPdf(rows: ExportRow[], period: ExportPeriod) {
     let x = marginX;
     HEADERS.forEach((h, i) => {
       doc.text(h, x, y);
-      x += cols[i];
+      x += cols[i] ?? 0;
     });
     y += 6;
     doc.setLineWidth(0.5);
@@ -119,9 +119,9 @@ export async function downloadPdf(rows: ExportRow[], period: ExportPeriod) {
     }
     let x = marginX;
     [r.nama, r.arah, r.jenis, r.status, r.durasi, r.waktu].forEach((cell, i) => {
-      const text = doc.splitTextToSize(cell, cols[i] - 6)[0] ?? "";
+      const text = doc.splitTextToSize(cell, (cols[i] ?? 60) - 6)[0] ?? "";
       doc.text(String(text), x, y);
-      x += cols[i];
+      x += cols[i] ?? 0;
     });
     y += 14;
   }
