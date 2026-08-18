@@ -55,3 +55,19 @@ describe("retryRouteLoad", () => {
     expect(reload).toHaveBeenCalled();
   });
 });
+
+describe("isDomMutationError", () => {
+  it("mengenali kegagalan removeChild dari React", () => {
+    const e = new Error(
+      "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
+    );
+    e.name = "NotFoundError";
+    expect(isDomMutationError(e)).toBe(true);
+  });
+
+  it("tidak menangkap NotFoundError perangkat media", () => {
+    const e = new Error("Requested device not found");
+    e.name = "NotFoundError";
+    expect(isDomMutationError(e)).toBe(false);
+  });
+});
