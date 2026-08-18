@@ -25,6 +25,8 @@ import {
 import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
+import { FieldError } from "@/components/mcm/primitives";
+import { pinError } from "@/lib/validation/forms";
 import {
   clearScanHistory,
   readScanHistory,
@@ -86,6 +88,7 @@ function AddContactPage() {
   const { userId, profile } = useRequireAuth();
   const { conv, reason, scan, pin: pinParam } = Route.useSearch();
   const [pin, setPin] = useState("");
+  const [pinTouched, setPinTouched] = useState(false);
   const [message, setMessage] = useState("Halo, saya ingin terhubung di MCM.");
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -204,7 +207,8 @@ function AddContactPage() {
 
   const search = async (value: string = pin) => {
     if (!isValidPin(value)) {
-      toast.error("Format PIN tidak valid. Contoh: A2B3-C4D5");
+      setError(pinError(value) ?? "Format PIN tidak valid. Contoh: A2B3-C4D5");
+      setPinTouched(true);
       return;
     }
     setSearching(true);
@@ -313,7 +317,11 @@ function AddContactPage() {
             <PinField
               id="pin"
               value={pin}
-              onChange={(v) => setPin(normalizePin(v))}
+              onChange={(v) => {
+                setPinTouched(true);
+                setError(null);
+                setPin(normalizePin(v));
+              }}
               onPickContact={(c) => void search(c.pin)}
               placeholder="A2B3-C4D5"
               maxLength={9}
@@ -322,14 +330,14 @@ function AddContactPage() {
                 <Button
                   className="h-11 rounded-xl"
                   onClick={() => void search()}
-                  disabled={searching || !pin}
+                  disabled={searching || !!pinError(pin)}
                 >
                   <Search className="size-4" /> {searching ? "Mencari…" : "Cari"}
                 </Button>
               }
             />
+            <FieldError message={pinTouched ? (error ?? pinError(pin)) : error} />
           </div>
-          {error && <p className="text-xs text-destructive">{error}</p>}
           <Button
             type="button"
             variant="secondary"
