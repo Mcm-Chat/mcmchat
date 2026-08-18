@@ -379,7 +379,8 @@ function ContactsPage() {
                   disabled={busy === c.contact_id}
                   onClick={() => void askConnect(c.contact_id)}
                 >
-                  Kirim permintaan
+                  {busy === c.contact_id && <Loader2 className="size-3.5 animate-spin" />}
+                  {busy === c.contact_id ? "Mengirim…" : "Kirim permintaan"}
                 </Button>
                 <Button
                   variant="ghost"
