@@ -14,6 +14,12 @@ const errorMiddleware = createMiddleware().server(async ({ next, request }) => {
       throw error;
     }
     console.error(error);
+    // Server functions use a typed RPC response. Returning an HTML error page
+    // here corrupts that protocol and can turn one failed action into a root
+    // render error on the client. Only document navigations may receive HTML;
+    // RPC/fetch callers must keep the original error semantics.
+    const acceptsHtml = request?.headers.get("accept")?.includes("text/html") ?? false;
+    if (!acceptsHtml) throw error;
     return new Response(renderErrorPage(), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" },

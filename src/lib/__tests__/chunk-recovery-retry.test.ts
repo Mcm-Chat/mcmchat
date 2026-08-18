@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { retryRouteLoad, type RecoveryStage } from "@/lib/chunk-recovery";
+import { retryRouteLoad, retryRouteRender, type RecoveryStage } from "@/lib/chunk-recovery";
 
 describe("retryRouteLoad", () => {
   it("prefetch ulang rute target lalu menyegarkan data", async () => {
@@ -12,7 +12,19 @@ describe("retryRouteLoad", () => {
     expect(ok).toBe(true);
     expect(preloadRoute).toHaveBeenCalledWith({ to: "/catalog" });
     expect(invalidate).toHaveBeenCalled();
-    expect(stages).toEqual(["membersihkan", "mengunduh", "menampilkan"]);
+    expect(stages).toEqual(["mencoba", "mengunduh", "menampilkan"]);
+  });
+
+  it("retry render biasa tidak melakukan preload atau reload", async () => {
+    const stages: RecoveryStage[] = [];
+    const reset = vi.fn();
+    const invalidate = vi.fn().mockResolvedValue(undefined);
+    const ok = await retryRouteRender({ invalidate }, reset, (stage) => stages.push(stage));
+
+    expect(ok).toBe(true);
+    expect(reset).toHaveBeenCalledOnce();
+    expect(invalidate).toHaveBeenCalledOnce();
+    expect(stages).toEqual(["mencoba", "menampilkan"]);
   });
 
   it("jatuh ke muat ulang penuh bila prefetch tetap gagal", async () => {

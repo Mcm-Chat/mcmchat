@@ -79,22 +79,15 @@ export function installChunkRecovery(): () => void {
 }
 
 /** Tahapan pemulihan yang ditampilkan pada tombol "Muat ulang". */
-export type RecoveryStage = "idle" | "membersihkan" | "mengunduh" | "menampilkan" | "gagal";
+export type RecoveryStage = "idle" | "mencoba" | "mengunduh" | "menampilkan" | "gagal";
 
 type MinimalRouter = {
   preloadRoute: (opts: { to: string }) => Promise<unknown>;
   invalidate: () => Promise<unknown> | unknown;
 };
 
-/** Buang cache aset lama agar unduhan berikutnya mengambil versi terbaru. */
-async function purgeStaleAssets(): Promise<void> {
-  if (typeof caches === "undefined") return;
-  try {
-    const keys = await caches.keys();
-    await Promise.all(keys.map((k) => caches.delete(k)));
-  } catch {
-    /* cache tidak tersedia: lanjut saja */
-  }
+/** Minta service worker aktif memeriksa versi baru tanpa menghapus data/cache lain. */
+async function refreshServiceWorkers(): Promise<void> {
   try {
     const regs = await navigator.serviceWorker?.getRegistrations?.();
     await Promise.all((regs ?? []).map((r) => r.update()));
@@ -117,8 +110,8 @@ export async function retryRouteLoad(
   target: string,
   onStage: (stage: RecoveryStage) => void,
 ): Promise<boolean> {
-  onStage("membersihkan");
-  await purgeStaleAssets();
+  onStage("mencoba");
+  await refreshServiceWorkers();
 
   onStage("mengunduh");
   try {
@@ -136,4 +129,25 @@ export async function retryRouteLoad(
     /* data akan dimuat ulang oleh rute itu sendiri */
   }
   return true;
+}
+
+/**
+ * Retry untuk error render/data biasa. Berbeda dari chunk recovery: tidak
+ * mengunduh modul ulang, tidak menyentuh Cache Storage, dan tidak reload.
+ */
+export async function retryRouteRender(
+  router: Pick<MinimalRouter, "invalidate">,
+  reset: () => void,
+  onStage: (stage: RecoveryStage) => void,
+): Promise<boolean> {
+  onStage("mencoba");
+  try {
+    reset();
+    await router.invalidate();
+    onStage("menampilkan");
+    return true;
+  } catch {
+    onStage("gagal");
+    return false;
+  }
 }
