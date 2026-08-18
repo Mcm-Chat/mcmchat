@@ -151,7 +151,7 @@ function Highlight({ text, query }: { text: string; query: string | undefined })
   return <>{parts}</>;
 }
 
-export function ChatListItem({
+function ChatListItemBase({
   conv,
   time,
   outgoingStatus,
