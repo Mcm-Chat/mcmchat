@@ -153,14 +153,20 @@ function LedgerDetail() {
       toast.error("Nominal melebihi sisa tagihan");
       return;
     }
+    const rollback = optimisticRecordPayment(ledger.id ? qc : qc, ledger.id, {
+      amount,
+      method: pay.method,
+      note: pay.note.trim() || null,
+    });
+    setPayOpen(false);
+    setPay({ amount: "", method: "transfer", note: "" });
     try {
       const updated = await recordPayment(ledger.id, amount, pay.method, pay.note.trim());
       const sisaBaru = Math.max(0, Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0));
       toast.success(sisaBaru === 0 ? "Pembayaran tercatat — catatan lunas" : "Pembayaran tercatat");
-      setPayOpen(false);
-      setPay({ amount: "", method: "transfer", note: "" });
       await refresh();
     } catch (err) {
+      rollback();
       toast.error(err instanceof Error ? err.message : "Pembayaran gagal dicatat");
     }
   };
@@ -464,6 +470,8 @@ function LedgerDetail() {
           const target = delPayment;
           if (!target) return;
           void (async () => {
+            const rollback = optimisticDeletePayment(qc, id, target.id);
+            setDelPayment(null);
             try {
               const updated = await deleteLedgerPayment(target.id);
               const sisaBaru = Math.max(
@@ -475,9 +483,8 @@ function LedgerDetail() {
               );
               await refresh();
             } catch (err) {
+              rollback();
               toast.error(err instanceof Error ? err.message : "Gagal menghapus pembayaran");
-            } finally {
-              setDelPayment(null);
             }
           })();
         }}
