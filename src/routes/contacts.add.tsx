@@ -25,6 +25,8 @@ import {
 import { useRequireAuth } from "@/lib/api/guard";
 import { buildAccessPrefill } from "@/lib/contacts/access-request";
 import { ContactRequestConfirmDialog } from "@/components/mcm/contact-request-confirm";
+import { FieldError } from "@/components/mcm/primitives";
+import { pinError } from "@/lib/validation/forms";
 import {
   clearScanHistory,
   readScanHistory,
@@ -204,7 +206,8 @@ function AddContactPage() {
 
   const search = async (value: string = pin) => {
     if (!isValidPin(value)) {
-      toast.error("Format PIN tidak valid. Contoh: A2B3-C4D5");
+      setError(pinError(value) ?? "Format PIN tidak valid. Contoh: A2B3-C4D5");
+      setPinTouched(true);
       return;
     }
     setSearching(true);
