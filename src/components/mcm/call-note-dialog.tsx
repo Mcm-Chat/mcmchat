@@ -65,6 +65,7 @@ export function CallNoteDialog({
 }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const areaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
