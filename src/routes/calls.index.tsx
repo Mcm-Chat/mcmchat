@@ -106,10 +106,12 @@ function CallsPage() {
   const { nameOf } = useContactAliases();
   const { data: calls, isLoading, isError, refetch } = useCalls(userId);
   const { data: conversations } = useConversations(userId);
+  const { data: contacts } = useContacts(userId);
   const [tab, setTab] = useState("semua");
   const [notice, setNotice] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const newCallRef = useRef<HTMLButtonElement>(null);
   const noticeReturnRef = useRef<HTMLElement | null>(null);
