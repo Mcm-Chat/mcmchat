@@ -7,7 +7,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { RenameContactButton } from "@/components/mcm/rename-contact-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
-import { LoadingSkeleton, StatusBadge } from "@/components/mcm/primitives";
+import { ConfirmDialog, LoadingSkeleton, StatusBadge } from "@/components/mcm/primitives";
 import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "@/lib/api/guard";
 import { qk } from "@/lib/api/queries";
