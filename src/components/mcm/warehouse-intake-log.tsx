@@ -14,7 +14,7 @@ function dateLabel(v: string | null | undefined) {
 function IntakeThumb({ path }: { path: string }) {
   const url = useSignedUrl("product-photos", path || null);
   if (!url) return null;
-  return <img src={url} alt="Foto barang masuk" className="size-12 rounded-lg object-cover" />;
+  return <img loading="lazy" decoding="async" src={url} alt="Foto barang masuk" className="size-12 rounded-lg object-cover" />;
 }
 
 /** Riwayat barang masuk gudang beserta bukti foto dan link lokasi. */
