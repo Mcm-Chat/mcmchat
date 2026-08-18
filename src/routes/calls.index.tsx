@@ -447,7 +447,7 @@ function CallsPage() {
                           : "Berlangsung"
                         : OUTCOME_LABEL[outcome]}
                     </span>
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <p className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                       {isMissed ? (
                         <PhoneMissed className="size-3.5 text-destructive" />
                       ) : wasIncoming ? (
@@ -455,13 +455,23 @@ function CallsPage() {
                       ) : (
                         <ArrowUpRight className="size-3.5 text-primary" />
                       )}
+                      {c.kind === "video" ? (
+                        <Video className="size-3.5" aria-hidden />
+                      ) : (
+                        <Phone className="size-3.5" aria-hidden />
+                      )}
                       {c.kind === "video" ? "Video" : "Suara"} •{" "}
                       {isLiveCall(c.status)
                         ? liveStatusLabel(c)
-                        : outcome === "answered"
-                          ? durasi(c.duration_sec)
-                          : OUTCOME_LABEL[outcome]}{" "}
-                      • {waktuRelatif(c.created_at)}
+                        : c.duration_sec > 0
+                          ? `Durasi ${durasi(c.duration_sec)}`
+                          : OUTCOME_LABEL[outcome]}
+                    </p>
+                    <p
+                      className="text-[11px] text-muted-foreground/80"
+                      title={waktuRelatif(c.created_at)}
+                    >
+                      {tanggal(c.created_at)} • {jam(c.created_at)}
                     </p>
                   </div>
                 </button>
