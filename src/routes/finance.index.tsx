@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { LedgerFormDialog } from "@/components/mcm/ledger-form";
+import { LedgerFormDialog } from "@/components/mcm/lazy-heavy";
 import { useRequireAuth } from "@/lib/api/guard";
 import { useLedgers, useMyBusiness, useOrders, useSales, qk } from "@/lib/api/queries";
 import { useQueryClient } from "@tanstack/react-query";
