@@ -117,14 +117,14 @@ function LoginPage() {
             {loading ? "Memproses…" : "Masuk"}
           </Button>
           <p className="text-center text-sm">
-            <Link to="/forgot-password" className="font-semibold text-primary">
+            <Link to="/forgot-password" className="inline-flex min-h-11 items-center font-semibold text-primary">
               Lupa kata sandi?
             </Link>
           </p>
         </form>
         <p className="text-center text-sm text-muted-foreground">
           Belum punya akun?{" "}
-          <Link to="/register" className="font-semibold text-primary">
+          <Link to="/register" className="inline-flex min-h-11 items-center font-semibold text-primary">
             Daftar
           </Link>
         </p>
