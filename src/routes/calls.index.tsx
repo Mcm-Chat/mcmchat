@@ -30,7 +30,13 @@ import {
 import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { CallExportDialog } from "@/components/mcm/call-export-dialog";
 import { useContactAliases } from "@/lib/contacts/alias";
-import { EmptyState, LoadingSkeleton, MCMAvatar, ProtoNote } from "@/components/mcm/primitives";
+import {
+  EmptyState,
+  ListErrorState,
+  LoadingSkeleton,
+  MCMAvatar,
+  ProtoNote,
+} from "@/components/mcm/primitives";
 import { UserAvatar } from "@/components/mcm/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -476,12 +482,11 @@ function CallsPage() {
       {busy ? (
         <LoadingSkeleton rows={6} />
       ) : isError ? (
-        <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-          <p className="text-sm text-muted-foreground">Gagal memuat riwayat panggilan.</p>
-          <Button size="sm" variant="outline" className="rounded-xl" onClick={() => void refetch()}>
-            Coba lagi
-          </Button>
-        </div>
+        <ListErrorState
+          title="Gagal memuat riwayat panggilan"
+          description="Riwayat panggilan tidak dapat diambil. Periksa koneksi Anda lalu coba lagi."
+          onRetry={() => void refetch()}
+        />
       ) : list.length === 0 ? (
         <EmptyState
           icon={PhoneCall}
@@ -490,6 +495,20 @@ function CallsPage() {
             term
               ? `Tidak ada panggilan yang cocok dengan "${query.trim()}". Coba nama kontak, PIN, atau status seperti "tak terjawab".`
               : "Riwayat panggilan suara dan video Anda akan muncul di sini."
+          }
+          action={
+            term ? (
+              <Button variant="outline" className="rounded-xl" onClick={() => setQuery("")}>
+                Hapus pencarian
+              </Button>
+            ) : (
+              <Button
+                className="rounded-xl"
+                onClick={() => void navigate({ to: "/contacts" })}
+              >
+                Pilih kontak untuk ditelepon
+              </Button>
+            )
           }
         />
       ) : (
