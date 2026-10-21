@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { isUnusedPdfRenderer } from "./scripts/pdf-optional-dependencies";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,6 +28,16 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: [
+      {
+        name: "unused-pdf-renderers",
+        enforce: "pre",
+        resolveId(source, importer) {
+          if (isUnusedPdfRenderer(source, importer)) return { id: source, external: true };
+          return null;
+        },
+      },
+    ],
     resolve: {
       alias: {
         "entities/lib/decode.js": path.join(entitiesV4, "decode.js"),

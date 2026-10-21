@@ -40,10 +40,7 @@ export function VoicePrivacyBadge({ active, className }: { active: boolean; clas
   if (!active) return null;
   return (
     <Badge
-      className={cn(
-        "gap-1 border-0 bg-success/15 text-success",
-        className,
-      )}
+      className={cn("gap-1 border-0 bg-success/15 text-success", className)}
       aria-live="polite"
     >
       <ShieldCheck className="size-3.5" />

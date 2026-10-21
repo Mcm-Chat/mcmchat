@@ -140,33 +140,29 @@ const cfg = { numRuns: RUNS, verbose: false };
 d("fuzz: RPC bersentuhan PIN menolak anon/anggota tanpa izin", () => {
   for (const caller of CALLERS) {
     for (const rpc of PIN_RPCS) {
-      it(
-        `${rpc.name} tidak pernah membocorkan PIN untuk ${caller}`,
-        async () => {
-          await fc.assert(
-            fc.asyncProperty(rpc.args(), async (args) => {
-              const res = await api(caller, `rpc/${rpc.name}`, {
-                method: "POST",
-                body: JSON.stringify(args),
-              });
-              const leaks = pinKeysIn(res.body);
-              expect(leaks, `${rpc.name}(${JSON.stringify(args)}) bocor: ${leaks.join(",")}`).toEqual(
-                [],
-              );
-              if (caller === "anon") {
-                // anon tidak boleh sukses pada RPC bergerbang otorisasi
-                expect(
-                  res.status >= 400,
-                  `${rpc.name} justru mengizinkan anon (status ${res.status})`,
-                ).toBe(true);
-              }
-              return true;
-            }),
-            cfg,
-          );
-        },
-        120_000,
-      );
+      it(`${rpc.name} tidak pernah membocorkan PIN untuk ${caller}`, async () => {
+        await fc.assert(
+          fc.asyncProperty(rpc.args(), async (args) => {
+            const res = await api(caller, `rpc/${rpc.name}`, {
+              method: "POST",
+              body: JSON.stringify(args),
+            });
+            const leaks = pinKeysIn(res.body);
+            expect(leaks, `${rpc.name}(${JSON.stringify(args)}) bocor: ${leaks.join(",")}`).toEqual(
+              [],
+            );
+            if (caller === "anon") {
+              // anon tidak boleh sukses pada RPC bergerbang otorisasi
+              expect(
+                res.status >= 400,
+                `${rpc.name} justru mengizinkan anon (status ${res.status})`,
+              ).toBe(true);
+            }
+            return true;
+          }),
+          cfg,
+        );
+      }, 120_000);
     }
   }
 });
@@ -174,49 +170,41 @@ d("fuzz: RPC bersentuhan PIN menolak anon/anggota tanpa izin", () => {
 d("fuzz: endpoint tabel menolak seleksi kolom PIN", () => {
   for (const caller of CALLERS) {
     for (const { table, column } of PIN_TABLES) {
-      it(
-        `${table}.${column} tidak terbaca lewat select acak (${caller})`,
-        async () => {
-          await fc.assert(
-            fc.asyncProperty(pinColumnVariants(column), async (sel) => {
-              const res = await api(caller, `${table}?select=${encodeURIComponent(sel)}&limit=3`);
-              const leaks = pinKeysIn(res.body);
-              expect(leaks, `${table}?select=${sel} bocor: ${leaks.join(",")}`).toEqual([]);
-              return true;
-            }),
-            cfg,
-          );
-        },
-        120_000,
-      );
+      it(`${table}.${column} tidak terbaca lewat select acak (${caller})`, async () => {
+        await fc.assert(
+          fc.asyncProperty(pinColumnVariants(column), async (sel) => {
+            const res = await api(caller, `${table}?select=${encodeURIComponent(sel)}&limit=3`);
+            const leaks = pinKeysIn(res.body);
+            expect(leaks, `${table}?select=${sel} bocor: ${leaks.join(",")}`).toEqual([]);
+            return true;
+          }),
+          cfg,
+        );
+      }, 120_000);
 
-      it(
-        `${table}.${column} tidak bisa dijadikan oracle lewat filter/order acak (${caller})`,
-        async () => {
-          await fc.assert(
-            fc.asyncProperty(
-              fc.constantFrom("eq", "like", "ilike", "gt", "lt", "neq"),
-              fuzzPin(),
-              fc.constantFrom("asc", "desc"),
-              async (op, val, dir) => {
-                const res = await api(
-                  caller,
-                  `${table}?select=id&${column}=${op}.${encodeURIComponent(val)}&order=${column}.${dir}&limit=3`,
-                );
-                const leaks = pinKeysIn(res.body);
-                expect(leaks, `${table} filter ${column}=${op}.${val} bocor`).toEqual([]);
-                expect(
-                  res.status >= 400 || (Array.isArray(res.body) && res.body.length === 0),
-                  `${table} mengizinkan filter pada ${column} (status ${res.status})`,
-                ).toBe(true);
-                return true;
-              },
-            ),
-            cfg,
-          );
-        },
-        120_000,
-      );
+      it(`${table}.${column} tidak bisa dijadikan oracle lewat filter/order acak (${caller})`, async () => {
+        await fc.assert(
+          fc.asyncProperty(
+            fc.constantFrom("eq", "like", "ilike", "gt", "lt", "neq"),
+            fuzzPin(),
+            fc.constantFrom("asc", "desc"),
+            async (op, val, dir) => {
+              const res = await api(
+                caller,
+                `${table}?select=id&${column}=${op}.${encodeURIComponent(val)}&order=${column}.${dir}&limit=3`,
+              );
+              const leaks = pinKeysIn(res.body);
+              expect(leaks, `${table} filter ${column}=${op}.${val} bocor`).toEqual([]);
+              expect(
+                res.status >= 400 || (Array.isArray(res.body) && res.body.length === 0),
+                `${table} mengizinkan filter pada ${column} (status ${res.status})`,
+              ).toBe(true);
+              return true;
+            },
+          ),
+          cfg,
+        );
+      }, 120_000);
     }
   }
 });

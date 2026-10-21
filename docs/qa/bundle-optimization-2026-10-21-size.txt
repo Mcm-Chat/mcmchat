@@ -1,0 +1,26 @@
+| Metrik | Gzip | Anggaran |
+| --- | ---: | ---: |
+| Total klien | 970.4 KiB | 950 KiB |
+| Total JS | 932.5 KiB | 800 KiB |
+| Total CSS | 19.2 KiB | 40 KiB |
+
+10 chunk JS terbesar (gzip):
+
+| Chunk | Gzip | Mentah |
+| --- | ---: | ---: |
+| assets/client-DsaDCivz.js | 125.4 KiB | 389.3 KiB |
+| assets/livekit-client-CnXw2Dax.js | 122.3 KiB | 476.8 KiB |
+| assets/index-BB_F8QMy.js | 105.0 KiB | 332.5 KiB |
+| assets/client-ClL8XFy3.js | 52.5 KiB | 204.4 KiB |
+| assets/qr-scanner-OyUsmJ4B.js | 49.5 KiB | 137.9 KiB |
+| assets/access-fallback-BmSc-WMn.js | 22.6 KiB | 75.1 KiB |
+| assets/call._id-BxCIzh7K.js | 21.3 KiB | 71.1 KiB |
+| assets/chat._id-ruB_4mNK.js | 21.3 KiB | 69.6 KiB |
+| assets/types-jD0WdwoY.js | 12.6 KiB | 55.2 KiB |
+| assets/createServerFn-BCNZ7nl7.js | 11.6 KiB | 36.4 KiB |
+
+Anggaran bundel terlampaui:
+ - totalClient: 970.4 KiB > anggaran 950 KiB
+ - totalJs: 932.5 KiB > anggaran 800 KiB
+
+Perkecil bundel (lazy-load / code-split) atau naikkan angka di bundle-budget.json secara sadar.

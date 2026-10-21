@@ -502,10 +502,7 @@ function CallsPage() {
                 Hapus pencarian
               </Button>
             ) : (
-              <Button
-                className="rounded-xl"
-                onClick={() => void navigate({ to: "/contacts" })}
-              >
+              <Button className="rounded-xl" onClick={() => void navigate({ to: "/contacts" })}>
                 Pilih kontak untuk ditelepon
               </Button>
             )

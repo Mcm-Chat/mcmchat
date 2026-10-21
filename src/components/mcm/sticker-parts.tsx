@@ -39,7 +39,13 @@ export function StickerThumb({
         aria-label={`Kirim stiker ${sticker.emoji}`}
       >
         {url ? (
-          <img loading="lazy" decoding="async" src={url} alt={`Stiker ${sticker.emoji}`} className="size-full object-contain" />
+          <img
+            loading="lazy"
+            decoding="async"
+            src={url}
+            alt={`Stiker ${sticker.emoji}`}
+            className="size-full object-contain"
+          />
         ) : (
           <Loader2 className="size-4 animate-spin opacity-60" />
         )}

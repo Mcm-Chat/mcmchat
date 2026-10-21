@@ -49,9 +49,20 @@ describe("tema global konsisten di enam menu", () => {
 
 describe("aksi tambah pada Tugas dan Keuangan", () => {
   it("halaman Tugas punya tombol buat penyiapan dan memakai dialog yang sama", () => {
-    const src = read("src/routes/tasks.index.tsx");
-    expect(src).toMatch(/CreatePreparationDialog/);
-    expect(src).toMatch(/Buat Penyiapan/);
+    const legacyRoute = read("src/routes/tasks.index.tsx");
+    expect(legacyRoute).toMatch(/throw redirect\(\{ to: "\/business\/tugas", replace: true \}\)/);
+    const destination = read("src/routes/business.tugas.tsx");
+    expect(destination).toMatch(/createFileRoute\("\/business\/tugas"\)/);
+    expect(destination).toMatch(/component: TasksPanel/);
+    const panel = read("src/components/mcm/business/tasks-panel.tsx");
+    expect(panel).toMatch(
+      /import \{ CreatePreparationDialog \} from "@\/components\/mcm\/prepare-parts"/,
+    );
+    expect(panel).toMatch(/onClick=\{\(\) => setCreateOpen\(true\)\}/);
+    expect(panel).toMatch(/Buat Penyiapan/);
+    expect(panel).toMatch(
+      /<CreatePreparationDialog\s+open=\{createOpen\}\s+onOpenChange=\{setCreateOpen\}/,
+    );
   });
 
   it("halaman Keuangan punya tombol catat dan memakai form ledger bersama", () => {

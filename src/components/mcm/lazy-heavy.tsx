@@ -12,9 +12,7 @@ const QrScannerLazy = lazy(() =>
 const PhotoEditorLazy = lazy(() =>
   import("./photo-editor").then((m) => ({ default: m.PhotoEditorDialog })),
 );
-const SaleDialogLazy = lazy(() =>
-  import("./sale-dialog").then((m) => ({ default: m.SaleDialog })),
-);
+const SaleDialogLazy = lazy(() => import("./sale-dialog").then((m) => ({ default: m.SaleDialog })));
 const LedgerFormDialogLazy = lazy(() =>
   import("./ledger-form").then((m) => ({ default: m.LedgerFormDialog })),
 );

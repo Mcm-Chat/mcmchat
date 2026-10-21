@@ -331,6 +331,15 @@ function CallScreen() {
       .finally(() => setSavingVoice(false));
   };
 
+  const callOver =
+    session.phase === "ended" || session.phase === "error" || session.phase === "unconfigured";
+
+  // Tutup sheet perangkat begitu panggilan berakhir supaya tidak ada kontrol
+  // yang tampak masih bisa dipakai.
+  useEffect(() => {
+    if (callOver) setDevicesOpen(false);
+  }, [callOver]);
+
   if (loading || detailStatus === "loading") {
     return (
       <div
@@ -419,8 +428,6 @@ function CallScreen() {
   // Sebelum panggilan tersambung tidak ada sesi media sama sekali: kontrol
   // mikrofon/kamera/speaker/perangkat tidak punya apa pun untuk diubah.
   // Ditampilkan nonaktif dengan alasan jujur, bukan tombol mati diam-diam.
-  const callOver =
-    session.phase === "ended" || session.phase === "error" || session.phase === "unconfigured";
   // Aktif hanya ketika sesi media benar-benar hidup; mati lagi begitu
   // panggilan berakhir/gagal.
   const controlsLive = session.phase === "connected" && !callOver;
@@ -429,12 +436,6 @@ function CallScreen() {
     : session.phase === "connecting"
       ? "Menyambungkan… tombol aktif setelah tersambung"
       : "Aktif setelah panggilan tersambung";
-
-  // Tutup sheet perangkat begitu panggilan berakhir supaya tidak ada kontrol
-  // yang tampak masih bisa dipakai.
-  useEffect(() => {
-    if (callOver) setDevicesOpen(false);
-  }, [callOver]);
 
   // Feedback instan tiap tombol ditekan: aksi dijalankan dulu, lalu toast
   // menyebut keadaan barunya (bukan janji, tapi hasil toggle).

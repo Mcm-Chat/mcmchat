@@ -1,4 +1,9 @@
-import { LEDGER_STATUS_LABEL, remaining, type LedgerPaymentRow, type LedgerRow } from "@/lib/api/ledger";
+import {
+  LEDGER_STATUS_LABEL,
+  remaining,
+  type LedgerPaymentRow,
+  type LedgerRow,
+} from "@/lib/api/ledger";
 import { rupiah, tanggal } from "@/lib/mcm/format";
 import { absoluteUrl } from "@/lib/site";
 
@@ -7,7 +12,10 @@ const HEADERS = ["Tanggal", "Nominal", "Metode", "Catatan"] as const;
 const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
 
 const slug = (v: string) =>
-  v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "catatan";
+  v
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "catatan";
 
 export function paymentsFileName(ledger: LedgerRow, ext: "csv" | "pdf", receipt?: string) {
   const date = new Date().toISOString().slice(0, 10);
@@ -112,7 +120,7 @@ export async function downloadPaymentsPdf(
   payments: LedgerPaymentRow[],
   receiptOverride?: string,
 ) {
-  const { jsPDF } = await import("jspdf");
+  const { jsPDF } = await import("@/lib/pdf/client");
   const QR = (await import("qrcode")).default;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const marginX = 32;

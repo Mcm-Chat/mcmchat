@@ -56,7 +56,7 @@ PATCH nol baris, PATCH pemindahan ke user lain nol baris, dan pembaruan hapus+in
 | --- | --- |
 | `bun run dev` | dev server Vite |
 | `bun run build:web` (alias `build`) | bundle produksi TanStack/Nitro/Vite |
-| `bun run typecheck` | `tsgo --noEmit` |
+| `bun run typecheck` | `tsc --noEmit` |
 | `bun run test` / `test:security` | seluruh Vitest / hanya invariant keamanan |
 | `bun run lint` | ESLint |
 | `bun run verify:assetlinks` | gagal bila fingerprint App Links masih placeholder |

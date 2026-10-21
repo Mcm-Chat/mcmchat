@@ -78,7 +78,13 @@ function Ring({ group, onClick }: { group: StatusGroup; onClick: () => void }) {
       >
         <span className="grid size-full place-items-center overflow-hidden rounded-full bg-card p-[2px]">
           {thumb ? (
-            <img loading="lazy" decoding="async" src={thumb} alt="" className="size-full rounded-full object-cover" />
+            <img
+              loading="lazy"
+              decoding="async"
+              src={thumb}
+              alt=""
+              className="size-full rounded-full object-cover"
+            />
           ) : (
             <UserAvatar
               userId={group.ownerId}
@@ -114,7 +120,13 @@ function GroupRow({ group, onClick }: { group: StatusGroup; onClick: () => void 
       >
         <span className="grid size-full place-items-center overflow-hidden rounded-full bg-card p-[2px]">
           {thumb ? (
-            <img loading="lazy" decoding="async" src={thumb} alt="" className="size-full rounded-full object-cover" />
+            <img
+              loading="lazy"
+              decoding="async"
+              src={thumb}
+              alt=""
+              className="size-full rounded-full object-cover"
+            />
           ) : (
             <UserAvatar
               userId={group.ownerId}

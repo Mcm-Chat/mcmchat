@@ -7,7 +7,7 @@ Berjalan otomatis pada **setiap pull request**, setiap push ke `main`/`productio
 | Job | Isi | Wajib |
 | --- | --- | --- |
 | `db-security-regression` | `bun run test:security` — invariant PIN, izin bucket `avatars`, hapus anggota jalur admin, keanggotaan percakapan, privasi avatar & blokir | ya |
-| `quality` | typecheck (`tsgo`), lint, seluruh test (`vitest run`), build produksi | ya |
+| `quality` | typecheck (`tsc --noEmit`, memakai TypeScript dari lockfile), lint, seluruh test (`vitest run`), build produksi | ya |
 | `dependency-audit` | `bun audit --audit-level=high` (registri dipatok ke `https://registry.npmjs.org/`) | ya |
 | `production-gate` | hanya untuk PR yang menuju branch `production`; menunggu ketiga job di atas | ya |
 

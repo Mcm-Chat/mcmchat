@@ -7,13 +7,7 @@
  * untuk alasan yang butuh penjelasan (dikeluarkan, diblokir, sesi habis).
  */
 export type PushDeniedCode =
-  | "no_session"
-  | "not_member"
-  | "removed"
-  | "blocked"
-  | "missing"
-  | "invalid_route"
-  | "unknown";
+  "no_session" | "not_member" | "removed" | "blocked" | "missing" | "invalid_route" | "unknown";
 
 export type PushDeniedNotice = {
   code: PushDeniedCode;

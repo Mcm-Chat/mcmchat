@@ -72,7 +72,8 @@ export function callConnectionStatus(input: CallConnectionInput): CallConnection
       label: input.retrying ? "Mencoba menyambungkan ulang…" : "Menyambungkan…",
       hint: "Kontrol aktif setelah panggilan tersambung.",
     };
-  if (input.phase === "outgoing") return { tone: "pending", label: "Menunggu dijawab…", hint: perm };
+  if (input.phase === "outgoing")
+    return { tone: "pending", label: "Menunggu dijawab…", hint: perm };
   if (input.phase === "incoming")
     return { tone: "pending", label: "Panggilan masuk", hint: perm ?? "Tekan Jawab untuk mulai." };
   if (input.phase === "loading") return { tone: "pending", label: "Menyiapkan…", hint: null };

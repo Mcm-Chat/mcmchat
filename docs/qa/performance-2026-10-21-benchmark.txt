@@ -1,0 +1,32 @@
+Benchmarking is an experimental feature.
+Breaking changes might not follow SemVer, please pin Vitest's version when using it.
+
+ RUN  v4.1.12 /workspace/scratch/e3d265d677b4/mcmchat-security
+
+
+ ✓ src/lib/mcm/__tests__/format.bench.ts > date metadata for 1,000 loaded chat messages 1610ms
+     name                                 hz      min      max     mean      p75      p99     p995     p999     rme  samples
+   · previous per-call locale setup  21.5443  39.6322  53.0938  46.4160  49.4317  53.0938  53.0938  53.0938  ±5.32%       11
+   · cached formatter                 392.55   2.3040   6.1728   2.5475   2.5753   4.4048   6.1728   6.1728  ±2.08%      197
+
+ ✓ src/lib/mcm/__tests__/format.bench.ts > timestamps for 40 visible chat bubbles 1346ms
+     name                                   hz     min     max    mean     p75     p99    p995    p999     rme  samples
+   · previous per-call locale setup     611.73  1.2905  4.8714  1.6347  1.7668  3.2942  3.9711  4.8714  ±2.64%      307
+   · cached formatter                22,018.79  0.0382  1.7335  0.0454  0.0394  0.1546  0.2112  0.4051  ±1.59%    11010
+
+ ✓ src/lib/mcm/__tests__/format.bench.ts > rupiah amounts for 1,000 rows 1282ms
+     name                                  hz      min      max     mean      p75      p99     p995     p999     rme  samples
+   · previous per-call locale setup   43.0503  20.6919  28.9792  23.2286  24.3357  28.9792  28.9792  28.9792  ±4.07%       22
+   · cached formatter                2,246.69   0.3670   6.1121   0.4451   0.4454   0.8604   2.1209   3.8343  ±3.34%     1124
+
+ BENCH  Summary
+
+  cached formatter - src/lib/mcm/__tests__/format.bench.ts > date metadata for 1,000 loaded chat messages
+    18.22x faster than previous per-call locale setup
+
+  cached formatter - src/lib/mcm/__tests__/format.bench.ts > timestamps for 40 visible chat bubbles
+    35.99x faster than previous per-call locale setup
+
+  cached formatter - src/lib/mcm/__tests__/format.bench.ts > rupiah amounts for 1,000 rows
+    52.19x faster than previous per-call locale setup
+

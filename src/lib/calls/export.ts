@@ -48,9 +48,7 @@ const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
 export function rowsToCsv(rows: ExportRow[]) {
   const lines = [HEADERS.join(",")];
   for (const r of rows) {
-    lines.push(
-      [r.nama, r.arah, r.jenis, r.status, r.durasi, r.waktu].map(escapeCsv).join(","),
-    );
+    lines.push([r.nama, r.arah, r.jenis, r.status, r.durasi, r.waktu].map(escapeCsv).join(","));
   }
   // BOM agar Excel membaca karakter non-ASCII dengan benar.
   return `\uFEFF${lines.join("\r\n")}\r\n`;
@@ -80,7 +78,7 @@ export function downloadCsv(rows: ExportRow[], period: ExportPeriod) {
 }
 
 export async function downloadPdf(rows: ExportRow[], period: ExportPeriod) {
-  const { jsPDF } = await import("jspdf");
+  const { jsPDF } = await import("@/lib/pdf/client");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const marginX = 32;
   const cols = [110, 48, 48, 78, 58, 118];

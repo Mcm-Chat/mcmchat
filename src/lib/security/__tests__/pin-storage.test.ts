@@ -164,44 +164,40 @@ api("live REST Storage: respons tanpa field PIN", () => {
   if (USER_TOKEN) callers.push({ name: "member", token: USER_TOKEN });
 
   for (const caller of callers) {
-    it(
-      `endpoint list/objek Storage tidak mengembalikan field PIN (${caller.name})`,
-      async () => {
-        const leaks: string[] = [];
-        for (const bucket of BUCKETS) {
-          const endpoint = `/storage/v1/object/list/${bucket}`;
-          const res = await fetch(`${URL_BASE}${endpoint}`, {
-            method: "POST",
-            headers: {
-              apikey: ANON,
-              Authorization: `Bearer ${caller.token}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ prefix: "", limit: 100, offset: 0 }),
-          });
-          let body: unknown = null;
-          try {
-            body = await res.json();
-          } catch {
-            body = null;
-          }
-          const found = pinKeysIn(body);
-          if (found.length) {
-            leaks.push(`${bucket}: ${found.join(", ")}`);
-            recordPinFinding({
-              kind: "storage-list",
-              label: `list objek ${bucket} membawa field PIN`,
-              endpoint,
-              caller: caller.name,
-              status: res.status,
-              keys: found,
-            });
-          }
+    it(`endpoint list/objek Storage tidak mengembalikan field PIN (${caller.name})`, async () => {
+      const leaks: string[] = [];
+      for (const bucket of BUCKETS) {
+        const endpoint = `/storage/v1/object/list/${bucket}`;
+        const res = await fetch(`${URL_BASE}${endpoint}`, {
+          method: "POST",
+          headers: {
+            apikey: ANON,
+            Authorization: `Bearer ${caller.token}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ prefix: "", limit: 100, offset: 0 }),
+        });
+        let body: unknown = null;
+        try {
+          body = await res.json();
+        } catch {
+          body = null;
         }
-        expect(leaks, `respons Storage membocorkan PIN untuk ${caller.name}`).toEqual([]);
-      },
-      45_000,
-    );
+        const found = pinKeysIn(body);
+        if (found.length) {
+          leaks.push(`${bucket}: ${found.join(", ")}`);
+          recordPinFinding({
+            kind: "storage-list",
+            label: `list objek ${bucket} membawa field PIN`,
+            endpoint,
+            caller: caller.name,
+            status: res.status,
+            keys: found,
+          });
+        }
+      }
+      expect(leaks, `respons Storage membocorkan PIN untuk ${caller.name}`).toEqual([]);
+    }, 45_000);
   }
 
   it("objek bucket privat tidak bisa diambil tanpa signed URL (anon)", async () => {

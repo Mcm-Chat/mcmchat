@@ -194,7 +194,11 @@ export function ScanResultSheet({
   const resendRequest = async () => {
     setBusy(true);
     try {
-      const result = await sendContactRequest(userId, profile.id, "Halo, saya ingin terhubung di MCM.");
+      const result = await sendContactRequest(
+        userId,
+        profile.id,
+        "Halo, saya ingin terhubung di MCM.",
+      );
       if (result.code === "resent" || result.code === "sent") {
         toast.success("Permintaan dikirim ulang");
       } else if (result.code === "accepted_incoming") {

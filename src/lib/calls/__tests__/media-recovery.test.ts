@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  MAX_MEDIA_RECOVERIES,
-  hasLiveAudio,
-  planMediaRecovery,
-} from "../media-recovery";
+import { MAX_MEDIA_RECOVERIES, hasLiveAudio, planMediaRecovery } from "../media-recovery";
 
 const track = (readyState: string, muted = false) =>
   ({ readyState, muted }) as unknown as MediaStreamTrack;

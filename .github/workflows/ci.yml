@@ -133,7 +133,7 @@ jobs:
           restore-keys: |
             build-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb', 'vite.config.ts') }}-
             build-${{ runner.os }}-
-      - run: bunx tsgo --noEmit
+      - run: bun run typecheck
       - run: bun run lint
       - run: bun run test
       - run: bun run build:web

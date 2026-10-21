@@ -70,7 +70,7 @@ export function PremiumCheckoutDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-xl bg-warning p-3 text-[11px] text-warning-foreground">
           <ShieldAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
             Mode uji: penyedia pembayaran belum tersambung. Tidak ada uang yang ditagih dan

@@ -196,7 +196,7 @@ export async function runLiveKitConnectTest(
     );
   }
   const started = Date.now();
-  const { Room } = await import("livekit-client");
+  const { Room } = await import("./livekit-client");
   const room = new Room();
   try {
     await room.connect(t.url, t.token, { autoSubscribe: false });

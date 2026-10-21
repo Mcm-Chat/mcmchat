@@ -45,8 +45,7 @@ function relationBadges(r: ContactRelation): StatusBadge[] {
     out.push({ label: "Anda diblokir", className: "bg-destructive/10 text-destructive" });
   if (r.blockedByMe)
     out.push({ label: "Anda memblokir", className: "bg-destructive/10 text-destructive" });
-  if (r.connected)
-    out.push({ label: "Sudah terhubung", className: "bg-success/15 text-success" });
+  if (r.connected) out.push({ label: "Sudah terhubung", className: "bg-success/15 text-success" });
   if (r.incomingRequest)
     out.push({ label: "Menunggu jawaban Anda", className: "bg-primary/10 text-primary" });
   if (r.outgoingPending)
@@ -63,10 +62,10 @@ export const Route = createFileRoute("/contacts/add")({
     search: Record<string, unknown>,
   ): { conv?: string; reason?: string; scan?: boolean; pin?: string } => {
     const out: { conv?: string; reason?: string; scan?: boolean; pin?: string } = {};
-    if (typeof search['conv'] === "string") out.conv = search['conv'];
-    if (typeof search['reason'] === "string") out.reason = search['reason'];
-    if (typeof search['pin'] === "string" && search['pin']) out.pin = search['pin'];
-    if (search['scan'] === true || search['scan'] === "1" || search['scan'] === "true")
+    if (typeof search["conv"] === "string") out.conv = search["conv"];
+    if (typeof search["reason"] === "string") out.reason = search["reason"];
+    if (typeof search["pin"] === "string" && search["pin"]) out.pin = search["pin"];
+    if (search["scan"] === true || search["scan"] === "1" || search["scan"] === "true")
       out.scan = true;
     return out;
   },

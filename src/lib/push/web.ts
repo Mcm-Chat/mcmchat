@@ -129,9 +129,7 @@ export async function registerWebPush(deviceName: string): Promise<WebRegisterRe
   if (!ready.ok) return { registered: false, ...(ready.reason ? { reason: ready.reason } : {}) };
   try {
     const perm =
-      Notification.permission === "granted"
-        ? "granted"
-        : await Notification.requestPermission();
+      Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
     if (perm !== "granted") return { registered: false, reason: "izin notifikasi ditolak" };
 
     const token = await messagingToken();

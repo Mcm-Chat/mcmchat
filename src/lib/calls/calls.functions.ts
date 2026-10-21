@@ -37,19 +37,21 @@ export const issueCallToken = createServerFn({ method: "POST" })
     const cfg = readLiveKitConfig();
     if (!cfg) return { configured: false as const, reason: "Penyedia panggilan belum terhubung" };
 
-    // Otorisasi eksplisit: baris peserta harus ada untuk pengguna ini.
-    const { data: participant } = await context.supabase
-      .from("call_participants")
-      .select("user_id, left_at")
-      .eq("call_id", data.callId)
-      .eq("user_id", context.userId)
-      .maybeSingle();
-
-    const { data: call } = await context.supabase
-      .from("calls")
-      .select("id, kind, status, room_name")
-      .eq("id", data.callId)
-      .maybeSingle();
+    // Kedua bacaan otorisasi independen: jalankan bersamaan agar startup tidak
+    // menunggu dua round-trip DB berurutan. Token tetap menunggu keduanya.
+    const [{ data: participant }, { data: call }] = await Promise.all([
+      context.supabase
+        .from("call_participants")
+        .select("user_id, left_at")
+        .eq("call_id", data.callId)
+        .eq("user_id", context.userId)
+        .maybeSingle(),
+      context.supabase
+        .from("calls")
+        .select("id, kind, status, room_name")
+        .eq("id", data.callId)
+        .maybeSingle(),
+    ]);
 
     const decision = canIssueCallToken({
       status: (call?.status ?? "ended") as CallStatusValue,

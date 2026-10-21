@@ -65,7 +65,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   const chunk = isChunkLoadError(error);
@@ -126,8 +126,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               : "Data halaman gagal diproses. Coba lagi; bila berulang, waktu kejadian di bawah membantu pelacakan."}
         </p>
         {!chunk && (
-          <p className="mt-2 font-mono text-[11px] text-muted-foreground" aria-label="Referensi error">
-            Ref {error.name || "Error"} · {new Date().toISOString().slice(11, 19)} UTC
+          <p
+            className="mt-2 font-mono text-[11px] text-muted-foreground"
+            aria-label="Referensi error"
+          >
+            Ref {error instanceof Error ? error.name || "Error" : "Error"} ·{" "}
+            {new Date().toISOString().slice(11, 19)} UTC
           </p>
         )}
         {busy && (
@@ -221,7 +225,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="id" translate="no" className="dark notranslate" data-theme="dark" suppressHydrationWarning>
+    <html
+      lang="id"
+      translate="no"
+      className="dark notranslate"
+      data-theme="dark"
+      suppressHydrationWarning
+    >
       <head>
         <HeadContent />
         {/* Terjemahan otomatis mengubah node DOM milik React → NotFoundError saat commit. */}

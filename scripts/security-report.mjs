@@ -36,14 +36,27 @@ function runSecurityTests() {
   try {
     execFileSync(
       "bunx",
-      ["vitest", "run", "src/lib/security/__tests__", "--reporter=json", `--outputFile=${jsonPath}`],
+      [
+        "vitest",
+        "run",
+        "src/lib/security/__tests__",
+        "--reporter=json",
+        `--outputFile=${jsonPath}`,
+      ],
       { stdio: ["ignore", "inherit", "inherit"], cwd: ROOT },
     );
   } catch {
     failed = true;
   }
   if (!existsSync(jsonPath)) {
-    return { failed: true, total: 0, passed: 0, failures: [], files: [], error: "vitest tidak menghasilkan laporan" };
+    return {
+      failed: true,
+      total: 0,
+      passed: 0,
+      failures: [],
+      files: [],
+      error: "vitest tidak menghasilkan laporan",
+    };
   }
   const raw = JSON.parse(readFileSync(jsonPath, "utf8"));
   const files = [];
@@ -56,10 +69,16 @@ function runSecurityTests() {
     let bad = 0;
     for (const t of suite.assertionResults ?? []) {
       total += 1;
-      if (t.status === "passed") { passed += 1; ok += 1; }
-      else {
+      if (t.status === "passed") {
+        passed += 1;
+        ok += 1;
+      } else {
         bad += 1;
-        failures.push({ file: rel, title: t.fullName ?? t.title, message: (t.failureMessages ?? []).join("\n").slice(0, 800) });
+        failures.push({
+          file: rel,
+          title: t.fullName ?? t.title,
+          message: (t.failureMessages ?? []).join("\n").slice(0, 800),
+        });
       }
     }
     files.push({ file: rel, passed: ok, failed: bad });
@@ -69,7 +88,9 @@ function runSecurityTests() {
 
 function migrationFingerprint() {
   const names = existsSync(MIGRATIONS)
-    ? readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()
+    ? readdirSync(MIGRATIONS)
+        .filter((f) => f.endsWith(".sql"))
+        .sort()
     : [];
   const perFile = names.map((f) => ({
     file: f,
@@ -102,21 +123,31 @@ function migrationFingerprint() {
       enableRls: count(/enable row level security/g),
     },
     rlsTables: uniq(/alter table (?:only )?public\.([a-z0-9_]+) enable row level security/),
-    definerFunctions: uniq(/create or replace function public\.([a-z0-9_]+)\s*\([^;]*?security definer/),
+    definerFunctions: uniq(
+      /create or replace function public\.([a-z0-9_]+)\s*\([^;]*?security definer/,
+    ),
   };
 }
 
 function diffFingerprint(prev, next) {
-  if (!prev) return { baseline: "absent", changed: false, notes: ["Baseline belum ada — laporan ini menjadi baseline pertama."] };
+  if (!prev)
+    return {
+      baseline: "absent",
+      changed: false,
+      notes: ["Baseline belum ada — laporan ini menjadi baseline pertama."],
+    };
   const notes = [];
   const prevFiles = new Map((prev.migrations ?? []).map((m) => [m.file, m.sha256]));
   const nextFiles = new Map((next.migrations ?? []).map((m) => [m.file, m.sha256]));
   const added = [...nextFiles.keys()].filter((f) => !prevFiles.has(f));
   const removed = [...prevFiles.keys()].filter((f) => !nextFiles.has(f));
-  const modified = [...nextFiles.keys()].filter((f) => prevFiles.has(f) && prevFiles.get(f) !== nextFiles.get(f));
+  const modified = [...nextFiles.keys()].filter(
+    (f) => prevFiles.has(f) && prevFiles.get(f) !== nextFiles.get(f),
+  );
   if (added.length) notes.push(`Migration baru: ${added.join(", ")}`);
   if (removed.length) notes.push(`Migration hilang: ${removed.join(", ")}`);
-  if (modified.length) notes.push(`Migration berubah isi (harusnya immutable): ${modified.join(", ")}`);
+  if (modified.length)
+    notes.push(`Migration berubah isi (harusnya immutable): ${modified.join(", ")}`);
   for (const [k, v] of Object.entries(next.stats)) {
     const before = prev.stats?.[k];
     if (before !== undefined && before !== v) notes.push(`stats.${k}: ${before} → ${v}`);

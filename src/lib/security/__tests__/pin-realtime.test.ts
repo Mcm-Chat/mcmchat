@@ -138,57 +138,53 @@ const CHANNEL_TABLES = [
 
 api("kanal Realtime — payload tanpa field PIN", () => {
   for (const caller of USER_TOKEN ? (["anon", "member"] as const) : (["anon"] as const)) {
-    it(
-      `langganan postgres_changes tidak pernah membawa field PIN (${caller})`,
-      async () => {
-        const { createClient } = await import("@supabase/supabase-js");
-        const client = createClient(URL_BASE, ANON, {
-          auth: { persistSession: false, autoRefreshToken: false },
-          realtime: { params: { eventsPerSecond: 20 } },
+    it(`langganan postgres_changes tidak pernah membawa field PIN (${caller})`, async () => {
+      const { createClient } = await import("@supabase/supabase-js");
+      const client = createClient(URL_BASE, ANON, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        realtime: { params: { eventsPerSecond: 20 } },
+      });
+      if (caller === "member") await client.realtime.setAuth(USER_TOKEN);
+
+      const leaks: string[] = [];
+      const channel = client.channel(`pin-audit-${caller}-${Date.now()}`);
+      for (const table of CHANNEL_TABLES) {
+        channel.on("postgres_changes", { event: "*", schema: "public", table }, (payload) => {
+          const found = [
+            ...pinKeysIn(payload.new ?? null, "$.new"),
+            ...pinKeysIn(payload.old ?? null, "$.old"),
+          ];
+          if (found.length) {
+            leaks.push(`${table}: ${found.join(", ")}`);
+            recordPinFinding({
+              kind: "realtime-payload",
+              label: `payload realtime ${table}`,
+              endpoint: `realtime:public.${table}`,
+              caller,
+              keys: found,
+            });
+          }
         });
-        if (caller === "member") await client.realtime.setAuth(USER_TOKEN);
+      }
 
-        const leaks: string[] = [];
-        const channel = client.channel(`pin-audit-${caller}-${Date.now()}`);
-        for (const table of CHANNEL_TABLES) {
-          channel.on("postgres_changes", { event: "*", schema: "public", table }, (payload) => {
-            const found = [
-              ...pinKeysIn(payload.new ?? null, "$.new"),
-              ...pinKeysIn(payload.old ?? null, "$.old"),
-            ];
-            if (found.length) {
-              leaks.push(`${table}: ${found.join(", ")}`);
-              recordPinFinding({
-                kind: "realtime-payload",
-                label: `payload realtime ${table}`,
-                endpoint: `realtime:public.${table}`,
-                caller,
-                keys: found,
-              });
-            }
-          });
-        }
-
-        const status = await new Promise<string>((resolve) => {
-          const t = setTimeout(() => resolve("TIMED_OUT"), 15_000);
-          channel.subscribe((s) => {
-            if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") {
-              clearTimeout(t);
-              resolve(s);
-            }
-          });
+      const status = await new Promise<string>((resolve) => {
+        const t = setTimeout(() => resolve("TIMED_OUT"), 15_000);
+        channel.subscribe((s) => {
+          if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") {
+            clearTimeout(t);
+            resolve(s);
+          }
         });
+      });
 
-        // Beri jendela singkat untuk menampung event yang lewat saat tes berjalan.
-        if (status === "SUBSCRIBED") await new Promise((r) => setTimeout(r, 4_000));
+      // Beri jendela singkat untuk menampung event yang lewat saat tes berjalan.
+      if (status === "SUBSCRIBED") await new Promise((r) => setTimeout(r, 4_000));
 
-        await client.removeChannel(channel);
-        client.realtime.disconnect();
+      await client.removeChannel(channel);
+      client.realtime.disconnect();
 
-        expect(leaks, `payload Realtime membocorkan PIN untuk ${caller}`).toEqual([]);
-      },
-      45_000,
-    );
+      expect(leaks, `payload Realtime membocorkan PIN untuk ${caller}`).toEqual([]);
+    }, 45_000);
   }
 });
 

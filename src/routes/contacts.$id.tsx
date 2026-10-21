@@ -218,7 +218,6 @@ function ContactDetailPage() {
           )}
 
           <div className="grid gap-2">
-
             {!rel?.connected && !rel?.blockedByMe && !rel?.outgoingPending && (
               <Button
                 className="h-12 rounded-xl"

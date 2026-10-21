@@ -89,7 +89,10 @@ export function LedgerPaySheet({
     onOpenChange(false);
     try {
       const updated = await recordPayment(ledger.id, value, "cash", note.trim(), paidAt);
-      const sisaBaru = Math.max(0, Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0));
+      const sisaBaru = Math.max(
+        0,
+        Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0),
+      );
       toast.success(sisaBaru === 0 ? "Pembayaran dicatat — catatan lunas" : "Pembayaran dicatat");
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["ledgers"] }),
@@ -105,7 +108,10 @@ export function LedgerPaySheet({
 
   return (
     <Sheet open={open} onOpenChange={(v) => (saving ? undefined : onOpenChange(v))}>
-      <SheetContent side="bottom" className="rounded-t-3xl p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl p-5 pb-[calc(env(safe-area-inset-bottom)+20px)]"
+      >
         <SheetHeader className="text-left">
           <SheetTitle>Bayar {ledger.counterpart_name}</SheetTitle>
           <SheetDescription>
@@ -170,7 +176,11 @@ export function LedgerPaySheet({
             </div>
           </div>
 
-          <Button className="h-12 w-full rounded-2xl" disabled={saving} onClick={() => void submit()}>
+          <Button
+            className="h-12 w-full rounded-2xl"
+            disabled={saving}
+            onClick={() => void submit()}
+          >
             <Wallet className="size-4" />
             {saving ? "Menyimpan…" : `Bayar ${rupiah(value)}`}
           </Button>

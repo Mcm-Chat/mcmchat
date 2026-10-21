@@ -79,8 +79,9 @@ function ForgotPasswordPage() {
           <div className="card-soft space-y-4 p-5 text-center">
             <MailCheck className="mx-auto size-8 text-success" />
             <p className="text-sm text-muted-foreground">
-              Tautan reset sudah dikirim ke <span className="font-semibold text-foreground">{email}</span>.
-              Buka email tersebut, lalu ikuti tautannya untuk membuat kata sandi baru.
+              Tautan reset sudah dikirim ke{" "}
+              <span className="font-semibold text-foreground">{email}</span>. Buka email tersebut,
+              lalu ikuti tautannya untuk membuat kata sandi baru.
             </p>
             <Button
               variant="outline"
@@ -120,7 +121,10 @@ function ForgotPasswordPage() {
         )}
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link to="/login" className="inline-flex min-h-11 items-center gap-1 font-semibold text-primary">
+          <Link
+            to="/login"
+            className="inline-flex min-h-11 items-center gap-1 font-semibold text-primary"
+          >
             <ArrowLeft className="size-4" /> Kembali masuk
           </Link>
         </p>

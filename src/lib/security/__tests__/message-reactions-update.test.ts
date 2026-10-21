@@ -48,7 +48,9 @@ const db = HAS_DB ? describe : describe.skip;
 
 db("skema message_reactions: tanpa jalur UPDATE", () => {
   it("RLS aktif dan tidak ada policy UPDATE", () => {
-    expect(q(`select relrowsecurity from pg_class where oid='public.message_reactions'::regclass`)).toEqual(["t"]);
+    expect(
+      q(`select relrowsecurity from pg_class where oid='public.message_reactions'::regclass`),
+    ).toEqual(["t"]);
     const cmds = q(`select cmd from pg_policies where tablename='message_reactions'`);
     expect(cmds).not.toContain("UPDATE");
     expect(cmds).not.toContain("ALL");
@@ -160,13 +162,15 @@ live("integrasi: UPDATE ditolak, hapus+insert berhasil", () => {
        where cm.user_id <> '${userId}' limit 1`,
     )[0];
     if (!other) return;
-    const patch = await rest(
-      `message_reactions?message_id=eq.${messageId}&user_id=eq.${userId}`,
-      { method: "PATCH", body: JSON.stringify({ user_id: other }) },
-    );
+    const patch = await rest(`message_reactions?message_id=eq.${messageId}&user_id=eq.${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ user_id: other }),
+    });
     if (patch.status === 200) expect(patch.body).toEqual([]);
     expect(
-      q(`select count(*) from public.message_reactions where message_id='${messageId}' and user_id='${other}'`),
+      q(
+        `select count(*) from public.message_reactions where message_id='${messageId}' and user_id='${other}'`,
+      ),
     ).toEqual(["0"]);
   }, 45_000);
 

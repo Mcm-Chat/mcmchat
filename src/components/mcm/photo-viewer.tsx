@@ -51,11 +51,7 @@ export function PhotoViewer({
       return;
     }
     const limit =
-      scale >= MAX_SCALE
-        ? ", zoom maksimum"
-        : scale <= MIN_SCALE
-          ? ", ukuran asli"
-          : "";
+      scale >= MAX_SCALE ? ", zoom maksimum" : scale <= MIN_SCALE ? ", ukuran asli" : "";
     // Spasi berselang agar pengumuman dengan teks sama tetap dibacakan ulang.
     const text = `Zoom ${pct} persen${limit}`;
     setAnnouncement((prev) => (prev.endsWith("\u00a0") ? text : `${text}\u00a0`));

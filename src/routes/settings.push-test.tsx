@@ -174,11 +174,7 @@ function PushTestPage() {
               )}
               Uji pesan
             </Button>
-            <Button
-              variant="secondary"
-              onClick={() => void send("call")}
-              disabled={busy !== null}
-            >
+            <Button variant="secondary" onClick={() => void send("call")} disabled={busy !== null}>
               {busy === "call" ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (

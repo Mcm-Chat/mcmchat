@@ -47,7 +47,9 @@ function lastFunctionBody(name: string): string {
 
 describe("customers.pin — grant tabel", () => {
   it("kolom pin dicabut dari authenticated dan anon", () => {
-    const revoke = lastIndexOf(/revoke select \(pin\) on public\.customers from [^;]*authenticated/);
+    const revoke = lastIndexOf(
+      /revoke select \(pin\) on public\.customers from [^;]*authenticated/,
+    );
     expect(revoke).toBeGreaterThan(-1);
     const grantPin = lastIndexOf(/grant [^;]*\([^)]*\bpin\b[^)]*\) on public\.customers to/);
     expect(grantPin).toBeLessThan(revoke);

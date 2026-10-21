@@ -94,9 +94,7 @@ function PerfPanel() {
         <dl className="mt-1 space-y-0.5">
           <div className="flex gap-2">
             <dt className="opacity-60">frame max</dt>
-            <dd className={sample.worstFrame > 50 ? "text-warning" : ""}>
-              {sample.worstFrame} ms
-            </dd>
+            <dd className={sample.worstFrame > 50 ? "text-warning" : ""}>{sample.worstFrame} ms</dd>
           </div>
           <div className="flex gap-2">
             <dt className="opacity-60">render rute</dt>

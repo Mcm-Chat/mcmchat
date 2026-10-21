@@ -99,7 +99,7 @@ function tablesFromTypes(): string[] {
   const end = src.indexOf("\n      Views: {", start);
   const block = src.slice(start, end === -1 ? undefined : end);
   const names = new Set<string>();
-  for (const m of block.matchAll(/^      ([a-z0-9_]+): \{$/gm)) names.add(m[1]!);
+  for (const m of block.matchAll(/^ {6}([a-z0-9_]+): \{$/gm)) names.add(m[1]!);
   return [...names].sort();
 }
 
@@ -111,30 +111,26 @@ d("Data API — tidak ada field PIN pada respons tabel", () => {
   });
 
   for (const caller of CALLERS) {
-    it(
-      `select=* untuk setiap tabel tidak pernah mengembalikan field PIN (${caller})`,
-      async () => {
-        const leaks: string[] = [];
-        for (const table of tables) {
-          const { status, body } = await api(caller, `${table}?select=*&limit=5`);
-          if (status !== 200) continue; // ditolak RLS/grant = aman
-          const found = pinKeysIn(body);
-          if (found.length) {
-            leaks.push(`${table}: ${found.join(", ")}`);
-            recordPinFinding({
-              kind: "table",
-              label: `${table} (select=*)`,
-              endpoint: `${table}?select=*&limit=5`,
-              caller,
-              status,
-              keys: found,
-            });
-          }
+    it(`select=* untuk setiap tabel tidak pernah mengembalikan field PIN (${caller})`, async () => {
+      const leaks: string[] = [];
+      for (const table of tables) {
+        const { status, body } = await api(caller, `${table}?select=*&limit=5`);
+        if (status !== 200) continue; // ditolak RLS/grant = aman
+        const found = pinKeysIn(body);
+        if (found.length) {
+          leaks.push(`${table}: ${found.join(", ")}`);
+          recordPinFinding({
+            kind: "table",
+            label: `${table} (select=*)`,
+            endpoint: `${table}?select=*&limit=5`,
+            caller,
+            status,
+            keys: found,
+          });
         }
-        expect(leaks, `Field PIN bocor untuk ${caller}`).toEqual([]);
-      },
-      120_000,
-    );
+      }
+      expect(leaks, `Field PIN bocor untuk ${caller}`).toEqual([]);
+    }, 120_000);
 
     it(`permintaan eksplisit kolom PIN ditolak (${caller})`, async () => {
       for (const [table, col] of [
@@ -170,14 +166,23 @@ d("Data API — tidak ada field PIN pada respons tabel", () => {
 d("Payload join/embed chat, order & ledger bebas PIN", () => {
   const EMBEDS: Array<[string, string]> = [
     ["chat: pesan + pengirim", "messages?select=*,sender:profiles(*)&limit=5"],
-    ["chat: percakapan + anggota + profil", "conversations?select=*,conversation_members(*,profiles(*))&limit=5"],
+    [
+      "chat: percakapan + anggota + profil",
+      "conversations?select=*,conversation_members(*,profiles(*))&limit=5",
+    ],
     ["chat: pesanan chat + pelanggan", "chat_orders?select=*,customers(*)&limit=5"],
     ["chat: item pesanan + varian", "chat_order_items?select=*,product_variants(*)&limit=5"],
-    ["ledger: ledger + pelanggan + pembayaran", "ledgers?select=*,customers(*),ledger_payments(*)&limit=5"],
+    [
+      "ledger: ledger + pelanggan + pembayaran",
+      "ledgers?select=*,customers(*),ledger_payments(*)&limit=5",
+    ],
     ["ledger: kejadian ledger + ledger", "ledger_events?select=*,ledgers(*)&limit=5"],
     ["bisnis: anggota + profil", "business_members?select=*,profiles(*)&limit=5"],
     ["bisnis: bisnis + anggota", "businesses?select=*,business_members(*)&limit=5"],
-    ["penyiapan: job + item + pelanggan", "preparation_jobs?select=*,preparation_job_items(*),customers(*)&limit=5"],
+    [
+      "penyiapan: job + item + pelanggan",
+      "preparation_jobs?select=*,preparation_job_items(*),customers(*)&limit=5",
+    ],
     ["penjualan: sales_records + pelanggan", "sales_records?select=*,customers(*)&limit=5"],
   ];
 
@@ -185,7 +190,12 @@ d("Payload join/embed chat, order & ledger bebas PIN", () => {
     for (const [label, path] of EMBEDS) {
       it(`${label} (${caller})`, async () => {
         const { status, body } = await api(caller, path);
-        assertNoPin(`${label} (${caller})`, body, { kind: "embed", endpoint: path, caller, status });
+        assertNoPin(`${label} (${caller})`, body, {
+          kind: "embed",
+          endpoint: path,
+          caller,
+          status,
+        });
       }, 30_000);
     }
   }
