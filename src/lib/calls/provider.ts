@@ -103,7 +103,7 @@ export const liveKitProvider: CallProvider = {
   name: "livekit",
   isConfigured: () => true,
   async connect(opts: ConnectOptions): Promise<CallSessionHandle> {
-    const lk = await import("livekit-client");
+    const lk = await import("./livekit-client");
     const { Room, RoomEvent, Track, VideoPresets } = lk;
     // Profil hemat untuk ponsel kelas menengah Indonesia: kamera 360p 24fps,
     // simulcast agar SFU bisa menurunkan layer saat jaringan jelek, dan

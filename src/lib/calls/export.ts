@@ -78,7 +78,7 @@ export function downloadCsv(rows: ExportRow[], period: ExportPeriod) {
 }
 
 export async function downloadPdf(rows: ExportRow[], period: ExportPeriod) {
-  const { jsPDF } = await import("jspdf");
+  const { jsPDF } = await import("@/lib/pdf/client");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const marginX = 32;
   const cols = [110, 48, 48, 78, 58, 118];

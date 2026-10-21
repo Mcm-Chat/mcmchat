@@ -120,7 +120,7 @@ export async function downloadPaymentsPdf(
   payments: LedgerPaymentRow[],
   receiptOverride?: string,
 ) {
-  const { jsPDF } = await import("jspdf");
+  const { jsPDF } = await import("@/lib/pdf/client");
   const QR = (await import("qrcode")).default;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const marginX = 32;

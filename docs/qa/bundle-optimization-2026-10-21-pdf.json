@@ -1,0 +1,11 @@
+{
+  "fixtures": 9,
+  "pages": 13,
+  "pixel_differences": 0,
+  "browser_errors": 0,
+  "csp_violations": 0,
+  "external_resources": 0,
+  "production_chunk_import": "passed",
+  "browser": "CUA Chromium",
+  "raster_dpi": 96
+}
