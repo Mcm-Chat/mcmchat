@@ -86,8 +86,7 @@ export function PurchaseDialog({
     ]);
   const patchTemplate = (i: number, patch: Partial<TemplateRow>) =>
     setTemplates((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
-  const removeTemplate = (i: number) =>
-    setTemplates((rows) => rows.filter((_, idx) => idx !== i));
+  const removeTemplate = (i: number) => setTemplates((rows) => rows.filter((_, idx) => idx !== i));
 
   const pickPhoto = async (file: File | undefined) => {
     if (!file) return;

@@ -7,20 +7,12 @@ const CONN: Record<
   ReturnType<typeof useConnectionState>,
   { label: string; dot: string; text: string }
 > = {
-  online: { label: "Tersambung langsung", dot: "bg-emerald-500", text: "text-emerald-600" },
-  connecting: { label: "Menyambungkan ulang…", dot: "bg-amber-500", text: "text-amber-600" },
+  online: { label: "Tersambung langsung", dot: "bg-success", text: "text-success" },
+  connecting: { label: "Menyambungkan ulang…", dot: "bg-warning", text: "text-foreground" },
   offline: { label: "Tidak ada koneksi", dot: "bg-destructive", text: "text-destructive" },
 };
 
-function Metric({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof Eye;
-  value: string;
-  label: string;
-}) {
+function Metric({ icon: Icon, value, label }: { icon: typeof Eye; value: string; label: string }) {
   return (
     <div className="min-w-0 flex-1 rounded-xl bg-muted/50 px-3 py-2.5">
       <Icon className="size-4 text-muted-foreground" aria-hidden />
@@ -45,10 +37,7 @@ export function StatusOverview({ groups }: { groups: StatusGroup[] }) {
   const slideBaru = belumDilihat.reduce((n, g) => n + g.unseen, 0);
 
   return (
-    <section
-      aria-label="Ringkasan aktivitas status"
-      className="card-soft space-y-3 px-4 py-3.5"
-    >
+    <section aria-label="Ringkasan aktivitas status" className="card-soft space-y-3 px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Activity className="size-4 text-primary" aria-hidden />

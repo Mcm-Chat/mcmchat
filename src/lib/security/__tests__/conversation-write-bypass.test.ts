@@ -64,7 +64,9 @@ describe.each(TABLES)("%s — hak tulis klien dicabut", (table) => {
   });
 
   it("service_role tetap punya akses penuh untuk operasi tepercaya", () => {
-    expect(lastIndexOf(new RegExp(`grant all on (table )?public\\.${table} to service_role`))).toBeGreaterThan(-1);
+    expect(
+      lastIndexOf(new RegExp(`grant all on (table )?public\\.${table} to service_role`)),
+    ).toBeGreaterThan(-1);
   });
 
   it("policy RESTRICTIVE menolak semua tulis lewat WITH CHECK (false)", () => {
@@ -80,7 +82,9 @@ describe.each(TABLES)("%s — hak tulis klien dicabut", (table) => {
   });
 
   it("RLS aktif pada tabel", () => {
-    expect(lastIndexOf(new RegExp(`alter table (only )?public\\.${table} enable row level security`))).toBeGreaterThan(-1);
+    expect(
+      lastIndexOf(new RegExp(`alter table (only )?public\\.${table} enable row level security`)),
+    ).toBeGreaterThan(-1);
   });
 });
 

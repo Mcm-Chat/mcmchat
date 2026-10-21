@@ -42,9 +42,8 @@ export function isChunkLoadError(error: unknown): boolean {
   // Klasifikasikan sebagai chunk hanya bila pesan juga menyebut import, modul,
   // script, stylesheet, atau URL aset aplikasi; jangan salah menangkap fetch API.
   const vagueNetworkFailure = /(?:load failed|failed to fetch|networkerror)/.test(lower);
-  const assetContext = /(?:import|module|script|stylesheet|\/assets\/|\.m?js(?:\?|$)|\.css(?:\?|$))/.test(
-    lower,
-  );
+  const assetContext =
+    /(?:import|module|script|stylesheet|\/assets\/|\.m?js(?:\?|$)|\.css(?:\?|$))/.test(lower);
   return vagueNetworkFailure && assetContext;
 }
 

@@ -10,7 +10,11 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 let currentToken: string | null = "tok-1";
-vi.mock("firebase/app", () => ({ initializeApp: () => ({}), getApps: () => [], getApp: () => ({}) }));
+vi.mock("firebase/app", () => ({
+  initializeApp: () => ({}),
+  getApps: () => [],
+  getApp: () => ({}),
+}));
 vi.mock("firebase/messaging", () => ({
   isSupported: async () => true,
   getMessaging: () => ({}),
@@ -78,6 +82,6 @@ describe("syncWebPushToken", () => {
     expect(await syncWebPushToken("Pixel")).toBe(false);
     expect(rpc).not.toHaveBeenCalled();
     vi.stubGlobal("PushManager", class {});
-vi.stubGlobal("Notification", { permission: "granted" });
+    vi.stubGlobal("Notification", { permission: "granted" });
   });
 });

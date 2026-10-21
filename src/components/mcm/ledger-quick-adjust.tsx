@@ -93,7 +93,10 @@ export function LedgerQuickAdjust({ ledger, actorId }: { ledger: LedgerRow; acto
         </Button>
       </div>
 
-      <Dialog open={mode !== null} onOpenChange={(v) => (saving ? undefined : setMode(v ? mode : null))}>
+      <Dialog
+        open={mode !== null}
+        onOpenChange={(v) => (saving ? undefined : setMode(v ? mode : null))}
+      >
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>

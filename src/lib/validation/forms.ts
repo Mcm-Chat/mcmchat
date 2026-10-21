@@ -7,7 +7,8 @@ export function pinError(raw: string): string | null {
   const value = normalizePin(raw);
   if (!value) return "PIN wajib diisi.";
   const compact = value.replace("-", "");
-  if (compact.length < 8) return `PIN harus 8 karakter (baru ${compact.length}). Contoh: A2B3-C4D5.`;
+  if (compact.length < 8)
+    return `PIN harus 8 karakter (baru ${compact.length}). Contoh: A2B3-C4D5.`;
   if (compact.length > 8) return "PIN terlalu panjang — hanya 8 karakter. Contoh: A2B3-C4D5.";
   if (!isValidPin(value)) return "PIN hanya boleh huruf A–Z dan angka, tanpa 0/O/I/1.";
   return null;
@@ -32,11 +33,7 @@ export const ledgerSchema = z.object({
 });
 
 export const profileSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(3, "Nama minimal 3 karakter.")
-    .max(60, "Nama maksimal 60 karakter."),
+  name: z.string().trim().min(3, "Nama minimal 3 karakter.").max(60, "Nama maksimal 60 karakter."),
   bio: z.string().trim().max(140, "Bio maksimal 140 karakter."),
 });
 

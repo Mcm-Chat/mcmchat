@@ -1,9 +1,13 @@
-export const rupiah = (value: number) =>
-  new Intl.NumberFormat("id-ID", {
+let rupiahFormatter: Intl.NumberFormat | undefined;
+
+export const rupiah = (value: number) => {
+  rupiahFormatter ??= new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(Math.round(value));
+  });
+  return rupiahFormatter.format(Math.round(value));
+};
 
 export const rupiahShort = (value: number) => {
   if (Math.abs(value) >= 1_000_000)
@@ -14,25 +18,28 @@ export const rupiahShort = (value: number) => {
 
 const TZ = "Asia/Jakarta";
 
-export const jam = (iso: string) =>
-  new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+/** Reuse locale/time-zone setup across chat rows, but only initialize formats in use. */
+function dateFormatter(options: Intl.DateTimeFormatOptions) {
+  let formatter: Intl.DateTimeFormat | undefined;
+  return (iso: string) => {
+    const date = new Date(iso);
+    // Date#toLocale*String returns this for bad input; Intl#format would throw.
+    if (Number.isNaN(date.getTime())) return "Invalid Date";
+    formatter ??= new Intl.DateTimeFormat("id-ID", { ...options, timeZone: TZ });
+    return formatter.format(date);
+  };
+}
 
-export const tanggal = (iso: string) =>
-  new Date(iso).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: TZ,
-  });
+export const jam = dateFormatter({ hour: "2-digit", minute: "2-digit" });
 
-export const tanggalPanjang = (iso: string) =>
-  new Date(iso).toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: TZ,
-  });
+export const tanggal = dateFormatter({ day: "numeric", month: "short", year: "numeric" });
+
+export const tanggalPanjang = dateFormatter({
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 
 export const tanggalInput = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 

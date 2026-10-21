@@ -1,3 +1,5 @@
+import { getActiveUserId, scopedKey } from "@/lib/session-scope";
+
 export type PremiumPlan = {
   id: "monthly" | "yearly";
   name: string;
@@ -23,11 +25,7 @@ export const PREMIUM_PLANS: PremiumPlan[] = [
     price: 290000,
     period: "/tahun",
     note: "Hemat 2 bulan",
-    perks: [
-      "Semua manfaat bulanan",
-      "Preset kustom tersimpan",
-      "Prioritas fitur baru lebih awal",
-    ],
+    perks: ["Semua manfaat bulanan", "Preset kustom tersimpan", "Prioritas fitur baru lebih awal"],
     highlight: true,
   },
 ];
@@ -50,8 +48,9 @@ export type PremiumSimulation = {
 
 /** Hasil simulasi hanya disimpan lokal dan TIDAK memberi akses premium nyata. */
 export function readSimulation(): PremiumSimulation | null {
+  if (!getActiveUserId()) return null;
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(scopedKey(KEY));
     return raw ? (JSON.parse(raw) as PremiumSimulation) : null;
   } catch {
     return null;
@@ -59,16 +58,18 @@ export function readSimulation(): PremiumSimulation | null {
 }
 
 export function saveSimulation(sim: PremiumSimulation) {
+  if (!getActiveUserId()) return;
   try {
-    localStorage.setItem(KEY, JSON.stringify(sim));
+    localStorage.setItem(scopedKey(KEY), JSON.stringify(sim));
   } catch {
     /* storage penuh atau diblokir — abaikan */
   }
 }
 
 export function clearSimulation() {
+  if (!getActiveUserId()) return;
   try {
-    localStorage.removeItem(KEY);
+    localStorage.removeItem(scopedKey(KEY));
   } catch {
     /* abaikan */
   }

@@ -58,19 +58,18 @@ export const Route = createFileRoute("/")({
   component: Splash,
 });
 
-function Splash() {
+export function Splash() {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (loading) return;
     const seen = typeof window !== "undefined" && localStorage.getItem("mcm-onboarded") === "1";
-    const t = setTimeout(() => {
-      if (session) void navigate({ to: "/chat", replace: true });
-      else if (seen) void navigate({ to: "/login", replace: true });
-      else void navigate({ to: "/onboarding", replace: true });
-    }, 700);
-    return () => clearTimeout(t);
+    // Auth sudah selesai: jangan menahan pengguna di splash dengan timer
+    // dekoratif. Skeleton rute tetap menangani waktu unduh halaman tujuan.
+    if (session) void navigate({ to: "/chat", replace: true });
+    else if (seen) void navigate({ to: "/login", replace: true });
+    else void navigate({ to: "/onboarding", replace: true });
   }, [loading, session, navigate]);
 
   return (

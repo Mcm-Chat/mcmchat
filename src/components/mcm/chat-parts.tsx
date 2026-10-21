@@ -1,6 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useInView } from "@/lib/perf/use-in-view";
-import { LazyStorageImage, MediaError, MediaSkeleton, RemoteImage } from "@/components/mcm/lazy-media";
+import {
+  LazyStorageImage,
+  MediaError,
+  MediaSkeleton,
+  RemoteImage,
+} from "@/components/mcm/lazy-media";
 import {
   Archive,
   BellOff,
@@ -430,16 +435,19 @@ function StatusReplyQuote({ message }: { message: MessageRow }) {
     thumbPath?: string | null;
   };
   const { ref, inView } = useInView<HTMLDivElement>();
-  const { data: url } = useStatusMedia(
-    p.type === "status_reply" && inView ? p.thumbPath : null,
-  );
+  const { data: url } = useStatusMedia(p.type === "status_reply" && inView ? p.thumbPath : null);
   if (p.type !== "status_reply") return null;
   return (
     <div
       ref={ref}
       className="mb-1.5 flex items-center gap-2 rounded-lg border-l-2 border-primary bg-foreground/10 px-2 py-1 text-[11px]"
     >
-      <RemoteImage src={url} alt="" frameClassName="size-8 shrink-0 rounded" className="object-cover" />
+      <RemoteImage
+        src={url}
+        alt=""
+        frameClassName="size-8 shrink-0 rounded"
+        className="object-cover"
+      />
       <span className="min-w-0">
         <span className="block font-medium">Membalas status</span>
         <span className="line-clamp-1 opacity-80">{p.preview}</span>

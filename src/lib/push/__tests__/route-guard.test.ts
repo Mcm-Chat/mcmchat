@@ -50,7 +50,10 @@ describe("guardPushRoute", () => {
 
   it("tidak mengunci pengguna saat pengecekan gagal", async () => {
     capability.mockRejectedValue(new Error("network"));
-    expect(await guardPushRoute(`/chat/${CONV}`)).toMatchObject({ route: `/chat/${CONV}`, blocked: false });
+    expect(await guardPushRoute(`/chat/${CONV}`)).toMatchObject({
+      route: `/chat/${CONV}`,
+      blocked: false,
+    });
   });
 
   it("menolak rute protokol-relatif", async () => {

@@ -6,8 +6,7 @@ const html = (extra = "") =>
     status: 200,
     headers: { "content-type": "text/html" },
   });
-const redirect = (loc: string) =>
-  new Response(null, { status: 302, headers: { location: loc } });
+const redirect = (loc: string) => new Response(null, { status: 302, headers: { location: loc } });
 
 describe("safeUrl", () => {
   it("menerima URL publik", () => {
@@ -80,7 +79,10 @@ describe("redirect", () => {
   it("memblokir redirect internal di hop terakhir rantai", async () => {
     const hops = ["https://a.example/1", "https://b.example/2", "http://[::1]/3"];
     let i = 0;
-    vi.stubGlobal("fetch", vi.fn(async () => redirect(hops[i++]!)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => redirect(hops[i++]!)),
+    );
     expect(await unfurl("https://example.org/x")).toBeNull();
   });
 
@@ -95,12 +97,18 @@ describe("redirect", () => {
   it("menolak loop redirect", async () => {
     const seq = ["https://example.org/b", "https://example.org/x"];
     let i = 0;
-    vi.stubGlobal("fetch", vi.fn(async () => redirect(seq[i++ % 2]!)));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => redirect(seq[i++ % 2]!)),
+    );
     expect(await unfurl("https://example.org/x")).toBeNull();
   });
 
   it("menolak downgrade https ke http", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => redirect("http://example.org/plain")));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => redirect("http://example.org/plain")),
+    );
     expect(await unfurl("https://example.org/x")).toBeNull();
   });
 

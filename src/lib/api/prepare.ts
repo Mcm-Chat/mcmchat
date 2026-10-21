@@ -214,11 +214,7 @@ export async function listJobsForConversation(conversationId: string): Promise<J
 
 export async function getJob(jobId: string): Promise<JobWithItems> {
   const row = unwrap(
-    await supabase
-      .from("preparation_jobs")
-      .select(JOB_SELECT)
-      .eq("id", jobId)
-      .single(),
+    await supabase.from("preparation_jobs").select(JOB_SELECT).eq("id", jobId).single(),
     "Tugas tidak ditemukan",
   );
   return row as unknown as JobWithItems;

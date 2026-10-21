@@ -2,18 +2,18 @@
 /**
  * Gate ukuran bundel klien.
  *
- * Mengukur aset di dist/client dalam byte gzip (angka yang benar-benar
+ * Mengukur aset di .output/public dalam byte gzip (angka yang benar-benar
  * diunduh pengguna di jaringan seluler) lalu membandingkannya dengan
  * anggaran di bundle-budget.json. Keluar dengan kode 1 bila terlampaui,
  * supaya regresi performa ketahuan di CI, bukan di perangkat pengguna.
  *
- * Pakai: node scripts/check-bundle-size.mjs [dir=dist/client]
+ * Pakai: node scripts/check-bundle-size.mjs [dir=.output/public]
  */
 import { gzipSync } from "node:zlib";
 import { readFileSync, readdirSync, statSync, appendFileSync } from "node:fs";
 import path from "node:path";
 
-const ROOT = process.argv[2] || "dist/client";
+const ROOT = process.argv[2] || ".output/public";
 const KIB = 1024;
 const budgetFile = JSON.parse(readFileSync("bundle-budget.json", "utf8"));
 const { budgets, chunkOverrides = {} } = budgetFile;
@@ -51,7 +51,10 @@ const fmt = (bytes) => `${kib(bytes).toFixed(1)} KiB`;
 
 // Nama chunk tanpa hash: "assets/chat._id-DXlRpNfX.js" -> "chat._id"
 const chunkName = (file) =>
-  path.basename(file).replace(/-[A-Za-z0-9_-]{8,}\.(js|css)$/, "").replace(/\.(js|css)$/, "");
+  path
+    .basename(file)
+    .replace(/-[A-Za-z0-9_-]{8,}\.(js|css)$/, "")
+    .replace(/\.(js|css)$/, "");
 
 const totals = {
   totalClient: sum(() => true),
@@ -99,14 +102,19 @@ const summary = process.env["GITHUB_STEP_SUMMARY"];
 if (summary) {
   appendFileSync(summary, `### Ukuran bundel klien\n\n${lines.join("\n")}\n\n`);
   if (failures.length) {
-    appendFileSync(summary, `**Anggaran terlampaui:**\n\n${failures.map((f) => `- ${f}`).join("\n")}\n`);
+    appendFileSync(
+      summary,
+      `**Anggaran terlampaui:**\n\n${failures.map((f) => `- ${f}`).join("\n")}\n`,
+    );
   }
 }
 
 if (failures.length) {
   console.error("\nAnggaran bundel terlampaui:");
   for (const f of failures) console.error(` - ${f}`);
-  console.error("\nPerkecil bundel (lazy-load / code-split) atau naikkan angka di bundle-budget.json secara sadar.");
+  console.error(
+    "\nPerkecil bundel (lazy-load / code-split) atau naikkan angka di bundle-budget.json secara sadar.",
+  );
   process.exit(1);
 }
 

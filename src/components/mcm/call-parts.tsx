@@ -35,7 +35,9 @@ export function CallControls({
   const btn = (active: boolean) =>
     cn(
       "size-14 rounded-full border border-on-dark-border focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-navy",
-      active ? "bg-on-dark text-navy hover:bg-on-dark/80" : "bg-on-dark-surface text-on-dark hover:bg-on-dark-surface",
+      active
+        ? "bg-on-dark text-navy hover:bg-on-dark/80"
+        : "bg-on-dark-surface text-on-dark hover:bg-on-dark-surface",
     );
   const videoDisabled = kind === "audio";
   return (

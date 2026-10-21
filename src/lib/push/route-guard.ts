@@ -44,8 +44,7 @@ const REASON_TEXT: Record<string, { code: PushDeniedCode; title: string; detail:
   missing: {
     code: "missing",
     title: "Percakapan sudah tidak ada",
-    detail:
-      "Percakapan yang dituju notifikasi ini sudah dihapus. Notifikasinya bisa diabaikan.",
+    detail: "Percakapan yang dituju notifikasi ini sudah dihapus. Notifikasinya bisa diabaikan.",
   },
 };
 

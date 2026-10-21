@@ -32,10 +32,20 @@ describe("pemulihan posisi baca chat", () => {
   it("tidak memulihkan bila terakhir berada di dasar", () => {
     expect(shouldRestoreScroll(null)).toBe(false);
     expect(
-      shouldRestoreScroll({ top: 300, atBottom: true, composerFocused: false, savedAt: Date.now() }),
+      shouldRestoreScroll({
+        top: 300,
+        atBottom: true,
+        composerFocused: false,
+        savedAt: Date.now(),
+      }),
     ).toBe(false);
     expect(
-      shouldRestoreScroll({ top: 300, atBottom: false, composerFocused: false, savedAt: Date.now() }),
+      shouldRestoreScroll({
+        top: 300,
+        atBottom: false,
+        composerFocused: false,
+        savedAt: Date.now(),
+      }),
     ).toBe(true);
   });
 });

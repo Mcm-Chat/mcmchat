@@ -491,10 +491,7 @@ function ChatRoom() {
   }
   // Baseline maju sendiri saat pengguna benar-benar selesai membaca satu area.
   const [settledBaselineAt, setSettledBaselineAt] = useState<string | null>(null);
-  const effectiveBaseline = advanceReadBaseline(
-    readBaselineRef.current ?? null,
-    settledBaselineAt,
-  );
+  const effectiveBaseline = advanceReadBaseline(readBaselineRef.current ?? null, settledBaselineAt);
   const unread = useMemo(
     () =>
       summarizeUnread(
@@ -516,11 +513,7 @@ function ChatRoom() {
     if (!el) return;
     const idx = lastVisibleIndex(virtualizer.getVirtualItems(), el.scrollTop, el.clientHeight);
     setSettledBaselineAt((prev) =>
-      settledBaseline(
-        messages,
-        idx,
-        advanceReadBaseline(readBaselineRef.current ?? null, prev),
-      ),
+      settledBaseline(messages, idx, advanceReadBaseline(readBaselineRef.current ?? null, prev)),
     );
   }, [messages, virtualizer]);
   const scheduleReadSettle = useCallback(() => {
@@ -1349,138 +1342,138 @@ function ChatRoom() {
           }}
           className="chat-scroll relative flex-1 overflow-y-auto px-2 py-3"
         >
-        {hasOlder && (
-          <div className="mb-2 flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={isFetchingOlder}
-              onClick={() => void fetchOlder()}
-            >
-              {isFetchingOlder ? "Memuat pesan lama…" : "Muat pesan lama"}
-            </Button>
-          </div>
-        )}
-        {messages.length === 0 && (
-          <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
-            <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              {conv.other ? (
-                <UserAvatar
-                  userId={conv.other.id}
-                  path={conv.other.avatar_url}
-                  version={conv.other.avatar_version ?? 0}
-                  name={headerName}
-                  color={conv.other.avatar_color}
-                />
-              ) : (
-                <MCMAvatar initials={initialsOf(headerName)} color="#0ea5e9" />
-              )}
-            </span>
-            <p className="text-sm font-semibold">Mulai percakapan dengan {headerName}</p>
-            <p className="text-xs text-muted-foreground">
-              Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.
-            </p>
-          </div>
-        )}
-        <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
-          {virtualItems.map((virtualRow) => {
-            const row = rows[virtualRow.index];
-            if (!row) return null;
-            const m = row.message;
-            const mine = m.sender_id === userId;
-            const replyTo = m.reply_to_id ? messageById.get(m.reply_to_id) : undefined;
-            const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
-            return (
-              <div
-                key={virtualRow.key}
-                data-index={virtualRow.index}
-                data-virtual-row=""
-                ref={virtualizer.measureElement}
-                className="chat-row absolute top-0 left-0 w-full"
-                style={{ transform: `translate3d(0, ${virtualRow.start}px, 0)` }}
+          {hasOlder && (
+            <div className="mb-2 flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={isFetchingOlder}
+                onClick={() => void fetchOlder()}
               >
-                {row.showDay && (
-                  <div className="my-3 flex justify-center">
-                    <span className="rounded-full border border-border/60 bg-card/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur">
-                      {row.day}
-                    </span>
-                  </div>
-                )}
-                {markedIds && m.id === unread.firstId && (
-                  <div className="my-2 flex items-center gap-2 px-3" aria-hidden="true">
-                    <span className="h-px flex-1 bg-primary/40" />
-                    <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
-                      Belum dibaca
-                    </span>
-                    <span className="h-px flex-1 bg-primary/40" />
-                  </div>
-                )}
-                <MessageBubble
-                  message={m}
-                  replyTo={replyTo}
-                  replySenderName={replyTo ? nameOf(replyTo.sender_id) : undefined}
-                  senderName={nameOf(m.sender_id)}
-                  mine={mine}
-                  showSender={conv.type !== "direct"}
-                  reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
-                  status={status}
-                  grouped={row.grouped}
-                  animateIn={virtualRow.index === rows.length - 1}
-                  selectable={selection.length > 0}
-                  selected={selection.includes(m.id)}
-                  highlighted={
-                    search.hl === m.id || markedIds?.has(m.id) === true || activeMatchId === m.id
-                  }
-                  onAction={handleAction}
-                />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Pesan yang masih di outbox: tampil optimistis, tidak pernah hilang. */}
-        {pending.map((entry) => (
-          <div key={entry.clientId} className="mb-1.5 flex justify-end px-2">
-            <div
-              className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${
-                entry.status === "failed"
-                  ? "border border-destructive/40 bg-destructive/10"
-                  : "bg-primary/70 text-primary-foreground"
-              }`}
-            >
-              <p className="whitespace-pre-wrap break-words">{entry.body}</p>
-              <div className="mt-1 flex items-center justify-end gap-2 text-[10px] opacity-80">
-                {entry.status === "failed" ? (
-                  <>
-                    <span className="text-destructive">Gagal terkirim</span>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1 font-medium text-destructive underline"
-                      onClick={() => retryEntry(entry.clientId)}
-                    >
-                      <RotateCw className="size-3" /> Coba lagi
-                    </button>
-                    <button
-                      type="button"
-                      className="font-medium underline"
-                      onClick={() => discardEntry(entry.clientId)}
-                    >
-                      Buang
-                    </button>
-                  </>
+                {isFetchingOlder ? "Memuat pesan lama…" : "Muat pesan lama"}
+              </Button>
+            </div>
+          )}
+          {messages.length === 0 && (
+            <div className="flex min-h-[45vh] flex-col items-center justify-center gap-2 px-8 text-center">
+              <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                {conv.other ? (
+                  <UserAvatar
+                    userId={conv.other.id}
+                    path={conv.other.avatar_url}
+                    version={conv.other.avatar_version ?? 0}
+                    name={headerName}
+                    color={conv.other.avatar_color}
+                  />
                 ) : (
-                  <span>Mengirim…</span>
+                  <MCMAvatar initials={initialsOf(headerName)} color="#0ea5e9" />
                 )}
+              </span>
+              <p className="text-sm font-semibold">Mulai percakapan dengan {headerName}</p>
+              <p className="text-xs text-muted-foreground">
+                Kirim pesan, foto berlokasi, atau catatan keuangan langsung dari sini.
+              </p>
+            </div>
+          )}
+          <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+            {virtualItems.map((virtualRow) => {
+              const row = rows[virtualRow.index];
+              if (!row) return null;
+              const m = row.message;
+              const mine = m.sender_id === userId;
+              const replyTo = m.reply_to_id ? messageById.get(m.reply_to_id) : undefined;
+              const status = deriveStatus(receiptIndex.get(m.id) ?? [], otherMemberCount);
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  data-virtual-row=""
+                  ref={virtualizer.measureElement}
+                  className="chat-row absolute top-0 left-0 w-full"
+                  style={{ transform: `translate3d(0, ${virtualRow.start}px, 0)` }}
+                >
+                  {row.showDay && (
+                    <div className="my-3 flex justify-center">
+                      <span className="rounded-full border border-border/60 bg-card/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur">
+                        {row.day}
+                      </span>
+                    </div>
+                  )}
+                  {markedIds && m.id === unread.firstId && (
+                    <div className="my-2 flex items-center gap-2 px-3" aria-hidden="true">
+                      <span className="h-px flex-1 bg-primary/40" />
+                      <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+                        Belum dibaca
+                      </span>
+                      <span className="h-px flex-1 bg-primary/40" />
+                    </div>
+                  )}
+                  <MessageBubble
+                    message={m}
+                    replyTo={replyTo}
+                    replySenderName={replyTo ? nameOf(replyTo.sender_id) : undefined}
+                    senderName={nameOf(m.sender_id)}
+                    mine={mine}
+                    showSender={conv.type !== "direct"}
+                    reactions={reactionsByMessage.get(m.id) ?? EMPTY_REACTIONS}
+                    status={status}
+                    grouped={row.grouped}
+                    animateIn={virtualRow.index === rows.length - 1}
+                    selectable={selection.length > 0}
+                    selected={selection.includes(m.id)}
+                    highlighted={
+                      search.hl === m.id || markedIds?.has(m.id) === true || activeMatchId === m.id
+                    }
+                    onAction={handleAction}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pesan yang masih di outbox: tampil optimistis, tidak pernah hilang. */}
+          {pending.map((entry) => (
+            <div key={entry.clientId} className="mb-1.5 flex justify-end px-2">
+              <div
+                className={`max-w-[78%] rounded-2xl px-3 py-2 text-sm ${
+                  entry.status === "failed"
+                    ? "border border-destructive/40 bg-destructive/10"
+                    : "bg-primary/70 text-primary-foreground"
+                }`}
+              >
+                <p className="whitespace-pre-wrap break-words">{entry.body}</p>
+                <div className="mt-1 flex items-center justify-end gap-2 text-[10px] opacity-80">
+                  {entry.status === "failed" ? (
+                    <>
+                      <span className="text-destructive">Gagal terkirim</span>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 font-medium text-destructive underline"
+                        onClick={() => retryEntry(entry.clientId)}
+                      >
+                        <RotateCw className="size-3" /> Coba lagi
+                      </button>
+                      <button
+                        type="button"
+                        className="font-medium underline"
+                        onClick={() => discardEntry(entry.clientId)}
+                      >
+                        Buang
+                      </button>
+                    </>
+                  ) : (
+                    <span>Mengirim…</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        <div ref={bottomRef} />
-        {unreadMarked && (
-          <p role="status" aria-live="polite" className="sr-only">
-            {unread.count} pesan belum dibaca disorot, mulai dari pesan pertama.
-          </p>
-        )}
+          ))}
+          <div ref={bottomRef} />
+          {unreadMarked && (
+            <p role="status" aria-live="polite" className="sr-only">
+              {unread.count} pesan belum dibaca disorot, mulai dari pesan pertama.
+            </p>
+          )}
         </div>
         <TypingIndicator names={typingUsers.map((u) => nameOf(u))} className="pt-1" />
       </div>
@@ -1534,9 +1527,7 @@ function ChatRoom() {
             size="icon"
             variant="secondary"
             aria-label={
-              missedCount > 0
-                ? `Lompat ke ${missedCount} pesan baru`
-                : "Lompat ke pesan terbaru"
+              missedCount > 0 ? `Lompat ke ${missedCount} pesan baru` : "Lompat ke pesan terbaru"
             }
             className="pointer-events-auto relative rounded-full shadow-md"
             onClick={() => {

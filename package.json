@@ -18,7 +18,7 @@
     "test:e2e:chat-media": "python3 e2e/chat_media_overflow.py",
     "test:e2e:chat-visual": "python3 e2e/chat_visual.py",
     "test:e2e:chat-visual:update": "python3 e2e/chat_visual.py --update",
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsc --noEmit",
     "verify:assetlinks": "node scripts/verify-assetlinks.mjs",
     "verify:aab": "node scripts/verify-aab.mjs",
     "verify:identity": "node scripts/verify-app-identity.mjs",
@@ -36,10 +36,10 @@
     "verify:db-secrets": "node scripts/verify-db-secrets.mjs"
   },
   "dependencies": {
-    "@capacitor/android": "7.6.8",
+    "@capacitor/android": "7.6.9",
     "@capacitor/app": "7.1.0",
     "@capacitor/browser": "7.0.3",
-    "@capacitor/core": "7.6.8",
+    "@capacitor/core": "7.6.9",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/email-js": "0.1.0",
     "@lovable.dev/webhooks-js": "^0.0.1",
@@ -74,10 +74,10 @@
     "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
-    "@tanstack/react-router": "1.170.18",
-    "@tanstack/react-start": "1.168.32",
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
     "@tanstack/react-virtual": "^3.14.9",
-    "@tanstack/router-plugin": "1.168.23",
+    "@tanstack/router-plugin": "1.168.42",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -107,7 +107,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "7.6.8",
+    "@capacitor/cli": "7.6.9",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.13.1",
     "@testing-library/jest-dom": "^7.0.1",
@@ -117,7 +117,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.12",
     "axe-core": "^4.13.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
@@ -133,7 +133,7 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   },
   "pnpm": {
     "overrides": {
@@ -141,6 +141,7 @@
     }
   },
   "overrides": {
+    "@grpc/grpc-js": "1.13.6",
     "brace-expansion": "^2.0.3",
     "nanoid": "^3.3.18",
     "js-yaml": "^4.3.1"

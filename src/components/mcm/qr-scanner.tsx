@@ -31,14 +31,7 @@ export function extractPin(raw: string): string | null {
 }
 
 type CamPhase =
-  | "idle"
-  | "prompt"
-  | "requesting"
-  | "streaming"
-  | "denied"
-  | "missing"
-  | "busy"
-  | "unsupported";
+  "idle" | "prompt" | "requesting" | "streaming" | "denied" | "missing" | "busy" | "unsupported";
 
 type BlockedPhase = Exclude<CamPhase, "idle" | "prompt" | "requesting" | "streaming">;
 
@@ -55,8 +48,7 @@ const PHASE_COPY: Record<BlockedPhase, string> = {
 async function readCameraPermission(): Promise<"granted" | "denied" | "prompt" | "unknown"> {
   try {
     const perms = navigator.permissions as
-      | { query?: (d: { name: string }) => Promise<PermissionStatus> }
-      | undefined;
+      { query?: (d: { name: string }) => Promise<PermissionStatus> } | undefined;
     if (!perms?.query) return "unknown";
     const status = await perms.query({ name: "camera" });
     return status.state as "granted" | "denied" | "prompt";
@@ -347,56 +339,56 @@ export function QrScannerDialog({
             phase !== "prompt" &&
             phase !== "requesting" &&
             phase !== "streaming" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
-              <CameraOff className="size-6 text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">{PHASE_COPY[phase]}</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="rounded-xl"
-                  onClick={() => {
-                    setArmed(true);
-                    setAttempt((a) => a + 1);
-                  }}
-                >
-                  <RefreshCw className="size-4" /> Coba lagi
-                </Button>
-                {phase === "denied" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 p-4 text-center">
+                <CameraOff className="size-6 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">{PHASE_COPY[phase]}</p>
+                <div className="flex flex-wrap justify-center gap-2">
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
                     className="rounded-xl"
                     onClick={() => {
-                      void openAppSettings().then((ok) => {
-                        if (!ok)
-                          toast.info(
-                            "Buka setelan peramban/aplikasi → Izin → Kamera untuk mengizinkan MCM.",
-                          );
-                      });
+                      setArmed(true);
+                      setAttempt((a) => a + 1);
                     }}
                   >
-                    <Settings className="size-4" /> Buka setelan
+                    <RefreshCw className="size-4" /> Coba lagi
                   </Button>
-                )}
-                {onManualPin && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-xl"
-                    onClick={() => {
-                      onOpenChange(false);
-                      onManualPin();
-                    }}
-                  >
-                    <Keyboard className="size-4" /> Masukkan PIN manual
-                  </Button>
-                )}
+                  {phase === "denied" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl"
+                      onClick={() => {
+                        void openAppSettings().then((ok) => {
+                          if (!ok)
+                            toast.info(
+                              "Buka setelan peramban/aplikasi → Izin → Kamera untuk mengizinkan MCM.",
+                            );
+                        });
+                      }}
+                    >
+                      <Settings className="size-4" /> Buka setelan
+                    </Button>
+                  )}
+                  {onManualPin && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl"
+                      onClick={() => {
+                        onOpenChange(false);
+                        onManualPin();
+                      }}
+                    >
+                      <Keyboard className="size-4" /> Masukkan PIN manual
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <div className="grid grid-cols-2 gap-2">

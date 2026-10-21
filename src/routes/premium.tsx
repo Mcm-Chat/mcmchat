@@ -169,8 +169,7 @@ function PremiumPage() {
             <div className="mt-3 rounded-xl bg-muted/60 p-3">
               <p className="text-xs font-medium">
                 Simulasi terakhir:{" "}
-                {PREMIUM_PLANS.find((p) => p.id === sim.planId)?.name ?? sim.planId} •{" "}
-                {sim.method}
+                {PREMIUM_PLANS.find((p) => p.id === sim.planId)?.name ?? sim.planId} • {sim.method}
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {new Date(sim.at).toLocaleString("id-ID")} — catatan uji lokal, bukan langganan

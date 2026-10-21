@@ -11,7 +11,8 @@ type LedgerDetail = {
 
 /** Recompute status the same way the server RPC does. */
 function nextStatus(ledger: LedgerRow, paid: number): LedgerRow["status"] {
-  const settled = ledger.status === "active" || ledger.status === "partially_paid" || ledger.status === "paid";
+  const settled =
+    ledger.status === "active" || ledger.status === "partially_paid" || ledger.status === "paid";
   if (!settled) return ledger.status;
   if (paid >= Number(ledger.amount)) return "paid";
   if (paid > 0) return "partially_paid";

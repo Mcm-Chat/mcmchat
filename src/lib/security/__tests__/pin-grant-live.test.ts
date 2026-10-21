@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 /**
  * Bukti berbasis hasil query (bukan pembacaan teks migration): tidak ada jalur
@@ -124,7 +124,12 @@ d("view / matview — tidak ada jalur pintas ke PIN", () => {
 });
 
 d("fungsi — satu-satunya jalur PIN, dan tetap tertutup untuk anon", () => {
-  const rows = q(`
+  let rows: { name: string; secdef: boolean; anon: boolean }[];
+
+  // Suite callbacks run during collection even for describe.skip. Keep database
+  // access in a hook so offline collection never invokes psql.
+  beforeAll(() => {
+    rows = q(`
     select p.proname || '|' || p.prosecdef::text || '|'
            || has_function_privilege('anon', p.oid, 'EXECUTE')::text
     from pg_proc p
@@ -133,8 +138,13 @@ d("fungsi — satu-satunya jalur PIN, dan tetap tertutup untuk anon", () => {
       and (p.prosrc ilike '%.pin%' or p.prosrc ilike '%staff_pin%'
            or p.prosrc ilike '% pin %' or p.prosrc ilike '%pin =%')
   `).map((r) => {
-    const [name, secdef, anon] = r.split("|");
-    return { name: name ?? "", secdef: secdef === "true" || secdef === "t", anon: anon === "true" || anon === "t" };
+      const [name, secdef, anon] = r.split("|");
+      return {
+        name: name ?? "",
+        secdef: secdef === "true" || secdef === "t",
+        anon: anon === "true" || anon === "t",
+      };
+    });
   });
 
   it("setiap fungsi yang menyentuh PIN ada di allowlist", () => {

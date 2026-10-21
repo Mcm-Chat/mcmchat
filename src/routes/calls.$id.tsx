@@ -260,9 +260,7 @@ function CallDetailPage() {
                 size="sm"
                 variant="ghost"
                 className="rounded-xl"
-                onClick={() =>
-                  setNoteTarget({ callId: call.id, peerName, note: note?.note ?? "" })
-                }
+                onClick={() => setNoteTarget({ callId: call.id, peerName, note: note?.note ?? "" })}
               >
                 <NotebookPen className="size-4" /> {note ? "Ubah" : "Tambah"}
               </Button>

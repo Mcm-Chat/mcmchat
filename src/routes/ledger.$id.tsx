@@ -51,10 +51,7 @@ import {
   updateStatus,
   type LedgerRow,
 } from "@/lib/api/ledger";
-import {
-  optimisticDeletePayment,
-  optimisticRecordPayment,
-} from "@/lib/api/ledger-optimistic";
+import { optimisticDeletePayment, optimisticRecordPayment } from "@/lib/api/ledger-optimistic";
 import { downloadPaymentsCsv, downloadPaymentsPdf } from "@/lib/ledger/export";
 import {
   listExportHistory,
@@ -189,7 +186,10 @@ function LedgerDetail() {
     setPay({ amount: "", method: "transfer", note: "" });
     try {
       const updated = await recordPayment(ledger.id, amount, pay.method, pay.note.trim());
-      const sisaBaru = Math.max(0, Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0));
+      const sisaBaru = Math.max(
+        0,
+        Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0),
+      );
       toast.success(sisaBaru === 0 ? "Pembayaran tercatat — catatan lunas" : "Pembayaran tercatat");
       await refresh();
     } catch (err) {
@@ -628,7 +628,9 @@ function LedgerDetail() {
                 Number(updated?.amount ?? 0) - Number(updated?.paid_amount ?? 0),
               );
               toast.success(
-                sisaBaru > 0 ? "Pembayaran dihapus — sisa tagihan diperbarui" : "Pembayaran dihapus",
+                sisaBaru > 0
+                  ? "Pembayaran dihapus — sisa tagihan diperbarui"
+                  : "Pembayaran dihapus",
               );
               await refresh();
             } catch (err) {

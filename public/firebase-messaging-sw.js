@@ -23,7 +23,8 @@ function routeFromData(d) {
       : "/chat";
   if (d.kind === "task_assigned" || d.kind === "task_completed")
     return d.jobId ? `/tasks/${d.jobId}` : "/tasks";
-  if (d.kind === "sale" || d.kind === "order") return d.orderId ? `/catalog/${d.orderId}` : "/finance";
+  if (d.kind === "sale" || d.kind === "order")
+    return d.orderId ? `/catalog/${d.orderId}` : "/finance";
   if (d.kind === "ledger") return d.ledgerId ? `/ledger/${d.ledgerId}` : "/finance";
   if (d.kind === "contact_request") return "/contacts";
   return "/chat";
@@ -85,9 +86,10 @@ function deliverRoute(client, route) {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const data = event.notification.data || {};
-  const route = typeof data.route === "string" && data.route.startsWith("/") && !data.route.startsWith("//")
-    ? data.route
-    : "/chat";
+  const route =
+    typeof data.route === "string" && data.route.startsWith("/") && !data.route.startsWith("//")
+      ? data.route
+      : "/chat";
   event.waitUntil(
     (async () => {
       const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
@@ -99,7 +101,10 @@ self.addEventListener("notificationclick", (event) => {
         }
       });
       // Tab yang terlihat lebih dulu, agar rute mendarat di jendela yang dipakai.
-      sameOrigin.sort((a, b) => (a.visibilityState === "visible" ? -1 : 0) - (b.visibilityState === "visible" ? -1 : 0));
+      sameOrigin.sort(
+        (a, b) =>
+          (a.visibilityState === "visible" ? -1 : 0) - (b.visibilityState === "visible" ? -1 : 0),
+      );
 
       for (const client of sameOrigin) {
         try {

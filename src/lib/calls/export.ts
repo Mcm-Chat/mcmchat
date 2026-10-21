@@ -48,9 +48,7 @@ const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
 export function rowsToCsv(rows: ExportRow[]) {
   const lines = [HEADERS.join(",")];
   for (const r of rows) {
-    lines.push(
-      [r.nama, r.arah, r.jenis, r.status, r.durasi, r.waktu].map(escapeCsv).join(","),
-    );
+    lines.push([r.nama, r.arah, r.jenis, r.status, r.durasi, r.waktu].map(escapeCsv).join(","));
   }
   // BOM agar Excel membaca karakter non-ASCII dengan benar.
   return `\uFEFF${lines.join("\r\n")}\r\n`;

@@ -23,7 +23,10 @@ function isAppHost(host: string): boolean {
 export function internalPathOf(href: string): string | null {
   let u: URL;
   try {
-    u = new URL(href, typeof window === "undefined" ? "https://" + SITE_HOST : window.location.href);
+    u = new URL(
+      href,
+      typeof window === "undefined" ? "https://" + SITE_HOST : window.location.href,
+    );
   } catch {
     return null;
   }

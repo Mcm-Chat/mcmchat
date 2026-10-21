@@ -1,3 +1,5 @@
+import { getActiveUserId, scopedKey } from "@/lib/session-scope";
+
 /** Riwayat ekspor pembayaran (lokal, per perangkat) agar bisa diunduh ulang. */
 export type ExportHistoryEntry = {
   receipt: string;
@@ -12,9 +14,9 @@ const KEY = "mcm.ledger.export-history.v1";
 const MAX = 20;
 
 function readAll(): ExportHistoryEntry[] {
-  if (typeof localStorage === "undefined") return [];
+  if (typeof localStorage === "undefined" || !getActiveUserId()) return [];
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(scopedKey(KEY));
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
@@ -27,9 +29,9 @@ function readAll(): ExportHistoryEntry[] {
 }
 
 function writeAll(entries: ExportHistoryEntry[]) {
-  if (typeof localStorage === "undefined") return;
+  if (typeof localStorage === "undefined" || !getActiveUserId()) return;
   try {
-    localStorage.setItem(KEY, JSON.stringify(entries.slice(0, MAX)));
+    localStorage.setItem(scopedKey(KEY), JSON.stringify(entries.slice(0, MAX)));
   } catch {
     /* kuota penuh — abaikan */
   }
