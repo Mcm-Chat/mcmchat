@@ -404,16 +404,8 @@ export async function upsertVariant(input: VariantInput): Promise<VariantRow> {
       .single(),
     "Gagal membuat varian",
   );
-  const { error } = await supabase.from("inventory_balances").upsert(
-    {
-      variant_id: created.id,
-      product_id: created.product_id,
-      business_id: created.business_id,
-      qty_base: 0,
-    },
-    { onConflict: "variant_id" },
-  );
-  if (error) throw new Error(friendly(error.message, "Gagal menyiapkan stok varian"));
+  // The variant INSERT trigger initializes zero inventory in the same
+  // transaction. Clients keep read-only balance access; stock changes use RPC.
   return created;
 }
 

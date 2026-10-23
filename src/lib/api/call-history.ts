@@ -24,7 +24,7 @@ export async function hideCalls(userId: string, callIds: string[]): Promise<void
   if (ids.length === 0) return;
   const { error } = await supabase.from("call_log_hides").upsert(
     ids.map((call_id) => ({ user_id: userId, call_id })),
-    { onConflict: "user_id,call_id" },
+    { onConflict: "user_id,call_id", ignoreDuplicates: true },
   );
   if (error) throw new Error(friendly(error.message, "Gagal menghapus riwayat panggilan"));
 }

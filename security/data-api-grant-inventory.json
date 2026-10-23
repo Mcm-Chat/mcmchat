@@ -1,0 +1,555 @@
+{
+  "scope": "Top-level public CREATE TABLE statements; creation ACL, not final effective privileges",
+  "migration_count": 87,
+  "tables": [
+    {
+      "table": "public.profiles",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated",
+        "GRANT ALL ON public.profiles TO service_role"
+      ]
+    },
+    {
+      "table": "public.user_settings",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_settings TO authenticated",
+        "GRANT ALL ON public.user_settings TO service_role"
+      ]
+    },
+    {
+      "table": "public.devices",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.devices TO authenticated",
+        "GRANT ALL ON public.devices TO service_role"
+      ]
+    },
+    {
+      "table": "public.contact_requests",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.contact_requests TO authenticated",
+        "GRANT ALL ON public.contact_requests TO service_role"
+      ]
+    },
+    {
+      "table": "public.contacts",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.contacts TO authenticated",
+        "GRANT ALL ON public.contacts TO service_role"
+      ]
+    },
+    {
+      "table": "public.pin_search_log",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT ON public.pin_search_log TO authenticated",
+        "GRANT ALL ON public.pin_search_log TO service_role"
+      ]
+    },
+    {
+      "table": "public.conversations",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.conversations TO authenticated",
+        "GRANT ALL ON public.conversations TO service_role"
+      ]
+    },
+    {
+      "table": "public.conversation_members",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.conversation_members TO authenticated",
+        "GRANT ALL ON public.conversation_members TO service_role"
+      ]
+    },
+    {
+      "table": "public.messages",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.messages TO authenticated",
+        "GRANT ALL ON public.messages TO service_role"
+      ]
+    },
+    {
+      "table": "public.message_hides",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, DELETE ON public.message_hides TO authenticated",
+        "GRANT ALL ON public.message_hides TO service_role"
+      ]
+    },
+    {
+      "table": "public.message_reactions",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, DELETE ON public.message_reactions TO authenticated",
+        "GRANT ALL ON public.message_reactions TO service_role"
+      ]
+    },
+    {
+      "table": "public.message_receipts",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.message_receipts TO authenticated",
+        "GRANT ALL ON public.message_receipts TO service_role"
+      ]
+    },
+    {
+      "table": "public.calls",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.calls TO authenticated",
+        "GRANT ALL ON public.calls TO service_role"
+      ]
+    },
+    {
+      "table": "public.call_participants",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.call_participants TO authenticated",
+        "GRANT ALL ON public.call_participants TO service_role"
+      ]
+    },
+    {
+      "table": "public.businesses",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.businesses TO authenticated",
+        "GRANT ALL ON public.businesses TO service_role"
+      ]
+    },
+    {
+      "table": "public.business_members",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.business_members TO authenticated",
+        "GRANT ALL ON public.business_members TO service_role"
+      ]
+    },
+    {
+      "table": "public.products",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.products TO authenticated",
+        "GRANT ALL ON public.products TO service_role"
+      ]
+    },
+    {
+      "table": "public.product_photos",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.product_photos TO authenticated",
+        "GRANT ALL ON public.product_photos TO service_role"
+      ]
+    },
+    {
+      "table": "public.quick_replies",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.quick_replies TO authenticated",
+        "GRANT ALL ON public.quick_replies TO service_role"
+      ]
+    },
+    {
+      "table": "public.customers",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.customers TO authenticated",
+        "GRANT ALL ON public.customers TO service_role"
+      ]
+    },
+    {
+      "table": "public.orders",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO authenticated",
+        "GRANT ALL ON public.orders TO service_role"
+      ]
+    },
+    {
+      "table": "public.order_items",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.order_items TO authenticated",
+        "GRANT ALL ON public.order_items TO service_role"
+      ]
+    },
+    {
+      "table": "public.sales_records",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.sales_records TO authenticated",
+        "GRANT ALL ON public.sales_records TO service_role"
+      ]
+    },
+    {
+      "table": "public.ledgers",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.ledgers TO authenticated",
+        "GRANT ALL ON public.ledgers TO service_role"
+      ]
+    },
+    {
+      "table": "public.ledger_payments",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT ON public.ledger_payments TO authenticated",
+        "GRANT ALL ON public.ledger_payments TO service_role"
+      ]
+    },
+    {
+      "table": "public.ledger_events",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT ON public.ledger_events TO authenticated",
+        "GRANT ALL ON public.ledger_events TO service_role"
+      ]
+    },
+    {
+      "table": "public.notifications",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.notifications TO authenticated",
+        "GRANT ALL ON public.notifications TO service_role"
+      ]
+    },
+    {
+      "table": "public.product_variants",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.product_variants TO authenticated",
+        "GRANT ALL ON public.product_variants TO service_role"
+      ]
+    },
+    {
+      "table": "public.inventory_balances",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.inventory_balances TO authenticated",
+        "GRANT ALL ON public.inventory_balances TO service_role"
+      ]
+    },
+    {
+      "table": "public.inventory_movements",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.inventory_movements TO authenticated",
+        "GRANT ALL ON public.inventory_movements TO service_role"
+      ]
+    },
+    {
+      "table": "public.preparation_jobs",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.preparation_jobs TO authenticated",
+        "GRANT ALL ON public.preparation_jobs TO service_role"
+      ]
+    },
+    {
+      "table": "public.preparation_job_items",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.preparation_job_items TO authenticated",
+        "GRANT ALL ON public.preparation_job_items TO service_role"
+      ]
+    },
+    {
+      "table": "public.preparation_item_photos",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, DELETE ON public.preparation_item_photos TO authenticated",
+        "GRANT ALL ON public.preparation_item_photos TO service_role"
+      ]
+    },
+    {
+      "table": "public.background_action_log",
+      "created_in": "20260812134028_88c5be26-d834-4380-85cf-6f33b80001a4.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.background_action_log TO authenticated",
+        "GRANT ALL ON public.background_action_log TO service_role"
+      ]
+    },
+    {
+      "table": "public.entitlements",
+      "created_in": "20260812134905_772d4d6f-e709-4e0e-b196-d6ce09c06e55.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.entitlements TO authenticated",
+        "GRANT ALL ON public.entitlements TO service_role"
+      ]
+    },
+    {
+      "table": "public.statuses",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.statuses TO authenticated",
+        "GRANT ALL ON public.statuses TO service_role"
+      ]
+    },
+    {
+      "table": "public.status_items",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.status_items TO authenticated",
+        "GRANT ALL ON public.status_items TO service_role"
+      ]
+    },
+    {
+      "table": "public.status_views",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT ON public.status_views TO authenticated",
+        "GRANT ALL ON public.status_views TO service_role"
+      ]
+    },
+    {
+      "table": "public.status_reactions",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.status_reactions TO authenticated",
+        "GRANT ALL ON public.status_reactions TO service_role"
+      ]
+    },
+    {
+      "table": "public.status_mutes",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, DELETE ON public.status_mutes TO authenticated",
+        "GRANT ALL ON public.status_mutes TO service_role"
+      ]
+    },
+    {
+      "table": "public.status_audience",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, DELETE ON public.status_audience TO authenticated",
+        "GRANT ALL ON public.status_audience TO service_role"
+      ]
+    },
+    {
+      "table": "public.status_preferences",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE ON public.status_preferences TO authenticated",
+        "GRANT ALL ON public.status_preferences TO service_role"
+      ]
+    },
+    {
+      "table": "public.device_action_rate",
+      "created_in": "20260812154414_a4cd3b4d-e088-46e3-8a63-649300b14571.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT ALL ON public.device_action_rate TO service_role"
+      ]
+    },
+    {
+      "table": "public.avatar_audience",
+      "created_in": "20260813013741_6af850fc-023a-42ad-a4e2-7a0df780ef58.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.avatar_audience TO authenticated",
+        "GRANT ALL ON public.avatar_audience TO service_role"
+      ]
+    },
+    {
+      "table": "public.stickers",
+      "created_in": "20260813175238_9a7187da-a68d-4af0-bcd2-e1db70f81ee0.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.stickers TO authenticated",
+        "GRANT ALL ON public.stickers TO service_role"
+      ]
+    },
+    {
+      "table": "public.call_diagnostic_runs",
+      "created_in": "20260814020240_d1120027-e5c7-4eab-8198-507560aaa344.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "grant select, insert, delete on public.call_diagnostic_runs to authenticated",
+        "grant all on public.call_diagnostic_runs to service_role"
+      ]
+    },
+    {
+      "table": "public.contact_connections",
+      "created_in": "20260814020853_a3da2c3a-4bb3-4ac5-b327-709486b964ec.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.contact_connections TO authenticated",
+        "GRANT ALL ON public.contact_connections TO service_role",
+        "REVOKE ALL ON TABLE public.profiles, public.contacts, public.contact_requests, public.pin_search_log, public.contact_connections FROM authenticated, anon, PUBLIC",
+        "GRANT SELECT ON public.contact_connections TO authenticated",
+        "GRANT ALL ON public.profiles, public.contacts, public.contact_requests, public.pin_search_log, public.contact_connections TO service_role"
+      ]
+    },
+    {
+      "table": "public.direct_conversations",
+      "created_in": "20260814032644_17b050f4-26b3-49a8-a845-4b735ceac44f.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.direct_conversations TO authenticated",
+        "GRANT ALL ON public.direct_conversations TO service_role",
+        "REVOKE ALL ON TABLE public.direct_conversations FROM anon, PUBLIC"
+      ]
+    },
+    {
+      "table": "public.business_conversations",
+      "created_in": "20260814034142_1ef4404d-9b8a-45e9-89c7-1d847e25b5d8.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "REVOKE ALL ON TABLE public.business_conversations FROM authenticated, anon, PUBLIC",
+        "GRANT SELECT ON TABLE public.business_conversations TO authenticated",
+        "GRANT ALL ON TABLE public.business_conversations TO service_role"
+      ]
+    },
+    {
+      "table": "public.variant_stock_units",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.variant_stock_units TO authenticated",
+        "GRANT ALL ON public.variant_stock_units TO service_role"
+      ]
+    },
+    {
+      "table": "public.chat_orders",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.chat_orders TO authenticated",
+        "GRANT ALL ON public.chat_orders TO service_role"
+      ]
+    },
+    {
+      "table": "public.chat_order_items",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.chat_order_items TO authenticated",
+        "GRANT ALL ON public.chat_order_items TO service_role"
+      ]
+    },
+    {
+      "table": "public.chat_order_unit_slots",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.chat_order_unit_slots TO authenticated",
+        "GRANT ALL ON public.chat_order_unit_slots TO service_role"
+      ]
+    },
+    {
+      "table": "public.push_action_tokens",
+      "created_in": "20260814092748_9b1b6e7d-77ee-44d8-b2d9-f6fb4066a0f9.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT ALL ON public.push_action_tokens TO service_role"
+      ]
+    },
+    {
+      "table": "public.notification_actions",
+      "created_in": "20260814101052_7d72cf32-2b61-46a5-831a-0d67072a211d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "REVOKE ALL ON TABLE public.notification_actions FROM PUBLIC, anon, authenticated",
+        "GRANT ALL ON TABLE public.notification_actions TO service_role"
+      ]
+    },
+    {
+      "table": "public.call_reminders",
+      "created_in": "20260815032219_1bb5417d-2d43-4a0b-99d0-096873dd700d.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.call_reminders TO authenticated",
+        "GRANT ALL ON public.call_reminders TO service_role"
+      ]
+    },
+    {
+      "table": "public.call_log_hides",
+      "created_in": "20260815095057_2afea56c-35e6-4c55-84a0-822431ce38d8.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, DELETE ON public.call_log_hides TO authenticated",
+        "GRANT ALL ON public.call_log_hides TO service_role"
+      ]
+    },
+    {
+      "table": "public.purchases",
+      "created_in": "20260815102820_067475da-7ec0-46ad-bf28-b39943b659f2.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.purchases TO authenticated",
+        "GRANT ALL ON public.purchases TO service_role"
+      ]
+    },
+    {
+      "table": "public.product_stock_balances",
+      "created_in": "20260815164301_6936b9b4-16ed-407e-9b99-e560de7d1fe6.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT ON public.product_stock_balances TO authenticated",
+        "GRANT ALL ON public.product_stock_balances TO service_role"
+      ]
+    },
+    {
+      "table": "public.call_notes",
+      "created_in": "20260818051124_6a17e36f-e846-4448-a4a1-7995fdd83b26.sql",
+      "rls_enabled_at_creation": true,
+      "creation_acl": [
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON public.call_notes TO authenticated",
+        "GRANT ALL ON public.call_notes TO service_role"
+      ]
+    }
+  ],
+  "dropped_tables": [
+    {
+      "table": "public.push_action_tokens",
+      "migration": "20260814101750_1a448442-cd41-48ca-b2b0-541db4333be4.sql"
+    }
+  ]
+}

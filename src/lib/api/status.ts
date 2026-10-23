@@ -171,7 +171,7 @@ export async function markStatusViewed(item: StatusItem, userId: string, share: 
     .from("status_views")
     .upsert(
       { item_id: item.id, viewer_id: userId, status_id: item.status_id },
-      { onConflict: "item_id,viewer_id" },
+      { onConflict: "item_id,viewer_id", ignoreDuplicates: true },
     );
 }
 
@@ -270,7 +270,10 @@ export async function deleteStatus(statusId: string, items: StatusItem[]) {
 
 export async function setStatusMuted(userId: string, ownerId: string, muted: boolean) {
   if (muted)
-    await supabase.from("status_mutes").upsert({ user_id: userId, muted_user_id: ownerId });
+    await supabase.from("status_mutes").upsert(
+      { user_id: userId, muted_user_id: ownerId },
+      { onConflict: "user_id,muted_user_id", ignoreDuplicates: true },
+    );
   else
     await supabase.from("status_mutes").delete().eq("user_id", userId).eq("muted_user_id", ownerId);
 }
