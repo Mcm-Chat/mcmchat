@@ -1,0 +1,4263 @@
+{
+  "source": "Mcm-Chat/mcmchat@a6a6a576fb29d8564a37cdccfcc989abdb313e9e",
+  "records": [
+    {
+      "file": "src/components/mcm/business/manage-panel.tsx",
+      "line": 66,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "then"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/components/mcm/business/manage-panel.tsx",
+      "line": 91,
+      "receiver": "supabase",
+      "name": "businesses",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/components/mcm/business/manage-panel.tsx",
+      "line": 107,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/components/mcm/business/manage-panel.tsx",
+      "line": 118,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 73,
+      "receiver": "supabase",
+      "name": "avatar_audience",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 88,
+      "receiver": "supabase",
+      "name": "avatar_audience",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 95,
+      "receiver": "supabase",
+      "name": "avatar_audience",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 55,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 64,
+      "receiver": "supabase",
+      "name": "businesses",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 99,
+      "receiver": "supabase",
+      "name": "businesses",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 110,
+      "receiver": "supabase",
+      "name": "products",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 119,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 172,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 177,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "in"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 190,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 195,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/business.ts",
+      "line": 205,
+      "receiver": "supabase",
+      "name": "quick_replies",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-diagnostics.ts",
+      "line": 17,
+      "receiver": "supabase",
+      "name": "call_diagnostic_runs",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-diagnostics.ts",
+      "line": 29,
+      "receiver": "supabase",
+      "name": "call_diagnostic_runs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-diagnostics.ts",
+      "line": 39,
+      "receiver": "supabase",
+      "name": "call_diagnostic_runs",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-history.ts",
+      "line": 13,
+      "receiver": "supabase",
+      "name": "call_log_hides",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-history.ts",
+      "line": 25,
+      "receiver": "supabase",
+      "name": "call_log_hides",
+      "role": "authenticated",
+      "methods": [
+        "upsert"
+      ],
+      "operations": [
+        "insert"
+      ],
+      "conflict_behavior": "DO NOTHING"
+    },
+    {
+      "file": "src/lib/api/call-history.ts",
+      "line": 36,
+      "receiver": "supabase",
+      "name": "call_log_hides",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq",
+        "in"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-notes.ts",
+      "line": 16,
+      "receiver": "supabase",
+      "name": "call_notes",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-notes.ts",
+      "line": 33,
+      "receiver": "supabase",
+      "name": "call_notes",
+      "role": "authenticated",
+      "methods": [
+        "upsert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select",
+        "update"
+      ],
+      "conflict_behavior": "DO UPDATE"
+    },
+    {
+      "file": "src/lib/api/call-notes.ts",
+      "line": 43,
+      "receiver": "supabase",
+      "name": "call_notes",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-reminders.ts",
+      "line": 31,
+      "receiver": "supabase",
+      "name": "call_reminders",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "is",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-reminders.ts",
+      "line": 53,
+      "receiver": "supabase",
+      "name": "call_reminders",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/call-reminders.ts",
+      "line": 72,
+      "receiver": "supabase",
+      "name": "call_reminders",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "select",
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 128,
+      "receiver": "supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 142,
+      "receiver": "supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "is"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 149,
+      "receiver": "supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "eq",
+        "gt",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 165,
+      "receiver": "supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 240,
+      "receiver": "supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 249,
+      "receiver": "supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 255,
+      "receiver": "supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 156,
+      "receiver": "supabase",
+      "name": "product_stock_balances",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 167,
+      "receiver": "supabase",
+      "name": "products",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 178,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 187,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 210,
+      "receiver": "supabase",
+      "name": "products",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 216,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 224,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 274,
+      "receiver": "supabase",
+      "name": "products",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "select",
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 293,
+      "receiver": "supabase",
+      "name": "products",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 330,
+      "receiver": "supabase",
+      "name": "products",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 390,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "select",
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 400,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 414,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 425,
+      "receiver": "supabase",
+      "name": "inventory_movements",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 426,
+      "receiver": "supabase",
+      "name": "variant_stock_units",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "neq",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 432,
+      "receiver": "supabase",
+      "name": "order_items",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 433,
+      "receiver": "supabase",
+      "name": "chat_order_items",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 443,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 468,
+      "receiver": "supabase",
+      "name": "inventory_movements",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 501,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 525,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 571,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 577,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 581,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 588,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 625,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 648,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 62,
+      "receiver": "supabase",
+      "name": "chat_orders",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "single"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 67,
+      "receiver": "supabase",
+      "name": "chat_order_items",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 75,
+      "receiver": "supabase",
+      "name": "chat_order_unit_slots",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 88,
+      "receiver": "supabase",
+      "name": "chat_orders",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 111,
+      "receiver": "supabase",
+      "name": "conversations",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 112,
+      "receiver": "supabase",
+      "name": "conversation_members",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 116,
+      "receiver": "supabase",
+      "name": "conversation_members",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 217,
+      "receiver": "supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 230,
+      "receiver": "supabase",
+      "name": "message_hides",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 276,
+      "receiver": "supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 298,
+      "receiver": "supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 315,
+      "receiver": "supabase",
+      "name": "message_hides",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 330,
+      "receiver": "supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 352,
+      "receiver": "supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "in"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 364,
+      "receiver": "supabase",
+      "name": "message_reactions",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 373,
+      "receiver": "supabase",
+      "name": "message_reactions",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 375,
+      "receiver": "supabase",
+      "name": "message_reactions",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 381,
+      "receiver": "supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 122,
+      "receiver": "supabase",
+      "name": "contacts",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 176,
+      "receiver": "supabase",
+      "name": "contact_requests",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "or"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 298,
+      "receiver": "supabase",
+      "name": "contact_requests",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "limit",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 347,
+      "receiver": "supabase",
+      "name": "contact_requests",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 481,
+      "receiver": "supabase",
+      "name": "contact_requests",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/customers.ts",
+      "line": 24,
+      "receiver": "supabase",
+      "name": "customers",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/entitlements.ts",
+      "line": 28,
+      "receiver": "supabase",
+      "name": "entitlements",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/finance.ts",
+      "line": 52,
+      "receiver": "supabase",
+      "name": "sales_records",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 31,
+      "receiver": "supabase",
+      "name": "ledgers",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "or",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 42,
+      "receiver": "supabase",
+      "name": "ledgers",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 46,
+      "receiver": "supabase",
+      "name": "ledger_payments",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 51,
+      "receiver": "supabase",
+      "name": "ledger_events",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 81,
+      "receiver": "supabase",
+      "name": "ledgers",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 101,
+      "receiver": "supabase",
+      "name": "ledger_events",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 140,
+      "receiver": "supabase",
+      "name": "ledgers",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 142,
+      "receiver": "supabase",
+      "name": "ledger_events",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 168,
+      "receiver": "supabase",
+      "name": "ledgers",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "select",
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 176,
+      "receiver": "supabase",
+      "name": "ledger_events",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/notifications.ts",
+      "line": 10,
+      "receiver": "supabase",
+      "name": "notifications",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/notifications.ts",
+      "line": 21,
+      "receiver": "supabase",
+      "name": "notifications",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/notifications.ts",
+      "line": 26,
+      "receiver": "supabase",
+      "name": "notifications",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 44,
+      "receiver": "supabase",
+      "name": "product_variants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 56,
+      "receiver": "supabase",
+      "name": "inventory_balances",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 205,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 217,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "single"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 229,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 238,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/purchases.ts",
+      "line": 52,
+      "receiver": "supabase",
+      "name": "purchases",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/purchases.ts",
+      "line": 63,
+      "receiver": "supabase",
+      "name": "purchases",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/purchases.ts",
+      "line": 70,
+      "receiver": "supabase",
+      "name": "inventory_movements",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order",
+        "limit"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/receipts.ts",
+      "line": 47,
+      "receiver": "supabase",
+      "name": "message_receipts",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/sales.ts",
+      "line": 136,
+      "receiver": "supabase",
+      "name": "sales_records",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "single"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/sales.ts",
+      "line": 166,
+      "receiver": "supabase",
+      "name": "sales_records",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/sales.ts",
+      "line": 177,
+      "receiver": "supabase",
+      "name": "sales_records",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/sales.ts",
+      "line": 188,
+      "receiver": "supabase",
+      "name": "orders",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/sales.ts",
+      "line": 198,
+      "receiver": "supabase",
+      "name": "orders",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 65,
+      "receiver": "supabase",
+      "name": "user_settings",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 73,
+      "receiver": "supabase",
+      "name": "user_settings",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 117,
+      "receiver": "supabase",
+      "name": "user_settings",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "select",
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 30,
+      "receiver": "supabase",
+      "name": "status_preferences",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 40,
+      "receiver": "supabase",
+      "name": "status_preferences",
+      "role": "authenticated",
+      "methods": [
+        "upsert"
+      ],
+      "operations": [
+        "insert",
+        "update"
+      ],
+      "conflict_behavior": "DO UPDATE"
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 63,
+      "receiver": "supabase",
+      "name": "status_items",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 77,
+      "receiver": "supabase",
+      "name": "status_views",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 120,
+      "receiver": "supabase",
+      "name": "statuses",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 133,
+      "receiver": "supabase",
+      "name": "status_audience",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 159,
+      "receiver": "supabase",
+      "name": "status_items",
+      "role": "authenticated",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 161,
+      "receiver": "supabase",
+      "name": "statuses",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 170,
+      "receiver": "supabase",
+      "name": "status_views",
+      "role": "authenticated",
+      "methods": [
+        "upsert"
+      ],
+      "operations": [
+        "insert"
+      ],
+      "conflict_behavior": "DO NOTHING"
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 188,
+      "receiver": "supabase",
+      "name": "status_views",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 193,
+      "receiver": "supabase",
+      "name": "status_reactions",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 214,
+      "receiver": "supabase",
+      "name": "status_reactions",
+      "role": "authenticated",
+      "methods": [
+        "upsert"
+      ],
+      "operations": [
+        "insert",
+        "update"
+      ],
+      "conflict_behavior": "DO UPDATE"
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 245,
+      "receiver": "supabase",
+      "name": "status_items",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 250,
+      "receiver": "supabase",
+      "name": "status_items",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 255,
+      "receiver": "supabase",
+      "name": "statuses",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 262,
+      "receiver": "supabase",
+      "name": "statuses",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 273,
+      "receiver": "supabase",
+      "name": "status_mutes",
+      "role": "authenticated",
+      "methods": [
+        "upsert"
+      ],
+      "operations": [
+        "insert"
+      ],
+      "conflict_behavior": "DO NOTHING"
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 278,
+      "receiver": "supabase",
+      "name": "status_mutes",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/stickers.ts",
+      "line": 14,
+      "receiver": "supabase",
+      "name": "stickers",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/stickers.ts",
+      "line": 35,
+      "receiver": "supabase",
+      "name": "stickers",
+      "role": "authenticated",
+      "methods": [
+        "insert",
+        "select",
+        "single"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/stickers.ts",
+      "line": 48,
+      "receiver": "supabase",
+      "name": "stickers",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 52,
+      "receiver": "supabase",
+      "name": "variant_stock_units",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 61,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 85,
+      "receiver": "supabase",
+      "name": "variant_stock_units",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 95,
+      "receiver": "supabase",
+      "name": "product_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 38,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 51,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 63,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "single"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 75,
+      "receiver": "supabase",
+      "name": "preparation_item_photos",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 86,
+      "receiver": "supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 110,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/auth.tsx",
+      "line": 67,
+      "receiver": "supabase",
+      "name": "user_settings",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/calls/calls.functions.ts",
+      "line": 41,
+      "receiver": "context.supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/calls/calls.functions.ts",
+      "line": 48,
+      "receiver": "context.supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/contacts/access-request.ts",
+      "line": 34,
+      "receiver": "supabase",
+      "name": "direct_conversations",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/contacts/alias.ts",
+      "line": 22,
+      "receiver": "supabase",
+      "name": "contacts",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 34,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 51,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_job_items",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 126,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_item_photos",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 144,
+      "receiver": "supabaseAdmin",
+      "name": "messages",
+      "role": "service_role",
+      "methods": [
+        "insert",
+        "select",
+        "maybeSingle"
+      ],
+      "operations": [
+        "insert",
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 180,
+      "receiver": "supabaseAdmin",
+      "name": "sales_records",
+      "role": "service_role",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 24,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "update",
+        "eq",
+        "in"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 50,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_job_items",
+      "role": "service_role",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 58,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "update",
+        "eq",
+        "in"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 90,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "single"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 102,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_item_photos",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 107,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_item_photos",
+      "role": "service_role",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 140,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_item_photos",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 148,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_item_photos",
+      "role": "service_role",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 168,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "single"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 180,
+      "receiver": "supabaseAdmin",
+      "name": "messages",
+      "role": "service_role",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 189,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 258,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 270,
+      "receiver": "supabaseAdmin",
+      "name": "messages",
+      "role": "service_role",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 293,
+      "receiver": "supabaseAdmin",
+      "name": "messages",
+      "role": "service_role",
+      "methods": [
+        "insert"
+      ],
+      "operations": [
+        "insert"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.server.ts",
+      "line": 15,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.server.ts",
+      "line": 22,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_job_items",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.server.ts",
+      "line": 28,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_item_photos",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "order"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.server.ts",
+      "line": 90,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_jobs",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/prepare.server.ts",
+      "line": 101,
+      "receiver": "supabaseAdmin",
+      "name": "preparation_job_items",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 72,
+      "receiver": "db",
+      "name": "devices",
+      "role": "service_role",
+      "methods": [
+        "update",
+        "in"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 91,
+      "receiver": "db",
+      "name": "messages",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 106,
+      "receiver": "db",
+      "name": "conversations",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 107,
+      "receiver": "db",
+      "name": "profiles",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 218,
+      "receiver": "db",
+      "name": "calls",
+      "role": "service_role",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 21,
+      "receiver": "context.supabase",
+      "name": "messages",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 49,
+      "receiver": "context.supabase",
+      "name": "preparation_jobs",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 62,
+      "receiver": "context.supabase",
+      "name": "preparation_job_items",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 85,
+      "receiver": "context.supabase",
+      "name": "sales_records",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 117,
+      "receiver": "context.supabase",
+      "name": "ledgers",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 153,
+      "receiver": "context.supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 185,
+      "receiver": "context.supabase",
+      "name": "contact_requests",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 218,
+      "receiver": "context.supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 226,
+      "receiver": "context.supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/routes/call.$id.tsx",
+      "line": 89,
+      "receiver": "supabase",
+      "name": "calls",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "maybeSingle"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/routes/call.$id.tsx",
+      "line": 91,
+      "receiver": "supabase",
+      "name": "call_participants",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/routes/chat.$id.tsx",
+      "line": 288,
+      "receiver": "supabase",
+      "name": "message_reactions",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "in"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/routes/profile.index.tsx",
+      "line": 203,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "select",
+        "eq",
+        "then"
+      ],
+      "operations": [
+        "select"
+      ]
+    },
+    {
+      "file": "src/routes/profile.index.tsx",
+      "line": 346,
+      "receiver": "supabase",
+      "name": "businesses",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/routes/profile.index.tsx",
+      "line": 362,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "update",
+        "eq"
+      ],
+      "operations": [
+        "update"
+      ]
+    },
+    {
+      "file": "src/routes/profile.index.tsx",
+      "line": 373,
+      "receiver": "supabase",
+      "name": "business_members",
+      "role": "authenticated",
+      "methods": [
+        "delete",
+        "eq"
+      ],
+      "operations": [
+        "delete"
+      ]
+    }
+  ],
+  "rpc_calls": [
+    {
+      "file": "src/components/mcm/chat-order-card.tsx",
+      "line": 506,
+      "receiver": "supabase",
+      "name": "business_preparation_staff",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 37,
+      "receiver": "supabase",
+      "name": "commit_my_avatar",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 55,
+      "receiver": "supabase",
+      "name": "remove_my_avatar",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 65,
+      "receiver": "supabase",
+      "name": "set_my_avatar_privacy",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/avatar.ts",
+      "line": 113,
+      "receiver": "supabase",
+      "name": "set_avatar_privacy_audience",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 49,
+      "receiver": "supabase",
+      "name": "create_call_tx",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 67,
+      "receiver": "supabase",
+      "name": "end_call",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 84,
+      "receiver": "supabase",
+      "name": "answer_call",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 93,
+      "receiver": "supabase",
+      "name": "decline_call",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 103,
+      "receiver": "supabase",
+      "name": "join_call",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 113,
+      "receiver": "supabase",
+      "name": "leave_call",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/calls.ts",
+      "line": 124,
+      "receiver": "supabase",
+      "name": "expire_stale_calls",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 319,
+      "receiver": "supabase",
+      "name": "adjust_warehouse",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/catalog.ts",
+      "line": 456,
+      "receiver": "supabase",
+      "name": "adjust_inventory",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 123,
+      "receiver": "supabase",
+      "name": "create_chat_order_with_message",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 162,
+      "receiver": "supabase",
+      "name": "my_chat_order_capability",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 180,
+      "receiver": "supabase",
+      "name": "confirm_chat_order",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 192,
+      "receiver": "supabase",
+      "name": "approve_chat_order",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 198,
+      "receiver": "supabase",
+      "name": "request_chat_order_changes",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 207,
+      "receiver": "supabase",
+      "name": "cancel_chat_order",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 236,
+      "receiver": "supabase",
+      "name": "dispatch_chat_order",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat-orders.ts",
+      "line": 285,
+      "receiver": "supabase",
+      "name": "finalize_chat_order_delivery",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/chat.ts",
+      "line": 106,
+      "receiver": "supabase",
+      "name": "conversation_overview",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 59,
+      "receiver": "supabase",
+      "name": "search_profile_by_pin",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 96,
+      "receiver": "supabase",
+      "name": "profile_cards",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 127,
+      "receiver": "supabase",
+      "name": "my_connected_contacts",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 306,
+      "receiver": "supabase",
+      "name": "respond_contact_request",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 319,
+      "receiver": "supabase",
+      "name": "send_contact_request",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 367,
+      "receiver": "supabase",
+      "name": "respond_contact_request",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 383,
+      "receiver": "supabase",
+      "name": "set_contact_blocked",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 404,
+      "receiver": "supabase",
+      "name": "save_contact_card",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 422,
+      "receiver": "supabase",
+      "name": "update_my_contact",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 437,
+      "receiver": "supabase",
+      "name": "remove_saved_contact",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 449,
+      "receiver": "supabase",
+      "name": "disconnect_contact",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 454,
+      "receiver": "supabase",
+      "name": "cancel_contact_request",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 475,
+      "receiver": "supabase",
+      "name": "contact_relation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/contacts.ts",
+      "line": 502,
+      "receiver": "supabase",
+      "name": "blocked_between",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 43,
+      "receiver": "supabase",
+      "name": "get_or_create_direct",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 52,
+      "receiver": "supabase",
+      "name": "create_group",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 62,
+      "receiver": "supabase",
+      "name": "add_group_members",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 69,
+      "receiver": "supabase",
+      "name": "remove_group_member",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 81,
+      "receiver": "supabase",
+      "name": "set_group_member_role",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 93,
+      "receiver": "supabase",
+      "name": "transfer_group_ownership",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 103,
+      "receiver": "supabase",
+      "name": "leave_conversation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 114,
+      "receiver": "supabase",
+      "name": "update_group_settings",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 133,
+      "receiver": "supabase",
+      "name": "update_my_conversation_preferences",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 146,
+      "receiver": "supabase",
+      "name": "mark_conversation_read",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 167,
+      "receiver": "supabase",
+      "name": "my_conversation_capability",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 184,
+      "receiver": "supabase",
+      "name": "get_or_create_business_conversation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 195,
+      "receiver": "supabase",
+      "name": "set_conversation_assignee",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/conversations.ts",
+      "line": 210,
+      "receiver": "supabase",
+      "name": "set_conversation_inbox_status",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/customers.ts",
+      "line": 38,
+      "receiver": "supabase",
+      "name": "customer_pin",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/entitlements.ts",
+      "line": 27,
+      "receiver": "supabase",
+      "name": "has_entitlement",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 118,
+      "receiver": "supabase",
+      "name": "record_ledger_payment",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/ledger.ts",
+      "line": 134,
+      "receiver": "supabase",
+      "name": "delete_ledger_payment",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/pins.ts",
+      "line": 16,
+      "receiver": "supabase",
+      "name": "my_pin",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/pins.ts",
+      "line": 37,
+      "receiver": "supabase",
+      "name": "pins_for_me",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 81,
+      "receiver": "supabase",
+      "name": "business_staff_directory",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 116,
+      "receiver": "supabase",
+      "name": "confirm_staff_pin",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 148,
+      "receiver": "supabase",
+      "name": "deliver_preparation_job",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 194,
+      "receiver": "supabase",
+      "name": "create_preparation_job",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/prepare.ts",
+      "line": 275,
+      "receiver": "supabase",
+      "name": "rotate_preparation_token",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/presence.ts",
+      "line": 30,
+      "receiver": "supabase",
+      "name": "set_my_presence",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/presence.ts",
+      "line": 35,
+      "receiver": "supabase",
+      "name": "set_my_presence",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/presence.ts",
+      "line": 40,
+      "receiver": "supabase",
+      "name": "set_my_presence",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/product-card.ts",
+      "line": 71,
+      "receiver": "supabase",
+      "name": "build_product_card",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/profiles.ts",
+      "line": 37,
+      "receiver": "supabase",
+      "name": "profile_cards",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/profiles.ts",
+      "line": 59,
+      "receiver": "supabase",
+      "name": "profile_full",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/profiles.ts",
+      "line": 67,
+      "receiver": "supabase",
+      "name": "my_profile",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/profiles.ts",
+      "line": 74,
+      "receiver": "supabase",
+      "name": "update_my_profile",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/purchases.ts",
+      "line": 46,
+      "receiver": "supabase",
+      "name": "record_purchase",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/purchases.ts",
+      "line": 95,
+      "receiver": "supabase",
+      "name": "catalog_product_indicators",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/purchases.ts",
+      "line": 116,
+      "receiver": "supabase",
+      "name": "rename_product_category",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/receipts.ts",
+      "line": 57,
+      "receiver": "supabase",
+      "name": "mark_messages_delivered",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/receipts.ts",
+      "line": 66,
+      "receiver": "supabase",
+      "name": "mark_messages_read",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/sales.ts",
+      "line": 131,
+      "receiver": "supabase",
+      "name": "create_sale_tx",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 140,
+      "receiver": "supabase",
+      "name": "my_push_devices",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 146,
+      "receiver": "supabase",
+      "name": "revoke_my_push_device",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 151,
+      "receiver": "supabase",
+      "name": "revoke_my_push_devices",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/settings.ts",
+      "line": 158,
+      "receiver": "supabase",
+      "name": "revoke_my_push_installation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "line": 55,
+      "receiver": "supabase",
+      "name": "status_feed",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 113,
+      "receiver": "supabase",
+      "name": "create_stock_unit",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 125,
+      "receiver": "supabase",
+      "name": "activate_stock_unit",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/stock-units.ts",
+      "line": 131,
+      "receiver": "supabase",
+      "name": "void_stock_unit",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/api/tasks.ts",
+      "line": 98,
+      "receiver": "supabase",
+      "name": "rotate_preparation_token",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/auth.tsx",
+      "line": 66,
+      "receiver": "supabase",
+      "name": "my_profile",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/calls/calls.functions.ts",
+      "line": 70,
+      "receiver": "context.supabase",
+      "name": "my_profile",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 44,
+      "receiver": "supabaseAdmin",
+      "name": "complete_preparation_job",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/prepare-sale.server.ts",
+      "line": 74,
+      "receiver": "supabaseAdmin",
+      "name": "create_prep_sale_tx",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/prepare.functions.ts",
+      "line": 160,
+      "receiver": "supabaseAdmin",
+      "name": "complete_preparation_job",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/prepare.server.ts",
+      "line": 9,
+      "receiver": "supabaseAdmin",
+      "name": "prep_job_id_by_token",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 36,
+      "receiver": "db",
+      "name": "mint_notification_action",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 65,
+      "receiver": "db",
+      "name": "revoke_notification_actions",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 110,
+      "receiver": "db",
+      "name": "push_targets_for_conversation",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 243,
+      "receiver": "db",
+      "name": "push_targets_for_call",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 334,
+      "receiver": "db",
+      "name": "push_targets_for_call_terminal",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 385,
+      "receiver": "db",
+      "name": "push_targets_for_user",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/dispatch.server.ts",
+      "line": 464,
+      "receiver": "db",
+      "name": "push_targets_for_user",
+      "role": "service_role"
+    },
+    {
+      "file": "src/lib/push/native.ts",
+      "line": 119,
+      "receiver": "supabase",
+      "name": "register_push_device",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/native.ts",
+      "line": 176,
+      "receiver": "supabase",
+      "name": "revoke_my_push_installation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/native.ts",
+      "line": 187,
+      "receiver": "supabase",
+      "name": "revoke_my_push_devices",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/native.ts",
+      "line": 301,
+      "receiver": "supabase",
+      "name": "mark_messages_delivered",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 55,
+      "receiver": "context.supabase",
+      "name": "can_manage_business",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 163,
+      "receiver": "context.supabase",
+      "name": "my_profile",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/push.functions.ts",
+      "line": 193,
+      "receiver": "context.supabase",
+      "name": "my_profile",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/web.ts",
+      "line": 114,
+      "receiver": "supabase",
+      "name": "register_push_device",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/web.ts",
+      "line": 175,
+      "receiver": "supabase",
+      "name": "revoke_my_push_installation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/lib/push/web.ts",
+      "line": 213,
+      "receiver": "supabase",
+      "name": "mark_messages_delivered",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/routes/api/public/push/actions.ts",
+      "line": 71,
+      "receiver": "supabaseAdmin",
+      "name": "consume_notification_action",
+      "role": "service_role"
+    },
+    {
+      "file": "src/routes/chat.$id.tsx",
+      "line": 272,
+      "receiver": "supabase",
+      "name": "my_direct_relation_state",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/routes/chat.$id.tsx",
+      "line": 938,
+      "receiver": "supabase",
+      "name": "accept_legacy_direct_conversation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/routes/chat.$id.tsx",
+      "line": 958,
+      "receiver": "supabase",
+      "name": "reject_legacy_direct_conversation",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/routes/chat.$id.tsx",
+      "line": 990,
+      "receiver": "supabase",
+      "name": "respond_contact_request",
+      "role": "authenticated"
+    },
+    {
+      "file": "src/routes/register.tsx",
+      "line": 134,
+      "receiver": "supabase",
+      "name": "update_my_profile",
+      "role": "authenticated"
+    }
+  ],
+  "dynamic": [
+    {
+      "file": "src/components/mcm/business/catalog-panel.tsx",
+      "line": 119,
+      "receiver": "...Array",
+      "kind": "from",
+      "args": "new Set((products ?? []).map((p) => p.category))"
+    },
+    {
+      "file": "src/lib/api/storage.ts",
+      "line": 12,
+      "receiver": "supabase.storage",
+      "kind": "from",
+      "args": "bucket"
+    },
+    {
+      "file": "src/lib/api/storage.ts",
+      "line": 47,
+      "receiver": "supabase.storage",
+      "kind": "from",
+      "args": "bucket"
+    },
+    {
+      "file": "src/lib/api/storage.ts",
+      "line": 54,
+      "receiver": "supabase.storage",
+      "kind": "from",
+      "args": "bucket"
+    }
+  ],
+  "tables": {
+    "business_members": {
+      "authenticated": [
+        "delete",
+        "select",
+        "update"
+      ]
+    },
+    "businesses": {
+      "authenticated": [
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "avatar_audience": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "products": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "product_photos": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "quick_replies": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "call_diagnostic_runs": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "call_log_hides": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "call_notes": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "call_reminders": {
+      "authenticated": [
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "calls": {
+      "authenticated": [
+        "select"
+      ],
+      "service_role": [
+        "select"
+      ]
+    },
+    "call_participants": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "product_stock_balances": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "product_variants": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "inventory_movements": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "variant_stock_units": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "order_items": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "chat_order_items": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "chat_orders": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "chat_order_unit_slots": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "conversations": {
+      "authenticated": [
+        "select"
+      ],
+      "service_role": [
+        "select"
+      ]
+    },
+    "conversation_members": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "messages": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select",
+        "update"
+      ],
+      "service_role": [
+        "insert",
+        "select"
+      ]
+    },
+    "message_hides": {
+      "authenticated": [
+        "insert",
+        "select"
+      ]
+    },
+    "message_reactions": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "contacts": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "contact_requests": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "customers": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "entitlements": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "sales_records": {
+      "authenticated": [
+        "select",
+        "update"
+      ],
+      "service_role": [
+        "update"
+      ]
+    },
+    "ledgers": {
+      "authenticated": [
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "ledger_payments": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "ledger_events": {
+      "authenticated": [
+        "insert",
+        "select"
+      ]
+    },
+    "notifications": {
+      "authenticated": [
+        "select",
+        "update"
+      ]
+    },
+    "inventory_balances": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "preparation_jobs": {
+      "authenticated": [
+        "select",
+        "update"
+      ],
+      "service_role": [
+        "select",
+        "update"
+      ]
+    },
+    "purchases": {
+      "authenticated": [
+        "delete",
+        "select"
+      ]
+    },
+    "message_receipts": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "orders": {
+      "authenticated": [
+        "select",
+        "update"
+      ]
+    },
+    "user_settings": {
+      "authenticated": [
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "status_preferences": {
+      "authenticated": [
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "status_items": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "status_views": {
+      "authenticated": [
+        "insert",
+        "select"
+      ]
+    },
+    "statuses": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "status_audience": {
+      "authenticated": [
+        "insert"
+      ]
+    },
+    "status_reactions": {
+      "authenticated": [
+        "insert",
+        "select",
+        "update"
+      ]
+    },
+    "status_mutes": {
+      "authenticated": [
+        "delete",
+        "insert"
+      ]
+    },
+    "stickers": {
+      "authenticated": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "preparation_item_photos": {
+      "authenticated": [
+        "select"
+      ],
+      "service_role": [
+        "delete",
+        "insert",
+        "select"
+      ]
+    },
+    "direct_conversations": {
+      "authenticated": [
+        "select"
+      ]
+    },
+    "preparation_job_items": {
+      "service_role": [
+        "select",
+        "update"
+      ],
+      "authenticated": [
+        "select"
+      ]
+    },
+    "devices": {
+      "service_role": [
+        "update"
+      ]
+    },
+    "profiles": {
+      "service_role": [
+        "select"
+      ]
+    }
+  },
+  "indirect_requirements": [
+    {
+      "role": "authenticated",
+      "name": "status_mutes",
+      "operations": [
+        "select"
+      ],
+      "reason": "status_feed SECURITY INVOKER reads status_mutes; SQL migration 20260812153216"
+    },
+    {
+      "role": "authenticated",
+      "name": "preparation_job_items",
+      "operations": [
+        "select"
+      ],
+      "reason": "Nested items:preparation_job_items(*) in preparation_jobs queries plus server authenticated head count"
+    },
+    {
+      "role": "service_role",
+      "name": "devices",
+      "operations": [
+        "select"
+      ],
+      "columns": [
+        "push_token"
+      ],
+      "reason": "UPDATE WHERE push_token IN filters require SELECT privilege on predicate"
+    },
+    {
+      "role": "service_role",
+      "name": "sales_records",
+      "operations": [
+        "select"
+      ],
+      "columns": [
+        "id"
+      ],
+      "reason": "UPDATE WHERE id requires SELECT privilege on predicate"
+    }
+  ],
+  "sensitive_column_contracts": {
+    "profiles": {
+      "authenticated": "No direct grants; use SECURITY DEFINER my_profile/profile_cards/profile_full"
+    },
+    "customers": {
+      "authenticated_select_columns": [
+        "id",
+        "business_id",
+        "user_id",
+        "name",
+        "address",
+        "note",
+        "created_at",
+        "updated_at"
+      ],
+      "excluded": [
+        "pin"
+      ]
+    },
+    "business_members": {
+      "excluded_select": [
+        "staff_pin"
+      ],
+      "safe_column_constant": "src/lib/api/business.ts:MEMBER_SAFE_COLUMNS"
+    },
+    "preparation_jobs": {
+      "excluded_select": [
+        "delivered_pin"
+      ],
+      "safe_column_constant": "src/lib/api/tasks.ts:JOB_SELECT"
+    }
+  },
+  "anonymous_access": "No direct public-table chains found. Public prepare routes validate secret token server-side before service_role data access; push public endpoint calls SECURITY DEFINER consume_notification_action through service_role.",
+  "source_baseline_commit": "a6a6a576fb29d8564a37cdccfcc989abdb313e9e",
+  "reviewed_source": "Current worktree including reviewed least-privilege client ACL alignment; source above identifies original baseline, not an assertion of unchanged source.",
+  "reviewed_client_changes": [
+    {
+      "file": "src/lib/api/catalog.ts",
+      "sha256": "b06d607421015902ebc05e26676fa034c698098edc6c0087f270984d06ccd4e6"
+    },
+    {
+      "file": "src/lib/api/call-history.ts",
+      "sha256": "73e6f666279c2631ecd146e2a3823288ad49c6488648d43344cd64506d3af4df"
+    },
+    {
+      "file": "src/lib/api/status.ts",
+      "sha256": "6062151adf6ebc67c753123bfe29379af395f05103d4794ceca0c6582c5ede30"
+    }
+  ],
+  "baseline_counts": {
+    "table_query_chains": 202,
+    "rpc_calls": 114,
+    "literal_tables": 53
+  },
+  "counts": {
+    "table_query_chains": 201,
+    "rpc_calls": 114,
+    "literal_tables": 53
+  },
+  "reviewed_alignment": {
+    "inventory_balances": "Direct browser upsert removed; balance creation is database-triggered. Browser now SELECT only.",
+    "call_log_hides": "ignoreDuplicates:true uses ON CONFLICT DO NOTHING; no UPDATE required.",
+    "status_views": "ignoreDuplicates:true uses ON CONFLICT DO NOTHING; no UPDATE required.",
+    "status_mutes": "ignoreDuplicates:true uses ON CONFLICT DO NOTHING; no UPDATE required. SELECT remains necessary for SECURITY INVOKER status_feed.",
+    "remaining_do_update_upserts": [
+      "call_notes",
+      "status_preferences",
+      "status_reactions"
+    ]
+  }
+}

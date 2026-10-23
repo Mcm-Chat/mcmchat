@@ -1,0 +1,45 @@
+name: Data API migration grants
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "security/data-api-grant-inventory.json"
+      - "scripts/audit-data-api-grants.py"
+      - "scripts/data-api-tests/**"
+      - "supabase/tests/**"
+      - "src/lib/api/call-history.ts"
+      - "src/lib/api/catalog.ts"
+      - "src/lib/api/status.ts"
+      - ".github/workflows/data-api-grants.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "security/data-api-grant-inventory.json"
+      - "scripts/audit-data-api-grants.py"
+      - "scripts/data-api-tests/**"
+      - "supabase/tests/**"
+      - "src/lib/api/call-history.ts"
+      - "src/lib/api/catalog.ts"
+      - "src/lib/api/status.ts"
+      - ".github/workflows/data-api-grants.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  explicit-grants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check same-migration explicit ACL and RLS decisions
+        run: python3 scripts/audit-data-api-grants.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install isolated PostgreSQL test dependency
+        run: npm ci --prefix scripts/data-api-tests --no-audit --no-fund
+      - name: Replay migrations and verify actual PostgreSQL roles and RLS
+        run: node scripts/data-api-tests/replay.mjs "$PWD" HEAD tokolink

@@ -1,0 +1,3632 @@
+{
+  "source": "Mcm-Chat/mcmchat@a6a6a576fb29d8564a37cdccfcc989abdb313e9e",
+  "database": "isolated PostgreSQL 18.6 / PGlite 0.5.11; no default table grants; minimal Supabase bootstrap",
+  "scope": "Final ACL and policies after 86 original migration files, not live production state",
+  "tables": [
+    {
+      "name": "avatar_audience",
+      "created_in": "20260813013741_6af850fc-023a-42ad-a4e2-7a0df780ef58.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "avatar_audience",
+          "policyname": "avatar audience owner",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": "(owner_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "background_action_log",
+      "created_in": "20260812134028_88c5be26-d834-4380-85cf-6f33b80001a4.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {},
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "background_action_log",
+          "policyname": "no_direct_client_access",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "false",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "business_conversations",
+      "created_in": "20260814034142_1ef4404d-9b8a-45e9-89c7-1d847e25b5d8.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {},
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "business_conversations",
+          "policyname": "no direct business conversation writes",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "current_user_can_read_conversation(conversation_id)",
+          "with_check": "false"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "business_conversations",
+          "policyname": "read business conversation registry",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_conversation(conversation_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "business_members",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {
+        "id": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "business_id": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "user_id": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "role": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "created_at": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "updated_at": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "staff_pin_confirmed_at": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "staff_display_name": {
+          "authenticated": [
+            "SELECT"
+          ]
+        }
+      },
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "business_members",
+          "policyname": "add business member",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(current_user_can_manage_business(business_id) AND ((role <> 'owner'::business_role) OR (current_user_business_role(business_id) = 'owner'::business_role)))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "business_members",
+          "policyname": "read business members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((user_id = auth.uid()) OR current_user_is_business_member(business_id))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "business_members",
+          "policyname": "remove business member",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "business_members",
+          "policyname": "update business member",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "(current_user_can_manage_business(business_id) AND ((role <> 'owner'::business_role) OR (current_user_business_role(business_id) = 'owner'::business_role)))"
+        }
+      ]
+    },
+    {
+      "name": "businesses",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "businesses",
+          "policyname": "create business",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(owner_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "businesses",
+          "policyname": "manage business",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(id)",
+          "with_check": "current_user_can_manage_business(id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "businesses",
+          "policyname": "owner deletes business",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "businesses",
+          "policyname": "read business",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(is_public OR current_user_is_business_member(id))",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "call_diagnostic_runs",
+      "created_in": "20260814020240_d1120027-e5c7-4eab-8198-507560aaa344.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "call_diagnostic_runs",
+          "policyname": "own diagnostics delete",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "call_diagnostic_runs",
+          "policyname": "own diagnostics insert",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(user_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "call_diagnostic_runs",
+          "policyname": "own diagnostics select",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "call_log_hides",
+      "created_in": "20260815095057_2afea56c-35e6-4c55-84a0-822431ce38d8.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "call_log_hides",
+          "policyname": "own call log hides",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "(user_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "call_notes",
+      "created_in": "20260818051124_6a17e36f-e846-4448-a4a1-7995fdd83b26.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "call_notes",
+          "policyname": "call_notes_own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "((user_id = auth.uid()) AND is_call_participant(call_id, auth.uid()))"
+        }
+      ]
+    },
+    {
+      "name": "call_participants",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "call_participants",
+          "policyname": "participant reads roster",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_call_participant(call_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "call_reminders",
+      "created_in": "20260815032219_1bb5417d-2d43-4a0b-99d0-096873dd700d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "call_reminders",
+          "policyname": "call_reminders_delete_own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "call_reminders",
+          "policyname": "call_reminders_insert_own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(user_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "call_reminders",
+          "policyname": "call_reminders_select_own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "call_reminders",
+          "policyname": "call_reminders_update_own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "(user_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "calls",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ],
+        "service_role": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "calls",
+          "policyname": "participant reads call",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_call_participant(id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "chat_order_items",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "chat_order_items",
+          "policyname": "chat order items readable",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_chat_order(chat_order_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "chat_order_unit_slots",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "chat_order_unit_slots",
+          "policyname": "chat order slots readable",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_chat_order(chat_order_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "chat_orders",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "chat_orders",
+          "policyname": "chat orders readable",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_chat_order(id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "contact_connections",
+      "created_in": "20260814020853_a3da2c3a-4bb3-4ac5-b327-709486b964ec.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {},
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "contact_connections",
+          "policyname": "connections visible to parties",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((auth.uid() = user_low) OR (auth.uid() = user_high))",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "contact_requests",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "contact_requests",
+          "policyname": "requests visible to parties",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((requester_id = auth.uid()) OR (target_id = auth.uid()))",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "contacts",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "contacts",
+          "policyname": "own contacts read",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "conversation_members",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "conversation_members",
+          "policyname": "member reads members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_conversation(conversation_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "conversation_members",
+          "policyname": "no direct member writes",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "current_user_can_read_conversation(conversation_id)",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "conversations",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ],
+        "service_role": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "conversations",
+          "policyname": "member reads conversation",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_conversation(id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "customers",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {
+        "id": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "business_id": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "user_id": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "name": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "address": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "note": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "created_at": {
+          "authenticated": [
+            "SELECT"
+          ]
+        },
+        "updated_at": {
+          "authenticated": [
+            "SELECT"
+          ]
+        }
+      },
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "customers",
+          "policyname": "delete customers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "customers",
+          "policyname": "read customers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "customers",
+          "policyname": "update customers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_sell_business(business_id)",
+          "with_check": "current_user_can_sell_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "customers",
+          "policyname": "write customers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_sell_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "device_action_rate",
+      "created_in": "20260812154414_a4cd3b4d-e088-46e3-8a63-649300b14571.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {},
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "device_action_rate",
+          "policyname": "no_direct_client_access",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "false",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "devices",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "service_role": [
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "devices",
+          "policyname": "no_direct_client_access",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "false",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "direct_conversations",
+      "created_in": "20260814032644_17b050f4-26b3-49a8-a845-4b735ceac44f.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "direct_conversations",
+          "policyname": "direct pair reads canonical",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((auth.uid() = user_low) OR (auth.uid() = user_high))",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "entitlements",
+      "created_in": "20260812134905_772d4d6f-e709-4e0e-b196-d6ce09c06e55.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "entitlements",
+          "policyname": "Users can read their own entitlements",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(auth.uid() = user_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "inventory_balances",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "inventory_balances",
+          "policyname": "balances managed by business admins",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "inventory_balances",
+          "policyname": "balances readable by business members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "inventory_movements",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "inventory_movements",
+          "policyname": "movements readable by business members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "ledger_events",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "ledger_events",
+          "policyname": "add ledger events",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((actor_id = auth.uid()) AND can_see_ledger(ledger_id, auth.uid()))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "ledger_events",
+          "policyname": "read ledger events",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "can_see_ledger(ledger_id, auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "ledger_payments",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "ledger_payments",
+          "policyname": "add ledger payments",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((recorded_by = auth.uid()) AND can_see_ledger(ledger_id, auth.uid()))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "ledger_payments",
+          "policyname": "read ledger payments",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "can_see_ledger(ledger_id, auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "ledgers",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "ledgers",
+          "policyname": "create ledgers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(owner_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "ledgers",
+          "policyname": "delete ledgers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "ledgers",
+          "policyname": "read ledgers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((owner_id = auth.uid()) OR (counterpart_user_id = auth.uid()))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "ledgers",
+          "policyname": "update ledgers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "((owner_id = auth.uid()) OR (counterpart_user_id = auth.uid()))",
+          "with_check": "((owner_id = auth.uid()) OR (counterpart_user_id = auth.uid()))"
+        }
+      ]
+    },
+    {
+      "name": "message_hides",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "message_hides",
+          "policyname": "own hides",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "message_hides",
+          "policyname": "own hides delete",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "message_hides",
+          "policyname": "own hides insert",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.id = message_hides.message_id) AND current_user_can_read_conversation(m.conversation_id)))))"
+        }
+      ]
+    },
+    {
+      "name": "message_reactions",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "message_reactions",
+          "policyname": "member reads reactions",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.id = message_reactions.message_id) AND current_user_can_read_conversation(m.conversation_id))))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "message_reactions",
+          "policyname": "own reaction delete",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "message_reactions",
+          "policyname": "own reaction insert",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.id = message_reactions.message_id) AND current_user_can_send_conversation(m.conversation_id)))))"
+        }
+      ]
+    },
+    {
+      "name": "message_receipts",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "message_receipts",
+          "policyname": "member reads receipts",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.id = message_receipts.message_id) AND current_user_can_read_conversation(m.conversation_id))))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "message_receipts",
+          "policyname": "own receipt insert",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.id = message_receipts.message_id) AND current_user_can_read_conversation(m.conversation_id)))))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "message_receipts",
+          "policyname": "own receipt update",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "((user_id = auth.uid()) AND (EXISTS ( SELECT 1\n   FROM messages m\n  WHERE ((m.id = message_receipts.message_id) AND current_user_can_read_conversation(m.conversation_id)))))"
+        }
+      ]
+    },
+    {
+      "name": "messages",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select",
+          "update"
+        ],
+        "service_role": [
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "messages",
+          "policyname": "member reads messages",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_conversation(conversation_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "messages",
+          "policyname": "member sends messages",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((sender_id = auth.uid()) AND current_user_can_send_conversation(conversation_id))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "messages",
+          "policyname": "sender deletes messages",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(sender_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "messages",
+          "policyname": "sender edits messages",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "((sender_id = auth.uid()) AND current_user_can_send_conversation(conversation_id))",
+          "with_check": "((sender_id = auth.uid()) AND current_user_can_send_conversation(conversation_id))"
+        }
+      ]
+    },
+    {
+      "name": "notification_actions",
+      "created_in": "20260814101052_7d72cf32-2b61-46a5-831a-0d67072a211d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {},
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "notification_actions",
+          "policyname": "no_direct_client_access",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "false",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "notifications",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "notifications",
+          "policyname": "own notifications",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "(user_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "order_items",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "order_items",
+          "policyname": "delete order items",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_sell_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "order_items",
+          "policyname": "read order items",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(current_user_is_business_member(business_id) OR (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.id = order_items.order_id) AND (o.buyer_user_id = auth.uid())))))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "order_items",
+          "policyname": "update order items",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_sell_business(business_id)",
+          "with_check": "current_user_can_sell_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "order_items",
+          "policyname": "write order items",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_sell_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "orders",
+          "policyname": "delete orders",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "orders",
+          "policyname": "read orders",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(current_user_is_business_member(business_id) OR (buyer_user_id = auth.uid()))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "orders",
+          "policyname": "update orders",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_sell_business(business_id)",
+          "with_check": "current_user_can_sell_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "orders",
+          "policyname": "write orders",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_sell_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "pin_search_log",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {},
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "pin_search_log",
+          "policyname": "no_direct_client_access",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "false",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "preparation_item_photos",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ],
+        "service_role": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "preparation_item_photos",
+          "policyname": "prep photos readable by job audience",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "can_see_prep_job(job_id, auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "preparation_job_items",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "service_role": [
+          "select",
+          "update"
+        ],
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "preparation_job_items",
+          "policyname": "prep items managed by job admins",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(EXISTS ( SELECT 1\n   FROM preparation_jobs j\n  WHERE ((j.id = preparation_job_items.job_id) AND current_user_can_manage_business(j.business_id))))",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM preparation_jobs j\n  WHERE ((j.id = preparation_job_items.job_id) AND current_user_can_manage_business(j.business_id))))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "preparation_job_items",
+          "policyname": "prep items readable by job audience",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "can_see_prep_job(job_id, auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "preparation_jobs",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "INSERT",
+          "UPDATE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {
+        "id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "business_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "code": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "conversation_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "customer_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "customer_user_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "customer_name": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "order_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "assigned_user_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "status": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "notes": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "token_hash": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "token_prefix": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "expires_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "revoked_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "opened_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "completed_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "created_by": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "created_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "updated_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "delivered_at": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "delivered_message_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        },
+        "chat_order_id": {
+          "authenticated": [
+            "SELECT"
+          ],
+          "anon": [
+            "SELECT"
+          ]
+        }
+      },
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select",
+          "update"
+        ],
+        "service_role": [
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "preparation_jobs",
+          "policyname": "jobs inserted by business admins",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(current_user_can_manage_business(business_id) AND (created_by = auth.uid()))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "preparation_jobs",
+          "policyname": "jobs readable by admins and assignee",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(current_user_can_manage_business(business_id) OR (assigned_user_id = auth.uid()))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "preparation_jobs",
+          "policyname": "jobs updated by business admins",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "product_photos",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "product_photos",
+          "policyname": "delete product photos",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "product_photos",
+          "policyname": "insert product photos",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_manage_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "product_photos",
+          "policyname": "read product photos",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(current_user_is_business_member(business_id) OR (EXISTS ( SELECT 1\n   FROM (products p\n     JOIN businesses b ON ((b.id = p.business_id)))\n  WHERE ((p.id = product_photos.product_id) AND p.is_active AND b.is_public))))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "product_photos",
+          "policyname": "update product photos",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "product_stock_balances",
+      "created_in": "20260815164301_6936b9b4-16ed-407e-9b99-e560de7d1fe6.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "product_stock_balances",
+          "policyname": "warehouse readable by business members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "product_variants",
+      "created_in": "20260812125251_af0bd8f2-a33f-48a4-b097-50864055654d.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "product_variants",
+          "policyname": "variants managed by business admins",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "product_variants",
+          "policyname": "variants readable by business members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "products",
+          "policyname": "delete products",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "products",
+          "policyname": "manage products",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_manage_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "products",
+          "policyname": "read products",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(current_user_is_business_member(business_id) OR (is_active AND (EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = products.business_id) AND b.is_public)))))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "products",
+          "policyname": "update products",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "profiles",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "service_role": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "profiles",
+          "policyname": "no_direct_client_access",
+          "permissive": "RESTRICTIVE",
+          "roles": [
+            "anon",
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "false",
+          "with_check": "false"
+        }
+      ]
+    },
+    {
+      "name": "purchases",
+      "created_in": "20260815102820_067475da-7ec0-46ad-bf28-b39943b659f2.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "purchases",
+          "policyname": "purchases delete by managers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "purchases",
+          "policyname": "purchases insert by managers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_manage_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "purchases",
+          "policyname": "purchases readable by business members",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "purchases",
+          "policyname": "purchases update by managers",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "quick_replies",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "quick_replies",
+          "policyname": "delete quick replies",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "quick_replies",
+          "policyname": "read quick replies",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_is_business_member(business_id)",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "quick_replies",
+          "policyname": "update quick replies",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_manage_business(business_id)",
+          "with_check": "current_user_can_manage_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "quick_replies",
+          "policyname": "write quick replies",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "current_user_can_manage_business(business_id)"
+        }
+      ]
+    },
+    {
+      "name": "sales_records",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select",
+          "update"
+        ],
+        "service_role": [
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "sales_records",
+          "policyname": "read sales",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(current_user_is_business_member(business_id) OR (customer_user_id = auth.uid()))",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "sales_records",
+          "policyname": "update sales",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "current_user_can_sell_business(business_id)",
+          "with_check": "current_user_can_sell_business(business_id)"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "sales_records",
+          "policyname": "write sales",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((seller_id = auth.uid()) AND current_user_can_sell_business(business_id))"
+        }
+      ]
+    },
+    {
+      "name": "status_audience",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "status_audience",
+          "policyname": "status audience delete owner",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(status_owner_of(status_id) = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_audience",
+          "policyname": "status audience insert owner",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(status_owner_of(status_id) = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_audience",
+          "policyname": "status audience visible to owner or member",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(status_owner_of(status_id) = auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "status_items",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "status_items",
+          "policyname": "status items delete own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_items",
+          "policyname": "status items readable by audience",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "can_view_status(status_id, auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_items",
+          "policyname": "status items update own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": "(owner_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_items",
+          "policyname": "status items write own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((owner_id = auth.uid()) AND (status_owner_of(status_id) = auth.uid()))"
+        }
+      ]
+    },
+    {
+      "name": "status_mutes",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "status_mutes",
+          "policyname": "status mutes delete own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_mutes",
+          "policyname": "status mutes insert own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(user_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_mutes",
+          "policyname": "status mutes own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "status_preferences",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "status_preferences",
+          "policyname": "status preferences insert own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(user_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_preferences",
+          "policyname": "status preferences own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_preferences",
+          "policyname": "status preferences update own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "(user_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "status_reactions",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "status_reactions",
+          "policyname": "status reactions delete self",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_reactions",
+          "policyname": "status reactions insert self",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((user_id = auth.uid()) AND can_view_status(status_id, auth.uid()))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_reactions",
+          "policyname": "status reactions update self",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "(user_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_reactions",
+          "policyname": "status reactions visible to actor and owner",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((user_id = auth.uid()) OR (status_owner_of(status_id) = auth.uid()))",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "status_views",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "status_views",
+          "policyname": "status views insert self",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "((viewer_id = auth.uid()) AND can_view_status(status_id, auth.uid()))"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "status_views",
+          "policyname": "status views visible to viewer and owner",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "((viewer_id = auth.uid()) OR (status_owner_of(status_id) = auth.uid()))",
+          "with_check": null
+        }
+      ]
+    },
+    {
+      "name": "statuses",
+      "created_in": "20260812153216_e4a6b152-4235-4c12-93a9-f44e6adf3a5e.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "statuses",
+          "policyname": "statuses delete own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "DELETE",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "statuses",
+          "policyname": "statuses insert own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "INSERT",
+          "qual": null,
+          "with_check": "(owner_id = auth.uid())"
+        },
+        {
+          "schemaname": "public",
+          "tablename": "statuses",
+          "policyname": "statuses readable by audience",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "can_view_status(id, auth.uid())",
+          "with_check": null
+        },
+        {
+          "schemaname": "public",
+          "tablename": "statuses",
+          "policyname": "statuses update own",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "UPDATE",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": "(owner_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "stickers",
+      "created_in": "20260813175238_9a7187da-a68d-4af0-bcd2-e1db70f81ee0.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "delete",
+          "insert",
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "stickers",
+          "policyname": "stickers owner all",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(owner_id = auth.uid())",
+          "with_check": "(owner_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "user_settings",
+      "created_in": "20260812123533_af51dd56-f395-44ba-83ea-d6adc3db7071.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "authenticated": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE"
+        ],
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "insert",
+          "select",
+          "update"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "user_settings",
+          "policyname": "own settings",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "ALL",
+          "qual": "(user_id = auth.uid())",
+          "with_check": "(user_id = auth.uid())"
+        }
+      ]
+    },
+    {
+      "name": "variant_stock_units",
+      "created_in": "20260814050704_b91226ae-21bf-47bf-9489-2ea85a21682b.sql",
+      "rls_enabled": true,
+      "table_privileges": {
+        "service_role": [
+          "SELECT",
+          "INSERT",
+          "UPDATE",
+          "DELETE",
+          "TRUNCATE",
+          "REFERENCES",
+          "TRIGGER",
+          "MAINTAIN"
+        ],
+        "authenticated": [
+          "SELECT"
+        ]
+      },
+      "column_privileges": {},
+      "observed_direct_application_operations": {
+        "authenticated": [
+          "select"
+        ]
+      },
+      "rls_policies": [
+        {
+          "schemaname": "public",
+          "tablename": "variant_stock_units",
+          "policyname": "stock units readable",
+          "permissive": "PERMISSIVE",
+          "roles": [
+            "authenticated"
+          ],
+          "cmd": "SELECT",
+          "qual": "current_user_can_read_stock_unit(id)",
+          "with_check": null
+        }
+      ]
+    }
+  ],
+  "sequence": [
+    {
+      "name": "pin_search_log_id_seq",
+      "role_privileges": {
+        "service_role": [
+          "SELECT",
+          "UPDATE",
+          "USAGE"
+        ]
+      }
+    }
+  ],
+  "application_usage_scope": "Reviewed worktree client changes described in docs/qa/data-api-grants-2026-10-23.md; table and policy ACL unchanged from baseline"
+}
