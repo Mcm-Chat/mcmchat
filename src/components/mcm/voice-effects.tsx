@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
+  DEFAULT_VOICE_PREFS,
   LIMITS,
   PARAM_LABEL,
   PRESETS,
@@ -57,6 +58,7 @@ const CUSTOM_KEYS: (keyof VoiceParams)[] = [
   "denoise",
   "gain",
   "reverb",
+  "character",
 ];
 
 export function VoiceEffectsPanel({
@@ -131,7 +133,7 @@ export function VoiceEffectsPanel({
               : "Penagihan Premium belum terhubung di ruang kerja ini, jadi efek belum bisa dipakai saat panggilan. Pratinjau mikrofon tetap tersedia."}
           </p>
           <Button asChild size="sm" variant="secondary" className="mt-3">
-            <Link to="/premium">Lihat MCM Premium</Link>
+            <Link to="/premium">Lihat TOKOLINK Premium</Link>
           </Button>
         </div>
       )}
@@ -268,13 +270,17 @@ export function VoiceEffectsPanel({
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-muted-foreground">
           {effectOn
-            ? "Efek akan aktif pada panggilan berikutnya."
+            ? premium
+              ? "Efek dipilih. Penerapan saat panggilan bergantung pada dukungan pemrosesan audio perangkat."
+              : "Efek hanya tersedia dalam pratinjau sampai langganan Premium aktif."
             : "Efek nonaktif — suara asli Anda yang dikirim."}
         </p>
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => set({ preset: "natural", intensity: 0.7, enabled: false })}
+          onClick={() =>
+            onChange({ ...DEFAULT_VOICE_PREFS, custom: { ...DEFAULT_VOICE_PREFS.custom } })
+          }
           className="gap-1.5"
         >
           <RotateCcw className="size-3.5" /> Reset
@@ -282,7 +288,7 @@ export function VoiceEffectsPanel({
       </div>
 
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        MCM sengaja tidak menyediakan kloning suara, unggahan sampel suara orang lain, peniruan
+        TOKOLINK sengaja tidak menyediakan kloning suara, unggahan sampel suara orang lain, peniruan
         individu, maupun mode untuk melewati verifikasi suara. Gunakan efek ini hanya untuk privasi
         dan kenyamanan Anda sendiri.
       </p>

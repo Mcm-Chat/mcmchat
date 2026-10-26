@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useCalls, useConversations, useLedgers } from "@/lib/api/queries";
+import { useUserSettings } from "@/lib/settings/use-settings";
+import { notificationsOf } from "@/lib/api/settings";
 import { useIncomingCallActive } from "@/lib/calls/incoming-lock";
 import { isMissedUnseen, useMissedCallsSeen } from "@/lib/calls/missed-seen";
 
@@ -24,6 +26,8 @@ export function BottomNavigation({
 }) {
   const { user } = useAuth();
   const navRef = useRef<HTMLElement>(null);
+  const { settings } = useUserSettings(user?.id);
+  const showBadges = settings ? notificationsOf(settings).badge : false;
   const { data: convs } = useConversations(user?.id);
   const { data: ledgers } = useLedgers(user?.id);
   const { data: calls } = useCalls(user?.id);
@@ -94,7 +98,7 @@ export function BottomNavigation({
         <ul className="grid w-full grid-cols-5">
           {NAV.map((item) => {
             const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
-            const badge = merged[item.match];
+            const badge = showBadges ? merged[item.match] : undefined;
             const badgeText =
               badge && badge > 0 ? `, ${badge > 99 ? "lebih dari 99" : badge} item baru` : "";
             return (

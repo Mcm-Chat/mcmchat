@@ -104,8 +104,17 @@ class McmPushPlugin : Plugin() {
         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
             .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        runCatching { context.startActivity(intent) }
-        call.resolve()
+        val opened = runCatching { context.startActivity(intent); true }.getOrDefault(false)
+        call.resolve(JSObject().put("opened", opened))
+    }
+
+    @PluginMethod
+    fun openAppSettings(call: PluginCall) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            .setData(android.net.Uri.parse("package:" + context.packageName))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val opened = runCatching { context.startActivity(intent); true }.getOrDefault(false)
+        call.resolve(JSObject().put("opened", opened))
     }
 
     /** Setelan sistem khusus izin full-screen intent (Android 14+). */

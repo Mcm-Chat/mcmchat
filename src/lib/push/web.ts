@@ -12,42 +12,9 @@ import type { PushData } from "./payload";
 import { announceGuardResult, guardPushRoute } from "./route-guard";
 
 const installationKey = "mcm.web.installation";
-/** Token terakhir yang sudah tersimpan di server + kapan disegarkan. */
-const tokenKey = "mcm.web.push-token";
-/** Token FCM web bisa berotasi diam-diam; segarkan minimal sekali sehari. */
-const REFRESH_MS = 24 * 60 * 60 * 1000;
-
+// Legacy unscoped token cache is only deleted, never reused or written.
+const retiredTokenKey = "mcm.web.push-token";
 export type WebRegisterResult = { registered: boolean; reason?: string };
-
-type TokenRecord = { token: string; at: number };
-
-function readTokenRecord(): TokenRecord | null {
-  try {
-    const raw = localStorage.getItem(tokenKey);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<TokenRecord>;
-    if (typeof parsed.token !== "string" || typeof parsed.at !== "number") return null;
-    return { token: parsed.token, at: parsed.at };
-  } catch {
-    return null;
-  }
-}
-
-function writeTokenRecord(token: string) {
-  try {
-    localStorage.setItem(tokenKey, JSON.stringify({ token, at: Date.now() } satisfies TokenRecord));
-  } catch {
-    /* penyimpanan penuh/diblokir: registrasi tetap jalan, hanya kehilangan cache */
-  }
-}
-
-function clearTokenRecord() {
-  try {
-    localStorage.removeItem(tokenKey);
-  } catch {
-    /* abaikan */
-  }
-}
 
 /** Browser mendukung service worker + Push API. */
 export function webPushSupported(): boolean {
@@ -67,6 +34,8 @@ export function webPushReady(): { ok: boolean; reason?: string } {
 
 /** ID instalasi stabil per-browser (non-secret) untuk dedupe baris perangkat. */
 function installationId(): string {
+  // Retire the previous token cache: it could hide revocation for 24 hours.
+  localStorage.removeItem(retiredTokenKey);
   let id = localStorage.getItem(installationKey);
   if (!id || id.length < 8) {
     id = `web-${crypto.randomUUID()}`;
@@ -119,7 +88,6 @@ async function upsertDevice(deviceName: string, token: string): Promise<boolean>
     _app_version: "",
   });
   if (error) return false;
-  writeTokenRecord(token);
   return true;
 }
 
@@ -143,23 +111,22 @@ export async function registerWebPush(deviceName: string): Promise<WebRegisterRe
   }
 }
 
-/**
- * Sinkronisasi token perangkat asli: dipanggil saat aplikasi dibuka kembali dan
- * saat tab kembali aktif. TIDAK pernah memunculkan dialog izin — hanya berjalan
- * bila izin sudah diberikan. Menulis ke server hanya bila token berubah atau
- * cache sudah lebih tua dari 24 jam, supaya baris perangkat tetap segar
- * (token FCM web bisa dicabut/berotasi tanpa pemberitahuan).
- */
+/** Refresh only an existing active device; server-side revocation must survive rotation/resume. */
 export async function syncWebPushToken(deviceName: string): Promise<boolean> {
   if (!webPushReady().ok) return false;
   if (typeof Notification === "undefined" || Notification.permission !== "granted") return false;
   try {
     const token = await messagingToken();
     if (!token) return false;
-    const cached = readTokenRecord();
-    const fresh = cached && cached.token === token && Date.now() - cached.at < REFRESH_MS;
-    if (fresh) return true;
-    return await upsertDevice(deviceName, token);
+    const { data, error } = await supabase.rpc("refresh_my_push_device", {
+      _installation_id: installationId(),
+      _push_token: token,
+      _name: deviceName,
+      _platform: "web",
+      _app_version: "",
+    });
+    const registered = !error && data === true;
+    return registered;
   } catch {
     return false;
   }
@@ -168,6 +135,7 @@ export async function syncWebPushToken(deviceName: string): Promise<boolean> {
 /** Cabut instalasi browser ini (dipanggil saat logout). */
 export async function revokeWebPush() {
   if (typeof window === "undefined") return;
+  localStorage.removeItem(retiredTokenKey);
   const id = localStorage.getItem(installationKey);
   if (id) {
     await supabase.rpc("revoke_my_push_installation", { _installation_id: id }).then(
@@ -175,7 +143,6 @@ export async function revokeWebPush() {
       () => undefined,
     );
   }
-  clearTokenRecord();
   // Token lama dibatalkan di sisi FCM supaya perangkat ini benar-benar berhenti
   // menerima kiriman, bukan sekadar hilang dari daftar.
   try {

@@ -3,7 +3,12 @@
  * Prinsip least privilege: izin hanya diminta saat fitur dipakai, tidak ada
  * background location, tidak ada akses seluruh file, tidak ada exact alarm.
  */
-import { isNative, pushCapabilities, requestNativeNotificationPermission } from "./native";
+import {
+  isNative,
+  openNativeAppSettings,
+  pushCapabilities,
+  requestNativeNotificationPermission,
+} from "./native";
 
 export type PermState = "granted" | "prompt" | "denied" | "restricted" | "unsupported";
 
@@ -19,27 +24,17 @@ export const PERM_LABEL: Record<PermKey, { title: string; desc: string }> = {
   },
   photos: {
     title: "Foto & media",
-    desc: "Memakai Photo Picker Android; MCM tidak meminta akses seluruh file.",
+    desc: "Gunakan pemilih foto saat melampirkan media; tidak perlu akses seluruh berkas.",
   },
 };
 
 export const STATE_LABEL: Record<PermState, string> = {
   granted: "Diizinkan",
-  prompt: "Belum diminta",
+  prompt: "Perlu izin / pemeriksaan",
   denied: "Ditolak",
   restricted: "Dibatasi",
   unsupported: "Tidak tersedia",
 };
-
-async function plugin(name: string): Promise<Record<string, unknown> | null> {
-  try {
-    const mod = (await import(/* @vite-ignore */ name)) as Record<string, unknown>;
-    const key = Object.keys(mod).find((k) => k !== "default");
-    return key ? (mod[key] as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
-}
 
 function normalize(value: string | undefined): PermState {
   switch (value) {
@@ -79,19 +74,6 @@ export async function checkPermission(key: PermKey): Promise<PermState> {
       if (!caps) return "unsupported";
       return caps.permissionGranted ? "granted" : "prompt";
     }
-    if (key === "camera" || key === "photos") {
-      const cam = await plugin("@capacitor/camera");
-      const check = cam?.["checkPermissions"] as
-        (() => Promise<{ camera: string; photos: string }>) | undefined;
-      if (!check) return "unsupported";
-      const res = await check();
-      return normalize(key === "camera" ? res.camera : res.photos);
-    }
-    if (key === "location") {
-      const geo = await plugin("@capacitor/geolocation");
-      const check = geo?.["checkPermissions"] as (() => Promise<{ location: string }>) | undefined;
-      return check ? normalize((await check()).location) : "unsupported";
-    }
   }
 
   switch (key) {
@@ -100,11 +82,18 @@ export async function checkPermission(key: PermKey): Promise<PermState> {
         ? "unsupported"
         : normalize(Notification.permission);
     case "camera":
-      return webQuery("camera" as PermissionName);
-    case "microphone":
-      return webQuery("microphone" as PermissionName);
-    case "location":
-      return webQuery("geolocation" as PermissionName);
+    case "microphone": {
+      if (!navigator.mediaDevices?.getUserMedia) return "unsupported";
+      const state = await webQuery(key as PermissionName);
+      // Some WebViews support capture but not the Permissions API. Keep the
+      // explicit request action available instead of marking capture unavailable.
+      return state === "unsupported" ? "prompt" : state;
+    }
+    case "location": {
+      if (!navigator.geolocation?.getCurrentPosition) return "unsupported";
+      const state = await webQuery("geolocation" as PermissionName);
+      return state === "unsupported" ? "prompt" : state;
+    }
     case "photos":
       return "unsupported";
   }
@@ -119,42 +108,32 @@ export async function requestPermission(key: PermKey): Promise<PermState> {
       // Dialog POST_NOTIFICATIONS Android 13+ lewat plugin native MCM.
       return (await requestNativeNotificationPermission()) ? "granted" : "denied";
     }
-    if (key === "camera" || key === "photos") {
-      const cam = await plugin("@capacitor/camera");
-      const req = cam?.["requestPermissions"] as
-        ((o: unknown) => Promise<{ camera: string; photos: string }>) | undefined;
-      if (!req) return "unsupported";
-      const res = await req({ permissions: [key] });
-      return normalize(key === "camera" ? res.camera : res.photos);
-    }
-    if (key === "location") {
-      const geo = await plugin("@capacitor/geolocation");
-      const req = geo?.["requestPermissions"] as
-        ((o: unknown) => Promise<{ location: string }>) | undefined;
-      // Hanya izin saat aplikasi dipakai — tidak pernah background location.
-      return req ? normalize((await req({ permissions: ["location"] })).location) : "unsupported";
-    }
   }
 
   if (key === "notifications" && typeof Notification !== "undefined") {
     return normalize(await Notification.requestPermission());
   }
   if (key === "camera" || key === "microphone") {
+    if (!navigator.mediaDevices?.getUserMedia) return "unsupported";
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         key === "camera" ? { video: true } : { audio: true },
       );
       stream.getTracks().forEach((t) => t.stop());
       return "granted";
-    } catch {
-      return "denied";
+    } catch (error) {
+      // Missing/busy hardware is not a refused permission.
+      return error instanceof Error && ["NotAllowedError", "SecurityError"].includes(error.name)
+        ? "denied"
+        : "unsupported";
     }
   }
   if (key === "location") {
+    if (!navigator.geolocation?.getCurrentPosition) return "unsupported";
     return await new Promise<PermState>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         () => resolve("granted"),
-        () => resolve("denied"),
+        (error) => resolve(error.code === 1 ? "denied" : "unsupported"),
         { timeout: 8000 },
       );
     });
@@ -164,17 +143,5 @@ export async function requestPermission(key: PermKey): Promise<PermState> {
 
 /** Buka halaman pengaturan aplikasi bila izin sudah ditolak permanen. */
 export async function openAppSettings(): Promise<boolean> {
-  const app = await plugin("@capacitor/app");
-  const open = app?.["openSettings"] as (() => Promise<void>) | undefined;
-  if (open) {
-    await open();
-    return true;
-  }
-  const native = await plugin("capacitor-native-settings");
-  const openNative = native?.["openAndroid"] as ((o: unknown) => Promise<void>) | undefined;
-  if (openNative) {
-    await openNative({ option: "application_details" });
-    return true;
-  }
-  return false;
+  return (await openNativeAppSettings()).opened;
 }

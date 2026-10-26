@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   Bell,
@@ -7,14 +7,9 @@ import {
   CircleUserRound,
   Crown,
   Download,
-  Eye,
-  KeyRound,
   LogOut,
   Monitor,
-  Moon,
-  Palette,
   Phone,
-  Shield,
   Users,
   Sparkles,
   Stethoscope,
@@ -24,13 +19,7 @@ import { AppShell, MobileHeader } from "@/components/mcm/app-shell";
 import { PinCard, QRCard } from "@/components/mcm/pin-card";
 import { NotificationBell } from "@/components/mcm/notification-parts";
 import { NotificationPermissionRow } from "@/components/mcm/notification-permission-row";
-import {
-  ConfirmDialog,
-  LoadingSkeleton,
-  MCMAvatar,
-  ProtoNote,
-  SettingRow,
-} from "@/components/mcm/primitives";
+import { ConfirmDialog, LoadingSkeleton, MCMAvatar, SettingRow } from "@/components/mcm/primitives";
 import { FieldError } from "@/components/mcm/primitives";
 import { fieldErrors, profileSchema } from "@/lib/validation/forms";
 import { Button } from "@/components/ui/button";
@@ -41,8 +30,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useTheme } from "@/lib/theme";
-import { useReduceMotion } from "@/lib/a11y/reduce-motion";
 import { useRequireAuth } from "@/lib/api/guard";
 import {
   canManage,
@@ -64,30 +51,24 @@ import {
   type AvatarPrivacy,
 } from "@/lib/api/avatar";
 import { audienceModeFor, audienceSummary, needsAudience } from "@/lib/media/avatar-audience";
-import { readScreenSecurity, type ScreenSecurityStatus } from "@/lib/security/screen-privacy";
-import {
-  getSettings,
-  listDevices,
-  notificationsOf,
-  privacyOf,
-  removeDevice,
-  securityOf,
-  updateSettings,
-  type DeviceRow,
-  type UserSettingsRow,
-} from "@/lib/api/settings";
+import { AccountPreferenceControls } from "@/components/mcm/account-preference-controls";
+import { WhatsAppSettingsStatus } from "@/components/mcm/whatsapp-settings-status";
+import { listDevices, removeDevice, type DeviceRow } from "@/lib/api/settings";
 
 export const Route = createFileRoute("/profile/")({
   head: () => ({
     meta: [
-      { title: "Profil & Pengaturan — MCM" },
+      { title: "Profil & Pengaturan — TOKOLINK" },
       {
         name: "description",
         content:
-          "Kelola profil, PIN MCM, bisnis, privasi, keamanan, notifikasi, dan tema aplikasi Anda.",
+          "Kelola profil, PIN TOKOLINK, bisnis, privasi, keamanan, notifikasi, dan tema aplikasi Anda.",
       },
-      { property: "og:title", content: "Profil & Pengaturan — MCM" },
-      { property: "og:description", content: "Atur profil, bisnis, privasi, dan tampilan MCM." },
+      { property: "og:title", content: "Profil & Pengaturan — TOKOLINK" },
+      {
+        property: "og:description",
+        content: "Atur profil, bisnis, privasi, dan tampilan TOKOLINK.",
+      },
     ],
   }),
   component: ProfilePage,
@@ -100,18 +81,16 @@ type MemberWithProfile = Omit<BusinessMemberRow, "staff_pin"> & {
 function ProfilePage() {
   const { userId, profile, loading } = useRequireAuth();
   const { refresh, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
-  const {
-    preference: motionPreference,
-    reduced: motionReduced,
-    setPreference: setMotion,
-  } = useReduceMotion();
   const navigate = useNavigate();
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [avatarPrivacy, setAvatarPrivacyState] = useState<AvatarPrivacy>("contacts");
   const [removeAvatarOpen, setRemoveAvatarOpen] = useState(false);
   const [audienceOpen, setAudienceOpen] = useState(false);
   const [audienceCount, setAudienceCount] = useState(0);
+  const [audienceError, setAudienceError] = useState<string | null>(null);
+  const [audienceLoading, setAudienceLoading] = useState(false);
+  const [audienceRetry, setAudienceRetry] = useState(0);
+  const [savingAvatarPrivacy, setSavingAvatarPrivacy] = useState(false);
   // Mode berbasis daftar hanya aktif setelah audiens disimpan (transaksional).
   const [pendingAvatarPrivacy, setPendingAvatarPrivacy] = useState<AvatarPrivacy | null>(null);
 
@@ -123,11 +102,19 @@ function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const [settings, setSettings] = useState<UserSettingsRow | null>(null);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [devices, setDevices] = useState<DeviceRow[]>([]);
   const [devicesError, setDevicesError] = useState<string | null>(null);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [revokingDevice, setRevokingDevice] = useState<string | null>(null);
+  const deviceRequest = useRef(0);
   const [logoutOpen, setLogoutOpen] = useState(false);
+
+  useEffect(() => {
+    setDraftFile(null);
+    setAudienceOpen(false);
+    setPendingAvatarPrivacy(null);
+    setLogoutOpen(false);
+  }, [userId]);
 
   const {
     data: myBiz,
@@ -148,16 +135,6 @@ function ProfilePage() {
   });
   const [savingBiz, setSavingBiz] = useState(false);
   const [members, setMembers] = useState<MemberWithProfile[]>([]);
-  // Status read-only: berasal dari kapabilitas wadah native, bukan toggle demo.
-  // Wajib berada di atas setiap conditional return agar urutan hook stabil.
-  const [screenSecurity, setScreenSecurity] = useState<ScreenSecurityStatus>(() =>
-    readScreenSecurity(),
-  );
-
-  useEffect(() => {
-    setScreenSecurity(readScreenSecurity(window as never));
-  }, []);
-
   useEffect(() => {
     if (profile) {
       setName(profile.display_name);
@@ -173,18 +150,29 @@ function ProfilePage() {
     const mode = audienceModeFor(avatarPrivacy);
     if (!userId || !mode) {
       setAudienceCount(0);
+      setAudienceError(null);
+      setAudienceLoading(false);
       return;
     }
     let active = true;
+    setAudienceCount(0);
+    setAudienceError(null);
+    setAudienceLoading(true);
     void listAvatarAudience(userId, mode)
       .then((rows) => {
         if (active) setAudienceCount(rows.length);
       })
-      .catch(() => undefined);
+      .catch((err: unknown) => {
+        if (active)
+          setAudienceError(err instanceof Error ? err.message : "Gagal memuat daftar privasi foto");
+      })
+      .finally(() => {
+        if (active) setAudienceLoading(false);
+      });
     return () => {
       active = false;
     };
-  }, [userId, avatarPrivacy]);
+  }, [userId, avatarPrivacy, audienceRetry]);
 
   useEffect(() => {
     if (myBiz) {
@@ -221,30 +209,35 @@ function ProfilePage() {
     }
   }, [myBiz]);
 
-  const loadSettings = () => {
-    if (!userId) return;
-    setSettingsError(null);
-    getSettings(userId)
-      .then(setSettings)
-      .catch((err) =>
-        setSettingsError(err instanceof Error ? err.message : "Gagal memuat pengaturan"),
-      );
-  };
-  const loadDevices = () => {
-    if (!userId) return;
+  const loadDevices = useCallback(async () => {
+    const request = ++deviceRequest.current;
+    setDevices([]);
     setDevicesError(null);
-    listDevices()
-      .then(setDevices)
-      .catch((err) =>
-        setDevicesError(err instanceof Error ? err.message : "Gagal memuat perangkat"),
-      );
-  };
+    if (!userId) {
+      setDevicesLoading(false);
+      return;
+    }
+    setDevicesLoading(true);
+    try {
+      const rows = await listDevices();
+      if (request === deviceRequest.current) setDevices(rows);
+    } catch (err) {
+      if (request === deviceRequest.current)
+        setDevicesError(err instanceof Error ? err.message : "Gagal memuat perangkat");
+    } finally {
+      if (request === deviceRequest.current) setDevicesLoading(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
-    loadSettings();
-    loadDevices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    void loadDevices();
+    const onFocus = () => void loadDevices();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      deviceRequest.current += 1;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadDevices]);
 
   const saveProfile = async () => {
     if (!userId) return;
@@ -303,7 +296,7 @@ function ProfilePage() {
   };
 
   const changeAvatarPrivacy = async (value: AvatarPrivacy) => {
-    if (!userId) return;
+    if (!userId || savingAvatarPrivacy) return;
     // contacts_except / only_share: jangan sentuh DB sebelum audiens disimpan.
     if (needsAudience(value)) {
       setPendingAvatarPrivacy(value);
@@ -311,6 +304,7 @@ function ProfilePage() {
       return;
     }
     const prev = avatarPrivacy;
+    setSavingAvatarPrivacy(true);
     setAvatarPrivacyState(value);
     try {
       await setAvatarPrivacy(userId, value);
@@ -318,6 +312,8 @@ function ProfilePage() {
     } catch (err) {
       setAvatarPrivacyState(prev);
       toast.error(err instanceof Error ? err.message : "Gagal menyimpan privasi foto profil");
+    } finally {
+      setSavingAvatarPrivacy(false);
     }
   };
 
@@ -327,16 +323,6 @@ function ProfilePage() {
     setAudienceCount(count);
     setPendingAvatarPrivacy(null);
     await refresh();
-  };
-
-  const patchSettings = async (patch: Parameters<typeof updateSettings>[1]) => {
-    if (!userId) return;
-    try {
-      const next = await updateSettings(userId, patch);
-      setSettings(next);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menyimpan pengaturan");
-    }
   };
 
   const saveBusiness = async () => {
@@ -387,9 +373,6 @@ function ProfilePage() {
     );
   }
 
-  const notif = notificationsOf(settings);
-  const priv = privacyOf(settings);
-  const sec = securityOf(settings);
   const role = myBiz?.role;
 
   return (
@@ -495,6 +478,7 @@ function ProfilePage() {
               <button
                 key={key}
                 type="button"
+                disabled={savingAvatarPrivacy}
                 onClick={() => void changeAvatarPrivacy(key)}
                 className={`flex min-h-11 items-center justify-between rounded-xl border px-3 py-2 text-sm ${
                   avatarPrivacy === key ? "border-primary bg-primary/10" : "border-border"
@@ -505,6 +489,28 @@ function ProfilePage() {
               </button>
             ))}
           </div>
+          {savingAvatarPrivacy && (
+            <p role="status" className="text-xs text-muted-foreground">
+              Menyimpan privasi foto…
+            </p>
+          )}
+          {audienceLoading && (
+            <p role="status" className="text-xs text-muted-foreground">
+              Memuat daftar privasi foto…
+            </p>
+          )}
+          {audienceError && (
+            <div role="alert" className="space-y-2">
+              <p className="text-xs text-destructive">{audienceError}</p>
+              <Button
+                variant="outline"
+                className="min-h-11"
+                onClick={() => setAudienceRetry((value) => value + 1)}
+              >
+                Muat ulang daftar privasi
+              </Button>
+            </div>
+          )}
           {needsAudience(avatarPrivacy) && (
             <button
               type="button"
@@ -515,7 +521,9 @@ function ProfilePage() {
               className="flex min-h-11 w-full items-center justify-between rounded-xl bg-muted px-3 py-2 text-sm"
             >
               <span className="text-muted-foreground">
-                {audienceSummary(avatarPrivacy, audienceCount)}
+                {audienceLoading || audienceError
+                  ? "Pilih kontak yang boleh melihat foto"
+                  : audienceSummary(avatarPrivacy, audienceCount)}
               </span>
               <span className="text-primary">Pilih kontak</span>
             </button>
@@ -600,172 +608,95 @@ function ProfilePage() {
           <SettingRow
             icon={Download}
             label="Download aplikasi"
-            description="Pasang MCM di perangkat kamu"
+            description="Pasang TOKOLINK di perangkat kamu"
             right={<ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
             onClick={() => void navigate({ to: "/download" })}
           />
         </div>
 
         <div className="card-soft divide-y divide-border">
-          {settingsError ? (
-            <div className="flex items-center justify-between gap-2 p-4">
-              <p className="text-xs text-muted-foreground">{settingsError}</p>
-              <Button size="sm" variant="outline" className="rounded-lg" onClick={loadSettings}>
-                Coba lagi
-              </Button>
-            </div>
-          ) : (
-            <>
-              <SettingRow
-                icon={Moon}
-                label="Mode gelap"
-                description="Sesuaikan tampilan dengan pencahayaan sekitar"
-                right={
-                  <Switch
-                    checked={theme === "dark"}
-                    onCheckedChange={(v) => {
-                      setTheme(v ? "dark" : "light");
-                      void patchSettings({ theme: v ? "dark" : "light" });
-                    }}
-                  />
-                }
-              />
-              <SettingRow
-                icon={Sparkles}
-                label="Kurangi animasi"
-                description={
-                  motionPreference === "auto"
-                    ? `Mengikuti setelan perangkat (saat ini ${motionReduced ? "aktif" : "nonaktif"})`
-                    : "Mematikan animasi non-kritis seperti transisi dan efek gelembung pesan"
-                }
-                right={
-                  <Switch
-                    aria-label="Kurangi animasi"
-                    checked={motionReduced}
-                    onCheckedChange={(v) => {
-                      setMotion(v ? "on" : "off");
-                      toast.success(v ? "Animasi dikurangi" : "Animasi diaktifkan");
-                    }}
-                  />
-                }
-              />
-
-              <NotificationPermissionRow userId={userId} />
-              <button
-                type="button"
-                onClick={() => void navigate({ to: "/settings/notifications" })}
-                className="flex w-full items-center gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-muted/60"
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Bell className="size-4" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium">Izin & notifikasi</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Channel push, pratinjau pesan, izin kamera/lokasi, dan perangkat terdaftar
-                  </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
-              <button
-                type="button"
-                onClick={() => void navigate({ to: "/settings/voice" })}
-                className="flex w-full items-center gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-muted/60"
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Sparkles className="size-4" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium">Panggilan • Efek Suara Premium</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Preset Voice Privacy default dan tes mikrofon sebelum menelepon
-                  </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
-              <button
-                type="button"
-                onClick={() => void navigate({ to: "/settings/calls" })}
-                className="flex w-full items-center gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-muted/60"
-              >
-                <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Stethoscope className="size-4" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium">Diagnostik panggilan</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Cek penyedia, HTTPS, izin mikrofon/kamera, dan tes perangkat
-                  </span>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-              </button>
-              <SettingRow
-                icon={Shield}
-                label="Kunci aplikasi"
-                description="Minta PIN perangkat saat membuka MCM"
-                right={
-                  <Switch
-                    checked={sec.appLock}
-                    onCheckedChange={(v) => void patchSettings({ security: { appLock: v } })}
-                  />
-                }
-              />
-              <SettingRow
-                icon={Shield}
-                label="Perlindungan layar"
-                description={screenSecurity.detail}
-                right={
-                  <span className="max-w-[9rem] text-right text-[10px] leading-tight font-medium text-muted-foreground">
-                    {screenSecurity.flagSecure ? "APK Android" : "Web/PWA"}
-                  </span>
-                }
-              />
-              <p className="px-1 text-xs text-muted-foreground">{screenSecurity.label}</p>
-              <SettingRow
-                icon={KeyRound}
-                label="Verifikasi dua langkah"
-                description="Minta kode tambahan saat masuk di perangkat baru"
-                right={
-                  <Switch
-                    checked={sec.twoFactor}
-                    onCheckedChange={(v) => void patchSettings({ security: { twoFactor: v } })}
-                  />
-                }
-              />
-              <SettingRow
-                icon={Palette}
-                label="Status online"
-                description="Tampilkan saat Anda sedang aktif"
-                right={
-                  <Switch
-                    checked={priv.online}
-                    onCheckedChange={(v) => void patchSettings({ privacy: { online: v } })}
-                  />
-                }
-              />
-              <SettingRow
-                icon={Eye}
-                label="Centang dibaca"
-                description="Bagikan status baca ke lawan bicara"
-                right={
-                  <Switch
-                    checked={priv.readReceipts}
-                    onCheckedChange={(v) => void patchSettings({ privacy: { readReceipts: v } })}
-                  />
-                }
-              />
-            </>
-          )}
+          <AccountPreferenceControls userId={userId} />
+          <div className="px-4 pt-4 pb-2">
+            <h2 className="text-sm font-semibold">Notifikasi & panggilan</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Izin perangkat dan pemeriksaan layanan
+            </p>
+          </div>
+          <NotificationPermissionRow userId={userId} />
+          <button
+            type="button"
+            onClick={() => void navigate({ to: "/settings/notifications" })}
+            className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/60"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Bell className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Izin & notifikasi</span>
+              <span className="block text-xs text-muted-foreground">
+                Channel push, pratinjau pesan, izin kamera/lokasi, dan perangkat terdaftar
+              </span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            onClick={() => void navigate({ to: "/settings/voice" })}
+            className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/60"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Sparkles className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Panggilan • Efek Suara Premium</span>
+              <span className="block text-xs text-muted-foreground">
+                Preset Voice Privacy default dan tes mikrofon sebelum menelepon
+              </span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            onClick={() => void navigate({ to: "/settings/calls" })}
+            className="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/60"
+          >
+            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Stethoscope className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">Diagnostik panggilan</span>
+              <span className="block text-xs text-muted-foreground">
+                Cek penyedia, HTTPS, izin mikrofon/kamera, dan tes perangkat
+              </span>
+            </span>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          </button>
         </div>
+
+        <WhatsAppSettingsStatus />
 
         <div className="card-soft space-y-3 p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
-            <Monitor className="size-4" /> Perangkat aktif
+            <Monitor className="size-4" /> Perangkat penerima push
           </p>
-          {devicesError ? (
+          <p className="text-xs text-muted-foreground">
+            Pencabutan di sini menghentikan push; sesi login perangkat tetap terpisah.
+          </p>
+          {devicesLoading ? (
+            <p role="status" className="text-xs text-muted-foreground">
+              Memuat perangkat…
+            </p>
+          ) : devicesError ? (
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">{devicesError}</p>
-              <Button size="sm" variant="outline" className="rounded-lg" onClick={loadDevices}>
+              <p role="alert" className="text-xs text-destructive">
+                {devicesError}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-lg"
+                onClick={() => void loadDevices()}
+              >
                 Coba lagi
               </Button>
             </div>
@@ -775,7 +706,7 @@ function ProfilePage() {
             devices.map((dv) => (
               <div
                 key={dv.id}
-                className="flex items-center justify-between gap-3 rounded-xl bg-muted/50 p-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/50 p-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{dv.name}</p>
@@ -786,21 +717,27 @@ function ProfilePage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="rounded-lg text-xs"
-                  onClick={() =>
+                  className="min-h-11 rounded-lg text-xs"
+                  aria-label={`Cabut push ${dv.name || "perangkat"}`}
+                  disabled={revokingDevice !== null || dv.revoked}
+                  onClick={() => {
+                    const request = deviceRequest.current;
+                    setRevokingDevice(dv.id);
                     void removeDevice(dv.id)
                       .then(() => {
+                        if (request !== deviceRequest.current) return;
                         setDevices((p) => p.filter((x) => x.id !== dv.id));
-                        toast.success("Perangkat dikeluarkan");
+                        toast.success("Push perangkat dicabut");
                       })
                       .catch((err) =>
                         toast.error(
                           err instanceof Error ? err.message : "Gagal mengeluarkan perangkat",
                         ),
                       )
-                  }
+                      .finally(() => setRevokingDevice(null));
+                  }}
                 >
-                  Keluarkan perangkat
+                  {dv.revoked ? "Push dicabut" : "Cabut push"}
                 </Button>
               </div>
             ))
@@ -839,22 +776,21 @@ function ProfilePage() {
         >
           <LogOut className="size-4" /> Keluar
         </Button>
-
-        <ProtoNote>
-          Notifikasi push Android belum dikonfigurasi. Preferensi tersimpan tetapi belum mengirim
-          push nyata.
-        </ProtoNote>
       </div>
 
       <ConfirmDialog
         open={logoutOpen}
         onOpenChange={setLogoutOpen}
         title="Keluar dari akun?"
-        description="Anda perlu masuk kembali untuk mengakses MCM."
+        description="Anda perlu masuk kembali untuk mengakses TOKOLINK."
         confirmLabel="Keluar"
         destructive
         onConfirm={() => {
-          void signOut().then(() => navigate({ to: "/login" }));
+          void signOut()
+            .then(() => navigate({ to: "/login" }))
+            .catch((err: unknown) =>
+              toast.error(err instanceof Error ? err.message : "Gagal keluar dari akun"),
+            );
         }}
       />
 

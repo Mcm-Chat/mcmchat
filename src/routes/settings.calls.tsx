@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, RefreshCw, TriangleAlert, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -30,13 +30,13 @@ import {
 export const Route = createFileRoute("/settings/calls")({
   head: () => ({
     meta: [
-      { title: "Diagnostik Panggilan — MCM" },
+      { title: "Diagnostik Panggilan — TOKOLINK" },
       {
         name: "description",
         content:
-          "Periksa kesiapan panggilan MCM: penyedia panggilan, koneksi HTTPS, izin mikrofon dan kamera, serta tes perangkat.",
+          "Periksa kesiapan panggilan TOKOLINK: penyedia panggilan, koneksi HTTPS, izin mikrofon dan kamera, serta tes perangkat.",
       },
-      { property: "og:title", content: "Diagnostik Panggilan — MCM" },
+      { property: "og:title", content: "Diagnostik Panggilan — TOKOLINK" },
       {
         property: "og:description",
         content: "Cek penyedia panggilan, HTTPS, izin, dan perangkat sebelum menelepon.",
@@ -63,31 +63,77 @@ const TONE: Record<CheckStatus, string> = {
 };
 
 const SUMMARY: Record<CheckStatus, string> = {
-  pass: "Panggilan siap digunakan.",
+  pass: "Pemeriksaan dasar lulus. Lanjutkan tes koneksi dan panggilan antarperangkat.",
   fail: "Ada masalah yang membuat panggilan gagal.",
-  warn: "Panggilan bisa dicoba, tapi ada hal yang perlu diperhatikan.",
+  warn: "Ada pemeriksaan yang perlu dilengkapi sebelum mencoba panggilan.",
   pending: "Sedang memeriksa…",
 };
 
 function CallDiagnosticsPage() {
+  const { user } = useAuth();
+  return <AccountCallDiagnostics key={user?.id ?? "signed-out"} userId={user?.id} />;
+}
+
+function AccountCallDiagnostics({ userId }: { userId: string | undefined }) {
   const [checks, setChecks] = useState<DiagnosticResult[]>([]);
   const [running, setRunning] = useState(false);
   const [deviceTest, setDeviceTest] = useState<DiagnosticResult | null>(null);
   const [configured, setConfigured] = useState(false);
   const [netTest, setNetTest] = useState<DiagnosticResult | null>(null);
   const [netRunning, setNetRunning] = useState(false);
-  const { user } = useAuth();
-  const userId = user?.id ?? null;
   const [history, setHistory] = useState<DiagnosticRun[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+  const [deviceRunning, setDeviceRunning] = useState(false);
+  const historyEpoch = useRef(0);
+  const clearingHistory = useRef(false);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const loadHistory = useCallback(async () => {
-    if (!userId) return;
+    if (!userId || clearingHistory.current) return;
+    const epoch = ++historyEpoch.current;
+    setHistoryLoading(true);
+    setHistoryError(null);
     try {
-      setHistory(await listDiagnosticRuns());
-    } catch {
-      /* riwayat opsional; kegagalan muat tidak memblokir diagnostik */
+      const next = await listDiagnosticRuns();
+      if (mounted.current && epoch === historyEpoch.current) setHistory(next);
+    } catch (cause) {
+      if (mounted.current && epoch === historyEpoch.current)
+        setHistoryError(cause instanceof Error ? cause.message : "Gagal memuat riwayat diagnostik");
+    } finally {
+      if (mounted.current && epoch === historyEpoch.current) setHistoryLoading(false);
     }
   }, [userId]);
+
+  const clearHistory = async () => {
+    if (!userId || clearingHistory.current) return;
+    clearingHistory.current = true;
+    // Any history request begun before deletion can no longer repopulate the list.
+    const epoch = ++historyEpoch.current;
+    setClearing(true);
+    setHistoryLoading(false);
+    try {
+      await clearDiagnosticRuns(userId);
+      if (mounted.current && epoch === historyEpoch.current) {
+        setHistory([]);
+        setHistoryError(null);
+      }
+    } catch (cause) {
+      if (mounted.current && epoch === historyEpoch.current)
+        toast.error(cause instanceof Error ? cause.message : "Gagal menghapus riwayat");
+    } finally {
+      clearingHistory.current = false;
+      if (mounted.current) setClearing(false);
+    }
+  };
 
   useEffect(() => {
     void loadHistory();
@@ -124,14 +170,53 @@ function CallDiagnosticsPage() {
     void run();
   }, [run]);
 
-  const status = running && checks.length === 0 ? "pending" : overallStatus(checks);
+  useEffect(() => {
+    const onResume = () => {
+      if (document.visibilityState === "hidden") return;
+      void run();
+      void loadHistory();
+    };
+    window.addEventListener("focus", onResume);
+    document.addEventListener("resume", onResume);
+    return () => {
+      window.removeEventListener("focus", onResume);
+      document.removeEventListener("resume", onResume);
+    };
+  }, [run, loadHistory]);
+
+  const testDevice = async (video: boolean) => {
+    setDeviceRunning(true);
+    try {
+      setDeviceTest(await testLocalDevices(video));
+      await run();
+    } catch (cause) {
+      setDeviceTest(
+        result(
+          "device-test",
+          "Tes perangkat",
+          "fail",
+          cause instanceof Error ? cause.message : "Tes gagal dijalankan",
+        ),
+      );
+    } finally {
+      setDeviceRunning(false);
+    }
+  };
+
+  const status = checks.length === 0 ? "pending" : overallStatus(checks);
 
   return (
     <AppShell header={<MobileHeader title="Diagnostik panggilan" back />}>
-      <div className="space-y-4 p-4">
+      <div className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-24">
         <section className="rounded-2xl border bg-card p-4">
           <h1 className="text-base font-semibold">Kesiapan panggilan</h1>
-          <p className={`mt-1 text-sm ${TONE[status]}`}>{SUMMARY[status]}</p>
+          <p className={`mt-1 text-sm ${TONE[status]}`} role="status">
+            {SUMMARY[status]}
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Hasil ini belum membuktikan audio/video dua arah, kualitas jaringan, atau panggilan
+            masuk pada APK Android.
+          </p>
           <Button
             size="sm"
             variant="secondary"
@@ -174,7 +259,7 @@ function CallDiagnosticsPage() {
             size="sm"
             variant="secondary"
             className="rounded-xl"
-            disabled={!configured || netRunning}
+            disabled={!userId || !configured || netRunning}
             onClick={() => {
               setNetRunning(true);
               void runLiveKitConnectTest(() => issueDiagnosticToken())
@@ -187,6 +272,16 @@ function CallDiagnosticsPage() {
                   } catch (err) {
                     toast.error(err instanceof Error ? err.message : "Riwayat gagal disimpan");
                   }
+                })
+                .catch((cause: unknown) => {
+                  setNetTest(
+                    result(
+                      "livekit",
+                      "Tes koneksi LiveKit",
+                      "fail",
+                      cause instanceof Error ? cause.message : "Tes koneksi gagal dijalankan",
+                    ),
+                  );
                 })
                 .finally(() => setNetRunning(false));
             }}
@@ -220,20 +315,30 @@ function CallDiagnosticsPage() {
                 size="sm"
                 variant="ghost"
                 className="rounded-xl text-destructive"
-                onClick={() => {
-                  if (!userId) return;
-                  void clearDiagnosticRuns(userId)
-                    .then(() => setHistory([]))
-                    .catch((err: unknown) =>
-                      toast.error(err instanceof Error ? err.message : "Gagal menghapus"),
-                    );
-                }}
+                disabled={clearing}
+                onClick={() => void clearHistory()}
               >
                 Hapus
               </Button>
             )}
           </div>
-          {history.length === 0 ? (
+          {historyError ? (
+            <div role="alert" className="space-y-2">
+              <p className="text-sm text-destructive">{historyError}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={historyLoading}
+                onClick={() => void loadHistory()}
+              >
+                Coba muat riwayat
+              </Button>
+            </div>
+          ) : historyLoading ? (
+            <p role="status" className="text-xs">
+              Memuat riwayat…
+            </p>
+          ) : history.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               Belum ada hasil tersimpan. Jalankan tes koneksi di atas.
             </p>
@@ -280,12 +385,13 @@ function CallDiagnosticsPage() {
               Membuka mikrofon/kamera sebentar lalu menutupnya kembali. Tidak ada rekaman disimpan.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
               variant="secondary"
               className="rounded-xl"
-              onClick={() => void testLocalDevices(false).then(setDeviceTest)}
+              disabled={deviceRunning}
+              onClick={() => void testDevice(false)}
             >
               Tes mikrofon
             </Button>
@@ -293,7 +399,8 @@ function CallDiagnosticsPage() {
               size="sm"
               variant="secondary"
               className="rounded-xl"
-              onClick={() => void testLocalDevices(true).then(setDeviceTest)}
+              disabled={deviceRunning}
+              onClick={() => void testDevice(true)}
             >
               Tes kamera
             </Button>

@@ -1,14 +1,9 @@
-/**
- * Registrasi token FCM untuk perangkat asli: token web berotasi diam-diam,
- * jadi baris perangkat di server harus ikut diperbarui tanpa dialog izin baru.
- */
+/** Automatic token refresh verifies server state and never opts in or revives a device. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const rpc = vi.fn(async (_fn: string, _args: Record<string, unknown>) => ({ error: null }));
+const rpc = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { rpc: (fn: string, args: Record<string, unknown>) => rpc(fn, args) },
 }));
-
 let currentToken: string | null = "tok-1";
 vi.mock("firebase/app", () => ({
   initializeApp: () => ({}),
@@ -26,62 +21,70 @@ vi.mock("../web-config", () => ({
   swUrl: () => "/firebase-messaging-sw.js",
   webPushConfigured: () => true,
 }));
-
 const reg = {} as ServiceWorkerRegistration;
 Object.defineProperty(navigator, "serviceWorker", {
   configurable: true,
   value: { register: async () => reg, ready: Promise.resolve(reg) },
 });
 vi.stubGlobal("PushManager", class {});
-vi.stubGlobal("Notification", { permission: "granted" });
-
+const requestPermission = vi.fn();
 const { syncWebPushToken } = await import("../web");
 
 describe("syncWebPushToken", () => {
   beforeEach(() => {
-    rpc.mockClear();
+    rpc.mockReset().mockResolvedValue({ data: true, error: null });
+    requestPermission.mockClear();
     localStorage.clear();
     currentToken = "tok-1";
+    vi.stubGlobal("Notification", { permission: "granted", requestPermission });
   });
-
-  it("mendaftarkan token saat belum ada catatan lokal", async () => {
+  it("uses refresh-only RPC with stable installation identity", async () => {
     expect(await syncWebPushToken("Pixel")).toBe(true);
-    expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc.mock.calls[0]?.[1]).toMatchObject({ _push_token: "tok-1", _platform: "web" });
+    const id = localStorage.getItem("mcm.web.installation");
+    expect(rpc).toHaveBeenCalledWith(
+      "refresh_my_push_device",
+      expect.objectContaining({ _installation_id: id, _push_token: "tok-1", _platform: "web" }),
+    );
+    expect(requestPermission).not.toHaveBeenCalled();
   });
-
-  it("tidak menulis ulang saat token sama dan masih segar", async () => {
+  it("checks the server even when an old local token record claims to be fresh", async () => {
+    localStorage.setItem("mcm.web.push-token", JSON.stringify({ token: "tok-1", at: Date.now() }));
     await syncWebPushToken("Pixel");
-    rpc.mockClear();
-    expect(await syncWebPushToken("Pixel")).toBe(true);
-    expect(rpc).not.toHaveBeenCalled();
+    rpc.mockResolvedValueOnce({ data: false, error: null }); // revoked elsewhere
+    expect(await syncWebPushToken("Pixel")).toBe(false);
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(localStorage.getItem("mcm.web.push-token")).toBeNull();
+    expect(rpc.mock.calls.every(([fn]) => fn === "refresh_my_push_device")).toBe(true);
   });
-
-  it("menulis ulang saat token berotasi", async () => {
+  it("refreshes a rotated token without a registration call", async () => {
     await syncWebPushToken("Pixel");
+    const id = localStorage.getItem("mcm.web.installation");
     rpc.mockClear();
     currentToken = "tok-2";
     expect(await syncWebPushToken("Pixel")).toBe(true);
-    expect(rpc.mock.calls[0]?.[1]).toMatchObject({ _push_token: "tok-2" });
-  });
-
-  it("menyegarkan ulang setelah lebih dari 24 jam walau token sama", async () => {
-    await syncWebPushToken("Pixel");
-    const raw = JSON.parse(localStorage.getItem("mcm.web.push-token")!);
-    localStorage.setItem(
-      "mcm.web.push-token",
-      JSON.stringify({ ...raw, at: Date.now() - 25 * 60 * 60 * 1000 }),
+    expect(rpc).toHaveBeenCalledWith(
+      "refresh_my_push_device",
+      expect.objectContaining({ _installation_id: id, _push_token: "tok-2" }),
     );
-    rpc.mockClear();
-    expect(await syncWebPushToken("Pixel")).toBe(true);
-    expect(rpc).toHaveBeenCalledTimes(1);
   });
-
-  it("tidak melakukan apa pun saat izin belum diberikan", async () => {
-    vi.stubGlobal("Notification", { permission: "default" });
+  it("does not register a missing or revoked device during refresh", async () => {
+    rpc.mockResolvedValueOnce({ data: false, error: null });
+    expect(await syncWebPushToken("Pixel")).toBe(false);
+    expect(rpc).toHaveBeenCalledOnce();
+    expect(rpc.mock.calls[0]?.[0]).toBe("refresh_my_push_device");
+  });
+  it("reports RPC errors and missing tokens as unregistered", async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "offline" } });
+    expect(await syncWebPushToken("Pixel")).toBe(false);
+    rpc.mockClear();
+    currentToken = null;
     expect(await syncWebPushToken("Pixel")).toBe(false);
     expect(rpc).not.toHaveBeenCalled();
-    vi.stubGlobal("PushManager", class {});
-    vi.stubGlobal("Notification", { permission: "granted" });
+  });
+  it("does not request permission when permission has not been granted", async () => {
+    vi.stubGlobal("Notification", { permission: "default", requestPermission });
+    expect(await syncWebPushToken("Pixel")).toBe(false);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(requestPermission).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { getActiveUserId, onAccountSwitch, scopedKey } from "@/lib/session-scope";
+import { useUserSettings } from "@/lib/settings/use-settings";
 
 /** Key global hanya menyimpan tema terakhir yang dipakai di perangkat ini
  *  (dipakai skrip pra-hidrasi agar tidak ada kedip). Preferensi sebenarnya
@@ -43,9 +44,12 @@ function readStored(userId: string | null): Theme {
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
+  const [userId, setUserId] = useState(getActiveUserId);
+  const { settings } = useUserSettings(userId);
 
   useEffect(() => {
     const load = (userId: string | null) => {
+      setUserId(userId);
       const next = readStored(userId);
       setThemeState(next);
       apply(next);
@@ -55,6 +59,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // sudah dihapus oleh purgeLocalScope sehingga tidak bocor antar akun.
     return onAccountSwitch((next) => load(next));
   }, []);
+
+  // Remote account preferences apply on every route, including after another
+  // device changes the theme. Local storage remains only the fast startup cache.
+  useEffect(() => {
+    if (!userId || settings?.user_id !== userId || getActiveUserId() !== userId) return;
+    if (settings.theme !== "light" && settings.theme !== "dark") return;
+    const next = settings.theme;
+    setThemeState(next);
+    try {
+      localStorage.setItem(scopedKey("theme", userId), next);
+      localStorage.setItem(LAST_KEY, next);
+    } catch {
+      /* storage tidak tersedia */
+    }
+    apply(next);
+  }, [userId, settings]);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);

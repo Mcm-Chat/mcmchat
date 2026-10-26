@@ -9,20 +9,23 @@ import { listDevices, type DeviceRow } from "@/lib/api/settings";
 import { getPushStatus, sendPushSelfTest } from "@/lib/push/push.functions";
 import { missingWebPushKeys } from "@/lib/push/web-config";
 import { checkPermission, type PermState } from "@/lib/push/permissions";
+import { useAuth } from "@/lib/auth";
+import { isNative } from "@/lib/push/native";
 
 export const Route = createFileRoute("/settings/push-test")({
   head: () => ({
     meta: [
-      { title: "Uji Notifikasi Tertutup — MCM" },
+      { title: "Uji Notifikasi Tertutup — TOKOLINK" },
       {
         name: "description",
         content:
-          "Kirim push uji pesan dan panggilan ke perangkat Anda sendiri untuk membuktikan notifikasi tetap muncul saat aplikasi ditutup total.",
+          "Kirim push uji pesan dan panggilan ke perangkat Anda sendiri, lalu periksa penerimaannya pada perangkat tujuan.",
       },
-      { property: "og:title", content: "Uji Notifikasi Tertutup — MCM" },
+      { property: "og:title", content: "Uji Notifikasi Tertutup — TOKOLINK" },
       {
         property: "og:description",
-        content: "Bukti nyata jalur push MCM: pesan dan panggilan saat aplikasi force-quit.",
+        content:
+          "Periksa pengiriman push TOKOLINK dan uji penerimaan notifikasi pada perangkat Anda.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
@@ -53,33 +56,78 @@ function wib(d: Date) {
 }
 
 function PushTestPage() {
+  const { user } = useAuth();
+  return <AccountPushTest key={user?.id ?? "signed-out"} userId={user?.id} />;
+}
+
+function AccountPushTest({ userId }: { userId: string | undefined }) {
   const [devices, setDevices] = useState<DeviceRow[]>([]);
   const [perm, setPerm] = useState<PermState | null>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [configReason, setConfigReason] = useState<string | null>(null);
   const [busy, setBusy] = useState<Variant | null>(null);
   const [log, setLog] = useState<LogRow[]>([]);
-  const missingKeys = missingWebPushKeys();
+  const missingKeys = isNative() ? [] : missingWebPushKeys();
+  const [loading, setLoading] = useState(true);
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
-    const [d, p, s] = await Promise.all([
-      listDevices().catch(() => [] as DeviceRow[]),
-      checkPermission("notifications").catch(() => null),
-      getPushStatus().catch(() => null),
-    ]);
-    setDevices(d.filter((x) => !x.revoked && x.push_enabled));
-    setPerm(p);
-    if (s) {
-      setConfigured(s.configured);
-      setConfigReason(s.configured ? null : (s.reason ?? null));
+    if (!userId) {
+      setLoading(false);
+      return;
     }
-  }, []);
+    setLoading(true);
+    setLoadErrors([]);
+    const [d, p, s] = await Promise.allSettled([
+      listDevices(),
+      checkPermission("notifications"),
+      getPushStatus(),
+    ]);
+    const errors: string[] = [];
+    if (d.status === "fulfilled") setDevices(d.value.filter((x) => !x.revoked && x.push_enabled));
+    else {
+      setDevices([]);
+      errors.push("Daftar perangkat gagal dimuat.");
+    }
+    if (p.status === "fulfilled") setPerm(p.value);
+    else {
+      setPerm(null);
+      errors.push("Status izin perangkat gagal diperiksa.");
+    }
+    if (s.status === "fulfilled") {
+      setConfigured(s.value.configured);
+      setConfigReason(s.value.configured ? null : (s.value.reason ?? null));
+    } else {
+      setConfigured(null);
+      errors.push("Server push belum dapat diperiksa.");
+    }
+    setLoadErrors(errors);
+    setLoading(false);
+  }, [userId]);
 
   useEffect(() => {
     void refresh();
+    const onResume = () => {
+      if (document.visibilityState !== "hidden") void refresh();
+    };
+    window.addEventListener("focus", onResume);
+    document.addEventListener("resume", onResume);
+    return () => {
+      window.removeEventListener("focus", onResume);
+      document.removeEventListener("resume", onResume);
+    };
   }, [refresh]);
 
   const send = async (variant: Variant) => {
+    if (
+      !userId ||
+      loading ||
+      configured !== true ||
+      devices.length === 0 ||
+      loadErrors.length > 0 ||
+      busy
+    )
+      return;
     setBusy(variant);
     try {
       const res = await sendPushSelfTest({ data: { variant } });
@@ -88,7 +136,7 @@ function PushTestPage() {
         ? (res.reason ?? "Server push belum terhubung")
         : res.devices === 0
           ? "Tidak ada perangkat aktif yang menerima kategori ini"
-          : `${res.sent} terkirim • ${res.failed} gagal • ${res.devices} perangkat`;
+          : `${res.sent} diterima FCM • ${res.failed} gagal • ${res.devices} perangkat; penerimaan belum dikonfirmasi`;
       setLog((prev) => [{ at: wib(new Date()), variant, ok, detail }, ...prev].slice(0, 20));
       if (ok) toast.success(`Push uji ${VARIANT_LABEL[variant].toLowerCase()} dikirim`);
       else toast.error(detail);
@@ -103,39 +151,55 @@ function PushTestPage() {
   };
 
   const blocked =
-    configured === false || devices.length === 0 || (perm !== null && perm !== "granted");
+    !userId || loading || loadErrors.length > 0 || configured !== true || devices.length === 0;
 
   return (
     <AppShell header={<MobileHeader title="Uji notifikasi tertutup" back />}>
-      <div className="space-y-4 p-4 pb-24">
+      <div className="mx-auto w-full max-w-2xl space-y-4 p-4 pb-24">
         <section className="rounded-xl border border-border bg-card p-4">
           <h1 className="text-base font-semibold text-foreground">
-            Buktikan notifikasi saat aplikasi ditutup
+            Uji pengiriman dan penerimaan notifikasi
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Tombol di bawah mengirim push sungguhan lewat server ke perangkat Anda sendiri — bukan
-            notifikasi lokal. Kalau notifikasi muncul setelah aplikasi ditutup total, jalur latar
-            belakang terbukti hidup.
+            notifikasi lokal. Hasil kirim server belum membuktikan notifikasi tampil di perangkat.
+            Periksa penerimaan pesan dan panggilan secara terpisah.
           </p>
         </section>
 
         <section className="space-y-2 rounded-xl border border-border bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">Prasyarat</h2>
+          {!userId ? <p role="status">Masuk untuk menguji notifikasi akun Anda.</p> : null}
+          {loadErrors.length > 0 ? (
+            <div role="alert" className="space-y-1 text-sm text-destructive">
+              {loadErrors.map((message) => (
+                <p key={message}>{message}</p>
+              ))}
+            </div>
+          ) : null}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={loading || !userId}
+            onClick={() => void refresh()}
+          >
+            {loading ? "Memeriksa…" : "Periksa ulang"}
+          </Button>
           <StatusRow
             ok={configured === true}
-            pending={configured === null}
+            pending={loading && configured === null}
             label="Server push terhubung"
             detail={configured === false ? (configReason ?? "Kredensial server belum lengkap") : ""}
           />
           <StatusRow
             ok={perm === "granted"}
-            pending={perm === null}
+            pending={loading && perm === null}
             label="Izin notifikasi perangkat"
             detail={perm && perm !== "granted" ? "Aktifkan di Pengaturan → Notifikasi" : ""}
           />
           <StatusRow
             ok={devices.length > 0}
-            pending={false}
+            pending={loading}
             label={`Perangkat terdaftar (${devices.length})`}
             detail={devices.length === 0 ? "Aktifkan notifikasi dulu agar perangkat terdaftar" : ""}
           />
@@ -157,16 +221,25 @@ function PushTestPage() {
         <section className="space-y-3 rounded-xl border border-border bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">Langkah uji</h2>
           <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-            <li>Tutup aplikasi sepenuhnya (geser dari daftar aplikasi terbaru).</li>
-            <li>Tunggu 5 detik, lalu buka lagi halaman ini dan tekan tombol uji.</li>
             <li>
-              Atau minta orang lain menekan tombol dari perangkat Anda yang lain — uji ini mengirim
-              ke semua perangkat akun Anda sekaligus.
+              Masuk dengan akun yang sama pada dua perangkat; aktifkan notifikasi pada perangkat
+              tujuan.
             </li>
-            <li>Catat apakah notifikasi muncul di bilah status saat aplikasi tertutup.</li>
+            <li>
+              Di perangkat tujuan, pindahkan aplikasi ke latar belakang atau geser dari daftar
+              aplikasi terbaru. Jangan buka kembali selama pengujian.
+            </li>
+            <li>
+              Tekan tombol uji dari perangkat kedua. Pengiriman menyasar perangkat aktif milik akun
+              ini.
+            </li>
+            <li>
+              Periksa apakah notifikasi muncul di perangkat tujuan dan apakah ketuk notifikasi
+              membuka halaman yang tepat.
+            </li>
           </ol>
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={() => void send("message")} disabled={busy !== null}>
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+            <Button onClick={() => void send("message")} disabled={busy !== null || blocked}>
               {busy === "message" ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
@@ -174,7 +247,11 @@ function PushTestPage() {
               )}
               Uji pesan
             </Button>
-            <Button variant="secondary" onClick={() => void send("call")} disabled={busy !== null}>
+            <Button
+              variant="secondary"
+              onClick={() => void send("call")}
+              disabled={busy !== null || blocked}
+            >
               {busy === "call" ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
@@ -185,13 +262,23 @@ function PushTestPage() {
           </div>
           <p className="text-xs text-muted-foreground">
             Uji panggilan memakai channel panggilan (prioritas tertinggi + dering), tetapi tidak
-            memalsukan panggilan masuk — tidak ada layar dering palsu.
+            membuat panggilan nyata. Uji ini belum membuktikan dering panggilan, audio/video, atau
+            layar penuh. Android yang dihentikan paksa melalui Setelan dapat menahan push sampai
+            aplikasi dibuka kembali.
           </p>
         </section>
 
         <section className="space-y-2 rounded-xl border border-border bg-card p-4">
           <h2 className="text-sm font-semibold text-foreground">Perangkat penerima</h2>
-          {devices.length === 0 ? (
+          {loading ? (
+            <p role="status" className="text-sm">
+              Memuat perangkat…
+            </p>
+          ) : loadErrors.length > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Periksa ulang untuk memastikan daftar perangkat.
+            </p>
+          ) : devices.length === 0 ? (
             <p className="text-sm text-muted-foreground">Belum ada perangkat aktif.</p>
           ) : (
             <ul className="space-y-2">
