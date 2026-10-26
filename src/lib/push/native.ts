@@ -34,7 +34,8 @@ type McmPushPlugin = {
   startCallForeground(o: { callId: string; title?: string }): Promise<void>;
   stopCallForeground(): Promise<void>;
   capabilities(): Promise<NativeCapabilities>;
-  openNotificationSettings(): Promise<void>;
+  openNotificationSettings(): Promise<{ opened: boolean }>;
+  openAppSettings(): Promise<{ opened: boolean }>;
   openBatterySettings(): Promise<{ opened: boolean }>;
   sendTestNotification(): Promise<{ shown: boolean; reason?: string }>;
   clearConversationNotifications(o: { conversationId: string }): Promise<void>;
@@ -150,17 +151,23 @@ export async function registerNativePush(deviceName: string): Promise<RegisterRe
   }
 }
 
-/**
- * Rotasi token: dipanggil saat aplikasi dibuka setelah `onNewToken`.
- * Karena dedupe memakai installation id, rotasi memperbarui baris yang sama.
- */
+/** Refresh an active registration only; token rotation must never undo revocation. */
 export async function syncRotatedToken(deviceName: string): Promise<boolean> {
   if (!isNative()) return false;
   try {
-    const { token } = await McmPush.consumePendingFcmToken();
+    const pending = await McmPush.consumePendingFcmToken();
+    const token = pending.token ?? (await McmPush.getToken()).token;
     if (!token) return false;
-    const res = await upsertDevice(deviceName, token);
-    return res.ok;
+    const install = await installationId();
+    if (!install) return false;
+    const { data, error } = await supabase.rpc("refresh_my_push_device", {
+      _installation_id: install,
+      _push_token: token,
+      _name: deviceName,
+      _platform: "android",
+      _app_version: "",
+    });
+    return !error && data === true;
   } catch {
     return false;
   }
@@ -207,9 +214,19 @@ export async function sendTestNotification(): Promise<{ shown: boolean; reason?:
   }
 }
 
-export async function openNotificationSettings() {
-  if (!isNative()) return;
-  await McmPush.openNotificationSettings().catch(() => undefined);
+export async function openNotificationSettings(): Promise<{ opened: boolean }> {
+  if (!isNative()) return { opened: false };
+  return await McmPush.openNotificationSettings()
+    .then((result) => ({ opened: result?.opened === true }))
+    .catch(() => ({ opened: false }));
+}
+
+/** Real Android application settings intent; no optional/uninstalled plugins. */
+export async function openNativeAppSettings(): Promise<{ opened: boolean }> {
+  if (!isNative()) return { opened: false };
+  return await McmPush.openAppSettings()
+    .then((result) => ({ opened: result?.opened === true }))
+    .catch(() => ({ opened: false }));
 }
 
 /** Buka setelan izin full-screen intent (Android 14+). */

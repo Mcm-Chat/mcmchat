@@ -1,7 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { friendly, unwrap } from "./db";
-import type { Json, Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { DEFAULT_VOICE_PREFS, normalizePrefs, type VoicePrefs } from "@/lib/voice/presets";
+import type { Json, Tables } from "@/integrations/supabase/types";
+import {
+  DEFAULT_VOICE_PREFS,
+  normalizePrefs,
+  type VoicePrefs,
+  type VoiceParams,
+} from "@/lib/voice/presets";
 
 export type UserSettingsRow = Tables<"user_settings">;
 
@@ -40,24 +45,42 @@ const DEFAULT_NOTIFICATIONS: NotificationsPrefs = {
 const DEFAULT_PRIVACY: PrivacyPrefs = { online: true, readReceipts: true };
 const DEFAULT_SECURITY: SecurityPrefs = { appLock: false, twoFactor: false };
 
-function asRecord(value: Json | null | undefined): Record<string, unknown> {
+function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
 }
 
+/** Accept only actual booleans; use defaults for missing or malformed legacy keys. */
+function booleanPrefs<T extends Record<string, boolean>>(defaults: T, value: unknown): T {
+  const input = asRecord(value);
+  return Object.fromEntries(
+    Object.entries(defaults).map(([key, fallback]) => [
+      key,
+      typeof input[key] === "boolean" ? input[key] : fallback,
+    ]),
+  ) as T;
+}
+
 export function notificationsOf(row: UserSettingsRow | null): NotificationsPrefs {
-  return { ...DEFAULT_NOTIFICATIONS, ...asRecord(row?.notifications) } as NotificationsPrefs;
+  return booleanPrefs(DEFAULT_NOTIFICATIONS, row?.notifications);
 }
 export function privacyOf(row: UserSettingsRow | null): PrivacyPrefs {
-  return { ...DEFAULT_PRIVACY, ...asRecord(row?.privacy) } as PrivacyPrefs;
+  return booleanPrefs(DEFAULT_PRIVACY, row?.privacy);
 }
 export function securityOf(row: UserSettingsRow | null): SecurityPrefs {
-  return { ...DEFAULT_SECURITY, ...asRecord(row?.security) } as SecurityPrefs;
+  return booleanPrefs(DEFAULT_SECURITY, row?.security);
 }
 /** Preferensi Voice Privacy. Hanya setelan (angka), tidak pernah sampel suara. */
 export function voiceOf(row: UserSettingsRow | null): VoicePrefs {
-  return normalizePrefs(asRecord(row?.voice) as Partial<VoicePrefs>);
+  const input = asRecord(row?.voice);
+  return normalizePrefs({
+    ...input,
+    enabled: input["enabled"] === true,
+    intensity:
+      typeof input["intensity"] === "number" ? input["intensity"] : DEFAULT_VOICE_PREFS.intensity,
+    custom: asRecord(input["custom"]) as VoicePrefs["custom"],
+  });
 }
 
 /** Ambil pengaturan pengguna, membuat baris default jika belum ada. */
@@ -69,20 +92,23 @@ export async function getSettings(userId: string): Promise<UserSettingsRow> {
     .maybeSingle();
   if (existing.error) throw new Error(friendly(existing.error.message, "Gagal memuat pengaturan"));
   if (existing.data) return existing.data;
+  // A second device/bootstrap may create this row between our SELECT and INSERT.
+  // Ignore that conflict and read the winning row; never overwrite its preferences.
+  const created = await supabase.from("user_settings").upsert(
+    {
+      user_id: userId,
+      theme: "dark",
+      notifications: DEFAULT_NOTIFICATIONS as unknown as Json,
+      privacy: DEFAULT_PRIVACY as unknown as Json,
+      security: DEFAULT_SECURITY as unknown as Json,
+      voice: DEFAULT_VOICE_PREFS as unknown as Json,
+    },
+    { onConflict: "user_id", ignoreDuplicates: true },
+  );
+  if (created.error) throw new Error(friendly(created.error.message, "Gagal membuat pengaturan"));
   return unwrap(
-    await supabase
-      .from("user_settings")
-      .insert({
-        user_id: userId,
-        theme: "dark",
-        notifications: DEFAULT_NOTIFICATIONS as unknown as Json,
-        privacy: DEFAULT_PRIVACY as unknown as Json,
-        security: DEFAULT_SECURITY as unknown as Json,
-        voice: DEFAULT_VOICE_PREFS as unknown as Json,
-      })
-      .select("*")
-      .single(),
-    "Gagal membuat pengaturan",
+    await supabase.from("user_settings").select("*").eq("user_id", userId).single(),
+    "Gagal memuat pengaturan",
   );
 }
 
@@ -91,32 +117,24 @@ export type SettingsPatch = {
   notifications?: Partial<NotificationsPrefs>;
   privacy?: Partial<PrivacyPrefs>;
   security?: Partial<SecurityPrefs>;
-  voice?: Partial<VoicePrefs>;
+  voice?: Omit<Partial<VoicePrefs>, "custom"> & { custom?: Partial<VoiceParams> };
 };
 
-/** Gabungkan patch jsonb parsial di sisi klien lalu simpan seluruh objek. */
+/** Atomic, account-checked patch. No client read/merge/write that loses other devices' edits. */
 export async function updateSettings(
   userId: string,
   patch: SettingsPatch,
 ): Promise<UserSettingsRow> {
-  const current = await getSettings(userId);
-  const update: TablesUpdate<"user_settings"> = {};
-  if (patch.theme) update.theme = patch.theme;
-  if (patch.notifications)
-    update.notifications = {
-      ...notificationsOf(current),
-      ...patch.notifications,
-    } as unknown as Json;
-  if (patch.privacy)
-    update.privacy = { ...privacyOf(current), ...patch.privacy } as unknown as Json;
-  if (patch.voice)
-    update.voice = normalizePrefs({ ...voiceOf(current), ...patch.voice }) as unknown as Json;
-  if (patch.security)
-    update.security = { ...securityOf(current), ...patch.security } as unknown as Json;
-  return unwrap(
-    await supabase.from("user_settings").update(update).eq("user_id", userId).select("*").single(),
-    "Gagal menyimpan pengaturan",
+  if (!userId) throw new Error("Masuk kembali untuk menyimpan pengaturan.");
+  const row = unwrap(
+    await supabase.rpc("update_my_settings", {
+      _expected_user_id: userId,
+      _patch: patch as Json,
+    }),
+    "Gagal menyimpan pengaturan. Periksa koneksi atau hubungi admin.",
   );
+  if (row.user_id !== userId) throw new Error("Akun berubah. Muat ulang pengaturan.");
+  return row;
 }
 
 /**

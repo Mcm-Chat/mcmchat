@@ -4,13 +4,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { myPin } from "@/lib/api/pins";
-import { setActiveUser } from "@/lib/session-scope";
+import { getActiveUserId, setActiveUser } from "@/lib/session-scope";
+import { useUserSettings } from "@/lib/settings/use-settings";
 import { __resetAvatarCache } from "@/lib/api/avatar";
 import { clearSignedUrlCache } from "@/lib/api/storage";
 import { resetOutboxForAccount } from "@/lib/api/outbox";
@@ -34,8 +36,13 @@ const Ctx = createContext<AuthCtx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const { settings } = useUserSettings(session?.user.id);
   const [loading, setLoading] = useState(true);
+  const loadVersion = useRef(0);
+  const authVersion = useRef(0);
+  const invalidateLoad = useCallback(() => {
+    ++loadVersion.current;
+  }, []);
 
   /**
    * Identitas akun aktif adalah sumber kebenaran untuk seluruh data lokal.
@@ -43,56 +50,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * langganan realtime, dan key localStorage akun lama dibuang.
    */
   const applyAccount = useCallback((uid: string | null) => {
-    if (!setActiveUser(uid)) return;
+    if (!setActiveUser(uid)) return false;
     __resetAvatarCache();
     clearSignedUrlCache();
     void supabase.removeAllChannels();
     resetOutboxForAccount();
+    return true;
   }, []);
 
   const load = useCallback(
     async (uid: string | undefined) => {
-      applyAccount(uid ?? null);
+      const request = ++loadVersion.current;
+      if (applyAccount(uid ?? null)) setProfile(null);
       if (!uid) {
         setProfile(null);
-        setSettings(null);
         return;
       }
       // Kolom `pin` tidak lagi termasuk grant tabel; PIN sendiri diambil via RPC.
       // `avatar_privacy` dan `avatar_version` wajib ikut: tanpa keduanya, layar
       // profil mengembalikan pilihan privasi ke "contacts" setelah refresh dan
       // cache-buster avatar tidak pernah berubah.
-      const [p, s, pin] = await Promise.all([
-        supabase.rpc("my_profile"),
-        supabase.from("user_settings").select("*").eq("user_id", uid).maybeSingle(),
-        myPin().catch(() => ""),
-      ]);
+      const [p, pin] = await Promise.all([supabase.rpc("my_profile"), myPin().catch(() => "")]);
+      // A previous account's slow response must never populate the new session.
+      if (request !== loadVersion.current || getActiveUserId() !== uid) return;
       setProfile(p.data ? ({ ...p.data, pin } as Profile) : null);
-      setSettings(s.data ?? null);
     },
     [applyAccount],
   );
 
   useEffect(() => {
     let active = true;
+    const initialVersion = authVersion.current;
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       if (!active) return;
+      ++authVersion.current;
       setSession(next);
-      void load(next?.user.id);
+      void load(next?.user.id).finally(() => {
+        if (active) setLoading(false);
+      });
     });
     void supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
+      if (!active || initialVersion !== authVersion.current) return;
       setSession(data.session);
-      void load(data.session?.user.id).finally(() => setLoading(false));
+      void load(data.session?.user.id).finally(() => {
+        if (active) setLoading(false);
+      });
     });
     return () => {
       active = false;
+      invalidateLoad();
       sub.subscription.unsubscribe();
     };
-  }, [load]);
+  }, [load, invalidateLoad]);
 
   const refresh = useCallback(async () => {
+    const request = authVersion.current;
     const { data } = await supabase.auth.getSession();
+    if (request !== authVersion.current) return;
     setSession(data.session);
     await load(data.session?.user.id);
   }, [load]);
@@ -103,10 +117,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await revokeNativePush().catch(() => undefined);
     const { revokeWebPush } = await import("@/lib/push/web");
     await revokeWebPush().catch(() => undefined);
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error("Gagal keluar. Periksa koneksi lalu coba lagi.");
+    ++loadVersion.current;
+    applyAccount(null);
+    setSession(null);
     setProfile(null);
-    setSettings(null);
-  }, []);
+  }, [applyAccount]);
 
   const value = useMemo(
     () => ({ session, user: session?.user ?? null, profile, settings, loading, refresh, signOut }),

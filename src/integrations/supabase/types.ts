@@ -3267,6 +3267,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      refresh_my_push_device: {
+        Args: {
+          _installation_id: string
+          _push_token: string
+          _name?: string
+          _platform?: string
+          _app_version?: string
+        }
+        Returns: boolean
+      }
+      update_my_settings: {
+        Args: { _expected_user_id: string; _patch: Json }
+        Returns: Database["public"]["Tables"]["user_settings"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "user_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _answer_call_as: {
         Args: { _actor: string; _call: string }
         Returns: {

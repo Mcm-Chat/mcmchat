@@ -87,11 +87,11 @@ describe("preferensi tema terisolasi per akun", () => {
     expect(theme).not.toMatch(/localStorage\.getItem\("mcm-theme"\)/);
   });
 
-  it("tema hanya berubah lewat aksi eksplisit pengguna, bukan avatar/foto", () => {
-    const profile = read("src/routes/profile.index.tsx");
+  it("kontrol profil menyimpan tema terlebih dahulu dan avatar tidak memutasi tema", () => {
+    const profile = read("src/components/mcm/account-preference-controls.tsx");
     const avatar = read("src/components/mcm/avatar-editor.tsx");
     expect(avatar).not.toMatch(/setTheme\(/);
-    // setTheme di Profil hanya dipanggil dari handler switch tema.
+    // Penerapan tema hanya setelah penyimpanan dari kontrol tema berhasil.
     expect(profile.match(/setTheme\(/g)?.length ?? 0).toBe(1);
   });
 });

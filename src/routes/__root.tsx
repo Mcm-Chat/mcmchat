@@ -171,18 +171,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "MCM — Chat Privat, Panggilan & Catatan Utang" },
+      { title: "TOKOLINK — Chat Privat, Panggilan & Catatan Utang" },
       {
         name: "description",
         content:
-          "MCM: aplikasi komunikasi privat berbasis PIN untuk chat, panggilan, catatan utang-piutang bersama, dan alat bisnis.",
+          "TOKOLINK: aplikasi komunikasi privat berbasis PIN untuk chat, panggilan, catatan utang-piutang bersama, dan alat bisnis.",
       },
       { name: "theme-color", content: "#0f1b2a" },
       {
         name: "google-site-verification",
         content: "StEYz84rl1qtnbBteGIp64am18nvMhg5C8bd43_SPu4",
       },
-      { property: "og:title", content: "MCM — Chat Privat, Panggilan & Catatan Utang" },
+      { property: "og:title", content: "TOKOLINK — Chat Privat, Panggilan & Catatan Utang" },
       {
         property: "og:description",
         content: "Chat & panggilan privat berbasis PIN, catatan utang bersama, dan katalog bisnis.",
@@ -211,7 +211,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "MCM",
+          name: "TOKOLINK",
           url: "https://mcmchat.ai",
         }),
       },

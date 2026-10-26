@@ -63,7 +63,9 @@ export function PinCard({ pin, name, subtitle }: { pin: string; name: string; su
       <div className="absolute -top-10 -right-10 size-32 rounded-full bg-on-dark-surface" />
       <div className="absolute -bottom-12 -left-6 size-28 rounded-full bg-on-dark-surface" />
       <div className="relative">
-        <p className="text-[11px] tracking-widest text-navy-foreground/70 uppercase">PIN MCM</p>
+        <p className="text-[11px] tracking-widest text-navy-foreground/70 uppercase">
+          PIN TOKOLINK
+        </p>
         <p className="mt-1 font-mono text-3xl font-bold tracking-[0.18em]">{pin}</p>
         <p className="mt-1 text-sm text-navy-foreground/80">{name}</p>
         {subtitle && <p className="text-xs text-navy-foreground/60">{subtitle}</p>}
@@ -101,7 +103,7 @@ export function PinCard({ pin, name, subtitle }: { pin: string; name: string; su
                 variant="outline"
                 className="rounded-xl"
                 onClick={() =>
-                  copyText(`Tambahkan saya di MCM dengan PIN ${pin}`, "Undangan disalin")
+                  copyText(`Tambahkan saya di TOKOLINK dengan PIN ${pin}`, "Undangan disalin")
                 }
               >
                 <Share2 className="size-4" /> Salin teks undangan

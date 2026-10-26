@@ -12,44 +12,67 @@ import {
   subscribeNotifications,
   type NotificationRow,
 } from "@/lib/api/notifications";
-import { getSettings, notificationsOf, type NotificationsPrefs } from "@/lib/api/settings";
+import { notificationsOf } from "@/lib/api/settings";
+import { useUserSettings } from "@/lib/settings/use-settings";
 import { categoryOfKind } from "@/lib/notifications/categories";
 
 function useNotifications(userId?: string) {
-  const [items, setItems] = useState<NotificationRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = () => {
-    if (!userId) return;
-    setLoading(true);
-    setError(null);
-    listNotifications(userId)
-      .then(setItems)
-      .catch((err) => setError(err instanceof Error ? err.message : "Gagal memuat notifikasi"))
-      .finally(() => setLoading(false));
-  };
+  const [state, setState] = useState<{
+    owner?: string | undefined;
+    items: NotificationRow[];
+    loading: boolean;
+    error: string | null;
+  }>({ items: [], loading: true, error: null });
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
-    load();
+    let active = true;
+    let request = 0;
     if (!userId) return;
-    return subscribeNotifications(userId, load);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    const load = () => {
+      const token = ++request;
+      setState((s) => ({
+        owner: userId,
+        items: s.owner === userId ? s.items : [],
+        loading: true,
+        error: null,
+      }));
+      void listNotifications(userId)
+        .then((items) => {
+          if (active && token === request)
+            setState({ owner: userId, items, loading: false, error: null });
+        })
+        .catch((err) => {
+          if (active && token === request)
+            setState({
+              owner: userId,
+              items: [],
+              loading: false,
+              error: err instanceof Error ? err.message : "Gagal memuat notifikasi",
+            });
+        });
+    };
+    load();
+    const unsubscribe = subscribeNotifications(userId, load);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [userId, revision]);
 
-  return { items, loading, error, reload: load };
+  const own = state.owner === userId && Boolean(userId);
+  return {
+    items: own ? state.items : [],
+    loading: Boolean(userId) && (!own || state.loading),
+    error: own ? state.error : null,
+    reload: () => setRevision((n) => n + 1),
+  };
 }
 
 export function NotificationBell({ userId }: { userId?: string | undefined }) {
   const { items: all, loading, error, reload } = useNotifications(userId);
-  const [prefs, setPrefs] = useState<NotificationsPrefs | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    void getSettings(userId)
-      .then((row) => setPrefs(notificationsOf(row)))
-      .catch(() => setPrefs(null));
-  }, [userId]);
+  const { settings, error: preferenceError, refresh: refreshPreferences } = useUserSettings(userId);
+  const prefs = useMemo(() => (settings ? notificationsOf(settings) : null), [settings]);
 
   // Preferensi per akun juga mengatur daftar di dalam aplikasi, bukan hanya push.
   const items = useMemo(() => {
@@ -66,11 +89,13 @@ export function NotificationBell({ userId }: { userId?: string | undefined }) {
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Notifikasi"
+          aria-label={
+            prefs?.badge && unread > 0 ? `Notifikasi, ${unread} belum dibaca` : "Notifikasi"
+          }
           className="relative size-11 sm:size-9"
         >
           <Bell className="size-5" />
-          {unread > 0 && (
+          {prefs?.badge && unread > 0 && (
             <span className="absolute top-1 right-1 min-w-4 rounded-full bg-destructive px-1 text-[9px] leading-4 font-bold text-destructive-foreground">
               {unread > 99 ? "99+" : unread}
             </span>
@@ -98,6 +123,16 @@ export function NotificationBell({ userId }: { userId?: string | undefined }) {
           )}
         </SheetHeader>
         <div className="overflow-y-auto pb-6">
+          {preferenceError ? (
+            <div role="alert" className="space-y-2 px-1 py-3">
+              <p className="text-xs text-destructive">
+                Preferensi notifikasi belum dapat dimuat. Filter kategori belum diterapkan.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => void refreshPreferences()}>
+                Muat ulang preferensi
+              </Button>
+            </div>
+          ) : null}
           <NotificationList
             items={items}
             loading={loading}

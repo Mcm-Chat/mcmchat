@@ -75,7 +75,7 @@ export const PRESETS: VoicePreset[] = [
   {
     id: "off",
     name: "Nonaktif",
-    desc: "Suara asli tanpa pemrosesan. Ini setelan bawaan MCM.",
+    desc: "Suara asli tanpa pemrosesan. Ini setelan bawaan TOKOLINK.",
     params: { ...NEUTRAL, denoise: 0 },
   },
   {
